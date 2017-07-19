@@ -12,7 +12,7 @@ starts = [-0.25; -0.25]; % window starts 250 ms before stimulus onset
 
 ends = [0.75; 2.50]; % window ends 75o ms after stimulus onset
 
-align_before = NaN * ones(length(stimuli_type),1); % sampling points before the onset of stimuli
+align_before = NaN * ones(length(stimuli_type),1); % number of sampling points before the onset of stimuli
 
 for iStimulus_type = 1: length(stimuli_type)
     
