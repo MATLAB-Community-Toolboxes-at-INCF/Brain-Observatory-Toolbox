@@ -5,3 +5,5 @@ data_access/raw_files_json_csv/
 data_access/trash/
 
 data_access/working/
+
+data_access/*.m~
