@@ -1,4 +1,10 @@
-wta_access/nwb_files/
+nwb_files/
+
+sdk/data_access/raw_files_json_csv/
+
+*/*.m~
+
+*/*/*.m~wta_access/nwb_files/
 
 data_access/raw_files_json_csv/
 
