@@ -83,6 +83,7 @@ boc.imaging_depth = 275
 
 %  pass conditions
 boc.get_session()
+boc
 
 % get manifest of selected sessions
 boc.selected_session_table
@@ -105,8 +106,11 @@ boc.get_session_data(nwb_dir_name);
 % add path to nwb files
 addpath ([base_dir_name, 'nwb_files/'])
 
-%% 3a) plot fluorescence traces of the selcted cell from the selected subexperiment
+%% 3a) plot fluorescence traces of the selcted cell from the selected session
 
+
+% get fluoroscence traces of all cells in this session and plot ones of
+% selected cells
 session_id = 527745328;
 cell_specimen_id = 529022196;
 

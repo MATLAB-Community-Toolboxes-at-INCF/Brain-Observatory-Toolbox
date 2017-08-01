@@ -51,7 +51,7 @@ classdef brain_observatory_cache < handle
             end
             
             summarize_by_depths = sum(summary_matrix,2);
-            summary_matrix = [summary_matrix,summarize_by_depths]
+            summary_matrix = [summary_matrix,summarize_by_depths];
             summarize_by_structures = sum(summary_matrix,1);
             summary_matrix = [summary_matrix;summarize_by_structures];
             summary_table = array2table(summary_matrix);
@@ -166,7 +166,6 @@ classdef brain_observatory_cache < handle
                    
                 end
             end
-            boc
         end
     
         
@@ -187,6 +186,8 @@ classdef brain_observatory_cache < handle
                 if ~exist(save_file_name,'file')
                     fprintf('downloading the nwb file')
                     outfilename = websave(save_file_name, full_url)
+                else
+                    fprintf('desired nwb file already exists')
                 end
             end
         end
