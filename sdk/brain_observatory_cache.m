@@ -39,6 +39,7 @@ classdef brain_observatory_cache < handle
             summary_matrix = NaN(size(boc.get_all_imaing_depths(),1),size(boc.get_all_targeted_structures(),1));
             all_depths = boc.get_all_imaing_depths();
             all_structures = boc.get_all_targeted_structures;
+            
             for cur_depth = 1: size(boc.get_all_imaing_depths(),1)
                 for cur_structure = 1: size(boc.get_all_targeted_structures,1)
                     boc.imaging_depth = str2double(cell2mat(all_depths(cur_depth)));
@@ -46,11 +47,16 @@ classdef brain_observatory_cache < handle
                     boc.get_session();
                     total_of_containers = size(boc.selected_session_table,1)/3;
                     summary_matrix(cur_depth,cur_structure) = total_of_containers;
-                    summary_table = array2table(summary_matrix);
-                    summary_table.Properties.VariableNames = all_structures;
-                    summary_table.Properties.RowNames = all_depths;
                 end
             end
+            
+            summarize_by_depths = sum(summary_matrix,2);
+            summary_matrix = [summary_matrix,summarize_by_depths]
+            summarize_by_structures = sum(summary_matrix,1);
+            summary_matrix = [summary_matrix;summarize_by_structures];
+            summary_table = array2table(summary_matrix);
+            summary_table.Properties.VariableNames = [all_structures;'total'];
+            summary_table.Properties.RowNames = [all_depths;'total'];
         end
         
         function result = get_all_targeted_structures (boc)
@@ -88,7 +94,7 @@ classdef brain_observatory_cache < handle
             
             if ~isempty(boc.container_id)
                 boc.selected_session_table = boc.selected_session_table(boc.session_table.experiment_container_id == boc.container_id, :);
-                % complete stimuli when looked up
+                % complete stimuli when looked up a container
                 if isempty(boc.stimuli)
                     all_sessions_exist = boc.selected_session_table.stimulus_name;
                     session_by_stimuli = boc.get_session_by_stimuli();
@@ -98,15 +104,15 @@ classdef brain_observatory_cache < handle
                     end
                     boc.stimuli = categories(categorical(all_stimuli_exist));
                 end
-                % complete imaing_depth when looked up
+                % complete imaing_depth when looked up a container
                 if isempty(boc.imaging_depth)
                     boc.imaging_depth = boc.selected_session_table.imaging_depth(1);
                 end
-                % complete targeted_structure when looked up
+                % complete targeted_structure when looked up a container
                 if isempty(boc.targeted_structure)
                     boc.targeted_structure = boc.selected_session_table.targeted_structure.acronym;
                 end
-                % complete session_id when looked up
+                % complete session_id when looked up a container
                 if isempty(boc.session_id)
                     boc.session_id = boc.selected_session_table.id;
                 end
@@ -114,21 +120,21 @@ classdef brain_observatory_cache < handle
             
             if ~isempty(boc.session_id)
                 boc.selected_session_table = boc.selected_session_table(boc.selected_session_table.id == boc.session_id, :);
-                % complete stimuli when looked up
+                % complete stimuli when looked up a session
                 if isempty(boc.stimuli)
                     session_type = boc.selected_session_table.stimulus_name;
                     session_by_stimuli = boc.get_session_by_stimuli();
                     boc.stimuli = session_by_stimuli.(char(session_type));
                 end
-                % complete imaing_depth when looked up
+                % complete imaing_depth when looked up a session
                 if isempty(boc.imaging_depth)
                     boc.imaging_depth = boc.selected_session_table.imaging_depth;
                 end
-                % complete targeted_structure when looked up
+                % complete targeted_structure when looked up a session
                 if isempty(boc.targeted_structure)
                     boc.targeted_structure = boc.selected_session_table.targeted_structure.acronym;
                 end
-                % complete container_id when looked up
+                % complete container_id when looked up a session
                 if isempty(boc.container_id)
                     boc.container_id = boc.selected_session_table.experiment_container_id;
                 end
@@ -154,15 +160,15 @@ classdef brain_observatory_cache < handle
                     
                     exp_targeted_structure_session_table = struct2table(boc.selected_session_table.targeted_structure);
                     boc.selected_session_table = boc.selected_session_table(ismember(exp_targeted_structure_session_table.acronym, boc.targeted_structure), :);
-                else
-                    if size(boc.selected_session_table,1) == 0
-                        fprintf('not even a single session can met all of your creteria')
-                    else
-                        boc.selected_session_table = boc.selected_session_table(strcmp( boc.selected_session_table.targeted_structure.acronym,boc.targeted_structure),:);
-                    end
+              
+                elseif size(boc.selected_session_table,1) == 1
+                    boc.selected_session_table = boc.selected_session_table(strcmp( boc.selected_session_table.targeted_structure.acronym,boc.targeted_structure),:);
+                   
                 end
             end
+            boc
         end
+    
         
         function get_session_data(boc, save_directory_name)
             
@@ -179,7 +185,7 @@ classdef brain_observatory_cache < handle
                 cur_id = boc.selected_session_table(cur, :).id;
                 save_file_name = [save_directory_name num2str(cur_id) '.nwb'];
                 if ~exist(save_file_name,'file')
-                    fprintf('now download the file, which is around 500 MB')
+                    fprintf('downloading the nwb file')
                     outfilename = websave(save_file_name, full_url)
                 end
             end

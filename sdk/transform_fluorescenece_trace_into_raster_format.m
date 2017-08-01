@@ -1,4 +1,4 @@
-function current_raster_dir_name = transform_fluorescenece_trace_into_raster_format(fluorescenece_trace,session_id, stimuli,raster_directory_name)
+function current_raster_dir_name = transform_fluorescenece_trace_into_raster_format(fluorescenece_trace,session_id, stimuli,raster_dir_name)
 
 nwb_name = [num2str(session_id) '.nwb'];
 
@@ -17,18 +17,18 @@ new_cell_specimen_ids = h5read(nwb_name, '/processing/brain_observatory_pipeline
 
 % create a head directory 'ratser/' that store all ratser formats
 
-if ~exist(raster_directory_name,'dir')
-    mkdir(raster_directory_name);
+if ~exist(raster_dir_name,'dir')
+    mkdir(raster_dir_name);
 end
 
 % under the head directory 'raster/', create a current direcotry that store
 % all raster formats returned from the current analysis
 current_raster_dir_name = [stimuli,'_', session_id ,'/'];
-current_raster_dir_name_full  = [raster_directory_name,current_raster_dir_name];
+current_raster_dir_name_full  = [raster_dir_name,current_raster_dir_name];
 
 if ~exist(current_raster_dir_name_full ,'dir')
     mkdir(current_raster_dir_name_full );
-end
+
 
 % fetching some parameters (hardcoded inside the function) that define the raster data such as window
 % frames, sampling frequency, etc.
@@ -56,13 +56,13 @@ for iCell = 1:size(fluorescenece_trace,2)
     
 end
 
-fprintf ( [num2str(size(fluorescenece_trace,2)) ' cells transformed into raster formats'])
+fprintf ( [num2str(size(fluorescenece_trace,2)) ' cells transformed into raster formats.'])
 fprintf ([' There are ' num2str(length(dir(current_raster_dir_name_full))-2) ' raster files in folder ' current_raster_dir_name_full])
 
-if num2str(size(fluorescenece_trace,2)) ~= num2str(length(dir(current_raster_dir_name_full))-2)
-    fprtintf ('You contaminated this folder sometime earlier. Anyway, you screwed up')
-end
 
+else
+    fprintf([current_raster_dir_name_full ' already exists'])
+end
 end
 
 
