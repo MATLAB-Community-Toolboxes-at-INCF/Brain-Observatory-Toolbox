@@ -1,9 +1,11 @@
 nwb_files/
 
-sdk/data_access/raw_files_json_csv/
+sdk/raw_files_json_csv/
 
 */*.m~
 
-*/*/*.m~
+*.m~
 
-*/*/trash*
+*/trash*
+
+*.mat
