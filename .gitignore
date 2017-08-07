@@ -1,7 +1,5 @@
 nwb_files/
 
-raw_files_json_csv/
-
 */*.m~
 
 *.m~
@@ -10,11 +8,7 @@ raw_files_json_csv/
 
 trash*
 
-*.mat
+*/private*
 
-*/internal*
-
-*/*.mat
-
-internal*
+private*
 
