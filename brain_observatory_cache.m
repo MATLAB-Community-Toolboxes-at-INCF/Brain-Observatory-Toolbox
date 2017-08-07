@@ -1,5 +1,12 @@
 classdef brain_observatory_cache < handle
     
+% add help file information!!!    
+%    
+%
+% this will appear
+
+
+    
     properties
         session_table
         container_table
@@ -24,36 +31,49 @@ classdef brain_observatory_cache < handle
         
         % initialize
         function boc = brain_observatory_cache(references)
+            
             boc.session_table = references.session_manifest;
             boc.container_table = references.container_manifest;
             boc.references = references;
+            
             % get rid of failed ones
             if boc.failed == 0
                 failed_container_id = boc.container_table((boc.container_table.failed == 1),:).id;
-                
                 boc.session_table = boc.session_table(~ismember(boc.session_table.experiment_container_id,failed_container_id),:);
-                boc.container_table = boc.container_table((boc.container_table.failed ~= 1),:);
+                boc.container_table = boc.container_table((boc.container_table.failed ~= 1),:);          
             end
+            
             boc.selected_session_table =  boc.session_table;
         end
         
+        
+        % This function gets the total number of experiment containers
         function result = get_total_of_containers(boc)
             result = size(boc.container_table(boc.container_table.failed==0,:),1);
         end
+        
+        
         
         function result = get_all_imaing_depths(boc)
             result = categories(categorical(cellstr(num2str((boc.container_table.imaging_depth)))));
         end
         
+        
+        
         function get_summary_of_containers_along_imaing_depths(boc)
             summary(categorical(cellstr(num2str((boc.container_table.imaging_depth)))))
         end
         
+        
+        
         function summary_table = get_summary_of_containers_along_depths_and_structures(boc)
+            
             summary_matrix = NaN(size(boc.get_all_imaing_depths(),1),size(boc.get_all_targeted_structures(),1));
             all_depths = boc.get_all_imaing_depths();
             all_structures = boc.get_all_targeted_structures;
             boc.need_restriction_on_property = 0;
+            
+            
             for cur_depth = 1: size(boc.get_all_imaing_depths(),1)
                 for cur_structure = 1: size(boc.get_all_targeted_structures,1)
                     boc.refresh();
@@ -63,14 +83,20 @@ classdef brain_observatory_cache < handle
                     summary_matrix(cur_depth,cur_structure) = total_of_containers;
                 end
             end
+            
+            
             summarize_by_depths = sum(summary_matrix,2);
             summary_matrix = [summary_matrix,summarize_by_depths];
             summarize_by_structures = sum(summary_matrix,1);
-            summary_matrix = [summary_matrix;summarize_by_structures];
+            summary_matrix = [summary_matrix; summarize_by_structures];
             summary_table = array2table(summary_matrix);
             summary_table.Properties.VariableNames = [all_structures;'total'];
             summary_table.Properties.RowNames = [all_depths;'total'];
+            
         end
+        
+        
+        
         
         function result = get.selected_session_table(boc)
             if boc.need_restriction_on_property == 1 && isempty(boc.selected_session_table)
@@ -85,31 +111,44 @@ classdef brain_observatory_cache < handle
             end
         end
         
+        
+        
         function refresh(boc)
+            
             boc.session_table = boc.references.session_manifest;
             boc.container_table = boc.references.container_manifest;
-            % get rid of failed ones
+            
+            % remove failed containers
             if boc.failed == 0
                 failed_container_id = boc.container_table((boc.container_table.failed == 1),:).id;
                 boc.session_table = boc.session_table(~ismember(boc.session_table.experiment_container_id,failed_container_id),:);
                 boc.container_table = boc.container_table((boc.container_table.failed ~= 1),:);
             end
             boc.selected_session_table =  boc.session_table;
+            
         end
+        
+        
         
         function result = get_all_targeted_structures (boc)
             container_targeted_structure_table = struct2table(boc.container_table.targeted_structure);
             result = categories(categorical(cellstr(container_targeted_structure_table.acronym)));
         end
         
+        
+        
         function get_summary_of_container_along_targeted_structures (boc)
             container_targeted_structure_table = struct2table(boc.container_table.targeted_structure);
             summary(categorical(cellstr(container_targeted_structure_table.acronym)))
         end
         
+        
+        
         function result = get_all_session_types (boc)
             result = categories(categorical(cellstr((boc.session_table.stimulus_name))));
         end
+        
+        
         
         function result = get_all_stimuli (boc)
             session_by_stimuli = boc.get_session_by_stimuli();
@@ -117,44 +156,65 @@ classdef brain_observatory_cache < handle
                 session_by_stimuli.three_session_C,session_by_stimuli.three_session_C2]));
         end
         
+        
+        
         function result = get_all_cre_lines (boc)
             result = categories(categorical(boc.container_table.cre_lines));
         end
         
+        
+        % get_session_by_session_id
         function boc = get_sessions_by_session_id(boc,session_id)
+            
             boc.selected_session_table = boc.selected_session_table(boc.selected_session_table.id == session_id, :);
             boc.session_id = session_id;
             boc.container_id = boc.selected_session_table.experiment_container_id;
+            
             % complete session_type when looked up a session
             boc.session_type = boc.selected_session_table.stimulus_name;
+            
             % complete stimuli when looked up a session
             session_by_stimuli = boc.get_session_by_stimuli();
             boc.stimuli = session_by_stimuli.(char(boc.session_type));
-            % complete imaing_depth when looked up a session
+            
+            % complete imaging_depth when looked up a session
             boc.imaging_depth = boc.selected_session_table.imaging_depth;
+        
             % complete targeted_structure when looked up a session
             boc.targeted_structure = boc.selected_session_table.targeted_structure.acronym;
+        
         end
+        
+        
         
         function boc = get_sessions_by_container_id(boc,container_id)
             boc.selected_session_table = boc.selected_session_table(boc.selected_session_table.experiment_container_id == container_id, :);
             boc.container_id = container_id;
+            
             % complete session_type when looked up a container
             boc.session_type = boc.selected_session_table.stimulus_name;
+            
             % complete stimuli when looked up a container
             session_by_stimuli = boc.get_session_by_stimuli();
             all_stimuli_exist = {};
+            
             for i = 1:length(boc.session_type)
                 all_stimuli_exist = [all_stimuli_exist session_by_stimuli.(char(boc.session_type(i)))];
             end
             boc.stimuli = categories(categorical(all_stimuli_exist));
+            
             % complete imaing_depth when looked up a container
             boc.imaging_depth = boc.selected_session_table.imaging_depth(1);
+            
             % complete targeted_structure when looked up a container
             boc.targeted_structure = boc.selected_session_table.targeted_structure.acronym;
+            
             % complete session_id when looked up a container
             boc.session_id = boc.selected_session_table.id;
+        
         end
+        
+        
         
         function boc = get_sessions_by_stimuli(boc,stimuli)
             session_by_stimuli = boc.get_session_by_stimuli();
@@ -164,11 +224,14 @@ classdef brain_observatory_cache < handle
             boc.stimuli = stimuli;
         end
         
+        
+        
         function boc = get_sessions_by_imaging_depth(boc,depth)
             % filter sessions by imaging_depth
             boc.selected_session_table = boc.selected_session_table(boc.selected_session_table.imaging_depth == depth, :);
             boc.imaging_depth = depth;
         end
+        
         
         function boc = get_sessions_by_targeted_structure(boc,structure)
             % filter sessions by targeted_structure
@@ -180,6 +243,7 @@ classdef brain_observatory_cache < handle
             end
             boc.targeted_structure = structure;
         end
+        
         
         function get_session_data(boc, save_directory_name)
             
