@@ -1,5 +1,5 @@
 function current_raster_dir_name = transform_fluorescenece_trace_into_raster_format(fluorescenece_trace,session_id, stimuli,raster_dir_name)
-
+tic 
 nwb_name = [num2str(session_id) '.nwb'];
 
 sampling_times = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/timestamps');
@@ -59,7 +59,7 @@ end
 fprintf ( [num2str(size(fluorescenece_trace,2)) ' cells transformed into raster formats.'])
 fprintf ([' There are ' num2str(length(dir(current_raster_dir_name_full))-2) ' raster files in folder ' current_raster_dir_name_full])
 
-
+toc
 else
     fprintf([current_raster_dir_name_full ' already exists'])
 end
@@ -200,9 +200,12 @@ end
 
 variables = cellstr(char(string(variables)));
 
+raster_labels.combined = {'combined'};
+
 for iVariable = 1:size(variables,1)
     
     raster_labels.(char(strcat("stimulus_", variables(iVariable)))) = parsed_levels{iVariable};
+    raster_labels.combined = strcat(raster_labels.combined, {'_'}, parsed_levels{iVariable});
     
 end
 end

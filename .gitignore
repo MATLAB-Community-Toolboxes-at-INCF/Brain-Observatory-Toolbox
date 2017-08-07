@@ -1,6 +1,6 @@
 nwb_files/
 
-sdk/raw_files_json_csv/
+raw_files_json_csv/
 
 */*.m~
 
@@ -8,4 +8,13 @@ sdk/raw_files_json_csv/
 
 */trash*
 
+trash*
+
 *.mat
+
+*/internal*
+
+*/*.mat
+
+internal*
+

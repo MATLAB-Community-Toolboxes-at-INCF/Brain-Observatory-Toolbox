@@ -7,31 +7,47 @@
 %                                                  areas, imaging depth and
 %                                                  stimuli
 %                                                  c) download nwb files of selected sessions
-%  3) importing imgaging data from nwb files to a) plot fluorescence traces
-%                                               b) transform them into raster formats for decoding
+%  3) importing imgaging data from nwb files to a) get fluorescence traces
+%                                               b) plot fluorescence traces
+%                                               c) transform the interested 
+%                                                  fluorescence trace data of
+%                                                  the interested subexperiment 
+%                                                  into raster formats for decoding
 %% important information about this dataset:
 %
-% an experiment container (named by allen institute) 
-% contains a set of subexperiments (defined by us as one subexperiment only 
-% adopted one kind of stimuli) operated on a singe mouse, recorded in
+% An "experiment container" (named by allen institute) 
+% contains a set of "subexperiments" (defined by us as one subexperiment only 
+% adopted one kind of stimuli, allen institue doesn't seem to have a name 
+% for this concept) that were operated on a singe mouse, recorded in
 % a single brain space (same targeted_structure and same imaging depth),
-% performed during one out of three sessions (allen institue equated session
-% with experiment), that may have adopted the same stimulus as another
-% subexperiment in another session within the same experiment container.
+% performed during one out of three sessions (allen institue equates
+% "session"
+% with "ophys_experiment", in allen_sdk they use "ophys_experiment, in whitepapers
+% they use "session").
+%
+% Different sessions in the same experiment container 
+% may have adopted the same stimulus, which means they may share the same type of
+% "subexperiment":
 % 
+% session_by_stimuli.three_session_A = {'drifting_gratings','natural_movie_one','natural_movie_three','spontaneous_activity'};
+%             session_by_stimuli.three_session_B = {'static_gratings','natural_scene','natural_movie_one','spontaneous_activity'};
+%             session_by_stimuli.three_session_C = {'locally_sparse_noise_four_degree','natural_movie_one','natural_movie_two','spontaneous_activity'};
+%             session_by_stimuli.three_session_C2 = {'locally_sparse_noise_four_degree','locally_sparse_noise_eight_degree', ...
+%                 'natural_movie_one','natural_movie_two','spontaneous_activity'};
+%
+%
 % our shorthand:
 % container = experiment_container
 % 
 % the three names we use:
 % container > session > subexperiment
-%
 %% 0) 
 
-% set your base_directory 
-base_dir_name = '/om/user/xf15/Brain-Observatory-Toolbox/';
+% set your bot_dir
+bot_dir_name = '/om/user/xf15/Brain-Observatory-Toolbox/';
 
-% add path to sdk
-addpath([base_dir_name, 'sdk/'])
+% add path to bot_dir
+addpath(bot_dir_name)
 
 %% 1) download needed files from brain observatory api and converting them to matlab tables
 
@@ -67,36 +83,25 @@ boc.get_summary_of_containers_along_depths_and_structures()
 boc = brain_observatory_cache (references)
 
 % set conditions
-boc.stimuli = 'drifting_gratings'
-boc.targeted_structure = 'VISp'
-boc.imaging_depth = 275
+boc.get_sessions_by_stimuli('drifting_gratings')
+boc.get_sessions_by_targeted_structure('VISp')
+boc.get_sessions_by_imaging_depth(275)
+boc.get_sessions_by_container_id(527550471)
 
-% %  all filters are optional; all sessions will be returned if no filter
-% %  is applied 
-% % 
-% % you can also use brain_observatory_cache to look up manifest of
+% get more detailed metedata of selected session(s)
+boc.selected_session_table
+
+% % you can also use brain_observatory_cache to look up metedata of
 % % selected session(s) by container_id or session_id
 % %
 % boc = brain_observatory_cache(references)
-% boc.container_id = 527550471
-% boc.session_id = 527745328
-
-%  pass conditions
-boc.get_session()
-boc
-
-% get manifest of selected sessions
-boc.selected_session_table
-
-% get id of the first session in the current list for fun
-session_id = boc.selected_session_table.id(1)
+% boc.get_sessions_by_container_id (506823562)
+% boc.get_sessions_by_session_id (527676626)
 
 %% 2c) download nwb files of selected sessions
 
 % download nwb file of the first session in selected sessions into a directory called nwb_files
-boc.session_id = session_id
-boc.get_session()
-nwb_dir_name = [base_dir_name,'nwb_files/'];
+nwb_dir_name = [bot_dir_name,'nwb_files/'];
 
 % the size of a nwb file is at the scale of 100 MB
 boc.get_session_data(nwb_dir_name);
@@ -104,24 +109,23 @@ boc.get_session_data(nwb_dir_name);
 %% 3 import imgaging data from nwb files
 
 % add path to nwb files
-addpath ([base_dir_name, 'nwb_files/'])
+addpath ([bot_dir_name, 'nwb_files/'])
 
-%% 3a) plot fluorescence traces of the selcted cell from the selected session
+%% 3a) get_fluorescence_traces_of_selected_session
 
+[raw,demixed,neuropil_corrected,DfOverF] = get_fluorescence_traces_of_selected_session (boc.session_id);
 
-% get fluoroscence traces of all cells in this session and plot ones of
-% selected cells
-session_id = 527745328;
+%% 3b) plot the f traces of one cell in session 517745328
+
 cell_specimen_id = 529022196;
+plot_fluorecence_traces_of_selected_cell_in_selected_session(boc.session_id,cell_specimen_id);
 
-[raw,demixed,neuropil_corrected,DfOverF] = get_fluorescence_traces (session_id,cell_specimen_id);
+%% 3c) transform data of the selected fluorescence trace of the selected subexperiment into raster format
 
-%% 3b) transform data of the selected fluorescence trace of the selected subexperiment into raster format
-
-raster_dir_name = [base_dir_name, 'raster/'];
+raster_dir_name = [bot_dir_name, 'raster/'];
 
 stimuli = 'drifting_gratings';
 fluorescence_trace = DfOverF;
 
 current_raster_dir_name = transform_fluorescenece_trace_into_raster_format(fluorescence_trace,...
-    session_id, stimuli,raster_dir_name);
+    boc.session_id, stimuli,raster_dir_name);

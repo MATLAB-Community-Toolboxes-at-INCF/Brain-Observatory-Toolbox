@@ -1,6 +1,6 @@
 
-function  [raw,demixed,neuropil_corrected,DfOverF] = get_fluorescence_traces (session_id,cell_specimen_id)
-
+function  [raw,demixed,neuropil_corrected,DfOverF] = get_fluorescence_traces_of_selected_session (session_id)
+tic
 nwb_name = [num2str(session_id) '.nwb'];
 
 % k dimensions of cells by n dimesions of sampling points h5read table
@@ -13,26 +13,7 @@ contamination_ratio_matrix = contamination_ratio .* eye (size(contamination_rati
 neuropil_matrix = neuropil * contamination_ratio_matrix;
 neuropil_corrected = demixed - neuropil_matrix;
 DfOverF = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/data');
-
-new_cell_specimen_ids = h5read(nwb_name, '/processing/brain_observatory_pipeline/ImageSegmentation/cell_specimen_ids');
-nth_cell = find(new_cell_specimen_ids == cell_specimen_id);
-
-subplot(4,1,1)
-plot(raw (:,nth_cell))
-title ('raw')
-
-subplot(4,1,2)
-plot(demixed (:,nth_cell))
-title ('demixed')
-
-subplot(4,1,3)
-plot(neuropil_corrected(:,nth_cell))
-title ('neuropil\_corrected')
-
-subplot(4,1,4)
-plot(DfOverF (:,nth_cell))
-title ('DfOverF')
-
+toc
 end
 
 
