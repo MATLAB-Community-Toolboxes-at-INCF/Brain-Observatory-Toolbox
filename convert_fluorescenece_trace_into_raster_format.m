@@ -1,6 +1,31 @@
-function current_raster_dir_name = transform_fluorescenece_trace_into_raster_format(fluorescenece_trace,session_id, stimuli,raster_dir_name)
+function current_raster_dir_name = convert_fluorescenece_trace_into_raster_format(fluorescenece_trace_type,session_id, stimuli,raster_dir_name)
 tic 
+
 nwb_name = [num2str(session_id) '.nwb'];
+
+% get all fluorescenece_trace from nwb
+
+raw = h5read(nwb_name,'/processing/brain_observatory_pipeline/Fluorescence/imaging_plane_1/data');
+
+neuropil = h5read(nwb_name, '/processing/brain_observatory_pipeline/Fluorescence/imaging_plane_1/neuropil_traces');
+
+demixed = h5read(nwb_name, '/processing/brain_observatory_pipeline/Fluorescence/imaging_plane_1_demixed_signal/data');
+
+contamination_ratio = h5read(nwb_name, '/processing/brain_observatory_pipeline/Fluorescence/imaging_plane_1/r');
+
+contamination_ratio_matrix = contamination_ratio .* eye (size(contamination_ratio,1));
+
+neuropil_matrix = neuropil * contamination_ratio_matrix;
+
+neuropil_corrected = demixed - neuropil_matrix;
+
+DfOverF = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/data');
+
+all_f_traces = struct('raw', raw, 'demixed', demixed, 'neuropil_correted', neuropil_corrected, 'DfOverF', DfOverF);
+
+fluorescenece_trace = all_f_traces.(fluorescenece_trace_type);
+
+% get other info from nwb
 
 sampling_times = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/timestamps');
 
@@ -23,6 +48,7 @@ end
 
 % under the head directory 'raster/', create a current direcotry that store
 % all raster formats returned from the current analysis
+
 current_raster_dir_name = [stimuli,'_', session_id ,'/'];
 current_raster_dir_name_full  = [raster_dir_name,current_raster_dir_name];
 
@@ -30,12 +56,12 @@ if ~exist(current_raster_dir_name_full ,'dir')
     mkdir(current_raster_dir_name_full );
 
 
-% fetching some parameters (hardcoded inside the function) that define the raster data such as window
+% fetching some parameters (hardcoded inside the function) that help build the raster data such as window
 % frames, sampling frequency, etc.
 
 parameters_for_cur_stimulus = fetch_stimuli_based_parameters(stimuli);
 
-% generate raster_labels, apply to every cell in the same session
+% generate raster_labels, which applys to all cells in the same session
 
 raster_labels = generate_raster_labels (nwb_name, stimuli);
 
@@ -52,18 +78,20 @@ for iCell = 1:size(fluorescenece_trace,2)
     
     raster_site_info = generate_raster_site_info(container_id, parameters_for_cur_stimulus,session_id,session_type,cur_new_cell_id);
     
+   
     save([current_raster_dir_name_full , cur_raster_file_name], 'raster_data', 'raster_labels', 'raster_site_info');
     
 end
 
-fprintf ( [num2str(size(fluorescenece_trace,2)) ' cells transformed into raster formats.'])
+fprintf ( [num2str(size(fluorescenece_trace,2)) ' cells converted into raster formats.'])
 fprintf ([' There are ' num2str(length(dir(current_raster_dir_name_full))-2) ' raster files in folder ' current_raster_dir_name_full])
 
 toc
 else
     fprintf([current_raster_dir_name_full ' already exists'])
 end
-end
+
+end % end of convert_fluorescenece_trace_into_raster_format
 
 
 %  generate raster_data
@@ -115,6 +143,9 @@ raster_site_info = orderfields(raster_site_info);
 
 end
 
+% provide parameters that help build the raster data such as window
+% frames, sampling frequency, etc.
+
 function parameters_for_cur_stimulus = fetch_stimuli_based_parameters(stimuli)
 
 % set parameters for raster_data
@@ -153,6 +184,8 @@ parameters_for_all_stimuli = table (sample_interval, stimuli_interval, starts, e
 parameters_for_cur_stimulus = table2struct(parameters_for_all_stimuli(stimuli,:));
 
 end
+
+% genereate raster_labels
 
 function raster_labels = generate_raster_labels (nwb_name, stimuli)
 

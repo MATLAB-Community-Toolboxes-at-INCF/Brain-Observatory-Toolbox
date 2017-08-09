@@ -1,4 +1,4 @@
-function plot_fluorecence_traces_of_selected_cell_in_selected_session(session_id, cell_specimen_id)
+function plot_fluorecence_traces(session_id, cell_id)
 nwb_name = [num2str(session_id) '.nwb'];
 
 % k dimensions of cells by n dimesions of sampling points h5read table
@@ -13,7 +13,7 @@ neuropil_corrected = demixed - neuropil_matrix;
 DfOverF = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/data');
 
 new_cell_specimen_ids = h5read(nwb_name, '/processing/brain_observatory_pipeline/ImageSegmentation/cell_specimen_ids');
-nth_cell = find(new_cell_specimen_ids == cell_specimen_id);
+nth_cell = find(new_cell_specimen_ids == cell_id);
 
 subplot(4,1,1)
 plot(raw (:,nth_cell))
