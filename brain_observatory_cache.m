@@ -43,6 +43,8 @@ classdef brain_observatory_cache < handle
             end
             
             boc.filtered_session_table =  boc.session_table;
+            
+            boc.update_properties;
         end
         
         
@@ -62,7 +64,7 @@ classdef brain_observatory_cache < handle
                 container_targeted_structure_table = struct2table(boc.filtered_session_table.targeted_structure);
             result = categories(categorical(cellstr(container_targeted_structure_table.acronym)));
             elseif size(boc.filtered_session_table,1) == 1
-                result = boc.filtered_session_table.targeted_structure.acronym
+                result = boc.filtered_session_table.targeted_structure.acronym;
             end
            
         end
@@ -79,6 +81,7 @@ classdef brain_observatory_cache < handle
             for iSession = 1: length(boc.session_type)
                 result = [result, session_by_stimuli.(char(boc.session_type(iSession)))];
             end
+            result = categories(categorical(result));
         end
         
         

@@ -1,5 +1,5 @@
 
-function  [raw,demixed,neuropil_corrected,DfOverF] = get_fluorescence_traces_of_selected_session (session_id)
+function  [raw,demixed,neuropil_corrected,DfOverF] = save_fluorescence_traces (session_id)
 tic
 nwb_name = [num2str(session_id) '.nwb'];
 
