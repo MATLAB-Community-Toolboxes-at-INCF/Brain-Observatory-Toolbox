@@ -1,7 +1,7 @@
 
-function  [raw,demixed,neuropil_corrected,DfOverF] = save_fluorescence_traces (session_id)
+function  [raw,demixed,neuropil_corrected,DfOverF] = extract_fluorescence_traces_from_NWB_file(NWB_directory_name, session_id)
 tic
-nwb_name = [num2str(session_id) '.nwb'];
+nwb_name = [NWB_directory_name num2str(session_id) '.nwb'];
 
 % k dimensions of cells by n dimesions of sampling points h5read table
 % imported as n dimesions of sampling points by k dimensions of cells matlab matrix
