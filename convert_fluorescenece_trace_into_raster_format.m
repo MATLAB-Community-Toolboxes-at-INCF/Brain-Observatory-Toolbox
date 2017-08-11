@@ -1,7 +1,7 @@
-function current_raster_dir_name = convert_fluorescenece_trace_into_raster_format(fluorescenece_trace_type,session_id, stimuli,raster_dir_name)
+function current_raster_dir_name = convert_fluorescenece_trace_into_raster_format(nwb_dir_name, raster_dir_name, fluorescenece_trace_type, session_id, stimuli)
 tic 
 
-nwb_name = [num2str(session_id) '.nwb'];
+nwb_name = [nwb_dir_name num2str(session_id) '.nwb'];
 
 % get all fluorescenece_trace from nwb
 

@@ -1,5 +1,6 @@
-function plot_fluorecence_traces(session_id, cell_id)
-nwb_name = [num2str(session_id) '.nwb'];
+function plot_fluorecence_traces(nwb_dir_name, session_id, cell_id)
+
+nwb_name = [nwb_dir_name num2str(session_id) '.nwb'];
 
 % k dimensions of cells by n dimesions of sampling points h5read table
 % imported as n dimesions of sampling points by k dimensions of cells matlab matrix
@@ -30,4 +31,6 @@ title ('neuropil\_corrected')
 subplot(4,1,4)
 plot(DfOverF (:,nth_cell))
 title ('DfOverF')
+
+
 end
