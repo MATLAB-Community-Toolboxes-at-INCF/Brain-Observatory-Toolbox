@@ -1,7 +1,16 @@
-function current_raster_dir_name = convert_fluorescenece_trace_into_raster_format(nwb_dir_name, raster_dir_name, fluorescenece_trace_type, session_id, stimuli)
+function current_raster_dir_name = convert_fluorescenece_trace_into_raster_format(fluorescenece_trace_type,session_id,...
+    stimuli,raster_dir_name, manifests, nwb_dir_name)
 tic 
 
-nwb_name = [nwb_dir_name num2str(session_id) '.nwb'];
+addpath(genpath(nwb_dir_name))
+
+nwb_name = [num2str(session_id) '.nwb'];
+
+boc = brain_observatory_cache(manifests);
+
+boc.filter_sessions_by_session_id(session_id);
+
+
 
 % get all fluorescenece_trace from nwb
 
@@ -31,14 +40,7 @@ sampling_times = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF
 
 stimuli_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/timestamps'));
 
-container_id = h5read(nwb_name,'/general/experiment_container_id');
-
-session_id = h5read(nwb_name,'/general/session_id');
-
-session_type = h5read(nwb_name,'/general/session_type');
-
 new_cell_specimen_ids = h5read(nwb_name, '/processing/brain_observatory_pipeline/ImageSegmentation/cell_specimen_ids');
-
 
 % create a head directory 'ratser/' that store all ratser formats
 
@@ -46,11 +48,19 @@ if ~exist(raster_dir_name,'dir')
     mkdir(raster_dir_name);
 end
 
+% under the head directory 'raster/', create a directory for one stimuli
+% type
+
+stimuli_dir_name = [raster_dir_name  stimuli '/'];
+if ~exist(stimuli_dir_name, 'dir')
+    mkdir(stimuli_dir_name);
+end
+    
 % under the head directory 'raster/', create a current direcotry that store
 % all raster formats returned from the current analysis
 
-current_raster_dir_name = [stimuli,'_', session_id ,'/'];
-current_raster_dir_name_full  = [raster_dir_name,current_raster_dir_name];
+current_raster_dir_name = [stimuli,'_', num2str(session_id) ,'/'];
+current_raster_dir_name_full  = [stimuli_dir_name current_raster_dir_name];
 
 if ~exist(current_raster_dir_name_full ,'dir')
     mkdir(current_raster_dir_name_full );
@@ -76,7 +86,7 @@ for iCell = 1:size(fluorescenece_trace,2)
     % time
     raster_data = generate_raster_data(iCell, fluorescenece_trace, parameters_for_cur_stimulus, sampling_times, stimuli_onset_times);
     
-    raster_site_info = generate_raster_site_info(container_id, parameters_for_cur_stimulus,session_id,session_type,cur_new_cell_id);
+    raster_site_info = generate_raster_site_info(boc, parameters_for_cur_stimulus,cur_new_cell_id);
     
    
     save([current_raster_dir_name_full , cur_raster_file_name], 'raster_data', 'raster_labels', 'raster_site_info');
@@ -84,8 +94,9 @@ for iCell = 1:size(fluorescenece_trace,2)
 end
 
 fprintf ( [num2str(size(fluorescenece_trace,2)) ' cells converted into raster formats.'])
+disp(' ')
 fprintf ([' There are ' num2str(length(dir(current_raster_dir_name_full))-2) ' raster files in folder ' current_raster_dir_name_full])
-
+disp(' ')
 toc
 else
     fprintf([current_raster_dir_name_full ' already exists'])
@@ -127,17 +138,23 @@ end
 
 % generate raster_site_info
 
-function raster_site_info = generate_raster_site_info(container_id, parameters_for_cur_stimulus,session_id,session_type,new_cell_id)
+function raster_site_info = generate_raster_site_info(boc, parameters_for_cur_stimulus,cur_new_cell_id)
 
 raster_site_info = parameters_for_cur_stimulus;
 
-raster_site_info.container_id = container_id;
+raster_site_info.container_id = boc.container_id;
 
-raster_site_info.new_cell_id = new_cell_id;
+raster_site_info.new_cell_id = cur_new_cell_id;
 
-raster_site_info.session_id = session_id;
+raster_site_info.session_id = boc.session_id;
 
-raster_site_info.session_type = session_type;
+raster_site_info.session_type = boc.session_type;
+
+raster_site_info.targeted_structure = boc.targeted_structure;
+
+raster_site_info.imaging_depth = boc.imaging_depth;
+
+raster_site_info.stimuli_type = boc.stimuli;
 
 raster_site_info = orderfields(raster_site_info);
 

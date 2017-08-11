@@ -10,7 +10,6 @@ classdef brain_observatory_cache < handle
     properties
         session_table
         container_table
-        manifests
         filtered_session_table
         stimuli
         targeted_structure
@@ -24,6 +23,7 @@ classdef brain_observatory_cache < handle
     properties (Access = private)
         failed = 0
         need_restriction_on_property = 1
+        manifests
     end
     
     methods
@@ -230,28 +230,36 @@ classdef brain_observatory_cache < handle
         
         
         
-        function download_nwb(boc, save_directory_name)
+        function download_nwb(boc, nwb_dir_name)
             
             % prepare folder
-            if ~exist(save_directory_name,'dir')
-                mkdir(save_directory_name)
+            if ~exist(nwb_dir_name,'dir')
+                mkdir(nwb_dir_name)
             end
+            
             
             % get the NWB file URL for filtered sessions
             allen_institute_base_url = 'http://api.brain-map.org';
             for cur = 1 : size(boc.filtered_session_table,1)
+                session_dir_name = [nwb_dir_name boc.filtered_session_table.stimulus_name '/'];
+                % prepare session folder under nwb folder
+                if ~exist(session_dir_name, 'dir')
+                    mkdir(session_dir_name)
+                end
                 cur_url = boc.filtered_session_table(cur, :). well_known_files.download_link;
                 full_url = [allen_institute_base_url cur_url];
                 cur_id = boc.filtered_session_table(cur, :).id;
-                save_file_name = [save_directory_name num2str(cur_id) '.nwb'];
-                if ~exist(save_file_name,'file')
-                    fprintf('downloading the nwb file')
+                nwb_file_name = [session_dir_name num2str(cur_id) '.nwb'];
+                if ~exist(nwb_file_name,'file')
+                    fprintf(['downloading ' nwb_file_name])
+                    disp(' ')
                     tic
-                    websave(save_file_name, full_url);
-                    fprintf('the new nwb file is finally donwloaded')
+                    websave(nwb_file_name, full_url);
+                    disp(' ')
+                    fprintf(['donwloaded ' nwb_file_name])
                     toc
                 else
-                    fprintf('desired nwb file already exists')
+                    fprintf(['desired ' nwb_file_name ' already exists'])
                 end
             end
         end % end of function get_session_data
