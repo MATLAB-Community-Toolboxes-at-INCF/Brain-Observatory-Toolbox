@@ -1,5 +1,7 @@
 nwb_files/
 
+raster/
+
 */*.m~
 
 *.m~
