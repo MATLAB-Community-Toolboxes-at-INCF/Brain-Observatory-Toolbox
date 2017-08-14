@@ -1,10 +1,12 @@
-function current_raster_dir_name = convert_fluorescenece_trace_into_raster_format(fluorescenece_trace_type,session_id,...
-    stimuli,raster_dir_name, manifests, nwb_dir_name)
+function convert_fluorescenece_trace_into_raster_format(fluorescence_trace_type,session_id,...
+    stimuli, raster_dir_name, nwb_dir_name)
 tic 
 
 addpath(genpath(nwb_dir_name))
 
 nwb_name = [num2str(session_id) '.nwb'];
+
+manifests = get_manifests_info_from_api();
 
 boc = brain_observatory_cache(manifests);
 
@@ -32,7 +34,7 @@ DfOverF = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imagin
 
 all_f_traces = struct('raw', raw, 'demixed', demixed, 'neuropil_correted', neuropil_corrected, 'DfOverF', DfOverF);
 
-fluorescenece_trace = all_f_traces.(fluorescenece_trace_type);
+fluorescenece_trace = all_f_traces.(fluorescence_trace_type);
 
 % get other info from nwb
 

@@ -212,6 +212,12 @@ classdef brain_observatory_cache < handle
             boc.update_properties
         end
         
+        function boc = filter_sessions_by_session_type(boc,session_type)
+            boc.filtered_session_table = boc.filtered_session_table(strcmp(boc.filtered_session_table.stimulus_name,session_type),:);
+            
+                        boc.update_properties
+        end
+        
          function refresh(boc)
             
             boc.session_table = boc.manifests.session_manifest;
@@ -241,7 +247,7 @@ classdef brain_observatory_cache < handle
             % get the NWB file URL for filtered sessions
             allen_institute_base_url = 'http://api.brain-map.org';
             for cur = 1 : size(boc.filtered_session_table,1)
-                session_dir_name = [nwb_dir_name boc.filtered_session_table.stimulus_name '/'];
+                session_dir_name = [nwb_dir_name char(boc.filtered_session_table(cur,:).stimulus_name) '/'];
                 % prepare session folder under nwb folder
                 if ~exist(session_dir_name, 'dir')
                     mkdir(session_dir_name)

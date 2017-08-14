@@ -1,7 +1,8 @@
 function plot_fluorecence_traces(nwb_dir_name, session_id, cell_id)
 
-nwb_name = [nwb_dir_name num2str(session_id) '.nwb'];
+nwb_name = [num2str(session_id) '.nwb'];
 
+addpath(genpath(nwb_dir_name))
 % k dimensions of cells by n dimesions of sampling points h5read table
 % imported as n dimesions of sampling points by k dimensions of cells matlab matrix
 raw = h5read(nwb_name,'/processing/brain_observatory_pipeline/Fluorescence/imaging_plane_1/data');
@@ -19,18 +20,22 @@ nth_cell = find(new_cell_specimen_ids == cell_id);
 subplot(4,1,1)
 plot(raw (:,nth_cell))
 title ('raw')
+xlabel('Time (ms)')
 
 subplot(4,1,2)
 plot(demixed (:,nth_cell))
 title ('demixed')
+xlabel('Time (ms)')
 
 subplot(4,1,3)
 plot(neuropil_corrected(:,nth_cell))
 title ('neuropil\_corrected')
+xlabel('Time (ms)')
 
 subplot(4,1,4)
 plot(DfOverF (:,nth_cell))
 title ('DfOverF')
+xlabel('Time (ms)')
 
 
 end
