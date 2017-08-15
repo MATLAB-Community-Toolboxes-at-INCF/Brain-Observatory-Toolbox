@@ -173,15 +173,15 @@ function parameters_for_cur_stimulus = fetch_stimuli_based_parameters(stimuli)
 
 % set parameters for raster_data
 
-stimuli_type = {'static_gratings';'drifting_gratings'};
+stimuli_type = {'static_gratings';'drifting_gratings';'locally_sparse_noise_4deg'};
 
 sample_interval = repelem(33, length(stimuli_type)).';  % 30 Hz two-photon movie
 
-stimuli_interval = [250; 3000] ; % stimuli are shown every 250 ms
+stimuli_interval = [250; 3000; 250] ; % stimuli are shown every 250 ms
 
-duration_in_ms_before_stimulus_onset = [-250; -250]; % window starts 250 ms before stimulus onset
+duration_in_ms_before_stimulus_onset = [-250; -250; -250]; % window starts 250 ms before stimulus onset
 
-duration_in_ms_after_stimulus_onset = [750; 2750]; % window ends 750 ms after stimulus onset
+duration_in_ms_after_stimulus_onset = [750; 2750; 750]; % window ends 750 ms after stimulus onset
 
 num_sample_before_onset = NaN * ones(length(stimuli_type),1); % number of sampling points before the onset of stimuli
 
@@ -212,7 +212,10 @@ end
 
 function raster_labels = generate_raster_labels (nwb_name, stimuli)
 
+if strcmp(stimuli, 'drifting_gratings') || strcmp(stimuli, 'static_gratings')
+    
 variables = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/features'));
+
 
 % labels is a matrix of k dimensions of variables by n dimensions of trials
 labels = h5read(nwb_name,strcat('/stimulus/presentation/', stimuli, '_stimulus/data'));
@@ -239,16 +242,16 @@ parsed_labels = cell (size(labels, 1),size(labels, 2));
 
 for iVariable = 1:size(labels, 1)
     
-    for iLevel = 1:size(labels, 2)
+    for iTrial = 1:size(labels, 2)
         
-        curr_label = labels(iVariable, iLevel);
+        curr_label = labels(iVariable, iTrial);
         
         if isnan(curr_label)
             
-            parsed_labels{iVariable}{iLevel} = 'blank';
+            parsed_labels{iVariable}{iTrial} = 'blank';
             
         else
-            parsed_labels{iVariable}{iLevel} = num2str(curr_label);
+            parsed_labels{iVariable}{iTrial} = num2str(curr_label);
             
         end
     end
@@ -273,6 +276,33 @@ for iVariable = 1:size(variables,1)
     raster_labels.(combined_variable_name) = strcat(raster_labels.(combined_variable_name), {'_'}, parsed_labels{iVariable});
     
 end
+
+else
+    stimuli_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/timestamps'));
+    example_labels = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';
+    variables = cell(size(example_labels,1), size(example_labels,2));
+    for iRow = 1 : size(example_labels,1)
+        for iCol = 1: size(example_labels,2)
+            variables(iRow, iCol) = {['row_' num2str(iRow) '_col_' num2str(iCol)]};
+        end
+    end
+    flattened_variables = reshape(variables, [size(example_labels,1) * size(example_labels,2),1]);
+    
+    final_labels = NaN * ones(size(example_labels,1) * size(example_labels,2), length(stimuli_onset_times));
+    
+    for iTrial = 1: length(stimuli_onset_times)
+        
+        iLabels = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/indexed_timeseries/data'), [1,1,iTrial], [Inf, Inf, 1])';
+        
+        iflattend_labels = reshape(iLabels, [size(example_labels,1) * size(example_labels,2),1]);
+        final_labels(:, iTrial) = iflattend_labels;
+    end
+    for iVariable  =  1: length(flattened_variables)
+        raster_labels.(char(flattened_variables(iVariable, 1))) = final_labels(iVariable,:);
+    end
+end
+
+
 end
 
 
