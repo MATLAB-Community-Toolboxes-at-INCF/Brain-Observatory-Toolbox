@@ -315,7 +315,7 @@ classdef brain_observatory_cache < handle
         
         function session_by_stimuli = get_session_by_stimuli()
             session_by_stimuli.three_session_A = {'drifting_gratings','natural_movie_one','natural_movie_three','spontaneous'};
-            session_by_stimuli.three_session_B = {'static_gratings','natural_scene','natural_movie_one','spontaneous'};
+            session_by_stimuli.three_session_B = {'static_gratings','natural_scenes','natural_movie_one','spontaneous'};
             session_by_stimuli.three_session_C = {'locally_sparse_noise_4deg','natural_movie_one','natural_movie_two','spontaneous'};
             session_by_stimuli.three_session_C2 = {'locally_sparse_noise_4deg','locally_sparse_noise_8deg', ...
                 'natural_movie_one','natural_movie_two','spontaneous'};
