@@ -90,7 +90,7 @@ if ~exist(current_raster_dir_name_full ,'dir')
         % time
         raster_data = generate_raster_data(iCell, fluorescenece_trace, parameters_for_cur_stimulus, sampling_times, stimuli_onset_times);
         
-        raster_site_info = generate_raster_site_info(boc, parameters_for_cur_stimulus,cur_new_cell_id);
+        raster_site_info = generate_raster_site_info(boc, stimuli, parameters_for_cur_stimulus,cur_new_cell_id);
         
         
         save([current_raster_dir_name_full , cur_raster_file_name], 'raster_data', 'raster_labels', 'raster_site_info', '-v7.3');
@@ -146,7 +146,7 @@ end
 
 % generate raster_site_info
 
-function raster_site_info = generate_raster_site_info(boc, parameters_for_cur_stimulus,cur_new_cell_id)
+function raster_site_info = generate_raster_site_info(boc, stimuli, parameters_for_cur_stimulus,cur_new_cell_id)
 
 raster_site_info.time_info = parameters_for_cur_stimulus;
 
@@ -156,13 +156,13 @@ raster_site_info.new_cell_id = cur_new_cell_id;
 
 raster_site_info.session_id = boc.session_id;
 
-raster_site_info.session_type = boc.session_type;
+raster_site_info.session_type = char(boc.session_type);
 
 raster_site_info.targeted_structure = boc.targeted_structure;
 
 raster_site_info.imaging_depth = boc.imaging_depth;
 
-raster_site_info.stimuli_type = boc.stimuli;
+raster_site_info.stimuli_type = stimuli;
 
 raster_site_info = orderfields(raster_site_info);
 
@@ -175,16 +175,16 @@ function parameters_for_cur_stimulus = fetch_stimuli_based_parameters(stimuli)
 
 % set parameters for raster_data
 
-stimuli_type = {'static_gratings';'drifting_gratings';'locally_sparse_noise_4deg';...
-    'locally_sparse_noise_8deg'; 'natural_scenes';'natural_movie_one';'natural_movie_two';'natural_movie_three'};
+stimuli_type = {'static_gratings';'drifting_gratings';'locally_sparse_noise';...
+     'natural_scenes';'natural_movie_one';'natural_movie_two';'natural_movie_three'};
 
 sample_interval = repelem(33, length(stimuli_type)).';  % 30 Hz two-photon movie
 
-stimuli_interval = [250; 3000; 250; 250; 250; 250; 250; 250] ; % stimuli are shown every 250 ms
+stimuli_interval = [250; 3000; 250; 250; 250; 250; 250] ; % stimuli are shown every 250 ms
 
-duration_in_ms_before_stimulus_onset = [-250; -250; -250; -250; -250; -250; -250; -250]; % window starts 250 ms before stimulus onset
+duration_in_ms_before_stimulus_onset = [-250; -250; -250; -250; -250; -250; -250]; % window starts 250 ms before stimulus onset
 
-duration_in_ms_after_stimulus_onset = [750; 2750; 750; 750; 750; 750; 750; 750]; % window ends 750 ms after stimulus onset
+duration_in_ms_after_stimulus_onset = [750; 2750; 750; 750; 750; 750; 750]; % window ends 750 ms after stimulus onset
 
 num_sample_before_onset = NaN * ones(length(stimuli_type),1); % number of sampling points before the onset of stimuli
 
@@ -281,7 +281,7 @@ switch stimuli
             
         end
         
-    case {'locally_sparse_noise_4deg','locally_sparse_noise_8deg'}
+    case {'locally_sparse_noise'}
         
         stimuli_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/timestamps'));
         example_labels = h5read(nwb_name, strcat('/stimulus/presentation/', stimuli, '_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';

@@ -157,7 +157,7 @@ classdef brain_observatory_cache < handle
         
       
         
-        % get_session_by_session_id
+       
         function boc = filter_sessions_by_session_id(boc,session_id)
             
             boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.id == session_id, :);
@@ -166,9 +166,14 @@ classdef brain_observatory_cache < handle
         
         end
         
+        function boc = filter_session_by_cre_line(boc, cre_line)
+            
+            filtered_container_ids = boc.container_table(strcmp(boc.container_table.cre_line,cre_line), 'id');
+          boc.filtered_session_table = boc.filtered_session_table(ismember(num2cell(boc.filtered_session_table.experiment_container_id),...
+              filtered_container_ids),:);
+         
         
-        
-        
+        end
         function boc = filter_sessions_by_container_id(boc,container_id)
             boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.experiment_container_id == container_id, :);
             

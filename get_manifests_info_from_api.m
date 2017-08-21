@@ -34,7 +34,7 @@ if (nargin > 0 && ~exist([char(varargin) 'manifests.mat'],'file'))|| nargin == 0
     end
     
     manifests.container_manifest = [cont_table, cre_lines];
-    manifests.container_manifest.Properties.VariableNames{'Var13'} = 'cre_lines';
+    manifests.container_manifest.Properties.VariableNames{'Var13'} = 'cre_line';
     
     if nargin == 1
     save([char(varargin) 'manifests.mat'],'manifests')
