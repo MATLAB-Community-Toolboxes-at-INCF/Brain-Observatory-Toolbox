@@ -66,10 +66,17 @@ end
 current_raster_dir_name = [stimulus,'_', num2str(session_id) ,'/'];
 current_raster_dir_name_full  = [stimulus_dir_name current_raster_dir_name];
 
+% create dir for currrent session
 if ~exist(current_raster_dir_name_full ,'dir')
     mkdir(current_raster_dir_name_full );
-    
-    
+end
+
+% if the process of converting for this session was aborted once that the
+% session dir exists with no raster file or partial raster files, or the
+% session was newly made, we (re)convert all raster files
+if size(fluorescenece_trace,2) ~=...
+        length(dir(current_raster_dir_name_full))-2
+
     % fetching some parameters (hardcoded inside the function) that help build the raster data such as window
     % frames, sampling frequency, etc.
     
@@ -103,7 +110,7 @@ if ~exist(current_raster_dir_name_full ,'dir')
     disp(' ')
     toc
 else
-    fprintf([current_raster_dir_name_full ' already exists'])
+    fprintf([ 'all raster files already exist in ' current_raster_dir_name_full])
 end
 
 end % end of convert_fluorescenece_trace_into_raster_format
@@ -222,7 +229,7 @@ function raster_labels = generate_raster_labels (nwb_name, stimulus, want_pixel_
 
 switch stimulus
     case {'drifting_gratings','static_gratings'}
-        pixel_variables = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/features'));
+        variables = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/features'));
         
         
         % labels is a matrix of k dimensions of variables by n dimensions of trials
@@ -234,7 +241,7 @@ switch stimulus
         
         if strcmp(stimulus,'drifting_gratings') == 1
             
-            pixel_variables = pixel_variables(1:2,:);
+            variables = variables(1:2,:);
             
             labels = labels(1:2,:);
             
@@ -265,22 +272,21 @@ switch stimulus
             end
         end
         
-        pixel_variables = cellstr(char(string(pixel_variables)));
         
-        combined_variable_name = 'combined';
+        variables = cellstr(char(variables));
         
         
-        for iVariable = 1:size(pixel_variables,1)
+        for iVariable = 1:size(variables,1)
             
-            combined_variable_name = [combined_variable_name '_' char(pixel_variables{iVariable})];
+            combined_variable_name = [combined_variable_name '_' char(variables{iVariable})];
             
         end
         
         raster_labels.(combined_variable_name) = {'combined'};
         
-        for iVariable = 1:size(pixel_variables,1)
+        for iVariable = 1:size(variables,1)
             
-            raster_labels.(char(strcat('stimulus_', pixel_variables(iVariable)))) = parsed_labels{iVariable};
+            raster_labels.(char(strcat('stimulus_', variables(iVariable)))) = parsed_labels{iVariable};
             raster_labels.(combined_variable_name) = strcat(raster_labels.(combined_variable_name), {'_'}, parsed_labels{iVariable});
             
         end
