@@ -18,7 +18,7 @@ classdef brain_observatory_cache < handle
         session_id
         session_type
         cre_lines
-        eye_tracking_failed
+        eye_tracking_avail
     end
     
     properties (Access = private)
@@ -314,10 +314,9 @@ classdef brain_observatory_cache < handle
                 boc.cre_lines = boc.get_all_cre_lines;
                 
                 % update eye_tracking
-                boc.eye_tracking_failed = unique(boc.filtered_session_table.fail_eye_tracking);
+                boc.eye_tracking_avail = ~unique(boc.filtered_session_table.fail_eye_tracking);
             end
         end
-         
        
     end % end of private dynamic methods
     

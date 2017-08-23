@@ -164,7 +164,12 @@ raster_site_info.imaging_depth = boc.imaging_depth;
 
 raster_site_info.stimuli_type = stimuli;
 
+raster_site_info.cre_line = char(boc.cre_line);
+
+raster_site_info.eye_tracking_avail = boc.eye_tracking_avail;
+
 raster_site_info = orderfields(raster_site_info);
+
 
 end
 
@@ -194,7 +199,7 @@ for iStimulus_type = 1: length(stimuli_type)
     
 end
 
-stimulu_onset_sampling_index = 1 - num_sample_before_onset;
+stimulus_onset_sampling_index = 1 - num_sample_before_onset;
 
 num_sample_after_onset = NaN * ones(length(stimuli_type),1);
 
@@ -205,7 +210,7 @@ for iStimulus_type = 1: length(stimuli_type)
 end
 
 parameters_for_all_stimuli = table (sampling_period_in_ms, stimulus_duration_in_ms, duration_in_ms_before_stimulus_onset, duration_in_ms_after_stimulus_onset, num_sample_before_onset ...
-    , num_sample_after_onset,stimulu_onset_sampling_index ,'RowNames', stimuli_type);
+    , num_sample_after_onset,stimulus_onset_sampling_index ,'RowNames', stimuli_type);
 
 parameters_for_cur_stimulus = table2struct(parameters_for_all_stimuli(stimuli,:));
 
@@ -276,7 +281,7 @@ switch stimuli
         
         for iVariable = 1:size(pixel_variables,1)
             
-            raster_labels.(char(strcat("stimulus_", pixel_variables(iVariable)))) = parsed_labels{iVariable};
+            raster_labels.(char(strcat('stimulus_', pixel_variables(iVariable)))) = parsed_labels{iVariable};
             raster_labels.(combined_variable_name) = strcat(raster_labels.(combined_variable_name), {'_'}, parsed_labels{iVariable});
             
         end
