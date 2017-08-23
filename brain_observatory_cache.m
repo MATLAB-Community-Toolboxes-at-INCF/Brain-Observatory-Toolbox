@@ -11,13 +11,13 @@ classdef brain_observatory_cache < handle
     properties
         session_table
         filtered_session_table
-        stimuli
+        stimulus
         targeted_structure
         imaging_depth
         container_id
         session_id
         session_type
-        cre_lines
+        cre_line
         eye_tracking_avail
     end
     
@@ -193,11 +193,11 @@ classdef brain_observatory_cache < handle
         
         
         
-        function boc = filter_sessions_by_stimuli(boc,stimuli)
+        function boc = filter_sessions_by_stimuli(boc,stimulus)
             session_by_stimuli = boc.get_session_by_stimuli();
             % filter sessions by stimuli
             boc.filtered_session_table =  boc.filtered_session_table(ismember(boc.filtered_session_table.stimulus_name,...
-                boc.find_session_for_stimuli(stimuli,session_by_stimuli)), :);
+                boc.find_session_for_stimuli(stimulus,session_by_stimuli)), :);
             
            
             boc.update_properties
@@ -297,8 +297,8 @@ classdef brain_observatory_cache < handle
                 % update session_id
                 boc.session_id = boc.filtered_session_table.id;
                 
-                % update stimuli
-                boc.stimuli = boc.get_all_stimuli;
+                % update stimulus
+                boc.stimulus = boc.get_all_stimuli;
                 
                 % update imaging_depth
                 boc.imaging_depth = boc.get_all_imaging_depths;
@@ -310,8 +310,8 @@ classdef brain_observatory_cache < handle
                 boc.container_id = unique(boc.filtered_session_table.experiment_container_id);
                 
                 
-                % update cre_lines
-                boc.cre_lines = boc.get_all_cre_lines;
+                % update cre_line
+                boc.cre_line = boc.get_all_cre_lines;
                 
                 % update eye_tracking
                 boc.eye_tracking_avail = ~unique(boc.filtered_session_table.fail_eye_tracking);
@@ -323,11 +323,11 @@ classdef brain_observatory_cache < handle
     
     methods (Static  =  true, Access = private)
         
-        function filtered_session = find_session_for_stimuli(stimuli,session_by_stimuli)
+        function filtered_session = find_session_for_stimuli(stimulus,session_by_stimuli)
             filtered_session = {};
             fields = fieldnames(session_by_stimuli);
             for i = 1 :length(fields)
-                if sum(ismember(session_by_stimuli.(char(fields(i))),stimuli)) >= 1
+                if sum(ismember(session_by_stimuli.(char(fields(i))),stimulus)) >= 1
                     filtered_session(length(filtered_session)+1) = cellstr(fields(i));
                 end
             end
