@@ -6,10 +6,10 @@ classdef brain_observatory_cache < handle
 % this will appear
 
 
-    
+    % all the information in manifest.container_table is included in
+    % manifest.session_table, which is why I abandoned container_table
     properties
         session_table
-        container_table
         filtered_session_table
         stimuli
         targeted_structure
@@ -17,10 +17,13 @@ classdef brain_observatory_cache < handle
         container_id
         session_id
         session_type
-        
+        cre_lines
+        eye_tracking_failed
     end
     
     properties (Access = private)
+        
+        container_table
         failed = 0
         need_restriction_on_property = 1
         manifests
@@ -28,7 +31,7 @@ classdef brain_observatory_cache < handle
     
     methods
         
-        % initialize
+        % construct
         function boc = brain_observatory_cache(manifests)
             
             boc.session_table = manifests.session_manifest;
@@ -49,8 +52,10 @@ classdef brain_observatory_cache < handle
         
         
         % This function gets the total number of experiment containers
-        function result = get_total_num_of_containers(boc)
-            result = size(boc.container_table(boc.container_table.failed==0,:),1);
+        function result = get_total_num_of_containers(boc,varargin)
+            
+            result = size(boc.filtered_session_table,1) * 3;
+            
         end
         
         
@@ -87,7 +92,7 @@ classdef brain_observatory_cache < handle
         
         
         function result = get_all_cre_lines (boc)
-            result = categories(categorical(boc.container_table.cre_lines));
+            result = categories(categorical(boc.filtered_session_table.cre_line));
         end
         
         function get_summary_of_containers_along_imaging_depths(boc)
@@ -153,10 +158,15 @@ classdef brain_observatory_cache < handle
        
         
         
-       
-        
-      
-        
+        function boc = filter_session_by_eye_tracking(boc,want_eye_tracking)
+            if want_eye_tracking == 1
+                
+                boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.fail_eye_tracking == 0,:);
+                
+                boc.update_properties
+            end
+        end    
+            
        
         function boc = filter_sessions_by_session_id(boc,session_id)
             
@@ -168,17 +178,17 @@ classdef brain_observatory_cache < handle
         
         function boc = filter_session_by_cre_line(boc, cre_line)
             
-            filtered_container_ids = boc.container_table(strcmp(boc.container_table.cre_line,cre_line), 'id');
-          boc.filtered_session_table = boc.filtered_session_table(ismember(num2cell(boc.filtered_session_table.experiment_container_id),...
-              filtered_container_ids),:);
-         
-        
+            boc.filtered_session_table = boc.filtered_session_table(ismember(boc.filtered_session_table.cre_line, cre_line),:);
+            
+            boc.update_properties
+            
         end
+        
         function boc = filter_sessions_by_container_id(boc,container_id)
             boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.experiment_container_id == container_id, :);
             
             boc.update_properties
-        
+            
         end
         
         
@@ -281,25 +291,31 @@ classdef brain_observatory_cache < handle
         function update_properties(boc)
             
             if boc.need_restriction_on_property == 1
-            % update session_type
-            boc.session_type = boc.get_all_session_types;
-            
-            % update session_id
-            boc.session_id = boc.filtered_session_table.id;
-            
-            % update stimuli
-            boc.stimuli = boc.get_all_stimuli;
-            
-            % update imaging_depth
-            boc.imaging_depth = boc.get_all_imaging_depths;
-            
-            % update targeted_structure
-            boc.targeted_structure = boc.get_all_targeted_structures;
-            
-            % update container_id
-            boc.container_id = unique(boc.filtered_session_table.experiment_container_id);
+                % update session_type
+                boc.session_type = boc.get_all_session_types;
+                
+                % update session_id
+                boc.session_id = boc.filtered_session_table.id;
+                
+                % update stimuli
+                boc.stimuli = boc.get_all_stimuli;
+                
+                % update imaging_depth
+                boc.imaging_depth = boc.get_all_imaging_depths;
+                
+                % update targeted_structure
+                boc.targeted_structure = boc.get_all_targeted_structures;
+                
+                % update container_id
+                boc.container_id = unique(boc.filtered_session_table.experiment_container_id);
+                
+                
+                % update cre_lines
+                boc.cre_lines = boc.get_all_cre_lines;
+                
+                % update eye_tracking
+                boc.eye_tracking_failed = unique(boc.filtered_session_table.fail_eye_tracking);
             end
- 
         end
          
        

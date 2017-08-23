@@ -22,19 +22,23 @@ if (nargin > 0 && ~exist([char(varargin) 'manifests.mat'],'file'))|| nargin == 0
     
     manifests.cell_id_mapping = webread(cell_id_mapping_url,options2);
     
-    % create cre_lines table and append it to container_manifest table (all experiments within an experiment container
-    % were performed on a single rat and shared imaging plane
-    cont_table = manifests.container_manifest;
-    cre_lines = cell(size(cont_table,1),1);
-    for i = 1:size(cont_table,1)
-        donor_info = cont_table(i,:).specimen.donor;
+    % create cre_line table from specimen field of session_manifest and
+    % append it back to session_manifest table
+    % cre_line is important,make my life easier if it's explicit
+    
+    session_table = manifests.session_manifest;
+    cre_line = cell(size(session_table,1),1);
+    for i = 1:size(session_table,1)
+        donor_info = session_table(i,:).specimen.donor;
         transgenic_lines_info = struct2table(donor_info.transgenic_lines);
-        cre_lines(i,1) = transgenic_lines_info.name(string(transgenic_lines_info.transgenic_line_type_name) == 'driver' & ...
-            contains(transgenic_lines_info.name, 'Cre'));
+%         cre_line(i,1) = transgenic_lines_info.name(string(transgenic_lines_info.transgenic_line_type_name) == 'driver' & ...
+%             contains(transgenic_lines_info.name, 'Cre'));
+        cre_line(i,1) = transgenic_lines_info.name(not(cellfun('isempty', strfind(transgenic_lines_info.transgenic_line_type_name, 'driver')))...
+            & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
     end
     
-    manifests.container_manifest = [cont_table, cre_lines];
-    manifests.container_manifest.Properties.VariableNames{'Var13'} = 'cre_line';
+    manifests.session_manifest = [session_table, cre_line];
+    manifests.session_manifest.Properties.VariableNames{'Var15'} = 'cre_line';
     
     if nargin == 1
     save([char(varargin) 'manifests.mat'],'manifests')

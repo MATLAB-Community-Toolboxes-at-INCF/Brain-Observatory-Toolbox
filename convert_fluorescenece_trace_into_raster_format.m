@@ -148,7 +148,7 @@ end
 
 function raster_site_info = generate_raster_site_info(boc, stimuli, parameters_for_cur_stimulus,cur_new_cell_id)
 
-raster_site_info.time_info = parameters_for_cur_stimulus;
+raster_site_info.timing_info = parameters_for_cur_stimulus;
 
 raster_site_info.container_id = boc.container_id;
 
@@ -178,9 +178,9 @@ function parameters_for_cur_stimulus = fetch_stimuli_based_parameters(stimuli)
 stimuli_type = {'static_gratings';'drifting_gratings';'locally_sparse_noise';...
      'natural_scenes';'natural_movie_one';'natural_movie_two';'natural_movie_three'};
 
-sample_interval = repelem(33, length(stimuli_type)).';  % 30 Hz two-photon movie
+sampling_period_in_ms = repelem(33, length(stimuli_type)).';  % 30 Hz two-photon movie
 
-stimuli_interval = [250; 3000; 250; 250; 250; 250; 250] ; % stimuli are shown every 250 ms
+stimulus_duration_in_ms = [250; 3000; 250; 250; 250; 250; 250] ; % stimuli are shown every 250 ms
 
 duration_in_ms_before_stimulus_onset = [-250; -250; -250; -250; -250; -250; -250]; % window starts 250 ms before stimulus onset
 
@@ -190,7 +190,7 @@ num_sample_before_onset = NaN * ones(length(stimuli_type),1); % number of sampli
 
 for iStimulus_type = 1: length(stimuli_type)
     % total of sampling time points taken before stimulus onset
-    num_sample_before_onset(iStimulus_type) = round(duration_in_ms_before_stimulus_onset(iStimulus_type)/sample_interval(iStimulus_type));
+    num_sample_before_onset(iStimulus_type) = round(duration_in_ms_before_stimulus_onset(iStimulus_type)/sampling_period_in_ms(iStimulus_type));
     
 end
 
@@ -200,11 +200,11 @@ num_sample_after_onset = NaN * ones(length(stimuli_type),1);
 
 for iStimulus_type = 1: length(stimuli_type)
     % total of sampling time points taken after stimulus onset
-    num_sample_after_onset(iStimulus_type) = round(duration_in_ms_after_stimulus_onset(iStimulus_type)/sample_interval(iStimulus_type));
+    num_sample_after_onset(iStimulus_type) = round(duration_in_ms_after_stimulus_onset(iStimulus_type)/sampling_period_in_ms(iStimulus_type));
     
 end
 
-parameters_for_all_stimuli = table (sample_interval, stimuli_interval, duration_in_ms_before_stimulus_onset, duration_in_ms_after_stimulus_onset, num_sample_before_onset ...
+parameters_for_all_stimuli = table (sampling_period_in_ms, stimulus_duration_in_ms, duration_in_ms_before_stimulus_onset, duration_in_ms_after_stimulus_onset, num_sample_before_onset ...
     , num_sample_after_onset,stimulu_onset_sampling_index ,'RowNames', stimuli_type);
 
 parameters_for_cur_stimulus = table2struct(parameters_for_all_stimuli(stimuli,:));
