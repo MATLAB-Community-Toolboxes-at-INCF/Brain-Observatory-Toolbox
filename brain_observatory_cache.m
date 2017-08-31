@@ -1,48 +1,92 @@
 classdef brain_observatory_cache < handle
     
-% add help file information!!!    
-%    
-%
-% this will appear
-
-
-    % all the information in manifest.container_table is included in
-    % manifest.session_table, which is why I abandoned container_table
+    % The MATLAB brain_observator_cache takes manifests.mat and enables you to get information
+    % and access data using three types of methods:
+    % A) Get general information on the brain observatory data using methods that start with "get_"
+    % B) Filter sessions by different criteria using methods that start with "filter_"
+    % C) Download NWB file(s) of filtered session(s) using the method named "download_nwb"
+    
+    
+    
+    
+    
+    
     properties
+        
+        % a table initialized as manifests.session_manifest
         session_table
+        
+        % a table initialized as the property session_table, as different filter methods get
+        % called on the brain_observatory_cache object, rows in filtered_session_table
+        % are liminated to meet specified criteria. when refreshed
         filtered_session_table
+        
+        % a cell array contains all the stimulus types from filtered_session_table
         stimulus
+        
+        % a cell array contains all the brain areas from filtered_session_table
         targeted_structure
+        
+        % a cell array contains all the cortical depths from filtered_session_table
         imaging_depth
+        
+        % a matrix contains all the container ids from filtered_session_table
         container_id
+        
+        % a matrix contains all the session ids from filtered_session_table
         session_id
+        
+        % a cell array contains all the session types from filtered_session_table
         session_type
+        
+        % a cell array contains all the cre lines from filtered_session_table
         cre_line
+        
+        % a cell array contains all condtions if eye tracking is available or not from filtered_session_table
         eye_tracking_avail
     end
     
     properties (Access = private)
         
+        % all the information in manifest.container_table is included in
+        % manifest.session_table, which is why I make container_table private
         container_table
+        
+        % I don't think failed experiment containers can be used, so I just go and exclude them
         failed = 0
-        need_restriction_on_property = 1
-        manifests
+        
+        % There are two kinds of "get_"methods, one is simple, that information in
+        % session_table is directly read out. The other one that starts with "get_summary_" is
+        % a little more complex that in every sequence of the loop, sessions in
+        % the property session_table are eliminated with
+        % "filter_" methods and counted, and then session_table gets refreshed with the "refresh" method.
+        %
+        % It is also "filter_" methods' job to update "properties" of the class that characterizes
+        % property filtered_session_table by calling the "update" method. Because
+        % empty filtered_session_table is not characterizable, filtered_session_table has to be validated to be nonempty
+        % before updating, this need is flagged by the private property need_validation_for_filtered_session_table.
+        % However, when "filter_" methods are called inside "get_summary_" methods, updating is unhelpful while filtered_session_table
+        % should be allowed to be empty and has the total number of sessions it contains truthfully reported. In such case,
+        % need_validation_for_filtered_session_table is set to be 0 inside "get_summary_" methods.
+        need_validation_for_filtered_session_table = 1
+        
+        
     end
     
     methods
         
-        % construct
         function boc = brain_observatory_cache(manifests)
+            % constructor
+            
             
             boc.session_table = manifests.session_manifest;
             boc.container_table = manifests.container_manifest;
-            boc.manifests = manifests;
             
             % get rid of failed ones
             if boc.failed == 0
                 failed_container_id = boc.container_table((boc.container_table.failed == 1),:).id;
                 boc.session_table = boc.session_table(~ismember(boc.session_table.experiment_container_id,failed_container_id),:);
-                boc.container_table = boc.container_table((boc.container_table.failed ~= 1),:);          
+                boc.container_table = boc.container_table((boc.container_table.failed ~= 1),:);
             end
             
             boc.filtered_session_table =  boc.session_table;
@@ -51,36 +95,50 @@ classdef brain_observatory_cache < handle
         end
         
         
-        % This function gets the total number of experiment containers
+        
         function result = get_total_num_of_containers(boc,varargin)
+            % a function gets the total number of experiment containers from
+            % session_table
             
             result = size(boc.filtered_session_table,1) * 3;
             
         end
         
         
-        
         function result = get_all_imaging_depths(boc)
+            % a function gets all the cortical depths from
+            % session_table
+            
             result = unique(boc.filtered_session_table.imaging_depth);
         end
         
-         function result = get_all_targeted_structures (boc)
+        
+        function result = get_all_targeted_structures (boc)
+            % a function gets all the brain areas from
+            % session_table
+            
             if size(boc.filtered_session_table,1) > 1
                 container_targeted_structure_table = struct2table(boc.filtered_session_table.targeted_structure);
-            result = categories(categorical(cellstr(container_targeted_structure_table.acronym)));
+                result = categories(categorical(cellstr(container_targeted_structure_table.acronym)));
             elseif size(boc.filtered_session_table,1) == 1
                 result = boc.filtered_session_table.targeted_structure.acronym;
             end
-           
+            
         end
         
-         
+        
         function result = get_all_session_types (boc)
+            % a function gets all the session types from
+            % session_table
+            
             result = categories(categorical(cellstr(boc.filtered_session_table.stimulus_name)));
         end
         
         
         function result = get_all_stimuli (boc)
+            % a function gets all stimulus types from
+            % session_table
+            
             session_by_stimuli = boc.get_session_by_stimuli();
             result = [];
             for iSession = 1: length(boc.session_type)
@@ -92,28 +150,36 @@ classdef brain_observatory_cache < handle
         
         
         function result = get_all_cre_lines (boc)
+            % a function gets all cre lines from
+            % session_table
+            
             result = categories(categorical(boc.filtered_session_table.cre_line));
         end
         
+        
         function get_summary_of_containers_along_imaging_depths(boc)
+            % a function gets the number of experiment containers recorded at
+            % each cortical depth
+            
             summary(categorical(cellstr(num2str((boc.container_table.imaging_depth)))))
         end
         
-          
         function get_summary_of_containers_along_targeted_structures (boc)
+            % a function gets the number of experiment containers recorded in each brain region
+            
             container_targeted_structure_table = struct2table(boc.container_table.targeted_structure);
             summary(categorical(cellstr(container_targeted_structure_table.acronym)))
         end
         
         
-       
-        
         function summary_table = get_summary_of_containers_along_depths_and_structures(boc)
+            % a function gets the number of experiment containers recorded at each cortical depth in each brain region
+            
             
             summary_matrix = NaN(size(boc.get_all_imaging_depths(),1),size(boc.get_all_targeted_structures(),1));
             all_depths =  boc.get_all_imaging_depths();
             all_structures = boc.get_all_targeted_structures;
-            boc.need_restriction_on_property = 0;
+            boc.need_validation_for_filtered_session_table = 0;
             
             
             for cur_depth = 1: size(boc.get_all_imaging_depths(),1)
@@ -126,8 +192,8 @@ classdef brain_observatory_cache < handle
                 end
             end
             
-                        all_depths = cellstr(num2str( boc.get_all_imaging_depths()));
-
+            all_depths = cellstr(num2str( boc.get_all_imaging_depths()));
+            
             summarize_by_depths = sum(summary_matrix,2);
             summary_matrix = [summary_matrix,summarize_by_depths];
             summarize_by_structures = sum(summary_matrix,1);
@@ -140,9 +206,11 @@ classdef brain_observatory_cache < handle
         
         
         
-        
         function result = get.filtered_session_table(boc)
-            if boc.need_restriction_on_property == 1 && isempty(boc.filtered_session_table)
+            % validate filtered_session_table
+            
+            if boc.need_validation_for_filtered_session_table == 1 && isempty(boc.filtered_session_table)
+                % error doesn't break lines like sprintf
                 error(sprintf(['Not a single session meet all of your criteria\n'...
                     ' The last criterion has been declined\n '...
                     ' !!!This is not a bug. It is not my fault!!!\n'...
@@ -155,28 +223,34 @@ classdef brain_observatory_cache < handle
         end
         
         
-       
-        
-        
         function boc = filter_session_by_eye_tracking(boc,want_eye_tracking)
+            % a function eliminates sessions in filtered_session_table that don't have eye
+            % tracking
+            
             if want_eye_tracking == 1
                 
                 boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.fail_eye_tracking == 0,:);
                 
                 boc.update_properties
             end
-        end    
-            
-       
+        end
+        
+        
         function boc = filter_sessions_by_session_id(boc,session_id)
+            % a function eliminates sessions in filtered_session_table that don't
+            % have the session id provided
             
             boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.id == session_id, :);
             
             boc.update_properties
-        
+            
         end
         
+        
+        
         function boc = filter_session_by_cre_line(boc, cre_line)
+            % a function eliminates sessions in filtered_session_table that
+            % don't have the cre line provided
             
             boc.filtered_session_table = boc.filtered_session_table(ismember(boc.filtered_session_table.cre_line, cre_line),:);
             
@@ -184,7 +258,12 @@ classdef brain_observatory_cache < handle
             
         end
         
+        
+        
         function boc = filter_sessions_by_container_id(boc,container_id)
+            % a function eliminates sessions in filtered_session_table that
+            % don't have the container id provided
+            
             boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.experiment_container_id == container_id, :);
             
             boc.update_properties
@@ -194,12 +273,15 @@ classdef brain_observatory_cache < handle
         
         
         function boc = filter_sessions_by_stimuli(boc,stimulus)
+            % a function eliminates sessions in filtered_session_table that
+            % don't have the stimulus type provided
+            
             session_by_stimuli = boc.get_session_by_stimuli();
             % filter sessions by stimuli
             boc.filtered_session_table =  boc.filtered_session_table(ismember(boc.filtered_session_table.stimulus_name,...
                 boc.find_session_for_stimuli(stimulus,session_by_stimuli)), :);
             
-           
+            
             boc.update_properties
             
         end
@@ -207,6 +289,9 @@ classdef brain_observatory_cache < handle
         
         
         function boc = filter_sessions_by_imaging_depth(boc,depth)
+            % a function eliminates sessions in filtered_session_table that
+            % don't have the cortical depth provided
+            
             % filter sessions by imaging_depth
             boc.filtered_session_table = boc.filtered_session_table(boc.filtered_session_table.imaging_depth == depth, :);
             
@@ -214,7 +299,12 @@ classdef brain_observatory_cache < handle
         end
         
         
+        
+        
         function boc = filter_sessions_by_targeted_structure(boc,structure)
+            % a function eliminates sessions in filtered_session_table that
+            % don't have the brain area provided
+            
             % filter sessions by targeted_structure
             if size(boc.filtered_session_table,1) > 1
                 exp_targeted_structure_session_table = struct2table(boc.filtered_session_table.targeted_structure);
@@ -222,28 +312,25 @@ classdef brain_observatory_cache < handle
             elseif size(boc.filtered_session_table,1) == 1
                 boc.filtered_session_table = boc.filtered_session_table(strcmp( boc.filtered_session_table.targeted_structure.acronym, structure),:);
             end
-          
+            
             
             boc.update_properties
         end
         
+        
+        
         function boc = filter_sessions_by_session_type(boc,session_type)
+            % a function eliminates sessions in filtered_session_table that
+            % don't have the session type provided
+            
             boc.filtered_session_table = boc.filtered_session_table(strcmp(boc.filtered_session_table.stimulus_name,session_type),:);
             
-                        boc.update_properties
+            boc.update_properties
         end
         
-         function refresh(boc)
+        function refresh(boc)
+            % refresh to refilter when called by "get_summary_" methods
             
-            boc.session_table = boc.manifests.session_manifest;
-            boc.container_table = boc.manifests.container_manifest;
-            
-            % remove failed containers
-            if boc.failed == 0
-                failed_container_id = boc.container_table((boc.container_table.failed == 1),:).id;
-                boc.session_table = boc.session_table(~ismember(boc.session_table.experiment_container_id,failed_container_id),:);
-                boc.container_table = boc.container_table((boc.container_table.failed ~= 1),:);
-            end
             boc.filtered_session_table =  boc.session_table;
             
         end
@@ -252,6 +339,10 @@ classdef brain_observatory_cache < handle
         
         
         function download_nwb(boc, nwb_dir_name)
+            % a function downloads NWB files corrsponding to the sessions in
+            % filtered_session_table
+            
+            
             
             % prepare folder
             if ~exist(nwb_dir_name,'dir')
@@ -282,15 +373,19 @@ classdef brain_observatory_cache < handle
                 else
                     fprintf(['desired ' nwb_file_name ' already exists'])
                 end
-            end
+            end % end of for loop
         end % end of function get_session_data
     end % end of public dynamic methods
+    
+    
+    
     
     methods (Access = private)
         
         function update_properties(boc)
+            % called by filter methods 
             
-            if boc.need_restriction_on_property == 1
+            if boc.need_validation_for_filtered_session_table == 1
                 % update session_type
                 boc.session_type = boc.get_all_session_types;
                 
@@ -317,7 +412,7 @@ classdef brain_observatory_cache < handle
                 boc.eye_tracking_avail = ~unique(boc.filtered_session_table.fail_eye_tracking);
             end
         end
-       
+        
     end % end of private dynamic methods
     
     
