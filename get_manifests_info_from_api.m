@@ -3,8 +3,18 @@
 % reference
 
 function manifests = get_manifests_info_from_api(varargin)
+
+% manifests = get_manifests_info_from_api(varargin)
+% 
+% a function makes manifets by fetching raw manifests from AllenAPI, and saves
+% it to the direcotrty you want (I prefter BOT direcotry) optionally.
+
+
 tic
 if (nargin > 0 && ~exist([char(varargin) 'manifests.mat'],'file'))|| nargin == 0
+    
+    % make menifests if you want to save it in a dir that doesn't have
+    % it or you simply want to make it for some tempoprary use
     
     container_manifest_url = 'http://api.brain-map.org/api/v2/data/query.json?q=model::ExperimentContainer,rma::include,ophys_experiments,isi_experiment,specimen%28donor%28conditions,age,transgenic_lines%29%29,targeted_structure,rma::options%5Bnum_rows$eq%27all%27%5D%5Bcount$eqfalse%5D';
     session_manifest_url = 'http://api.brain-map.org/api/v2/data/query.json?q=model::OphysExperiment,rma::include,experiment_container,well_known_files%28well_known_file_type%29,targeted_structure,specimen%28donor%28age,transgenic_lines%29%29,rma::options%5Bnum_rows$eq%27all%27%5D%5Bcount$eqfalse%5D';
@@ -41,6 +51,7 @@ if (nargin > 0 && ~exist([char(varargin) 'manifests.mat'],'file'))|| nargin == 0
     manifests.session_manifest.Properties.VariableNames{'Var15'} = 'cre_line';
     
     if nargin == 1
+        % save it to the direcotry you specified 
     save([char(varargin) 'manifests.mat'],'manifests')
     toc
     end

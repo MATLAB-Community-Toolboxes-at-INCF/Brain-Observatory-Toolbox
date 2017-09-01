@@ -6,7 +6,12 @@ classdef brain_observatory_cache < handle
     % B) Filter sessions by different criteria using methods that start with "filter_"
     % C) Download NWB file(s) of filtered session(s) using the method named "download_nwb"
     
-    
+    % The advantage of using handle is that I can have a hierarchical family of boc that all
+    % node boc (different imaging spaces for one stimulus) refer to head boc (one stimuli).
+    % Imagine one hierarchical family as a hanger on a rolling rack, this way I only need to 
+    % push the hook of the hanger into the next position to push every boc into the next stimulus.
+    % This will make life easier when doing analysis, as you will see.
+
     
     
     
@@ -18,8 +23,8 @@ classdef brain_observatory_cache < handle
         
         % a table initialized as the property session_table, as different filter methods get
         % called on the brain_observatory_cache object, rows in filtered_session_table
-        % are liminated to meet specified criteria. when refreshed
-        filtered_session_table
+        % are liminated to meet specified criteria
+        filtered_session_table % test: this doesn't show on reference page
         
         % a cell array contains all the stimulus types from filtered_session_table
         stimulus
@@ -75,7 +80,8 @@ classdef brain_observatory_cache < handle
     
     methods
         
-        function boc = brain_observatory_cache(manifests)
+        % test: this doesn't show on reference page
+        function boc = brain_observatory_cache(manifests) % test: this doesn't show on reference page
             % constructor
             
             

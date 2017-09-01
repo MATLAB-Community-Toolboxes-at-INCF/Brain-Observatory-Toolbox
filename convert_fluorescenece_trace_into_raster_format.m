@@ -1,6 +1,14 @@
 function convert_fluorescenece_trace_into_raster_format(fluorescence_trace_type,session_id,...
     stimulus, raster_dir_name, nwb_dir_name, varargin)
 
+% convert_fluorescenece_trace_into_raster_format(fluorescence_trace_type,session_id,...
+% stimulus, raster_dir_name, nwb_dir_name, varargin)
+%
+% a function creates the raster data by specifying the session ID, the type 
+% of stimuli you are interested in, and the type of fluorescence trace you want to use,
+% along with the directory names for the nwb_files and raster_data
+% 
+% varargin is still under developing, please ignore it for now
 
 
 

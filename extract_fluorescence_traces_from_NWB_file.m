@@ -1,8 +1,14 @@
 
-function  [raw,demixed,neuropil_corrected,DfOverF] = extract_fluorescence_traces_from_NWB_file(nwb_directory_name, session_id)
+function  [raw,demixed,neuropil_corrected,DfOverF] = extract_fluorescence_traces_from_NWB_file(nwb_dir_name, session_id)
+
+% [raw,demixed,neuropil_corrected,DfOverF] = extract_fluorescence_traces_from_NWB_file(nwb_dir_name, session_id)
+% 
+% a function extracts and computes all four types fluorescence traces available in the NWB file
+% by specifying the session_id and new_directory_name
+
 tic
 nwb_name = [num2str(session_id) '.nwb'];
-addpath(genpath(nwb_directory_name))
+addpath(genpath(nwb_dir_name))
 % k dimensions of cells by n dimesions of sampling points h5read table
 % imported as n dimesions of sampling points by k dimensions of cells matlab matrix
 raw = h5read(nwb_name,'/processing/brain_observatory_pipeline/Fluorescence/imaging_plane_1/data');

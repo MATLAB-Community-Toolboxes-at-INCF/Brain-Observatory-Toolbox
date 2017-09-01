@@ -1,5 +1,11 @@
 function plot_fluorecence_traces(nwb_dir_name, session_id, cell_id)
 
+% plot_fluorecence_traces(nwb_dir_name, session_id, cell_id)
+% 
+% a function extract, computes and plots all four types fluorescence traces available
+% in the NWB file by specifing the session_id and cell_id, along with the nwb_dir_name
+
+
 nwb_name = [num2str(session_id) '.nwb'];
 
 addpath(genpath(nwb_dir_name))
