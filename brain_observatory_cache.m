@@ -7,9 +7,10 @@ classdef brain_observatory_cache < handle
     % C) Download NWB file(s) of filtered session(s) using the method named "download_nwb"
     
     % The advantage of using handle is that I can have a hierarchical family of boc that all
-    % node boc (different imaging spaces for one stimulus) refer to head boc (one stimuli).
+    % node boc (different imaging spaces for one stimulus) refer to head boc (all kinds of one stimulus).
     % Imagine one hierarchical family as a hanger on a rolling rack, this way I only need to 
-    % push the hook of the hanger into the next position to push every boc into the next stimulus.
+    % push the hook of the hanger into the next position (change the stimulus of head boc)
+    % to push node boc into the next stimulus.
     % This will make life easier when doing analysis, as you will see.
 
     
@@ -124,8 +125,8 @@ classdef brain_observatory_cache < handle
             % session_table
             
             if size(boc.filtered_session_table,1) > 1
-                container_targeted_structure_table = struct2table(boc.filtered_session_table.targeted_structure);
-                result = categories(categorical(cellstr(container_targeted_structure_table.acronym)));
+                targeted_structure_table = struct2table(boc.filtered_session_table.targeted_structure);
+                result = categories(categorical(cellstr(targeted_structure_table.acronym)));
             elseif size(boc.filtered_session_table,1) == 1
                 result = boc.filtered_session_table.targeted_structure.acronym;
             end

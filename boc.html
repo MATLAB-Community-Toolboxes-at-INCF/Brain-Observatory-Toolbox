@@ -1,0 +1,358 @@
+
+<!-- saved from url=(0058)file:///home/xf15/.matlab/R2017a/HtmlPanel/mwblank0.html?0 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      
+   
+      <link rel="stylesheet" href="file:///cm/shared/mit/matlab/matlab-2017a/toolbox/matlab/helptools/private/helpwin.css">
+      <title>MATLAB File Help: brain_observatory_cache</title>
+   </head>
+   <body>
+      <!--Single-page help-->
+      <table border="0" cellspacing="0" width="100%">
+         <tbody><tr class="subheader">
+            <td class="headertitle">MATLAB File Help: brain_observatory_cache</td>
+            <td class="subheader-left"><a href="matlab:edit brain_observatory_cache">View code for brain_observatory_cache</a></td>
+            <td class="subheader-left"><a href="matlab:doc brain_observatory_cache">Go to online doc for brain_observatory_cache</a></td>
+            <td class="subheader-right"><a href="matlab:doc">Default Topics</a></td>
+         </tr>
+      </tbody></table>
+      <div class="title">brain_observatory_cache</div>
+      <div class="helptext"><pre><!--helptext -->  The MATLAB brain_observator_cache takes manifests.mat and enables you to get information
+  and access data using three types of methods:
+  A) Get general information on the brain observatory data using methods that start with "get_"
+  B) Filter sessions by different criteria using methods that start with "filter_"
+  C) Download NWB file(s) of filtered session(s) using the method named "download_nwb"</pre></div><!--after help -->
+      <!--Class-->
+      <div class="sectiontitle">Class Details</div>
+      <table class="class-details">
+         <tbody><tr>
+            <td class="class-detail-label">Superclasses</td>
+            <td><a href="matlab:doc('handle')">handle</a></td>
+         </tr>
+         <tr>
+            <td class="class-detail-label">Sealed</td>
+            <td>false</td>
+         </tr>
+         <tr>
+            <td class="class-detail-label">Construct on load</td>
+            <td>false</td>
+         </tr>
+      </tbody></table>
+      <!--Constructors-->
+      <div class="sectiontitle"><a name="constructors"></a>Constructor Summary
+      </div>
+      <table class="summary-list">
+         <tbody><tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.brain_observatory_cache')">brain_observatory_cache</a></td>
+            <td class="m-help">constructor&nbsp;</td>
+         </tr>
+      </tbody></table>
+      <!--Properties-->
+      <div class="sectiontitle"><a name="properties"></a>Property Summary
+      </div>
+      <table class="summary-list">
+         <tbody><tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.container_id')">container_id</a></td>
+            <td class="m-help">a matrix contains all the container ids from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.cre_line')">cre_line</a></td>
+            <td class="m-help">a cell array contains all the cre lines from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.eye_tracking_avail')">eye_tracking_avail</a></td>
+            <td class="m-help">a cell array contains all condtions if eye tracking is available or not from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filtered_session_table')">filtered_session_table</a></td>
+            <td class="m-help">a table initialized as the property session_table, as different filter methods get&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.imaging_depth')">imaging_depth</a></td>
+            <td class="m-help">a cell array contains all the cortical depths from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.session_id')">session_id</a></td>
+            <td class="m-help">a matrix contains all the session ids from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.session_table')">session_table</a></td>
+            <td class="m-help">a table initialized as manifests.session_manifest&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.session_type')">session_type</a></td>
+            <td class="m-help">a cell array contains all the session types from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.stimulus')">stimulus</a></td>
+            <td class="m-help">a cell array contains all the stimulus types from filtered_session_table&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.targeted_structure')">targeted_structure</a></td>
+            <td class="m-help">a cell array contains all the brain areas from filtered_session_table&nbsp;</td>
+         </tr>
+      </tbody></table>
+      <!--Methods-->
+      <div class="sectiontitle"><a name="methods"></a>Method Summary
+      </div>
+      <table class="summary-list">
+         <tbody><tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.addlistener')">addlistener</a></td>
+            <td class="m-help">Add listener for event.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.delete')">delete</a></td>
+            <td class="m-help">Delete a handle object.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.download_nwb')">download_nwb</a></td>
+            <td class="m-help">a function downloads NWB files corrsponding to the sessions in&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.eq')">eq</a></td>
+            <td class="m-help">== (EQ)   Test handle equality.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_session_by_cre_line')">filter_session_by_cre_line</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_session_by_eye_tracking')">filter_session_by_eye_tracking</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that don't have eye&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_sessions_by_container_id')">filter_sessions_by_container_id</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_sessions_by_imaging_depth')">filter_sessions_by_imaging_depth</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_sessions_by_session_id')">filter_sessions_by_session_id</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that don't&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_sessions_by_session_type')">filter_sessions_by_session_type</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_sessions_by_stimuli')">filter_sessions_by_stimuli</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.filter_sessions_by_targeted_structure')">filter_sessions_by_targeted_structure</a></td>
+            <td class="m-help">a function eliminates sessions in filtered_session_table that&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.findobj')">findobj</a></td>
+            <td class="m-help">Find objects matching specified conditions.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.findprop')">findprop</a></td>
+            <td class="m-help">Find property of MATLAB handle object.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.ge')">ge</a></td>
+            <td class="m-help">&gt;= (GE)   Greater than or equal relation for handles.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_all_cre_lines')">get_all_cre_lines</a></td>
+            <td class="m-help">a function gets all cre lines from&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_all_imaging_depths')">get_all_imaging_depths</a></td>
+            <td class="m-help">a function gets all the cortical depths from&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_all_session_types')">get_all_session_types</a></td>
+            <td class="m-help">a function gets all the session types from&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_all_stimuli')">get_all_stimuli</a></td>
+            <td class="m-help">a function gets all stimulus types from&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_all_targeted_structures')">get_all_targeted_structures</a></td>
+            <td class="m-help">a function gets all the brain areas from&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_summary_of_containers_along_depths_and_structures')">get_summary_of_containers_along_depths_and_structures</a></td>
+            <td class="m-help">a function gets the number of experiment containers recorded at each cortical depth in each brain region&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_summary_of_containers_along_imaging_depths')">get_summary_of_containers_along_imaging_depths</a></td>
+            <td class="m-help">a function gets the number of experiment containers recorded at&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_summary_of_containers_along_targeted_structures')">get_summary_of_containers_along_targeted_structures</a></td>
+            <td class="m-help">a function gets the number of experiment containers recorded in each brain region&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.get_total_num_of_containers')">get_total_num_of_containers</a></td>
+            <td class="m-help">a function gets the total number of experiment containers from&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.gt')">gt</a></td>
+            <td class="m-help">&gt; (GT)   Greater than relation for handles.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">Sealed 
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.isvalid')">isvalid</a></td>
+            <td class="m-help">Test handle validity.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.le')">le</a></td>
+            <td class="m-help">&lt;= (LE)   Less than or equal relation for handles.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.lt')">lt</a></td>
+            <td class="m-help">&lt; (LT)   Less than relation for handles.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.ne')">ne</a></td>
+            <td class="m-help">~= (NE)   Not equal relation for handles.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.notify')">notify</a></td>
+            <td class="m-help">Notify listeners of event.&nbsp;</td>
+         </tr>
+         <tr class="summary-item">
+            <td class="attributes">
+               &nbsp;
+               
+            </td>
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.refresh')">refresh</a></td>
+            <td class="m-help">to refilter when called by "get_summary_" methods&nbsp;</td>
+         </tr>
+      </tbody></table>
+      <!--Events-->
+      <div class="sectiontitle"><a name="events"></a>Event Summary
+      </div>
+      <table class="summary-list">
+         <tbody><tr class="summary-item">
+            <td class="name"><a href="matlab:doc('brain_observatory_cache.ObjectBeingDestroyed')">ObjectBeingDestroyed</a></td>
+            <td class="m-help">Notifies listeners that a particular object has been destroyed.&nbsp;</td>
+         </tr>
+      </tbody></table>
+   
+</body></html>

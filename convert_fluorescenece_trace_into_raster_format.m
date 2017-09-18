@@ -1,5 +1,5 @@
 function convert_fluorescenece_trace_into_raster_format(fluorescence_trace_type,session_id,...
-    stimulus, raster_dir_name, nwb_dir_name, varargin)
+    stimulus, raster_dir_name, nwb_dir_name)
 
 % convert_fluorescenece_trace_into_raster_format(fluorescence_trace_type,session_id,...
 % stimulus, raster_dir_name, nwb_dir_name, varargin)
@@ -14,11 +14,13 @@ function convert_fluorescenece_trace_into_raster_format(fluorescence_trace_type,
 
 tic
 
-want_pixel_labels = varargin;
 
 addpath(genpath(nwb_dir_name))
 
 nwb_name = [num2str(session_id) '.nwb'];
+
+% create boc for the interested session to generate site_info and
+% session_type for sparse noise name discrepancy
 
 manifests = get_manifests_info_from_api();
 
@@ -50,11 +52,7 @@ all_f_traces = struct('raw', raw, 'demixed', demixed, 'neuropil_correted', neuro
 
 fluorescenece_trace = all_f_traces.(fluorescence_trace_type);
 
-% get other info from nwb
-
-sampling_times = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/timestamps');
-
-stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/timestamps'));
+% get cell_id
 
 new_cell_specimen_ids = h5read(nwb_name, '/processing/brain_observatory_pipeline/ImageSegmentation/cell_specimen_ids');
 
@@ -96,7 +94,7 @@ if size(fluorescenece_trace,2) ~=...
     
     % generate raster_labels, which applys to all cells in the same session
     
-    raster_labels = generate_raster_labels (nwb_name, stimulus, want_pixel_labels);
+    raster_labels = generate_raster_labels (nwb_name, stimulus, boc);
     
     % create raster files
     
@@ -107,7 +105,7 @@ if size(fluorescenece_trace,2) ~=...
         cur_raster_file_name = [num2str(cur_new_cell_id), '.mat'];
         % raster_data is a matrix of k dimensions of trials by n dimensions of
         % time
-        raster_data = generate_raster_data(iCell, fluorescenece_trace, parameters_for_cur_stimulus, sampling_times, stimulus_onset_times);
+        raster_data = generate_raster_data(iCell, fluorescenece_trace, parameters_for_cur_stimulus, nwb_name, boc, stimulus);
         
         raster_site_info = generate_raster_site_info(boc, stimulus, parameters_for_cur_stimulus,cur_new_cell_id);
         
@@ -130,7 +128,18 @@ end % end of convert_fluorescenece_trace_into_raster_format
 
 %  generate raster_data
 
-function raster_data = generate_raster_data(i, fluorescenece_trace, parameters_for_cur_stimulus, sampling_times, stimulus_onset_times)
+function raster_data = generate_raster_data(i, fluorescenece_trace, parameters_for_cur_stimulus, nwb_name, boc, stimulus)
+
+        if ismember(boc.session_type,'three_session_C') &&  strcmp(stimulus, 'locally_sparse_noise_4deg')
+            
+stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/locally_sparse_noise_stimulus/timestamps'));
+        else
+            
+stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/timestamps'));
+
+        end
+sampling_times = h5read(nwb_name,'/processing/brain_observatory_pipeline/DfOverF/imaging_plane_1/timestamps');
+
 
 sampling_times = sampling_times * 1000; % change unit from s to ms
 
@@ -199,16 +208,17 @@ function parameters_for_cur_stimulus = fetch_stimulus_based_parameters(stimulus)
 
 % set parameters for raster_data
 
-stimulus_type = {'static_gratings';'drifting_gratings';'locally_sparse_noise';...
-    'natural_scenes';'natural_movie_one';'natural_movie_two';'natural_movie_three'};
+stimulus_type = {'static_gratings';'drifting_gratings';'locally_sparse_noise_4deg';...
+    'locally_sparse_noise_8deg';'natural_scenes';'natural_movie_one';'natural_movie_two';'natural_movie_three'};
 
 sampling_period_in_ms = repelem(33, length(stimulus_type)).';  % 30 Hz two-photon movie
 
-stimulus_duration_in_ms = [250; 3000; 250; 250; 250; 250; 250] ; % stimuli are shown every 250 ms
+% this piece of information is not computed but simply stored in site_info
+stimulus_duration_in_ms = [250; 3000; 250; 250; 250; 33; 33; 33] ; % stimuli are shown every 250 ms
 
-duration_in_ms_before_stimulus_onset = [-250; -250; -250; -250; -250; -250; -250]; % window starts 250 ms before stimulus onset
+duration_in_ms_before_stimulus_onset = [-250; -250; -250; -250; -250; -250; -250; -250]; % window starts 250 ms before stimulus onset
 
-duration_in_ms_after_stimulus_onset = [750; 2750; 750; 750; 750; 750; 750]; % window ends 750 ms after stimulus onset
+duration_in_ms_after_stimulus_onset = [750; 2750; 750; 750; 750; 750; 750; 750]; % window ends 750 ms after stimulus onset
 
 num_sample_before_onset = NaN * ones(length(stimulus_type),1); % number of sampling points before the onset of stimulus
 
@@ -237,7 +247,7 @@ end
 
 % genereate raster_labels
 
-function raster_labels = generate_raster_labels (nwb_name, stimulus, want_pixel_labels)
+function raster_labels = generate_raster_labels (nwb_name, stimulus, boc)
 
 switch stimulus
     case {'drifting_gratings','static_gratings'}
@@ -288,6 +298,9 @@ switch stimulus
         variables = cellstr(char(variables));
         
         
+        combined_variable_name = 'combined';
+        
+        
         for iVariable = 1:size(variables,1)
             
             combined_variable_name = [combined_variable_name '_' char(variables{iVariable})];
@@ -303,38 +316,43 @@ switch stimulus
             
         end
         
-    case {'locally_sparse_noise'}
+    case {'locally_sparse_noise_4deg','locally_sparse_noise_8deg' }
         
-        stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/timestamps'));
-        example_labels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';
+        % so in session C where there is only 4deg, 4deg is simply named as
+        % locally_sparse_noise
+        
+        %         this doesn't work in older version of matlab
+        %         if  string(boc.session_type) == 'three_session_C2'
+        if ismember(boc.session_type,'three_session_C2')
+            stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/timestamps'));
+            example_labels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';
+        else
+            stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/locally_sparse_noise_stimulus/timestamps'));
+            example_labels = h5read(nwb_name, strcat('/stimulus/presentation/locally_sparse_noise_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';
+        end
+        
         pixel_variables = cell(size(example_labels,1), size(example_labels,2));
         for iRow = 1 : size(example_labels,1)
             for iCol = 1: size(example_labels,2)
-                if iRow < 10
-                    if iCol < 10
-                        pixel_variables{iRow, iCol} = ['row_' num2str(iRow,'%02d') '_col_' num2str(iCol,'%02d')];
-                        
-                    else
-                        pixel_variables{iRow, iCol} = ['row_' num2str(iRow,'%02d') '_col_' num2str(iCol)];
-                        
-                    end
-                elseif iCol < 10
-                    pixel_variables{iRow, iCol} = ['row_' num2str(iRow) '_col_' num2str(iCol,'%02d')];
-                else
-                    pixel_variables{iRow, iCol} = ['row_' num2str(iRow) '_col_' num2str(iCol)];
-                    
-                end
+                
+                pixel_variables{iRow, iCol} = ['row_' num2str(iRow,'%02d') '_col_' num2str(iCol,'%02d')];
+                
+                
             end
         end
-
+        
         flattened_pixel_variables = reshape(pixel_variables, [size(example_labels,1) * size(example_labels,2),1]);
+        
         % m pixels by n trials
         final_labels = NaN * ones(length(flattened_pixel_variables), length(stimulus_onset_times));
         
         for iTrial = 1: length(stimulus_onset_times)
-            
+                    if ismember(boc.session_type,'three_session_C2')
+
             iLabels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,iTrial], [Inf, Inf, 1])';
-            
+                    else
+                                iLabels = h5read(nwb_name, strcat('/stimulus/presentation/locally_sparse_noise_stimulus/indexed_timeseries/data'), [1,1,iTrial], [Inf, Inf, 1])';
+                    end
             iflattend_labels = reshape(iLabels, [length(flattened_pixel_variables),1]);
             final_labels(:, iTrial) = iflattend_labels;
         end
@@ -343,26 +361,17 @@ switch stimulus
         end
         
         
-        % we are having a hard time storing billions of pixel labels for natural scenes and natural movies,
-        % for now, pixel_labels are not
-        %     incorporated by default unless want_pixel_labels is set to 1
+
         
     case 'natural_scenes'
-        % we get lots of labels for natural_scenes, the structure of this
+        % the structure of this
         % section is
         %         1) parses 5950 frame_indexs including blank
         %         2) dealing with id_variables
         %             a) makes 119 id_labels
         %             b) maps 119 id_labels to 5950 frames refering to parsed_frame_indexs
         %             c) maps id_labels to id_variable
-        %         3) dealing with pixiel_variables
-        %             a) makes 1174*918 pixel_variables
-        %             b) makes (1174*918)*119 pixel_labels
-        %             c) maps (1174*918)*119 labels to 5950 frames refering to parsed_frame_indexs
-        %             d) maps pixel_labels to pixel_variables
-        
-        
-        
+
         
         example_labels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';
         
@@ -385,16 +394,11 @@ switch stimulus
         end
         % this part makes 119 id_labels
         % image_indexs ranges from 1 to 118
-%         image_indexs = 1 : length(categories(categorical(frame_indexs)))-1;
+        %         image_indexs = 1 : length(categories(categorical(frame_indexs)))-1;
         image_id_labels = cell(1, length(categories(categorical(frame_indexs)))-1);
+        % zero-pad 
         for iImage_index = 1 : length(categories(categorical(frame_indexs)))-1
-            if iImage_index < 10
-                image_id_labels(iImage_index) = cellstr(['Image', num2str(iImage_index,'%03d')]);
-            elseif iImage_index < 100
-                image_id_labels(iImage_index) = cellstr(['Image', num2str(iImage_index,'%03d')]);
-            else
-                image_id_labels(iImage_index) = cellstr(['Image', num2str(iImage_index)]);
-            end
+            image_id_labels(iImage_index) = cellstr(['Image', num2str(iImage_index,'%03d')]);
         end
 %         image_id_labels = strcat('No_', cellstr(num2str(image_indexs')));
 %         ['image', num2str(image_indexs')];
@@ -413,68 +417,15 @@ switch stimulus
         % this part maps id_labels to id_variable
         
         raster_labels.id = id_labels_for_all_frames;
-        
-%         if cell2mat(want_pixel_labels) == 1
-%             
-%             
-%             % this part makes 1174*918 pixel_variables
-%             % it makes life easier to make variables before making labels
-%             pixel_variables = cell(size(example_labels,1), size(example_labels,2));
-%             for iRow = 1 : size(example_labels,1)
-%                 for iCol = 1: size(example_labels,2)
-%                     %variables(iRow, iCol) = {['row_' num2str(iRow) '_col_' num2str(iCol)]};
-%                     pixel_variables{iRow, iCol} = ['row_' num2str(iRow) '_col_' num2str(iCol)];
-%                 end
-%             end
-%             flattened_pixel_variables = reshape(pixel_variables, [size(example_labels,1) * size(example_labels,2),1])';
-%             
-%             
-%             % this part makes (1174*918)*119 pixel_labels
-%             
-%             % m pixels by 118 images
-%             image_pixel_labels = NaN * ones(length(flattened_pixel_variables), length(image_indexs));
-%             
-%             for iImage = 1 : length(image_indexs)
-%                 iLabels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,iImage], [Inf, Inf, 1]);
-%                 
-%                 iflattend_labels = reshape(iLabels, [length(flattened_pixel_variables),1]);
-%                 image_pixel_labels(:, iImage) = iflattend_labels;
-%             end
-%             % the determination of pixel value of blank to be 127 is inspired from
-%             % locally sparse nosie where grey is 127
-%             blank_pixel_labels = repelem(127,length(flattened_pixel_variables), 1);
-%             all_pixel_labels = [image_pixel_labels, blank_pixel_labels];
-%             
-%             
-%             % this part maps (1174*918)*119 labels to 5950 frames refering to
-%             % parsed_frame_indexs
-%             
-%             % m pixels (around 1 million) by 5950 trials
-%             % this function may crash matlab
-%             pixel_labels_for_all_trials = NaN * ones(length(flattened_pixel_variables),length(frame_indexs));
-%             
-%             for iFrame = 1 : length(frame_indexs)
-%                 
-%                 pixel_labels_for_all_trials(:,iFrame) = all_pixel_labels(:, parsed_frame_indexs(iFrame));
-%                 
-%             end
-%             
-%             
-%             % this part maps pixel_labels to pixel_variables
-%             for iVariable  =  1: length(flattened_pixel_variables)
-%                 raster_labels.(char(flattened_pixel_variables(iVariable, 1))) = pixel_labels_for_all_trials(iVariable,:);
-%             end
-%             
-%             fprintf('made 6 billion labels')
-%             
-%         end
+
     case {'natural_movie_one','natural_movie_two', 'natural_movie_three'}
         example_labels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,1], [Inf, Inf, 1])';
         frame_indexs = h5read(nwb_name,strcat('/stimulus/presentation/', stimulus, '_stimulus/data'));
         
         %     this session is much simpler than natural scenes one, cuz clip is
         %     repeated in a row without randomization
-        
+        %  here we illlustrate the procedure for clip 1 and 2, both of
+        %  which have 300 frames, clip 3 has 3600 frames.
         %     % frame_indexs range from 0 to 899
         
         % this part makes 900 id_labels
@@ -484,72 +435,23 @@ switch stimulus
         image_indexs = 1 : length(categories(categorical(frame_indexs)));
         switch stimulus
             case 'natural_movie_one'
-                image_id_labels = strcat('clip_1_No_', cellstr(num2str(image_indexs')));
+                image_id_labels = strcat('clip_1_frame_', cellstr(num2str(image_indexs', '%03d')));
             case 'natural_movie_two'
-                image_id_labels = strcat('clip_2_No_', cellstr(num2str(image_indexs')));
+                image_id_labels = strcat('clip_2_frame_', cellstr(num2str(image_indexs', '%03d')));
                 
             case 'natural_movie_three'
-                image_id_labels = strcat('clip_3_No_', cellstr(num2str(image_indexs')));
+                image_id_labels = strcat('clip_3_frame_', cellstr(num2str(image_indexs', '%04d')));
         end
         
         
-        % repeat id_labels for 10 times
-        id_labels_for_all_frames = repelem(image_id_labels, 10);
+        % repeat id_labels as a whole for 10 times
+        id_labels_for_all_frames = repmat(image_id_labels, 10, 1);
         
         % this part maps id_labels to id_variable
         
         raster_labels.id = id_labels_for_all_frames';
         
-        
-%         if cell2mat(want_pixel_labels) == 1
-%             
-%             
-%             % this part makes 304 * 608  pixel_variables
-%             pixel_variables = cell(size(example_labels,1), size(example_labels,2));
-%             for iRow = 1 : size(example_labels,1)
-%                 for iCol = 1: size(example_labels,2)
-%                     %variables(iRow, iCol) = {['row_' num2str(iRow) '_col_' num2str(iCol)]};
-%                     pixel_variables{iRow, iCol} = ['row_' num2str(iRow) '_col_' num2str(iCol)];
-%                 end
-%             end
-%             flattened_pixel_variables = reshape(pixel_variables, [size(example_labels,1) * size(example_labels,2),1]);
-%             
-%             % add clip info to variables
-%             switch stimulus
-%                 case 'natural_movie_one'
-%                     flattened_pixel_variables_final = strcat('clip_1_',flattened_pixel_variables);
-%                 case 'natural_movie_two'
-%                     flattened_pixel_variables_final = strcat('clip_2_',flattened_pixel_variables);
-%                     
-%                 case 'natural_movie_three'
-%                     flattened_pixel_variables_final = strcat('clip_3_',flattened_pixel_variables);
-%             end
-%             
-%             
-%             % this part makes (304 * 608)* 900 pixel_labels
-%             
-%             % m pixels by 900 images
-%             image_pixel_labels = NaN * ones(length(flattened_pixel_variables), length(image_indexs));
-%             
-%             for iImage = 1 : length(image_indexs)
-%                 iLabels = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/indexed_timeseries/data'), [1,1,iImage], [Inf, Inf, 1])';
-%                 
-%                 iflattend_labels = reshape(iLabels, [length(flattened_pixel_variables),1]);
-%                 image_pixel_labels(:, iImage) = iflattend_labels;
-%             end
-%             
-%             % repeat pixel_labels for 10 times
-%             pixel_labels_for_all_frames = repmat(image_pixel_labels, 10);
-%             %
-%             
-%             % this part maps pixel_labels to pixel_variables
-%             for iVariable  =  1: length(flattened_pixel_variables)
-%                 raster_labels.(char(flattened_pixel_variables_final(iVariable, 1))) = pixel_labels_for_all_frames(iVariable,:);
-%             end
-%             
-%             fprintf('made 10 billion labels')
-%             
-%         end
+
         
 end
 end
