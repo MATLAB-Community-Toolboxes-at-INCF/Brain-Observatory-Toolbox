@@ -13,7 +13,7 @@ classdef BOT_cache < handle
    
    properties (SetAccess = private)
       strCacheDir;                     % Path to location of cached Brain Observatory data
-      sCacheFiles;                     % Structure containing file paths of cached files
+      sCacheFiles;                     % Structure containing file paths of cached files, as well as cloud cacher
    end
    
    properties (SetAccess = private, Dependent = true)
@@ -111,6 +111,7 @@ classdef BOT_cache < handle
       end      
    end
 
+   
    %% Methods to manage manifests and caching
    
    methods
@@ -146,53 +147,48 @@ classdef BOT_cache < handle
          oCache.bManifestsLoaded = true;
       end
       
-      function sData = CacheAndLoadFile(oCache, strURLPath)
-         % CacheAndLoadFile - METHOD Check for cached version of Brain Observatory file, and load
+      function strFile = CacheFile(oCache, strURL, strLocalFile)
+         % CacheFile - METHOD Check for cached version of Brain Observatory file, and return location
          %
-         % Usage: sData = CacheAndLoadFile(oCache, strURLPath)
+         % Usage: strFile = CacheFile(oCache, strURL, strLocalFile)
          
-         
-         
+         strFile = oCache.sCacheFiles.ccCache.websave(strLocalFile, strURL);
       end
       
-         function download_nwb(boc, nwb_dir_name)
-         % a function downloads NWB files corrsponding to the sessions in
-         % filtered_session_table
+      function CacheFilesForSessionIDs(oCache, vnSessionIDs)
+         % CacheFilesForSessionIDs - METHOD Download NWB files containing experimental data for the given session IDs
+         %
+         % Usage: CacheFilesForSessionIDs(oCache, vnSessionIDs)
          
-         
-         
-         % prepare folder
-         if ~exist(nwb_dir_name,'dir')
-            mkdir(nwb_dir_name)
+         % - Loop over session IDs
+         for nSessIndex = 1:numel(vnSessionIDs)
+            % - Find this session in the sessions table
+            tSession = oCache.tAllSessions(oCache.tAllSessions.id == vnSessionIDs(nSessIndex), :);
+            
+            % - Cache the corresponding NWB file
+            if ~isempty(tSession)
+               strURL = [oCache.strABOBaseUrl tSession.well_known_files.download_link];
+               strLocalFile = tSession.well_known_files.path;
+               
+               % - Provide some progress text
+               fprintf('Caching URL: [%s]...\n', strURL);
+               
+               try
+                  % - Try to cache the NWB file
+                  oCache.CacheFile(strURL, strLocalFile);
+               
+               catch mE_Cause
+                  % - Raise an error on failure
+                  mE_Base = MException('BOT:CouldNotCacheURL', ...
+                     'The NWB file for a session could not be cached.');
+                  mE_Base.addCause(mE_Cause);
+                  throw(mE_Base);
+               end
+            end
          end
-         
-         
-         % get the NWB file URL for filtered sessions
-         allen_institute_base_url = 'http://api.brain-map.org';
-         for cur = 1 : size(boc.filtered_session_table,1)
-            session_dir_name = [nwb_dir_name char(boc.filtered_session_table(cur,:).stimulus_name) '/'];
-            % prepare session folder under nwb folder
-            if ~exist(session_dir_name, 'dir')
-               mkdir(session_dir_name)
-            end
-            cur_url = boc.filtered_session_table(cur, :). well_known_files.download_link;
-            full_url = [allen_institute_base_url cur_url];
-            cur_id = boc.filtered_session_table(cur, :).id;
-            nwb_file_name = [session_dir_name num2str(cur_id) '.nwb'];
-            if ~exist(nwb_file_name,'file')
-               fprintf(['downloading ' nwb_file_name])
-               disp(' ')
-               tic
-               websave(nwb_file_name, full_url);
-               disp(' ')
-               fprintf(['donwloaded ' nwb_file_name])
-               toc
-            else
-               fprintf(['desired ' nwb_file_name ' already exists'])
-            end
-         end % end of for loop
-      end % end of function get_session_data
+      end
    end
+   
    
    %% Methods for returning a session object
    
@@ -367,7 +363,19 @@ classdef BOT_cache < handle
          boc.filtered_session_table = boc.filtered_session_table(strcmp(boc.filtered_session_table.stimulus_name,session_type),:);
       end
       
-      %% -- Getter methods for depedent filtered sessions properties
+      %% -- Method to return session objects for filtered sessions
+      
+      function vsSessions = get_filtered_sessions(boc)
+         % - Get the current table of filtered sessions, and their IDs
+         vnIDs = boc.filtered_session_table.id;
+         
+         % - Return session objects for these IDs
+         for nID = numel(vnIDs):-1:1
+            vsSessions(nID) = BOT_session(vnIDs(nID), boc);
+         end
+      end
+      
+      %% -- Getter methods for dependent filtered sessions properties
       
       function result = get.filtered_session_table(boc)
          if isempty(boc.filtered_session_table)
