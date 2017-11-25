@@ -49,8 +49,10 @@ classdef BOT_cache < handle
    
    %% Constructor
    methods
-      function oCache = BOT_cache(varargin)
+      function oCache = BOT_cache
          % CONSTRUCTOR - Returns an object for managing data access to the Allen Brain Observatory
+         %
+         % Usage: oCache = BOT_cache()
          
          % - Find and return the global cache object, if one exists
          sUserData = get(0, 'UserData');
