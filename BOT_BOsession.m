@@ -6,12 +6,16 @@ classdef BOT_BOsession
    
    %% - Public properties
    properties (SetAccess = private)
-      tSessionInfo;
+      sSessionInfo;              % Structure containing session metadata
+   end
+
+   properties (SetAccess = private, Dependent = true)
+      strLocalNWBFileLocation;   % Local location of the NWB file corresponding to this session, if it has been cached
    end
    
    %% - Private properties
-   properties (Hidden = true, SetAccess = private)
-      bocCache = BOT_cache();
+   properties (Hidden = true, SetAccess = private, Transient = true)
+      bocCache = BOT_cache();    % Private handle to the BOT cache object
    end
    
    %% - Constructor
@@ -71,7 +75,37 @@ classdef BOT_BOsession
          end
          
          % - Extract the appropriate table row from the manifest
-         bsObj.tSessionInfo = bsObj.bocCache.tAllSessions(find(vbManifestRow, 1, 'first'), :);
+         bsObj.sSessionInfo = table2struct(bsObj.bocCache.tAllSessions(find(vbManifestRow, 1, 'first'), :));
+      end
+   end
+   
+   %% - Matlab BOT methods
+   
+   methods
+      function bNWBFileIsCached = IsNWBFileCached(bos)
+         % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
+         %
+         % Usage: bNWBFileIsCached = IsNWBFileCached(bos)
+         bNWBFileIsCached =  bos.bocCache.IsInCache([bos.bocCache.strABOBaseUrl bos.sSessionInfo.well_known_files.download_link]);
+      end
+      
+      function strLocalFile = EnsureCached(bos)
+         % EnsureCached - METHOD Ensure the NWB file corresponding to this session is cached
+         %
+         % Usage: strLocalFile = EnsureCached(bos)
+         strLocalFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
+      end
+      
+      function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
+         % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
+         %
+         % Usage: strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
+         if ~bos.IsNWBFileCached()
+            strLocalNWBFileLocation = [];
+         else
+            % - Get the local file location for the session NWB URL
+            strLocalNWBFileLocation = bos.bocCache.sCacheFiles.ccCache.CachedFileForURL([bos.bocCache.strABOBaseUrl bos.sSessionInfo.well_known_files.download_link]);
+         end
       end
    end
    

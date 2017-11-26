@@ -157,48 +157,59 @@ classdef BOT_cache < handle
          strFile = oCache.sCacheFiles.ccCache.websave(strLocalFile, strURL);
       end
       
-      function CacheFilesForSessionIDs(oCache, vnSessionIDs)
+      function strLocalFile = CacheFilesForSessionIDs(oCache, vnSessionIDs)
          % CacheFilesForSessionIDs - METHOD Download NWB files containing experimental data for the given session IDs
          %
-         % Usage: CacheFilesForSessionIDs(oCache, vnSessionIDs)
+         % Usage: strLocalFile = CacheFilesForSessionIDs(oCache, vnSessionIDs)
          
          % - Loop over session IDs
          for nSessIndex = 1:numel(vnSessionIDs)
             % - Find this session in the sessions table
             tSession = oCache.tAllSessions(oCache.tAllSessions.id == vnSessionIDs(nSessIndex), :);
             
-            % - Cache the corresponding NWB file
-            if ~isempty(tSession)
+            % - Check to see if the session exists
+            if isempty(tSession)
+               error('BOT:InvalidSessionID', ...
+                     'The provided session ID [%d] was not found in the Brain Observatory manifest.', ...
+                     vnSessionIDs(nSessIndex));
+            
+            else
+               % - Cache the corresponding NWB file
                strURL = [oCache.strABOBaseUrl tSession.well_known_files.download_link];
                strLocalFile = tSession.well_known_files.path;
                
                % - Provide some progress text
-               fprintf('Caching URL: [%s]...\n', strURL);
+               if oCache.sCacheFiles.ccCache.IsInCache(strURL)
+                  fprintf('Cached URL: [%s]...\n', strURL);
+               else
+                  fprintf('Downloading URL: [%s]...\n', strURL);
+               end
                
                try
                   % - Try to cache the NWB file
-                  oCache.CacheFile(strURL, strLocalFile);
+                  strLocalFile = oCache.CacheFile(strURL, strLocalFile);
                
                catch mE_Cause
                   % - Raise an error on failure
                   mE_Base = MException('BOT:CouldNotCacheURL', ...
-                     'The NWB file for a session could not be cached.');
+                     'The NWB file for a session ID [%d] could not be cached.', ...
+                     vnSessionIDs(nSessIndex));
                   mE_Base.addCause(mE_Cause);
                   throw(mE_Base);
                end
             end
          end
       end
+      
+      function bIsInCache = IsInCache(oCache, strURL)
+         % IsInCache - METHOD Is the provided URL already cached?
+         %
+         % Usage: bIsInCache = IsInCache(oCache, strURL)
+         bIsInCache = oCache.sCacheFiles.ccCache.IsInCache(strURL);
+      end
    end
    
-   
-   %% Methods for returning a session object
-   
-   methods
-
-   end
-   
-   
+      
    %% Session table filtering properties and methods
    
    methods
