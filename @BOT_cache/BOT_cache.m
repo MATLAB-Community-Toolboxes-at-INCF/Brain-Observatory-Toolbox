@@ -245,7 +245,7 @@ classdef BOT_cache < handle
          session_by_stimuli = boc.get_session_by_stimuli();
          result = [];
          for iSession = 1: length(boc.session_type)
-            result = [result, session_by_stimuli.(char(boc.session_type(iSession)))];
+            result = [result, session_by_stimuli.(char(boc.session_type(iSession)))]; %#ok<AGROW>
          end
          result = categories(categorical(result));
       end
@@ -367,19 +367,19 @@ classdef BOT_cache < handle
       
       %% -- Method to return session objects for filtered sessions
       
-      function vsSessions = get_filtered_sessions(boc)
-         % - Get the current table of filtered sessions, and their IDs
-         vnIDs = boc.filtered_session_table.id;
+      function vbsSessions = get_filtered_sessions(boc)
+         % get_filtered_sessions - METHOD Return session objects for the filtered experimental sessions
+         %
+         % Usage: vbsSessions = get_filtered_sessions(boc)
          
-         % - Return session objects for these IDs
-         for nID = numel(vnIDs):-1:1
-            vsSessions(nID) = BOT_session(vnIDs(nID), boc);
-         end
+         % - Get the current table of filtered sessions, construct objects
+         vbsSessions = BOT_BOsession(boc.filtered_session_table.id);
       end
       
       %% -- Getter methods for dependent filtered sessions properties
       
       function result = get.filtered_session_table(boc)
+         % get.filtered_session_table - GETTER METHOD Access `filtered_session_table` property
          if isempty(boc.filtered_session_table)
             error('BOT:NoSessionsRemain', 'No sessions remain after filtering.');
          else
@@ -388,34 +388,42 @@ classdef BOT_cache < handle
       end
       
       function stimulus = get.stimulus(boc)
+         % get.stimulus - GETTER METHOD Access `stimulus` property
          stimulus = boc.get_all_stimuli();
       end
       
       function session_type = get.session_type(boc)
+         % get.session_type - GETTER METHOD Access `session_type` property
          session_type = categorical(boc.filtered_session_table{:, 'stimulus_name'});
       end
       
       function targeted_structure = get.targeted_structure(boc)
+         % get.targeted_structure - GETTER METHOD Access `targeted_structure` property
          targeted_structure = categories(boc.get_targeted_structure_acronyms());
       end
 
       function imaging_depth = get.imaging_depth(boc)
+         % get.imaging_depth - GETTER METHOD Access `imaging_depth` property
          imaging_depth = unique(boc.filtered_session_table.imaging_depth);
       end
 
       function container_id = get.container_id(boc)
+         % get.container_id - GETTER METHOD Access `container_id` property
          container_id = unique(boc.filtered_session_table.experiment_container_id);
       end
 
       function session_id = get.session_id(boc)
+         % get.session_id - GETTER METHOD Access `session_id` property
          session_id = boc.filtered_session_table.id;
       end
 
       function cre_line = get.cre_line(boc)
+         % get.cre_line - GETTER METHOD Access `cre_line` property
          cre_line = categories(categorical(boc.filtered_session_table.cre_line));
       end
 
       function eye_tracking_avail = get.eye_tracking_avail(boc)
+         % get.eye_tracking_avail - GETTER METHOD Access `eye_tracking_avail` property
          eye_tracking_avail = ~unique(boc.filtered_session_table.fail_eye_tracking);
       end      
    end
@@ -428,6 +436,8 @@ classdef BOT_cache < handle
          % STATIC METHOD - Check and update file manifest from Allen Brain Observatory API
          %
          % Usage: manifests = BOT_cache.UpdateManifest()
+         
+         % TODO: Force download of the manifest, if the manifest has been updated
          
          try
             % - Get a cache object
@@ -455,7 +465,7 @@ classdef BOT_cache < handle
       
       function [manifests] = get_manifests_info_from_api
          
-         % PRIVATE METHOD - get_manifests_info_from_api
+         % get_manifests_info_from_api - PRIVATE METHOD Download the Allen Brain Observatory manifests from the web
          %
          % Usage: [manifests] = get_manifests_info_from_api
          %
@@ -492,8 +502,6 @@ classdef BOT_cache < handle
          for i = 1:size(tAllSessions,1)
             donor_info = tAllSessions(i,:).specimen.donor;
             transgenic_lines_info = struct2table(donor_info.transgenic_lines);
-            %         cre_line(i,1) = transgenic_lines_info.name(string(transgenic_lines_info.transgenic_line_type_name) == 'driver' & ...
-            %             contains(transgenic_lines_info.name, 'Cre'));
             cre_line(i,1) = transgenic_lines_info.name(not(cellfun('isempty', strfind(transgenic_lines_info.transgenic_line_type_name, 'driver')))...
                & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
          end
@@ -510,7 +518,7 @@ classdef BOT_cache < handle
          fields = fieldnames(session_by_stimuli);
          for i = 1 :length(fields)
             if sum(ismember(session_by_stimuli.(char(fields(i))),stimulus)) >= 1
-               filtered_session(length(filtered_session)+1) = cellstr(fields(i));
+               filtered_session(end+1) = cellstr(fields(i)); %#ok<AGROW>
             end
          end
       end
