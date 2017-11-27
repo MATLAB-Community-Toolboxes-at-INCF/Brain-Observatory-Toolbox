@@ -27,6 +27,11 @@ classdef BOT_BOsession
          %        vbsObj = BOT_BOsession(vnSessionIDs)
          %        bsObj = BOT_BOsession(tSessionRow)
 
+         % - Support zero arguments
+         if nargin == 0
+            return;
+         end
+         
          % - Were we provided a table?
          if istable(nSessionID)
             tSession = nSessionID;

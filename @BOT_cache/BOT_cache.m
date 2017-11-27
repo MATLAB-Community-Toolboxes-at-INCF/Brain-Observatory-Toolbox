@@ -32,15 +32,15 @@ classdef BOT_cache < handle
    
    %% - Properties for global filtering of sessions table, included for backwards compatibility
    properties (SetAccess = private, Transient = true, Hidden = false)
-      filtered_session_table;    % A table of sessions that is progressively filtered
-      stimulus;                  % A categorical array containing all the stimulus types from filtered_session_table
-      targeted_structure;        % A categorical array containing all the brain areas from filtered_session_table
-      imaging_depth;             % A categorical array containing all the cortical depths from filtered_session_table
-      container_id;              % A vector containing all the container ids from filtered_session_table
-      session_id;                % A vector containing all the session ids from filtered_session_table
-      session_type;              % A categorical array containing all the session types from filtered_session_table
-      cre_line;                  % A categorical array containing all the cre lines from filtered_session_table
-      eye_tracking_avail;        % A boolean vector containing all condtions if eye tracking is available or not from filtered_session_table
+      filtered_session_table = nan;    % A table of sessions that is progressively filtered
+      stimulus;                        % A categorical array containing all the stimulus types from filtered_session_table
+      targeted_structure;              % A categorical array containing all the brain areas from filtered_session_table
+      imaging_depth;                   % A categorical array containing all the cortical depths from filtered_session_table
+      container_id;                    % A vector containing all the container ids from filtered_session_table
+      session_id;                      % A vector containing all the session ids from filtered_session_table
+      session_type;                    % A categorical array containing all the session types from filtered_session_table
+      cre_line;                        % A categorical array containing all the cre lines from filtered_session_table
+      eye_tracking_avail;              % A boolean vector containing all condtions if eye tracking is available or not from filtered_session_table
       
       % I don't think failed experiment containers can be used, so I just go and exclude them
       failed = false;            % Boolean flag: should failed sessions be included?
@@ -78,9 +78,6 @@ classdef BOT_cache < handle
          % - Populate cached filenames
          oCache.sCacheFiles.manifests = [oCache.strCacheDir filesep 'manifests.mat'];
          oCache.sCacheFiles.ccCache = CloudCacher(oCache.strCacheDir);
-         
-         % - Reset filtered sessions table
-         oCache.clear_filters();
          
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
@@ -391,6 +388,13 @@ classdef BOT_cache < handle
       
       function result = get.filtered_session_table(boc)
          % get.filtered_session_table - GETTER METHOD Access `filtered_session_table` property
+         
+         % - Reset filtered sessions table, if necessary
+         if ~istable(boc.filtered_session_table) && isnan(boc.filtered_session_table)
+            boc.clear_filters();
+         end
+         
+         % - Check for an empty table
          if isempty(boc.filtered_session_table)
             error('BOT:NoSessionsRemain', 'No sessions remain after filtering.');
          else
@@ -448,17 +452,21 @@ classdef BOT_cache < handle
          %
          % Usage: manifests = BOT_cache.UpdateManifest()
          
-         % TODO: Force download of the manifest, if the manifest has been updated
+         % TODO: Only download the manifest if it has been updated
          
          try
             % - Get a cache object
             oCache = BOT_cache();
             
             % - Download the manifest from the Allen Brain API
+            fprintf('Downloading Allen Brain Observatory manifests...\n');
             manifests = BOT_cache.get_manifests_info_from_api();
             
             % - Save the manifest to the cache directory
             save(oCache.sCacheFiles.manifests, 'manifests');
+            
+            % - Invalidate local manifests cache
+            oCache.bManifestsLoaded = false;
          
          catch mE_cause
             % - Throw an error if manifests could not be updated
@@ -469,6 +477,7 @@ classdef BOT_cache < handle
          end
       end
    end
+   
    
    %% Private methods
    
@@ -541,7 +550,6 @@ classdef BOT_cache < handle
          session_by_stimuli.three_session_C2 = {'locally_sparse_noise_4deg','locally_sparse_noise_8deg', ...
             'natural_movie_one','natural_movie_two','spontaneous'};
       end
-      
    end
    
 end   
