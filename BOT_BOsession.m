@@ -16,6 +16,28 @@ classdef BOT_BOsession
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
       bocCache = BOT_cache();    % Private handle to the BOT cache object
+      
+      strSupportedPipelineVersion = '2.0';
+      strPipelineDataset = 'brain_observatory_pipeline';
+
+      FILE_METADATA_MAPPING = struct(...
+         'age',                     '/general/subject/age', ...
+         'sex',                     '/general/subject/sex', ...
+         'imaging_depth',           '/general/optophysiology/imaging_plane_1/imaging depth', ...
+         'targeted_structure',      '/general/optophysiology/imaging_plane_1/location', ...
+         'ophys_experiment_id',     '/general/session_id', ...
+         'experiment_container_id', '/general/experiment_container_id', ...
+         'device_string',           '/general/devices/2-photon microscope', ...
+         'excitation_lambda',       '/general/optophysiology/imaging_plane_1/excitation_lambda', ...
+         'indicator',               '/general/optophysiology/imaging_plane_1/indicator', ...
+         'fov',                     '/general/fov', ...
+         'genotype',                '/general/subject/genotype', ...
+         'session_start_time',      '/session_start_time', ...
+         'session_type',            '/general/session_type', ...
+         'specimen_name',           '/general/specimen_name', ...
+         'generated_by',            '/general/generated_by');
+      
+      sCachedMetadata = [];
    end
    
    %% - Constructor
@@ -86,7 +108,7 @@ classdef BOT_BOsession
    
    %% - Matlab BOT methods
    
-   methods
+   methods (Access = private)
       function bNWBFileIsCached = IsNWBFileCached(bos)
          % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
          %
@@ -101,6 +123,14 @@ classdef BOT_BOsession
          strLocalFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
       end
       
+      function delete(~)
+         % delete - DELETER METHOD Clean up when the object is destroyed
+         %
+         % Usage: delete(bos)
+      end
+   end
+   
+   methods
       function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
          % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
@@ -117,18 +147,74 @@ classdef BOT_BOsession
    
    %% - Allen BO data set API
    methods (Hidden = false)
-      function vnCellSpecimenIDs = get_cell_specimen_ids(bos)
-         % get_cell_specimen_ids - METHOD Return all cell specimen IDs in this session
-         %
-         % Usage: vnCellSpecimenIDs = get_cell_specimen_ids(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
       
-      function vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
-         % get_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
-         %
-         % Usage: vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
+      function sMetadata = get_metadata(bos)
+         % get_metadata - METHOD Read metadata from the NWB file
+
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+         
+         % - Attempt to read each of the metadata fields from the NWB file
+         sMetadata = bos.FILE_METADATA_MAPPING;
+         for strFieldname = fieldnames(bos.FILE_METADATA_MAPPING)'
+            % - Convert to a string (otherwise it would be a cell)
+            strFieldname = strFieldname{1}; %#ok<FXSET>
+            
+            % - Try to read this metadata entry
+            try
+               sMetadata.(strFieldname) = h5read(bos.strLocalNWBFileLocation, sMetadata.(strFieldname));
+            catch
+               sMetadata.(strFieldname) = [];
+            end
+         end
+         
+         % - Try to convert CRE line information
+         if isfield(sMetadata, 'genotype') && ~isempty(sMetadata.genotype)
+            sMetadata.cre_line = strsplit(sMetadata.genotype, ';');
+            sMetadata.cre_line = sMetadata.cre_line{1};
+         end
+         
+         % - Try to extract imaging depth in ?m
+         if isfield(sMetadata, 'imaging_depth') && ~isempty(sMetadata.imaging_depth)
+            sMetadata.imaging_depth_um = strsplit(sMetadata.imaging_depth);
+            sMetadata.imaging_depth_um = str2double(sMetadata.imaging_depth_um{1});
+         end
+         
+         % - Try to convert the experiment ID
+         if isfield(sMetadata, 'ophys_experiment_id') && ~isempty(sMetadata.ophys_experiment_id)
+            sMetadata.ophys_experiment_id = str2double(sMetadata.ophys_experiment_id);
+         end
+
+         % - Try to convert the experiment container ID
+         if isfield(sMetadata, 'experiment_container_id') && ~isempty(sMetadata.experiment_container_id)
+            sMetadata.experiment_container_id = str2double(sMetadata.experiment_container_id);
+         end
+         
+         % - Convert the start time to a date
+         
+%         # convert start time to a date object
+%         session_start_time = meta.get('session_start_time')
+%         if isinstance(session_start_time, basestring):
+%             meta['session_start_time'] = dateutil.parser.parse(session_start_time)
+
+         % - Parse the age in days
+         if isfield(sMetadata, 'age') && ~isempty(sMetadata.age)
+            sMetadata.age_days = sscanf(sMetadata.age, '%d days');
+         end
+
+         % - Parse the device string
+         if isfield(sMetadata, 'device_string') && ~isempty(sMetadata.device_string)
+            [~, cMatches] = regexp(sMetadata.device_string, '(.*?)\.\s(.*?)\sPlease*', 'match', 'tokens');
+            sMetadata.device = cMatches{1}{1};
+            sMetadata.device_name = cMatches{1}{2};
+         end
+         
+         % - Parse the file version
+         if isfield(sMetadata, 'generated_by') && ~isempty(sMetadata.generated_by)
+            sMetadata.pipeline_version = sMetadata.generated_by{end};
+         else
+            sMetadata.pipeline_version = '0.9';
+         end
       end
       
       function [mtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
@@ -136,6 +222,24 @@ classdef BOT_BOsession
          %
          % Usage: [mtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
          BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+%         # starting in version 2.0, neuropil correction follows trace demixing
+%         if self.pipeline_version >= parse_version("2.0"):
+%             timestamps, cell_traces = self.get_demixed_traces(cell_specimen_ids)
+%         else:
+%             timestamps, cell_traces = self.get_fluorescence_traces(cell_specimen_ids)
+% 
+%         r = self.get_neuropil_r(cell_specimen_ids)
+% 
+%         _, neuropil_traces = self.get_neuropil_traces(cell_specimen_ids)
+% 
+%         fc = cell_traces - neuropil_traces * r[:, np.newaxis]
+% 
+%         return timestamps, fc
+      
       end
       
       function [mtTimestamps, mfTraces] = get_demixed_traces(bos, vnCellSpecimenIDs)
@@ -143,6 +247,24 @@ classdef BOT_BOsession
          %
          % Usage: [mtTimestamps, mfTraces] = get_demixed_traces(bos, vnCellSpecimenIDs)
          BBS_WARN_NOT_YET_IMPLEMENTED()
+
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+%          timestamps = self.get_fluorescence_timestamps()
+% 
+%         with h5py.File(self.nwb_file, 'r') as f:
+%             ds = f['processing'][self.PIPELINE_DATASET][
+%                 'Fluorescence']['imaging_plane_1_demixed_signal']['data']
+%             if cell_specimen_ids is None:
+%                 traces = ds.value
+%             else:
+%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
+%                 traces = ds[inds, :]
+% 
+%         return timestamps, traces
+      
+      
       end
       
       function [mtTimestamps, mfdFF] = get_dff_traces(bos, vnCellSpecimenIDs)
@@ -150,6 +272,25 @@ classdef BOT_BOsession
          %
          % Usage: [mtTimestamps, mfTraces] = get_dff_traces(bos, vnCellSpecimenIDs)
          BBS_WARN_NOT_YET_IMPLEMENTED()
+
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+         
+         
+%         with h5py.File(self.nwb_file, 'r') as f:
+%             dff_ds = f['processing'][self.PIPELINE_DATASET][
+%                 'DfOverF']['imaging_plane_1']
+% 
+%             timestamps = dff_ds['timestamps'].value
+% 
+%             if cell_specimen_ids is None:
+%                 cell_traces = dff_ds['data'].value
+%             else:
+%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
+%                 cell_traces = dff_ds['data'][inds, :]
+% 
+%         return timestamps, cell_traces
+      
       end
       
       function vtTimestamps = get_fluorescence_timestamps(bos)
@@ -157,6 +298,17 @@ classdef BOT_BOsession
          %
          % Usage: vtTimestamps = get_fluorescence_timestamps(bos)
          BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+        
+         
+%          with h5py.File(self.nwb_file, 'r') as f:
+%             timestamps = f['processing'][self.PIPELINE_DATASET][
+%                 'Fluorescence']['imaging_plane_1']['timestamps'].value
+%         return timestamps
+
       end
       
       function [mtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
@@ -164,8 +316,126 @@ classdef BOT_BOsession
          %
          % Usage: [mtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
          BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+         
+         
+%         timestamps = self.get_fluorescence_timestamps()
+%         with h5py.File(self.nwb_file, 'r') as f:
+%             ds = f['processing'][self.PIPELINE_DATASET][
+%                 'Fluorescence']['imaging_plane_1']['data']
+% 
+%             if cell_specimen_ids is None:
+%                 cell_traces = ds.value
+%             else:
+%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
+%                 cell_traces = ds[inds, :]
+% 
+%         return timestamps, cell_traces         
       end
       
+      function vfR = get_neuropil_r(bos, vnCellSpecimenIDs)
+         % get_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
+         %
+         % Usage: vfR = get_neuropil_r(bos, <vnCellSpecimenIDs>)
+         BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+         
+
+%         with h5py.File(self.nwb_file, 'r') as f:
+%             if self.pipeline_version >= parse_version("2.0"):
+%                 r_ds = f['processing'][self.PIPELINE_DATASET][
+%                     'Fluorescence']['imaging_plane_1_neuropil_response']['r']
+%             else:
+%                 r_ds = f['processing'][self.PIPELINE_DATASET][
+%                     'Fluorescence']['imaging_plane_1']['r']
+% 
+%             if cell_specimen_ids is None:
+%                 r = r_ds.value
+%             else:
+%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
+%                 r = r_ds[inds]
+% 
+%         return r      
+      
+      end
+      
+      function [mtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
+         % get_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
+         %
+         % Usage: [mtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
+         BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+         
+
+%         timestamps = self.get_fluorescence_timestamps()
+% 
+%         with h5py.File(self.nwb_file, 'r') as f:
+%             ds = f['processing'][self.PIPELINE_DATASET][
+%                 'Fluorescence']['imaging_plane_1_demixed_signal']['data']
+%             if cell_specimen_ids is None:
+%                 traces = ds.value
+%             else:
+%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
+%                 traces = ds[inds, :]
+% 
+%         return timestamps, traces      
+      
+      end
+
+      function vnCellSpecimenIDs = get_cell_specimen_ids(bos)
+         % get_cell_specimen_ids - METHOD Return all cell specimen IDs in this session
+         %
+         % Usage: vnCellSpecimenIDs = get_cell_specimen_ids(bos)
+         BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+         
+
+%         with h5py.File(self.nwb_file, 'r') as f:
+%             cell_id = f['processing'][self.PIPELINE_DATASET][
+%                 'ImageSegmentation']['cell_specimen_ids'].value
+%         return cell_id
+      
+      end
+      
+      function vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
+         % get_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
+         %
+         % Usage: vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
+         BBS_WARN_NOT_YET_IMPLEMENTED()
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos)
+
+         
+
+%         all_cell_specimen_ids = list(self.get_cell_specimen_ids())
+% 
+%         try:
+%             inds = [list(all_cell_specimen_ids).index(i)
+%                     for i in cell_specimen_ids]
+%         except ValueError as e:
+%             raise ValueError("Cell specimen not found (%s)" % str(e))
+% 
+%         return inds
+      
+      
+      end
+
+      
+      %% -- Second priority
+            
       function [template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
          % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
          %
@@ -187,19 +457,6 @@ classdef BOT_BOsession
          BBS_WARN_NOT_YET_IMPLEMENTED()
       end
       
-      function vfR = get_neuropil_r(bos, vnCellSpecimenIDs)
-         % get_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
-         %
-         % Usage: vfR = get_neuropil_r(bos, <vnCellSpecimenIDs>)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
-      
-      function [mtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
-         % get_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
-         %
-         % Usage: [mtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
       
       function [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, bAsSpherical)
          % get_pupil_location - METHOD Return the pupil location trace for this experimental session
@@ -286,10 +543,10 @@ classdef BOT_BOsession
          BBS_ERR_NOT_IMPLEMENTED('Use method get_roi_mask_array()');
       end
       
-      function varargout = get_metadata(varargin) %#ok<STOUT>
-         % get_metadata - UNIMPLEMENTED METHOD - Access object properties instead
-         BBS_ERR_NOT_IMPLEMENTED('Access object properties instead');
-      end
+%       function varargout = get_metadata(varargin) %#ok<STOUT>
+%          % get_metadata - UNIMPLEMENTED METHOD - Access object properties instead
+%          BBS_ERR_NOT_IMPLEMENTED('Access object properties instead');
+%       end
       
       function varargout = get_session_type(varargin) %#ok<STOUT>
          % get_session_type - UNIMPLEMENTED METHOD - Access object properties instead
