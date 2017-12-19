@@ -121,9 +121,7 @@ classdef BOT_cache < handle
                strLocalFile = tSession.well_known_files.path;
                
                % - Provide some progress text
-               if oCache.sCacheFiles.ccCache.IsInCache(strURL)
-                  fprintf('Cached URL: [%s]...\n', strURL);
-               else
+               if ~oCache.sCacheFiles.ccCache.IsInCache(strURL)
                   fprintf('Downloading URL: [%s]...\n', strURL);
                end
                

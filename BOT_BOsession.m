@@ -150,9 +150,11 @@ classdef BOT_BOsession
       
       function sMetadata = get_metadata(bos)
          % get_metadata - METHOD Read metadata from the NWB file
+         %
+         % Usage: sMetadata = get_metadata(bos)
 
          % - Ensure the file has been cached
-         EnsureCached(bos)
+         EnsureCached(bos);
          
          % - Attempt to read each of the metadata fields from the NWB file
          sMetadata = bos.FILE_METADATA_MAPPING;
@@ -217,221 +219,263 @@ classdef BOT_BOsession
          end
       end
       
-      function [mtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
-         % get_corrected_fluorescence_traces - METHOD Return corrected fluorescence traces for the provided cell specimen IDs
-         %
-         % Usage: [mtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-         
-         % - Ensure the file has been cached
-         EnsureCached(bos)
-
-%         # starting in version 2.0, neuropil correction follows trace demixing
-%         if self.pipeline_version >= parse_version("2.0"):
-%             timestamps, cell_traces = self.get_demixed_traces(cell_specimen_ids)
-%         else:
-%             timestamps, cell_traces = self.get_fluorescence_traces(cell_specimen_ids)
-% 
-%         r = self.get_neuropil_r(cell_specimen_ids)
-% 
-%         _, neuropil_traces = self.get_neuropil_traces(cell_specimen_ids)
-% 
-%         fc = cell_traces - neuropil_traces * r[:, np.newaxis]
-% 
-%         return timestamps, fc
-      
-      end
-      
-      function [mtTimestamps, mfTraces] = get_demixed_traces(bos, vnCellSpecimenIDs)
-         % get_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
-         %
-         % Usage: [mtTimestamps, mfTraces] = get_demixed_traces(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-
-         % - Ensure the file has been cached
-         EnsureCached(bos)
-
-%          timestamps = self.get_fluorescence_timestamps()
-% 
-%         with h5py.File(self.nwb_file, 'r') as f:
-%             ds = f['processing'][self.PIPELINE_DATASET][
-%                 'Fluorescence']['imaging_plane_1_demixed_signal']['data']
-%             if cell_specimen_ids is None:
-%                 traces = ds.value
-%             else:
-%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
-%                 traces = ds[inds, :]
-% 
-%         return timestamps, traces
-      
-      
-      end
-      
-      function [mtTimestamps, mfdFF] = get_dff_traces(bos, vnCellSpecimenIDs)
-         % get_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
-         %
-         % Usage: [mtTimestamps, mfTraces] = get_dff_traces(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-
-         % - Ensure the file has been cached
-         EnsureCached(bos)
-         
-         
-%         with h5py.File(self.nwb_file, 'r') as f:
-%             dff_ds = f['processing'][self.PIPELINE_DATASET][
-%                 'DfOverF']['imaging_plane_1']
-% 
-%             timestamps = dff_ds['timestamps'].value
-% 
-%             if cell_specimen_ids is None:
-%                 cell_traces = dff_ds['data'].value
-%             else:
-%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
-%                 cell_traces = dff_ds['data'][inds, :]
-% 
-%         return timestamps, cell_traces
-      
-      end
-      
       function vtTimestamps = get_fluorescence_timestamps(bos)
          % get_fluorescence_timestamps - METHOD Return timestamps for the fluorescence traces
          %
          % Usage: vtTimestamps = get_fluorescence_timestamps(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
          
          % - Ensure the file has been cached
-         EnsureCached(bos)
-
-        
+         EnsureCached(bos);
          
-%          with h5py.File(self.nwb_file, 'r') as f:
-%             timestamps = f['processing'][self.PIPELINE_DATASET][
-%                 'Fluorescence']['imaging_plane_1']['timestamps'].value
-%         return timestamps
-
+         % - Read imaging timestamps from NWB file
+         vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
+            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               'Fluorescence', 'imaging_plane_1', 'timestamps'));         
       end
       
-      function [mtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
-         % get_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
-         %
-         % Usage: [mtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-         
-         % - Ensure the file has been cached
-         EnsureCached(bos)
-
-         
-         
-%         timestamps = self.get_fluorescence_timestamps()
-%         with h5py.File(self.nwb_file, 'r') as f:
-%             ds = f['processing'][self.PIPELINE_DATASET][
-%                 'Fluorescence']['imaging_plane_1']['data']
-% 
-%             if cell_specimen_ids is None:
-%                 cell_traces = ds.value
-%             else:
-%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
-%                 cell_traces = ds[inds, :]
-% 
-%         return timestamps, cell_traces         
-      end
-      
-      function vfR = get_neuropil_r(bos, vnCellSpecimenIDs)
-         % get_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
-         %
-         % Usage: vfR = get_neuropil_r(bos, <vnCellSpecimenIDs>)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-         
-         % - Ensure the file has been cached
-         EnsureCached(bos)
-
-         
-
-%         with h5py.File(self.nwb_file, 'r') as f:
-%             if self.pipeline_version >= parse_version("2.0"):
-%                 r_ds = f['processing'][self.PIPELINE_DATASET][
-%                     'Fluorescence']['imaging_plane_1_neuropil_response']['r']
-%             else:
-%                 r_ds = f['processing'][self.PIPELINE_DATASET][
-%                     'Fluorescence']['imaging_plane_1']['r']
-% 
-%             if cell_specimen_ids is None:
-%                 r = r_ds.value
-%             else:
-%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
-%                 r = r_ds[inds]
-% 
-%         return r      
-      
-      end
-      
-      function [mtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
-         % get_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
-         %
-         % Usage: [mtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-         
-         % - Ensure the file has been cached
-         EnsureCached(bos)
-
-         
-
-%         timestamps = self.get_fluorescence_timestamps()
-% 
-%         with h5py.File(self.nwb_file, 'r') as f:
-%             ds = f['processing'][self.PIPELINE_DATASET][
-%                 'Fluorescence']['imaging_plane_1_demixed_signal']['data']
-%             if cell_specimen_ids is None:
-%                 traces = ds.value
-%             else:
-%                 inds = self.get_cell_specimen_indices(cell_specimen_ids)
-%                 traces = ds[inds, :]
-% 
-%         return timestamps, traces      
-      
-      end
-
       function vnCellSpecimenIDs = get_cell_specimen_ids(bos)
          % get_cell_specimen_ids - METHOD Return all cell specimen IDs in this session
          %
          % Usage: vnCellSpecimenIDs = get_cell_specimen_ids(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
          
          % - Ensure the file has been cached
-         EnsureCached(bos)
-
+         EnsureCached(bos);
          
-
-%         with h5py.File(self.nwb_file, 'r') as f:
-%             cell_id = f['processing'][self.PIPELINE_DATASET][
-%                 'ImageSegmentation']['cell_specimen_ids'].value
-%         return cell_id
-      
+         % - Read list of specimen IDs
+         vnCellSpecimenIDs = h5read(bos.strLocalNWBFileLocation, ...
+            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               'ImageSegmentation', 'cell_specimen_ids'));
       end
       
       function vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
          % get_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
          %
          % Usage: vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
          
          % - Ensure the file has been cached
-         EnsureCached(bos)
+         EnsureCached(bos);
 
+         % - Read all cell specimen IDs
+         vnAllCellSpecimenIDs = bos.get_cell_specimen_ids();
          
+         % - Find provided IDs in list
+         [vbFound, vnCellSpecimenIndices] = ismember(vnCellSpecimenIDs, vnAllCellSpecimenIDs);
 
-%         all_cell_specimen_ids = list(self.get_cell_specimen_ids())
-% 
-%         try:
-%             inds = [list(all_cell_specimen_ids).index(i)
-%                     for i in cell_specimen_ids]
-%         except ValueError as e:
-%             raise ValueError("Cell specimen not found (%s)" % str(e))
-% 
-%         return inds
-      
-      
+         % - Raise an error if specimens not found
+         assert(all(vbFound), 'BOT:NotFound', ...
+            'Provided cell specimen ID was not found in this session.');
       end
+      
+      function [vtTimestamps, mfTraces] = get_demixed_traces(bos, vnCellSpecimenIDs)
+         % get_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
+         %
+         % Usage: [vtTimestamps, mfTraces] = get_demixed_traces(bos <, vnCellSpecimenIDs>)
+         %
+         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `vtTimestamps`. Each column `n` contains the demixed fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % should be returned.
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos);
+
+         % - Get the fluorescence timestamps
+         vtTimestamps = bos.get_fluorescence_timestamps();
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
+            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         else
+            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         end
+                           
+         % - Read requested fluorescence traces
+         mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
+         
+         % - Subselect traces
+         mfTraces = mfTraces(:, vnCellSpecimenInds);
+      end      
+      
+      function [vtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
+         % get_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
+         %
+         % Usage: [vtTimestamps, mfTraces] = get_fluorescence_traces(bos <, vnCellSpecimenIDs>)
+         %
+         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `vtTimestamps`. Each column `n` contains the demixed fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % should be returned.
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos);
+         
+         % - Get the fluorescence timestamps
+         vtTimestamps = bos.get_fluorescence_timestamps();
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
+            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         else
+            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         end
+                           
+         % - Read requested fluorescence traces
+         mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               'Fluorescence', 'imaging_plane_1', 'data'));
+         
+         % - Subselect traces
+         mfTraces = mfTraces(:, vnCellSpecimenInds);
+      end
+      
+      function vfR = get_neuropil_r(bos, vnCellSpecimenIDs)
+         % get_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
+         %
+         % Usage: vfR = get_neuropil_r(bos <, vnCellSpecimenIDs>)
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos);
+
+         % - Find cell specimen IDs, if provided
+         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
+            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         else
+            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         end
+                           
+         % - Check pipeline version and read neuropil correction R
+         sMetadata = bos.get_metadata();
+         if str2double(sMetadata.pipeline_version) >= 2.0
+            vfR = h5read(bos.strLocalNWBFileLocation, ...
+               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+                  'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
+         else
+            vfR = h5read(bos.strLocalNWBFileLocation, ...
+               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+                  'Fluorescence', 'imaging_plane_1', 'r'));
+         end
+         
+         % - Subsample R to requested cell specimens
+         vfR = vfR(vnCellSpecimenInds);
+      end
+      
+      function [vtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
+         % get_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
+         %
+         % Usage: [vtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
+
+         % - Ensure the file has been cached
+         EnsureCached(bos);
+
+         % - Get the fluorescence timestamps
+         vtTimestamps = bos.get_fluorescence_timestamps();
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
+            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         else
+            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         end
+                           
+         % - Check pipeline version and read neuropil correction R
+         sMetadata = bos.get_metadata();
+         if str2double(sMetadata.pipeline_version) >= 2.0
+            mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+                  'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
+         else
+            mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+                  'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
+         end
+         
+         % - Subselect traces
+         mfTraces = mfTraces(:, vnCellSpecimenInds);         
+      end
+      
+      function [vtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
+         % get_corrected_fluorescence_traces - METHOD Return corrected fluorescence traces for the provided cell specimen IDs
+         %
+         % Usage: [vtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos <, vnCellSpecimenIDs>)
+         %
+         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `vtTimestamps`. Each column `n` contains the demixed fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % should be returned.
+         
+         % - Ensure the file has been cached
+         EnsureCached(bos);
+
+         % - Pass an empty matrix to return all cell specimen IDs
+         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
+            vnCellSpecimenIDs = [];
+         end
+            
+         % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
+         sMetadata = bos.get_metadata();
+         if str2double(sMetadata.pipeline_version) >= 2.0
+            [vtTimestamps, mfTraces] = bos.get_demixed_traces(vnCellSpecimenIDs);
+         else
+            [vtTimestamps, mfTraces] = bos.get_fluorescence_traces(vnCellSpecimenIDs);
+         end
+         
+         % - Read neuropil correction data
+         vfR = bos.get_neuropil_r(vnCellSpecimenIDs);
+         [~, mfNeuropilTraces] = bos.get_neuropil_traces(vnCellSpecimenIDs);
+         
+         % - Correct fluorescence traces using neuropil demixing model
+         mfTraces = mfTraces - bsxfun(@times, mfNeuropilTraces, reshape(vfR, 1, []));         
+      end
+      
+      function [vtTimestamps, mfdFF] = get_dff_traces(bos, vnCellSpecimenIDs)
+         % get_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
+         %
+         % Usage: [vtTimestamps, mfTraces] = get_dff_traces(bos, vnCellSpecimenIDs)
+
+         % - Ensure the file has been cached
+         EnsureCached(bos);
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
+            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         else
+            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         end
+                           
+         % - Read timestamps and response traces
+         vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
+            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               'DfOverF', 'imaging_plane_1', 'timestamps'));
+         
+         mfdFF = h5read(bos.strLocalNWBFileLocation, ...
+            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               'DfOverF', 'imaging_plane_1', 'data'));
+         
+         % - Subsample response traces to requested cell specimens
+         mfdFF = mfdFF(:, vnCellSpecimenInds);
+      end
+      
+
 
       
       %% -- Second priority
