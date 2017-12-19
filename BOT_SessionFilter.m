@@ -1,4 +1,6 @@
-% CLASS BOT_SessionFilter
+%% CLASS BOT_SessionFilter - Utility operations for filtering experimental sessions
+%
+% Usage: sf = BOT_SessionFilter()
 
 %% Class definition
 classdef BOT_SessionFilter < handle
@@ -15,7 +17,7 @@ classdef BOT_SessionFilter < handle
       eye_tracking_avail;              % A boolean vector containing all condtions if eye tracking is available or not from filtered_session_table
       
       % I don't think failed experiment containers can be used, so I just go and exclude them
-      failed = false;            % Boolean flag: should failed sessions be included?
+      failed = false;                  % Boolean flag: should failed sessions be included?
    end
 
    %% - Private properties
@@ -25,7 +27,16 @@ classdef BOT_SessionFilter < handle
 
    %% Constructor
    methods
-      function bosf = BOT_SessionFilter
+      function bosf = BOT_SessionFilter(bIncludeFailed)
+         % BOT_SessionFilter - CONSTRUCTOR Get a fresh Session Filter object
+         %
+         % Usage: bosf = BOT_SessionFilter(<bIncludeFailed>)
+         
+         % - Check arguments, set 'failed' flag
+         if exist('bIncludeFailed', 'var') && ~isempty(bIncludeFailed)
+            bosf.failed = bIncludeFailed;
+         end
+         
          % - Get the unfiltered session table, clear all filters
          clear_filters(bosf);
       end
@@ -268,6 +279,7 @@ classdef BOT_SessionFilter < handle
       end      
    end
    
+   %% Private static methods
    methods (Access = private, Static = true)
       function filtered_session = find_session_for_stimuli(stimulus, session_by_stimuli)
          filtered_session = {};
