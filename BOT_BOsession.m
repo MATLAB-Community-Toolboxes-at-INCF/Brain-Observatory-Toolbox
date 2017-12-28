@@ -116,13 +116,6 @@ classdef BOT_BOsession
          bNWBFileIsCached =  bos.bocCache.IsInCache([bos.bocCache.strABOBaseUrl bos.sSessionInfo.well_known_files.download_link]);
       end
       
-      function strLocalFile = EnsureCached(bos)
-         % EnsureCached - METHOD Ensure the NWB file corresponding to this session is cached
-         %
-         % Usage: strLocalFile = EnsureCached(bos)
-         strLocalFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
-      end
-      
       function delete(~)
          % delete - DELETER METHOD Clean up when the object is destroyed
          %
@@ -131,6 +124,13 @@ classdef BOT_BOsession
    end
    
    methods
+      function strLocalFile = EnsureCached(bos)
+         % EnsureCached - METHOD Ensure the NWB file corresponding to this session is cached
+         %
+         % Usage: strLocalFile = EnsureCached(bos)
+         strLocalFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
+      end
+      
       function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
          % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
