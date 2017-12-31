@@ -37,8 +37,15 @@ classdef BOT_BOsession
          'specimen_name',           '/general/specimen_name', ...
          'generated_by',            '/general/generated_by');
       
+      STIMULUS_TABLE_TYPES = struct( ...
+         'abstract_feature_series',       {{'drifting_gratings', 'static_gratings'}}, ...
+         'indexed_time_series',           {{'natural_scenes', 'locally_sparse_noise', ...
+                                            'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg'}}, ...
+         'repeated_indexed_time_series',  {{'natural_movie_one', 'natural_movie_two', 'natural_movie_three'}});
+   
       sCachedMetadata = [];
    end
+   
    
    %% - Constructor
    methods
@@ -106,6 +113,7 @@ classdef BOT_BOsession
       end
    end
    
+   
    %% - Matlab BOT methods
    
    methods (Access = private)
@@ -147,6 +155,8 @@ classdef BOT_BOsession
    
    %% - Allen BO data set API
    methods (Hidden = false)
+      
+      %% - Implemented
       
       function sMetadata = get_metadata(bos)
          % get_metadata - METHOD Read metadata from the NWB file
@@ -475,11 +485,177 @@ classdef BOT_BOsession
          mfdFF = mfdFF(:, vnCellSpecimenInds);
       end
       
+      function stimulus_table = get_spontaneous_activity_stimulus_table(bos)
+         % get_spontaneous_activity_stimulus_table - METHOD Return the sponaneous activity stimulus table for this experimental session
+         %
+         % Usage: stimulusTable = get_spontaneous_activity_stimulus_table(bos)
 
+         % - Build a key for this stimulus
+         strKey = fullfile(filesep, 'stimulus', 'presentation', 'spontaneous_stimulus');
+         
+         % - Read and convert stimulus data from the NWB file
+         try
+            % - Read data from the NWB file
+            bos.EnsureCached();
+            nwb_file = bos.strLocalNWBFileLocation;
+            events = h5read(nwb_file, fullfile(strKey, 'data'));
+            frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'));
+
+            % - Locate start and stop events
+            start_inds = find(events == 1);
+            stop_inds = find(events == -1);
+
+            % - Check spontaneous activity data
+            assert(numel(start_inds) == numel(stop_inds), ...
+                   'BOT:StimulusError', 'Inconsistent start and time times in spontaneous activity stimulus table');
+            
+            % - Create a stimulus table to return
+            stim_data = [frame_dur(1, start_inds) frame_dur(1, stop_inds)];
+            
+            % - Create a stimulus table to return
+            stimulus_table = array2table(stim_data, 'VariableNames', {'start_frame', 'end_frame'});
+                        
+         catch meCause
+            meBase = MException('BOT:StimulusError', 'Could not read spontaneous stimulus from session.\nThe stimulus may not exist.');
+            meBase.addCause(meCause);
+            throw(meBase);
+         end
+      end
+      
+      function cStimuli = list_stimuli(bos)
+         % list_stimuli - METHOD Return the list of stimuli used in this experimental session
+         %
+         % Usage: cStimuli = list_stimuli(bos)
+
+         % - Get local NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Get list of stimuli from NWB file
+         strKey = fullfile(filesep, 'stimulus', 'presentation');
+         sKeys = h5info(nwb_file, strKey);
+         [~, cStimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
+         
+         % - Remove trailing "_stimulus"
+         cStimuli = cellfun(@(s)strrep(s, '_stimulus', ''), cStimuli, 'UniformOutput', false);
+      end
+      
+      function strSessionType = get_session_type(bos)
+         % get_session_type - METHOD Return the name for the stimulus set used in this session
+         strSessionType = bos.sSessionInfo.stimulus_name;
+      end
+      
+      function tStimEpochs = get_stimulus_epoch_table(bos)
+         % get_stimulus_epoch_table - METHOD Return the stimulus epoch table for this experimental session
+         %
+         % Usage: tStimEpochs = get_stimulus_epoch_table(bos)
+         
+         % - Hard-coded thresholds from Allen SDK for get_epoch_mask_list. These
+         % set a maximum limit on the delta aqusistion frames to count as
+         % different trials (rows in the stim table).  This helps account for
+         % dropped frames, so that they dont cause the cutting of an entire
+         % experiment into too many stimulus epochs. If these thresholds are too
+         % low, the assert statment in get_epoch_mask_list will halt execution.
+         % In that case, make a bug report!.
+         sThresholds = struct('three_session_A', 32+7,...
+                              'three_session_B', 15, ...
+                              'three_session_C', 7, ...
+                              'three_session_C2', 7);
+         
+         % - Get list of stimuli for this session
+         cstrStimuli = bos.list_stimuli();
+         
+         % - Loop over stimuli to get stimulus tables
+         tStimEpochs = table();
+         for nStimIndex = numel(cstrStimuli):-1:1
+            % - Get the stimulus table for this stimulus
+            tThisStimulus = bos.get_stimulus_table(cstrStimuli{nStimIndex});
+            
+            % - Set "frame" column for spontaneous stimulus
+            if isequal(cstrStimuli{nStimIndex}, 'spontaneous')
+               tThisStimulus.frame = 0;
+            end
+            
+            % - Get epochs for this stimulus
+            cvnTheseEpochs = get_epoch_mask_list(tThisStimulus, sThresholds.(bos.get_session_type()));
+            tTheseEpochs = array2table(vertcat(cvnTheseEpochs{:}), 'VariableNames', {'start_frame', 'end_frame'});
+            tTheseEpochs.stimulus = repmat(cstrStimuli(nStimIndex), numel(cvnTheseEpochs), 1);
+            
+            % - Append to stimulus epochs table
+            tStimEpochs = vertcat(tStimEpochs, tTheseEpochs); %#ok<AGROW>
+         end
+         
+         % - Sort by initial frame
+         tStimEpochs = sortrows(tStimEpochs, 'start_frame');
+         
+         % - Rearrange columns to put 'stimulus' first
+         tStimEpochs = [tStimEpochs(:, 3) tStimEpochs(:, 1:2)];
+      end
+            
+      function tStimulusTable = get_stimulus_table(bos, strStimulusName)
+         % get_stimulus_table - METHOD Return the stimulus table for the provided stimulus
+         %
+         % Usage: tStimulusTable = get_stimulus_table(bos, strStimulusName)
+
+         % - Return a stimulus table for one of the stimulus types
+         if ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
+            tStimulusTable = get_abstract_feature_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
+            return;
+            
+         elseif ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
+            tStimulusTable = get_indexed_time_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
+            return;
+            
+         elseif ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
+            tStimulusTable = get_repeated_indexed_time_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
+            return;
+            
+         elseif isequal(strStimulusName, 'spontaneous')
+            tStimulusTable = bos.get_spontaneous_activity_stimulus_table();
+            return;
+            
+         elseif isequal(strStimulusName, 'master')
+            % - Return a master stimulus table containing all stimuli
+            % - Loop over stimuli, collect stimulus tables
+            ctStimuli = {};
+            cstrVariableNames = {};
+            for strStimulus = bos.list_stimuli()
+               % - Get stimulus as a string
+               strStimulus = strStimulus{1}; %#ok<FXSET>
+               
+               % - Get stimulus table for this stimulus, annotate with stimulus name
+               ctStimuli{end+1} = bos.get_stimulus_table(strStimulus); %#ok<AGROW>
+               ctStimuli{end}.stimulus = repmat({strStimulus}, size(ctStimuli{end}, 1), 1);
+               
+               % - Collect all variable names
+               cstrVariableNames = union(cstrVariableNames, ctStimuli{end}.Properties.VariableNames);
+            end
+            
+            % - Loop over stimulus tables and merge
+            for nStimIndex = numel(ctStimuli):-1:1
+               % - Find missing variables in this stimulus
+               cstrMissingVariables = setdiff(cstrVariableNames, ctStimuli{nStimIndex}.Properties.VariableNames);
+               
+               % - Add missing variables to this stimulus table
+               ctStimuli{nStimIndex} = [ctStimuli{nStimIndex} array2table(nan(size(ctStimuli{nStimIndex}, 1), numel(cstrMissingVariables)), 'VariableNames', cstrMissingVariables)];
+            end
+            
+            % - Concatenate all stimuli and sort by start frame
+            tStimulusTable = vertcat(ctStimuli{:});
+            tStimulusTable = sortrows(tStimulusTable, 'start_frame');
+            
+         else
+            % - Raise an error
+            error('BOT:Argument', 'Could not find a stimulus table named [%s].', strStimulusName);
+         end
+      end
+                  
+      %% - In progress
 
       
-      %% -- Second priority
+      %% -- Not yet implemented
             
+      
       function [template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
          % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
          %
@@ -537,31 +713,10 @@ classdef BOT_BOsession
          BBS_WARN_NOT_YET_IMPLEMENTED();
       end
       
-      function stimulusTable = get_spontaneous_activity_stimulus_table(bos)
-         % get_spontaneous_activity_stimulus_table - METHOD Return the sponaneous activity stimulus table for this experimental session
-         %
-         % Usage: stimulusTable = get_spontaneous_activity_stimulus_table(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
-      
       function stimulus = get_stimulus(bos, vnFrameIndex)
          % get_stimulus - METHOD Retrun the stimulus for the provided frame indices
          %
          % Usage: stimulus = get_stimulus(bos, vnFrameIndex)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
-      
-      function [vtTimestamps, tStimulusTable] = get_stimulus_epoch_table(bos)
-         % get_stimulus_epoch_table - METHOD Return the stimulus epoch table for this experimental session
-         %
-         % Usage: [vtTimestamps, tStimulusTable] = get_stimulus_epoch_table(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
-      
-      function tStimulusTable = get_stimulus_table(bos, strStimulusName)
-         % get_stimulus_table - METHOD Return the stimulus table for the provided stimulus
-         %
-         % Usage: tStimulusTable = get_stimulus_table(bos, strStimulusName)
          BBS_WARN_NOT_YET_IMPLEMENTED();
       end
       
@@ -572,12 +727,6 @@ classdef BOT_BOsession
          BBS_WARN_NOT_YET_IMPLEMENTED();
       end
       
-      function cStimuli = list_stimuli(bos)
-         % list_stimuli - METHOD Return the list of stimuli used in this experimental session
-         %
-         % Usage: cStimuli = list_stimuli(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
    end
 
    %% - Unimplemented API methods
@@ -586,19 +735,142 @@ classdef BOT_BOsession
          % get_roi_mask - UNIMPLEMENTED METHOD - Use method get_roi_mask_array()
          BBS_ERR_NOT_IMPLEMENTED('Use method get_roi_mask_array()');
       end
-      
-%       function varargout = get_metadata(varargin) %#ok<STOUT>
-%          % get_metadata - UNIMPLEMENTED METHOD - Access object properties instead
-%          BBS_ERR_NOT_IMPLEMENTED('Access object properties instead');
-%       end
-      
-      function varargout = get_session_type(varargin) %#ok<STOUT>
-         % get_session_type - UNIMPLEMENTED METHOD - Access object properties instead
-         BBS_ERR_NOT_IMPLEMENTED('Access object properties instead');
-      end
    end
    
 end
+
+%% - Private utility functions
+
+function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, stimulus_name)
+	% get_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
+
+   % - Build a key for this stimulus
+   strKey = fullfile(filesep, 'stimulus', 'presentation', stimulus_name);
+   
+   % - Read and convert stimulus data from the NWB file
+   try
+      % - Read data from the NWB file
+      stim_data = h5read(nwb_file, fullfile(strKey, 'data'));
+      features = deblank(h5read(nwb_file, fullfile(strKey, 'features')));
+      frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'));
+      
+      % - Create a stimulus table to return
+      stimulus_table = array2table(stim_data', 'VariableNames', features);
+      
+      % - Add start and finish frame times
+      stimulus_table.start_frame = int64(frame_dur(1, :)');
+      stimulus_table.end_frame = int64(frame_dur(2, :)');
+      
+   catch meCause
+      meBase = MException('BOT:StimulusError', ...
+         'Could not read stimulus [%s] from session.\nThe stimulus may not exist.', stimulus_name);
+      meBase.addCause(meCause);
+      throw(meBase);
+   end
+end
+
+function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
+   % get_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
+
+   % - Build a key for this stimulus
+   strKey = fullfile(filesep, 'stimulus', 'presentation', stimulus_name);
+   
+   % - Attempt to read data from this key, otherwise correct
+   try
+      h5info(nwb_file, strKey);
+   catch
+      strKey = fullfile(filesep, 'stimulus', 'presentation', [stimulus_name '_stimulus']);
+   end
+   
+   % - Read and convert stimulus data from the NWB file
+   try
+      % - Read data from the NWB file
+      inds = h5read(nwb_file, fullfile(strKey, 'data'));
+      frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'));
+      
+      % - Create a stimulus table to return
+      stimulus_table = array2table(inds, 'VariableNames', {'frame'});
+      
+      % - Add start and finish frame times
+      stimulus_table.start_frame = int32(frame_dur(1, :)');
+      stimulus_table.end_frame = int32(frame_dur(2, :)');
+      
+   catch meCause
+      meBase = MException('BOT:StimulusError', 'Could not read stimulus [%s] from session.\nThe stimulus may not exist.');
+      meBase.addCause(meCause);
+      throw(meBase);
+   end
+end
+
+function stimulus_table = get_repeated_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
+   % get_repeated_indexed_time_series_stimulus_table - FUNCTION Return a stimulus table for a repeated stimulus
+   
+   % - Get the full stimulus table
+   stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
+   
+   % - Locate repeats within stimulus order
+   vnUniqueStims = unique(stimulus_table.frame);
+   cvnRepeatIndices = arrayfun(@(nStim)find(stimulus_table.frame == nStim), vnUniqueStims, 'UniformOutput', false);
+   
+   % - Switch off warnings for extending the table
+   w = warning('off', 'MATLAB:table:RowsAddedNewVars');
+   
+   % - Loop over stimulus IDs, assign repeat numbers (zero-based to match Python SDK)
+   for nStimulus = 1:numel(vnUniqueStims)
+      stimulus_table{cvnRepeatIndices{nStimulus}, 'repeat'} = (1:numel(cvnRepeatIndices{nStimulus}))' - 1;
+   end
+   
+   % - Restore warnings
+   warning(w);
+end
+
+function epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
+   % get_epoch_mask_list - FUNCTION Cut a stimulus table into multiple epochs
+   %
+   % Usage: epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
+   
+   % - Check that a threshold was supplied
+	assert(~isempty(threshold), 'BOT:StimulusError', ...
+          'Threshold not set for this type of session.');
+   
+	% - Assign a default max_cuts
+   if ~exist('max_cuts', 'var') || isempty(max_cuts)
+      max_cuts = 2;
+   end
+   
+   % - Determine frame deltas and cut indices
+	delta = st.start_frame(2:end) - st.end_frame(1:end-1);
+	cut_inds = find(delta > threshold) + 1;
+
+   % - Are there too many epochs?
+   % See: https://gist.github.com/nicain/bce66cd073e422f07cf337b476c63be7
+   %      https://github.com/AllenInstitute/AllenSDK/issues/66
+   assert(numel(cut_inds) <= max_cuts, ...
+          'BOT:StimulusError', ...
+          'More than [%d] epochs were found.\nSee https://github.com/AllenInstitute/AllenSDK/issues/66.', ...
+          max_cuts);
+   
+	% - Loop over epochs
+   for nEpoch = numel(cut_inds)+1:-1:1
+      % - Determine first frame
+      if nEpoch == 1
+         first_ind = st{1, 'start_frame'};
+      else
+         first_ind = st{cut_inds(nEpoch-1), 'start_frame'};
+      end
+      
+      % - Determine last frame
+      if nEpoch == numel(cut_inds)+1
+         last_ind_inclusive = st{end, 'end_frame'};
+      else
+         last_ind_inclusive = st{cut_inds(nEpoch)-1, 'end_frame'};
+      end
+      
+      % - Build list of epochs
+      epoch_mask_list{nEpoch} = [first_ind last_ind_inclusive];
+   end
+end
+
 
 %% - Functions to return errors and warnings about unimplemented methods
 
