@@ -59,7 +59,7 @@ classdef brain_observatory_cache < handle
         container_table
         
         % I don't think failed experiment containers can be used, so I just go and exclude them
-        failed = 1
+        failed = 0
         
         % There are two kinds of "get_"methods, one is simple, that information in
         % session_table is directly read out. The other one that starts with "get_summary_" is
@@ -148,7 +148,7 @@ classdef brain_observatory_cache < handle
             
             session_by_stimuli = boc.get_session_by_stimuli();
             result = [];
-            for iSession = 1:length(boc.session_type)
+            for iSession = 1: length(boc.session_type)
                 result = [result, session_by_stimuli.(char(boc.session_type(iSession)))];
             end
             result = categories(categorical(result));
@@ -182,18 +182,20 @@ classdef brain_observatory_cache < handle
         function summary_table = get_summary_of_containers_along_depths_and_structures(boc)
             % a function gets the number of experiment containers recorded at each cortical depth in each brain region
             
+            
             summary_matrix = NaN(size(boc.get_all_imaging_depths(),1),size(boc.get_all_targeted_structures(),1));
             all_depths =  boc.get_all_imaging_depths();
             all_structures = boc.get_all_targeted_structures;
             boc.need_validation_for_filtered_session_table = 0;
             
-            for cur_depth = 1: size(all_depths,1)
-                for cur_structure = 1: size(all_structures,1)
-                    boc.refresh();
+            
+            for cur_depth = 1: size(boc.get_all_imaging_depths(),1)
+                for cur_structure = 1: size(boc.get_all_targeted_structures,1)
                     boc.filter_sessions_by_imaging_depth(all_depths(cur_depth));
-                    boc.filter_sessions_by_targeted_structure(all_structures{cur_structure});
+                    boc.filter_sessions_by_targeted_structure(string(all_structures(cur_structure)));
                     total_of_containers = size(boc.filtered_session_table,1)/3;
                     summary_matrix(cur_depth,cur_structure) = total_of_containers;
+                    boc.refresh();
                 end
             end
             

@@ -517,7 +517,7 @@ classdef BOT_BOsession
                         
          catch meCause
             meBase = MException('BOT:StimulusError', 'Could not read spontaneous stimulus from session.\nThe stimulus may not exist.');
-            meBase.addCause(meCause);
+            meBase = meBase.addCause(meCause);
             throw(meBase);
          end
       end
@@ -649,13 +649,258 @@ classdef BOT_BOsession
             error('BOT:Argument', 'Could not find a stimulus table named [%s].', strStimulusName);
          end
       end
-                  
+      
+      function mfMaxProjection = get_max_projection(bos)
+         % get_max_projection - METHOD Return the maximum-intensity projection image for this experimental session
+         %
+         % Usage: mfMaxProjection = get_max_projection(bos)
+
+         % - Ensure session data is cached, and locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Extract the maximum projection from the session
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'ImageSegmentation', 'imaging_plane_1', 'reference_images', ...
+            'maximum_intensity_projection_image', 'data');
+         mfMaxProjection = h5read(nwb_file, strKey);
+      end
+      
+      function vnROIIDs = get_roi_ids(bos)
+         % get_roi_ids - METHOD Return the list of ROI IDs for this experimental session
+         %
+         % Usage: vnROIIDs = get_roi_ids(bos)
+         
+         % - Ensure session data is cached, and locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Extract list of ROI IDs from NWB file
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'ImageSegmentation', 'roi_ids');
+         vnROIIDs = cellfun(@str2num, h5read(nwb_file, strKey));
+      end
+      
+      function [vfRunningSpeed, vtTimestamps] = get_running_speed(bos)
+         % get_running_speed - METHOD Return running speed in cm/s
+         %
+         % Usage: [vfRunningSpeed, vtTimestamps] = get_running_speed(bos)
+      
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Build a base key for the running speed data
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'BehavioralTimeSeries', 'running_speed');
+         vfRunningSpeed = h5read(nwb_file, fullfile(strKey, 'data'));
+         vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+         
+         % - Align with imaging timestamps
+         vtImageTimestamps = bos.get_fluorescence_timestamps();
+         [vfRunningSpeed, vtTimestamps] = align_running_speed(vfRunningSpeed, vtTimestamps, vtImageTimestamps);
+      end
+      
+      function tMotionCorrection = get_motion_correction(bos)
+         % get_motion_correction - METHOD Return the motion correction information for this experimental session
+         %
+         % Usage: mfShift = get_motion_correction(bos)
+         
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Try to locate the motion correction data
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'MotionCorrection', '2p_image_series');
+         
+         try
+            h5info(nwb_file, fullfile(strKey, 'xy_translation'));
+            strKey = fullfile(strKey, 'xy_translation');
+         catch
+            try
+               h5info(nwb_file, fullfile(strKey, 'xy_translations'));
+               strKey = fullfile(strKey, 'xy_translations');
+            catch
+               error('BOT:MotionCorrectionNotFound', ...
+                     'Could not file motion correction data.');
+            end
+         end
+         
+         % - Extract motion correction data from session
+         motion_log = h5read(nwb_file, fullfile(strKey, 'data'));
+         motion_time = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+         motion_names = h5read(nwb_file, fullfile(strKey, 'feature_description'));
+         
+         % - Create a motion correction table
+         tMotionCorrection = array2table(motion_log', 'VariableNames', motion_names);
+         tMotionCorrection.timestamp = motion_time;
+      end
+      
+      function [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, bAsSpherical)
+         % get_pupil_location - METHOD Return the pupil location trace for this experimental session
+         %
+         % Usage: [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, <bAsSpherical>)
+         
+         % - Fail quickly if eye tracking data is known not to exist
+         if bos.sSessionInfo.fail_eye_tracking
+            error('BOT:NoEyeTracking', ...
+               'No eye tracking data is available for this experiment.');
+         end
+         
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Default for spherical coordinates
+         if ~exist('bAsSpherical', 'var') || isempty(bAsSpherical)
+            bAsSpherical = true;
+         end
+         
+         % - Return spherical or euclidean coordinates?
+         if bAsSpherical
+            location_key = 'pupil_location_spherical';
+         else
+            location_key = 'pupil_location';
+         end
+         
+         % - Extract data from NWB file
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'EyeTracking', location_key);
+         
+         try
+            % - Try to read the eye tracking data from the NWB file
+            mfPupilLocation = h5read(nwb_file, fullfile(strKey, 'data'));
+            vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+            
+         catch meCause
+            % - Couldn't find the eye tracking data
+            meBase = MException('BOT:NoEyeTracking', ...
+               'No eye tracking data is available for this experiment.');
+            meBase = meBase.addCause(meCause);
+            throw(meBase);
+         end
+      end
+      
+      function [vtTimestamps, vfPupilAreas] = get_pupil_size(bos)
+         % get_pupil_size - METHOD Return the pupil area trace for this experimental session
+         %
+         % Usage: [vtTimestamps, vfPupilAreas] = get_pupil_size(bos)
+         
+         % - Fail quickly if eye tracking data is known not to exist
+         if bos.sSessionInfo.fail_eye_tracking
+            error('BOT:NoEyeTracking', ...
+               'No eye tracking data is available for this experiment.');
+         end
+         
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Extract session data from NWB file
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'PupilTracking', 'pupil_size');
+         
+         try
+            % - Try to read the eye tracking data from the NWB file
+            vfPupilAreas = h5read(nwb_file, fullfile(strKey, 'data'));
+            vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+            
+         catch meCause
+            % - Couldn't find the eye tracking data
+            meBase = MException('BOT:NoEyeTracking', ...
+               'No eye tracking data is available for this experiment.');
+            meBase = meBase.addCause(meCause);
+            throw(meBase);
+         end
+      end
+            
+      function tbROIMasks = get_roi_mask_array(bos, vnCellSpecimenIDs)
+         % get_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
+         %
+         % Usage: tbROIMasks = get_roi_mask_array(bos, vnCellSpecimenIDs)
+         
+         % - By default, return masks for all cells
+         if ~exist('vnCellSpecimenIDs', 'var')
+            vnCellSpecimenIDs = bos.get_cell_specimen_ids;
+         end
+         
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'ImageSegmentation', 'imaging_plane_1');
+         
+         % - Get list of ROI names
+         cstrRoiList = deblank(h5read(nwb_file, fullfile(strKey, 'roi_list')));
+         
+         % - Select only requested cell specimen IDs
+         vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         
+         % - Loop over ROIs, extract masks
+         tbROIMasks = [];
+         for nCellIndex = vnCellIndices'
+            % - Get a logical mask for this ROI
+            mbThisMask = logical(h5read(nwb_file, fullfile(strKey, cstrRoiList{nCellIndex}, 'img_mask')));
+            
+            % - Build a logical tensor of ROI masks
+            if isempty(tbROIMasks)
+               tbROIMasks = mbThisMask;
+            else
+               tbROIMasks = cat(3, tbROIMasks, mbThisMask);
+            end
+         end
+      end
+      
+      function sROIs = get_roi_mask(bos, vnCellSpecimenIDs)
+         % get_roi_mask - METHOD Return connected components structure defining requested ROIs
+         %
+         % Usage: sROIs = get_roi_mask(bos <, vnCellSpecimenIDs>)
+         
+         % - By default, return masks for all cells
+         if ~exist('vnCellSpecimenIDs', 'var')
+            vnCellSpecimenIDs = bos.get_cell_specimen_ids;
+         end
+         
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            'ImageSegmentation', 'imaging_plane_1');
+         
+         % - Get list of ROI names
+         cstrRoiList = deblank(h5read(nwb_file, fullfile(strKey, 'roi_list')));
+         
+         % - Select only requested cell specimen IDs
+         vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+
+         % - Initialise a CC structure
+         sROIs = struct('Connectivity', 8, ...
+                        'ImageSize', {[]}, ...
+                        'NumObjects', numel(vnCellIndices), ...
+                        'PixelIdxList', {{}}, ...
+                        'Labels', {{}});
+
+         % - Loop over ROIs, extract masks
+         for nCellIndex = numel(vnCellIndices):-1:1
+            % - Get a logical mask for this ROI
+            mbThisMask = logical(h5read(nwb_file, fullfile(strKey, cstrRoiList{vnCellIndices(nCellIndex)}, 'img_mask')));
+
+            % - Build up a CC structure containing these ROIs
+            sROIs.PixelIdxList{nCellIndex} = find(mbThisMask);
+            sROIs.Labels{nCellIndex} = cstrRoiList{vnCellIndices(nCellIndex)};
+         end
+         
+         % - Fill in CC structure
+         sROIs.ImageSize = size(mbThisMask);
+      end
+
       %% - In progress
 
-      
       %% -- Not yet implemented
             
-      
       function [template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
          % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
          %
@@ -663,58 +908,9 @@ classdef BOT_BOsession
          BBS_WARN_NOT_YET_IMPLEMENTED()
       end
       
-      function mfMaxProjection = get_max_projection(bos)
-         % get_max_projection - METHOD Return the maximum-intensity projection image for this experimental session
-         %
-         % Usage: mfMaxProjection = get_max_projection(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
-      
-      function mfShift = get_motion_correction(bos)
-         % get_motion_correction - METHOD Return the motion correction information for this experimental session
-         %
-         % Usage: mfShift = get_motion_correction(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
-      
-      
-      function [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, bAsSpherical)
-         % get_pupil_location - METHOD Return the pupil location trace for this experimental session
-         %
-         % Usage: [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, <bAsSpherical>)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
-      
-      function [vtTimestamps, vfPupilAreas] = get_pupil_size(bos)
-         % get_pupil_size - METHOD Return the pupil area trace for this experimental session
-         %
-         % Usage: [vtTimestamps, vfPupilAreas] = get_pupil_size(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
-      
-      function vnROIIDs = get_roi_ids(bos)
-         % get_roi_ids - METHOD Return the list of ROI IDs for this experimental session
-         %
-         % Usage: vnROIIDs = get_roi_ids(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
-      end
-      
-      function tfROIMasks = get_roi_mask_array(bos, vnCellSpecimenIDs)
-         % get_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
-         %
-         % Usage: tfROIMasks = get_roi_mask_array(bos, vnCellSpecimenIDs)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
-      
-      function [vtTimestamps, vfRunningSpeed] = get_running_speed(bos)
-         % get_running_speed - METHOD Return running speed in cm/s
-         %
-         % Usage: [vtTimestamps, vfRunningSpeed] = get_running_speed(bos)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
-      
+
       function stimulus = get_stimulus(bos, vnFrameIndex)
-         % get_stimulus - METHOD Retrun the stimulus for the provided frame indices
+         % get_stimulus - METHOD Return the stimulus for the provided frame indices
          %
          % Usage: stimulus = get_stimulus(bos, vnFrameIndex)
          BBS_WARN_NOT_YET_IMPLEMENTED();
@@ -731,10 +927,6 @@ classdef BOT_BOsession
 
    %% - Unimplemented API methods
    methods (Hidden = true)
-      function varargout = get_roi_mask(varargin) %#ok<STOUT>
-         % get_roi_mask - UNIMPLEMENTED METHOD - Use method get_roi_mask_array()
-         BBS_ERR_NOT_IMPLEMENTED('Use method get_roi_mask_array()');
-      end
    end
    
 end
@@ -764,7 +956,7 @@ function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, s
    catch meCause
       meBase = MException('BOT:StimulusError', ...
          'Could not read stimulus [%s] from session.\nThe stimulus may not exist.', stimulus_name);
-      meBase.addCause(meCause);
+      meBase = meBase.addCause(meCause);
       throw(meBase);
    end
 end
@@ -797,7 +989,7 @@ function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimu
       
    catch meCause
       meBase = MException('BOT:StimulusError', 'Could not read stimulus [%s] from session.\nThe stimulus may not exist.');
-      meBase.addCause(meCause);
+      meBase = meBase.addCause(meCause);
       throw(meBase);
    end
 end
@@ -871,6 +1063,26 @@ function epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
    end
 end
 
+function [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
+   % align_running_speed - FUNCTION Align running speed data with fluorescence time stamps
+   %
+   % Usage: [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
+   
+   % - Do we need to add time points at the beginning of the session?
+   if dxtime(1) ~= timestamps(1)
+      % - Prepend timestamps and nans
+      nFirstMatch = find(timestamps == dxtime(1), 1, 'first');
+      dxtime = [timestamps(1:nFirstMatch-1); dxtime];
+      dxcm = [nan(nFirstMatch, 1); dxcm];
+   end
+   
+   % - Do we need to add time points at the end of the session?
+   nNumMissing = numel(timestamps) - numel(dxtime);
+   if nNumMissing > 0
+      dxtime = [dxtime; timestamps(end - (nNumMissing-1):end)];
+      dxcm = [dxcm; nan(nNumMissing, 1)];
+   end
+end
 
 %% - Functions to return errors and warnings about unimplemented methods
 
