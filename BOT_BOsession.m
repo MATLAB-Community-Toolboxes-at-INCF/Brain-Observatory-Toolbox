@@ -770,7 +770,7 @@ classdef BOT_BOsession
          
          try
             % - Try to read the eye tracking data from the NWB file
-            mfPupilLocation = h5read(nwb_file, fullfile(strKey, 'data'));
+            mfPupilLocation = h5read(nwb_file, fullfile(strKey, 'data'))';
             vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
             
          catch meCause
@@ -814,7 +814,7 @@ classdef BOT_BOsession
             throw(meBase);
          end
       end
-            
+      
       function tbROIMasks = get_roi_mask_array(bos, vnCellSpecimenIDs)
          % get_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
          %
@@ -897,17 +897,87 @@ classdef BOT_BOsession
          sROIs.ImageSize = size(mbThisMask);
       end
 
-      %% - In progress
-
-      %% -- Not yet implemented
-            
-      function [template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
-         % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
+      function tStimulusTemplate = get_stimulus_template(bos, strStimulusName)
+         % get_stimulus_template - METHOD Return the stimulus template for the provided stimulus
          %
-         % Usage: [template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
-         BBS_WARN_NOT_YET_IMPLEMENTED()
+         % Usage: tStimulusTemplate = get_stimulus_template(bos, strStimulusName)
+         
+         % - Ensure session data is cached, locate NWB file
+         bos.EnsureCached();
+         nwb_file = bos.strLocalNWBFileLocation;
+         
+         % - Extract stimulus template from NWB file
+         strKey = fullfile(filesep, 'stimulus', 'templates', ...
+            [strStimulusName '_image_stack'], 'data');
+         
+         try
+            tStimulusTemplate = h5read(nwb_file, strKey);
+            
+         catch meCause
+            meBase = MException('BOT:StimulusNotFound', ...
+               'A template for the stimulus [%s] was not found.', ...
+               strStimulusName);
+            meBase = meBase.addCause(meCause);
+            throw(meBase);
+         end
       end
       
+      function [tfStimTemplate, mbOffScreenMask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
+         % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
+         %
+         % Usage: [tfStimTemplate, mbOffScreenMask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
+         
+         % - Pre-defined dimensions for locally sparse noise stimuli
+         sLocallySparseNoiseDimensions = struct(...
+            'locally_sparse_noise', [16 28], ...
+            'locally_sparse_noise_4deg', [16 28], ...
+            'locally_sparse_noise_8deg', [8 14]);
+
+         % - By default, mask off screen regions
+         if ~exist('bMaskOffScreen', 'var') || isempty(bMaskOffScreen)
+            bMaskOffScreen = true;
+         end
+         
+         % - Is the provided stimulus one of the known noise stimuli?
+         if ~isfield(sLocallySparseNoiseDimensions, strStimulus)
+            cstrStimNames = fieldnames(sLocallySparseNoiseDimensions);
+            error('BOT:UnknownStimulus', ...
+               '''strStimulus'' must be one of {%s}.', ...
+               sprintf('%s, ', cstrStimNames{:}));
+         end
+         
+         % - Get a stimulus template
+         tfStimTemplate = bos.get_stimulus_template(strStimulus);
+         vnTemplateSize = size(tfStimTemplate);
+         
+         % - Build a mapping from template to display coordinates
+         template_size = sLocallySparseNoiseDimensions.(strStimulus);
+         template_size = template_size([2 1]);
+         template_display_size = [1260 720];
+         display_size = [1920 1200];
+         
+         scale = template_size ./ template_display_size;
+         offset = -(display_size - template_display_size) / 2;
+         
+         [x, y] = ndgrid((1:display_size(1))-1, (1:display_size(2))-1);
+         template_display_coords = cat(3, (x + offset(1)) * scale(1) - .5, (y + offset(2)) * scale(2) - .5);
+         template_display_coords = round(template_display_coords);
+         
+         % - Obtain a mask indicating which stimulus elements are off-screen after warping
+         [mbOffScreenMask, ~] = mask_stimulus_template(template_display_coords, template_size);
+         if bMaskOffScreen
+            % - Mask the off-screen stimulus elements
+            tfStimTemplate = reshape(tfStimTemplate, [], vnTemplateSize(3));
+            tfStimTemplate(~mbOffScreenMask(:), :) = 64;
+            tfStimTemplate = reshape(tfStimTemplate, vnTemplateSize);
+         end
+      end
+      
+      %% - In progress
+      
+      
+      %% -- Not yet implemented
+            
 
       function stimulus = get_stimulus(bos, vnFrameIndex)
          % get_stimulus - METHOD Return the stimulus for the provided frame indices
@@ -916,12 +986,6 @@ classdef BOT_BOsession
          BBS_WARN_NOT_YET_IMPLEMENTED();
       end
       
-      function tStimulusTemplate = get_stimulus_template(bos, strStimulusName)
-         % get_stimulus_template - METHOD Return the stimulus template for the provided stimulus
-         %
-         % Usage: tStimulusTemplate = get_stimulus_template(bos, strStimulusName)
-         BBS_WARN_NOT_YET_IMPLEMENTED();
-      end
       
    end
 
@@ -1084,9 +1148,136 @@ function [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
    end
 end
 
+function retCoords = warp_stimulus_coords(vertices, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint)
+   % warp_stimulus_coords - FUNCTION For a list of screen vertices, provides a corresponding list of texture coordinates
+   % 
+   % Usage: retCoords = warp_stimulus_coords(vertices <, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint>)
+
+   % - Assign default arguments
+   if ~exist('distance', 'var') || isempty(distance)
+      distance = 15;
+   end
+
+   if ~exist('mon_height_cm', 'var') || isempty(mon_height_cm)
+      mon_height_cm = 32.5;
+   end
+
+   if ~exist('mon_width_cm', 'var') || isempty(mon_width_cm)
+      mon_width_cm = 51;
+   end
+
+   if ~exist('mon_res', 'var') || isempty(mon_res)
+      mon_res = [1920 1200];
+   end
+
+   if ~exist('eyepoint', 'var') || isempty(eyepoint)
+      eyepoint = [.5 .5];
+   end
+   
+   % - Convert from pixels (-1920/2 -> 1920/2) to stimulus space (-0.5 -> 0.5)
+   vertices = bsxfun(@rdivide, vertices, mon_res);
+   
+   x = (vertices(:, 1) + .5) * mon_width_cm;
+   y = (vertices(:, 2) + .5) * mon_height_cm;
+   
+   xEye = eyepoint(1) * mon_width_cm;
+   yEye = eyepoint(2) * mon_height_cm;
+   
+   x = x - xEye;
+   y = y - yEye;
+   
+   r = sqrt(x.^2 + y.^2 + distance.^2);
+   
+   azimuth = atan(x ./ distance);
+   altitude = asin(y ./ r);
+   
+   % - Calculate texture coordinates
+   tx = distance .* (1 + x ./ r) - distance;
+   ty = distance .* (1 + y ./ r) - distance;
+   
+   % - The texture coordinates (which are now lying on the sphere) need to be
+   % remapped back onto the plane of the display. This effectively stretches the
+   % coordinates away from the eyepoint.
+   
+   centralAngle = acos(cos(altitude) .* cos(abs(azimuth)));
+   
+   % - Distance froom eyepoint to texture vertex
+   arcLength = centralAngle .* distance;
+   
+   % - Remap the texture coordinates
+   theta = atan2(ty, tx);
+   tx = arcLength .* cos(theta);
+   ty = arcLength .* sin(theta);
+   
+   u_coords = tx ./ mon_width_cm;
+   v_coords = ty ./ mon_height_cm;
+   
+   retCoords = [u_coords v_coords];
+   
+   % - Convert back to pixels
+   retCoords = bsxfun(@times, retCoords, mon_res);
+end
+
+function mbMask = make_display_mask(display_shape)
+   % make_display_mask - FUNCTION Build a display-shaped mask that indicates which stimulus pixels are on screen after warping the stimulus
+   %
+   % Usage: mbMask = make_display_mask(display_shape)
+
+   % - Assign default arguments
+   if ~exist('display_shape', 'var') || isempty(display_shape)
+      display_shape = [1920 1200];
+   end
+
+   % - Determine coordinates of the screen
+   x = (1:display_shape(1))-1 - display_shape(1) / 2;
+   y = (1:display_shape(2))-1 - display_shape(2) / 2;
+   [mX, mY] = meshgrid(x, y);
+   display_coords = [mX(:) mY(:)];
+   
+   % - Warp the coordinates to spherical distance
+   warped_coords = warp_stimulus_coords(display_coords);
+   
+   % - Determine which stimulus pixels are on-screen after warping
+   off_warped_coords = round(bsxfun(@plus, warped_coords, display_shape ./ 2));
+   mbMask = false(display_shape);
+   mbMask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
+end
+
+function [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
+   % mask_stimulus_template - FUNCTION Build a mask for a stimulus template of a given shape and display coordinates that indicates which part of the template is on screen after warping
+   %
+   % Usage: [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
+
+   % - Assign default arguments
+   if ~exist('display_mask', 'var')
+      display_mask = make_display_mask();
+   end
+
+   if ~exist('threshold', 'var') || isempty(threshold)
+      threshold = 1;
+   end
+
+   % - Find valid indices for the template, and masked pixels
+   template_display_coords = reshape(template_display_coords, [], 2) + 1;
+   vbValidIndices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
+   vbValidMaskIndices = display_mask(:) & vbValidIndices;
+   
+   % - Determine which template units are on the screen above the threshold
+   mfPixelFraction = accumarray(...
+      [template_display_coords(vbValidMaskIndices, 1) template_display_coords(vbValidMaskIndices, 2)], ...
+      1, template_shape);
+   mnPixelTotals = accumarray(...
+      [template_display_coords(vbValidIndices, 1) template_display_coords(vbValidIndices, 2)], ...
+      1, template_shape);
+   
+   % - Create a mask indicating which stimulus pixels should be included
+   mfPixelFraction = mfPixelFraction ./ mnPixelTotals;
+   mbMask = mfPixelFraction >= threshold;
+end
+
 %% - Functions to return errors and warnings about unimplemented methods
 
-function BBS_ERR_NOT_IMPLEMENTED(strAlternative)
+function BBS_ERR_NOT_IMPLEMENTED(strAlternative) %#ok<DEFNU>
 % BBS_ERR_NOT_IMPLEMENTED - FUNCTION Throw an error indicating this method is not implemented
 %
 % Usage: BBS_ERR_NOT_IMPLEMENTED(strAlternative)
@@ -1100,4 +1291,12 @@ function BBS_WARN_NOT_YET_IMPLEMENTED()
 % Usage: BBS_WARN_NOT_YET_IMPLEMENTED()
 warning('BOT:UnimplementedAPIMethod', ...
       'This API method is not yet implemented.');
+end
+
+function BBS_WARN_NOT_YET_TESTED() %#ok<DEFNU>
+% BBS_WARN_NOT_YET_TESTED - FUNCTION Raise a warning indicating this method is not yet tested
+%
+% Usage: BBS_WARN_NOT_YET_TESTED()
+warning('BOT:UntestedAPIMethod', ...
+      'This API method is not yet tested.');
 end
