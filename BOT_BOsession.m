@@ -498,8 +498,8 @@ classdef BOT_BOsession
             % - Read data from the NWB file
             bos.EnsureCached();
             nwb_file = bos.strLocalNWBFileLocation;
-            events = h5read(nwb_file, fullfile(strKey, 'data'));
-            frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'));
+            events = h5read(nwb_file, fullfile(strKey, 'data'))';
+            frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'))';
 
             % - Locate start and stop events
             start_inds = find(events == 1);
@@ -510,11 +510,11 @@ classdef BOT_BOsession
                    'BOT:StimulusError', 'Inconsistent start and time times in spontaneous activity stimulus table');
             
             % - Create a stimulus table to return
-            stim_data = [frame_dur(1, start_inds) frame_dur(1, stop_inds)];
+            stim_data = [frame_dur(start_inds, 1) frame_dur(stop_inds, 1)];
             
             % - Create a stimulus table to return
             stimulus_table = array2table(stim_data, 'VariableNames', {'start_frame', 'end_frame'});
-                        
+
          catch meCause
             meBase = MException('BOT:StimulusError', 'Could not read spontaneous stimulus from session.\nThe stimulus may not exist.');
             meBase = meBase.addCause(meCause);
