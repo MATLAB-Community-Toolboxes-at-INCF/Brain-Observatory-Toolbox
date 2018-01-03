@@ -1,6 +1,47 @@
 %% CLASS bot.sessionfilter - Utility operations for filtering experimental sessions
 %
-% Usage: sf = bot.sessionfilter()
+% This class implements a mechanism for searching the experimental data sets
+% within the Allen Brain Observatory. It mimics some functionality of the python
+% class `brain_observatory_cache` from the Allen SDK.
+%
+% Note: `bot.sessionfilter` is a handle class, which means that copies of an
+% object point to the same object. This means you should create new
+% sessionfilter objects if you want to keep the results of several filtering
+% chains.
+%
+% Construction:
+% >> bosf = bot.sessionfilter()
+% bosf = 
+%   sessionfilter with properties:
+%     filtered_session_table: [543x15 table]
+%                   stimulus: {9x1 cell}
+%         targeted_structure: {6x1 cell}
+%     ...
+%
+% Filter by targetted structure:
+% >> bosf.filter_sessions_by_targetted_structre('VISp')
+% ans = 
+%   sessionfilter with properties:
+%     filtered_session_table: [138x15 table]
+%     ...
+%
+% See all methods for information about filtering options.
+%
+% Get summaries of all session data:
+% >> bosf.get_all_cre_lines();
+% >> bosf.get_all_targeted_structures();
+% >> bosf.get_all_imaging_depths();
+%
+% Obtain session objects for remaining sessions after filtering:
+% >> vsSessions = bosf.get_filtered_sessions()
+% ans = 
+%   1x138 session array with properties:
+%     sSessionInfo
+%     strLocalNWBFileLocation
+%
+% Clear filters and start again:
+% >> bosf.clear_filters();
+
 
 %% Class definition
 classdef sessionfilter < handle

@@ -41,7 +41,7 @@ end
 
 
 % - Create a session object
-bos = BOT_BOsession(session_id);
+bos = bot.session(session_id);
 
 % - Extract fluorescence traces from this experiment session
 switch fluorescence_trace_type
