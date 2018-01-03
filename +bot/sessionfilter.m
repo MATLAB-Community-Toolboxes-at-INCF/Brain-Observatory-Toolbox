@@ -1,9 +1,9 @@
-%% CLASS BOT_SessionFilter - Utility operations for filtering experimental sessions
+%% CLASS bot.sessionfilter - Utility operations for filtering experimental sessions
 %
-% Usage: sf = BOT_SessionFilter()
+% Usage: sf = bot.sessionfilter()
 
 %% Class definition
-classdef BOT_SessionFilter < handle
+classdef sessionfilter < handle
    %% - Properties for global filtering of sessions table, included for backwards compatibility
    properties (SetAccess = private, Transient = true, Hidden = false)
       filtered_session_table = nan;    % A table of sessions that is progressively filtered
@@ -22,15 +22,15 @@ classdef BOT_SessionFilter < handle
 
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
-      bocCache = BOT_cache();    % Private handle to the BOT cache object
+      bocCache = bot.cache();    % Private handle to the BOT cache object
    end
 
    %% Constructor
    methods
-      function bosf = BOT_SessionFilter(bIncludeFailed)
-         % BOT_SessionFilter - CONSTRUCTOR Get a fresh Session Filter object
+      function bosf = sessionfilter(bIncludeFailed)
+         % bot.sessionfilter - CONSTRUCTOR Get a fresh Session Filter object
          %
-         % Usage: bosf = BOT_SessionFilter(<bIncludeFailed>)
+         % Usage: bosf = bot.sessionfilter(<bIncludeFailed>)
          
          % - Check arguments, set 'failed' flag
          if exist('bIncludeFailed', 'var') && ~isempty(bIncludeFailed)
@@ -217,7 +217,7 @@ classdef BOT_SessionFilter < handle
          % Usage: vbsSessions = get_filtered_sessions(bosf)
          
          % - Get the current table of filtered sessions, construct objects
-         vbsSessions = BOT_BOsession(bosf.filtered_session_table.id);
+         vbsSessions = bot.session(bosf.filtered_session_table.id);
       end
       
       %% -- Getter methods for dependent filtered sessions properties

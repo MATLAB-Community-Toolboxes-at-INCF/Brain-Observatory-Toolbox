@@ -1,13 +1,38 @@
-%% CLASS BOT_cache - Cache and cloud access class for Brain Observatory Toolbox
+%% CLASS bot.cache - Cache and cloud access class for Brain Observatory Toolbox
 %
-% Usage: oBOCache = BOT_cache()
-% 
 % This class is used internally by the Brain Observatory Toolbox. It can also be
 % used to obtain a raw list of all available experimental sessions from the
 % Allen Brain Observatory.
+%
+% Construction:
+% >> boc = bot.cache()
+%
+% Get information about all experimental sessions:
+% >> boc.tAllSessions
+% ans = 
+%      date_of_acquisition      experiment_container_id    fail_eye_tracking  ...  
+%     ______________________    _______________________    _________________  ...  
+%     '2016-03-31T20:22:09Z'    5.1151e+08                 true               ...  
+%     '2016-07-06T15:22:01Z'    5.2755e+08                 false              ...
+%     ...
+%
+% Force an update of the Allen Brain Observatory manifest:
+% >> boc.UpdateManifest()
+%
+% Access data from an experimental session:
+% >> nSessionID = boc.tAllSessions(1, 'id');
+% >> bos = bot.session(nSessionID)
+% bos = 
+%   session with properties:
+% 
+%                sSessionInfo: [1x1 struct]
+%     strLocalNWBFileLocation: []
+%
+% (See documentation for the `bot.session` class for more information)
+
 
 %% Class definition
-classdef BOT_cache < handle
+classdef cache < handle
    
    properties (SetAccess = immutable)
       strVersion = '0.02 alpha';       % Version string for cache class
@@ -34,10 +59,10 @@ classdef BOT_cache < handle
    
    %% Constructor
    methods
-      function oCache = BOT_cache
+      function oCache = cache
          % CONSTRUCTOR - Returns an object for managing data access to the Allen Brain Observatory
          %
-         % Usage: oCache = BOT_cache()
+         % Usage: oCache = bot.cache()
          
          % - Find and return the global cache object, if one exists
          sUserData = get(0, 'UserData');
@@ -52,7 +77,7 @@ classdef BOT_cache < handle
          %% - Set up a cache object, if no object exists
          
          % - Get the cache directory
-         strBOTDir = fileparts(which('BOT_cache'));
+         strBOTDir = fileparts(which('bot.cache'));
          oCache.strCacheDir = [strBOTDir filesep 'Cache'];
          
          % - Ensure the cache directory exists
@@ -62,7 +87,7 @@ classdef BOT_cache < handle
          
          % - Populate cached filenames
          oCache.sCacheFiles.manifests = [oCache.strCacheDir filesep 'manifests.mat'];
-         oCache.sCacheFiles.ccCache = CloudCacher(oCache.strCacheDir);
+         oCache.sCacheFiles.ccCache = bot.internal.CloudCacher(oCache.strCacheDir);
          
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
@@ -144,7 +169,7 @@ classdef BOT_cache < handle
    
    %% Private methods
    
-   methods (Access = {?BOT_BOsession})
+   methods (Access = {?bot.session})
       function strFile = CacheFile(oCache, strURL, strLocalFile)
          % CacheFile - METHOD Check for cached version of Brain Observatory file, and return local location on disk
          %
@@ -174,7 +199,7 @@ classdef BOT_cache < handle
             % - Do the manifests exist on disk?
             if ~exist(oCache.sCacheFiles.manifests, 'file')
                % - No, so force an update of the cached manifests
-               oCache.manifests = BOT_cache.UpdateManifest();
+               oCache.manifests = bot.cache.UpdateManifest();
             else
                % - Yes, so load them directly from disk
                sData = load(oCache.sCacheFiles.manifests, 'manifests');
@@ -200,17 +225,17 @@ classdef BOT_cache < handle
       function manifests = UpdateManifest
          % STATIC METHOD - Check and update file manifest from Allen Brain Observatory API
          %
-         % Usage: manifests = BOT_cache.UpdateManifest()
+         % Usage: manifests = bot.cache.UpdateManifest()
          
          % TODO: Only download the manifest if it has been updated
          
          try
             % - Get a cache object
-            oCache = BOT_cache();
+            oCache = bot.cache();
             
             % - Download the manifest from the Allen Brain API
             fprintf('Downloading Allen Brain Observatory manifests...\n');
-            manifests = BOT_cache.get_manifests_info_from_api();
+            manifests = bot.cache.get_manifests_info_from_api();
             
             % - Save the manifest to the cache directory
             save(oCache.sCacheFiles.manifests, 'manifests');
