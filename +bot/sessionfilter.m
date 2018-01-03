@@ -25,7 +25,9 @@
 %     filtered_session_table: [138x15 table]
 %     ...
 %
-% See all methods for information about filtering options.
+% See all methods for information about filtering options. Access the object
+% properties to retrieve a summary of which experimental sessions remain after
+% filtering.
 %
 % Get summaries of all session data:
 % >> bosf.get_all_cre_lines();
@@ -55,9 +57,7 @@ classdef sessionfilter < handle
       session_id;                      % A vector containing all the session ids from filtered_session_table
       session_type;                    % A categorical array containing all the session types from filtered_session_table
       cre_line;                        % A categorical array containing all the cre lines from filtered_session_table
-      eye_tracking_avail;              % A boolean vector containing all condtions if eye tracking is available or not from filtered_session_table
-      
-      % I don't think failed experiment containers can be used, so I just go and exclude them
+      eye_tracking_avail;              % A boolean vector containing all condtions if eye tracking is available or not from filtered_session_table      
       failed = false;                  % Boolean flag: should failed sessions be included?
    end
 
@@ -72,6 +72,10 @@ classdef sessionfilter < handle
          % bot.sessionfilter - CONSTRUCTOR Get a fresh Session Filter object
          %
          % Usage: bosf = bot.sessionfilter(<bIncludeFailed>)
+         %
+         % Create a session filter object. By default, failed sessions are
+         % immediately excluded. They can optionally be included using the
+         % argument `bIncludeFailed`.
          
          % - Check arguments, set 'failed' flag
          if exist('bIncludeFailed', 'var') && ~isempty(bIncludeFailed)
