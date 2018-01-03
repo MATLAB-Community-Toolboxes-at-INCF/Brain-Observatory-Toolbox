@@ -10,4 +10,7 @@ raster_files/
 
 trash*
 
-@BOT_cache/Cache
++bot/Cache
+
+*/*.mex*
+
