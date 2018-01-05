@@ -294,7 +294,10 @@ classdef session
          % - Read imaging timestamps from NWB file
          vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
             fullfile(filesep, 'processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1', 'timestamps'));         
+               'Fluorescence', 'imaging_plane_1', 'timestamps'));     
+            
+         % - Convert to 'duration'
+         vtTimestamps = seconds(vtTimestamps);
       end
       
       function vnCellSpecimenIDs = get_cell_specimen_ids(bos)
@@ -565,6 +568,7 @@ classdef session
          vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
             fullfile(filesep, 'processing', bos.strPipelineDataset, ...
                'DfOverF', 'imaging_plane_1', 'timestamps'));
+         vtTimestamps = seconds(vtTimestamps);
          
          mfdFF = h5read(bos.strLocalNWBFileLocation, ...
             fullfile(filesep, 'processing', bos.strPipelineDataset, ...
@@ -813,7 +817,7 @@ classdef session
          strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
             'BehavioralTimeSeries', 'running_speed');
          vfRunningSpeed = h5read(nwb_file, fullfile(strKey, 'data'));
-         vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+         vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
          
          % - Align with imaging timestamps
          vtImageTimestamps = bos.get_fluorescence_timestamps();
@@ -903,7 +907,7 @@ classdef session
          try
             % - Try to read the eye tracking data from the NWB file
             mfPupilLocation = h5read(nwb_file, fullfile(strKey, 'data'))';
-            vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+            vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
             
          catch meCause
             % - Couldn't find the eye tracking data
@@ -941,7 +945,7 @@ classdef session
          try
             % - Try to read the eye tracking data from the NWB file
             vfPupilAreas = h5read(nwb_file, fullfile(strKey, 'data'));
-            vtTimestamps = h5read(nwb_file, fullfile(strKey, 'timestamps'));
+            vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
             
          catch meCause
             % - Couldn't find the eye tracking data
