@@ -124,13 +124,13 @@ classdef cache < handle
    %% Methods to manage manifests and caching
    
    methods
-      function strLocalFile = CacheFilesForSessionIDs(oCache, vnSessionIDs)
+      function cstrLocalFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs)
          % CacheFilesForSessionIDs - METHOD Download NWB files containing experimental data for the given session IDs
          %
-         % Usage: strLocalFile = CacheFilesForSessionIDs(oCache, vnSessionIDs)
+         % Usage: cstrLocalFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs)
          
          % - Loop over session IDs
-         for nSessIndex = 1:numel(vnSessionIDs)
+         for nSessIndex = numel(vnSessionIDs):-1:1
             % - Find this session in the sessions table
             tSession = oCache.tAllSessions(oCache.tAllSessions.id == vnSessionIDs(nSessIndex), :);
             
@@ -142,18 +142,28 @@ classdef cache < handle
             
             else
                % - Cache the corresponding NWB file
-               strURL = [oCache.strABOBaseUrl tSession.well_known_files.download_link];
-               strLocalFile = tSession.well_known_files.path;
-               
-               % - Provide some progress text
-               if ~oCache.sCacheFiles.ccCache.IsInCache(strURL)
-                  fprintf('Downloading URL: [%s]...\n', strURL);
-               end
-               
+               cstrURLs{nSessIndex} = [oCache.strABOBaseUrl tSession.well_known_files.download_link];
+               cstrLocalFiles{nSessIndex} = tSession.well_known_files.path;               
+            end
+         end
+         
+         % - Cache all sessions in parallel
+         if ~isempty(gcp('nocreate'))
+            fprintf('Downloading URLs in parallel...\n');
+            oCache.sCacheFiles.ccCache.pwebsave(cstrLocalFiles, cstrURLs, true);
+         
+         else
+            % - Cache sessions sequentially
+            for nSessIndex = numel(vnSessionIDs):-1:1
                try
+                  % - Provide some progress text
+                  if ~oCache.sCacheFiles.ccCache.IsInCache(cstrURLs{nSessIndex})
+                     fprintf('Downloading URL: [%s]...\n', cstrURLs{nSessIndex});
+                  end
+                  
                   % - Try to cache the NWB file
-                  strLocalFile = oCache.CacheFile(strURL, strLocalFile);
-               
+                  cstrLocalFiles{nSessIndex} = oCache.CacheFile(strURL, strLocalFile);
+                  
                catch mE_Cause
                   % - Raise an error on failure
                   mE_Base = MException('BOT:CouldNotCacheURL', ...

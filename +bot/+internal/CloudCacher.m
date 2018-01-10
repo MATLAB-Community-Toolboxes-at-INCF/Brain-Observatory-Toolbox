@@ -108,6 +108,86 @@ classdef CloudCacher < handle
          end
       end
       
+      function cstrCacheFilenames = pwebsave(ccObj, cstrLocalFilenames, cstrURLs, bProgress, varargin)
+         % pwebsave - METHOD Parallel websave of several URLs
+         %
+         % Usage: cstrCachedFilename = pwebsave(ccObj, cstrLocalFilenames, cstrURLs, bProgress, varargin)
+         
+         % Replaces the Matlab `websave` function, with a cached method.
+         % Optional arguments are passed to `websave`.
+         
+         % - Are the URLs already in the cache?
+         vbCacheHit = cellfun(@(u)(ccObj.IsInCache(u) && exist(ccObj.CachedFileForURL(u), 'file')), cstrURLs);
+         
+         % - Get file names for cache hits
+         cstrCacheFilenames = cell(size(cstrURLs));
+         cstrCacheFilenames(vbCacheHit) = cellfun(@(u)ccObj.CachedFileForURL(u), cstrURLs(vbCacheHit), 'UniformOutput', false);
+         
+         % - Can we exit quickly, if all were hits?
+         if all(vbCacheHit)
+            return;
+         end
+         
+         % - Check that a pool exists
+         if isempty(gcp('nocreate'))
+            error('CouldCacher:NoParallel', ...
+               'A parallel pool must exist to use ''pwebsave''.');
+         end
+         
+         % - Helper funciton to generate local filenames
+         function strLocalFilename = getLocalFilename(strLocalFilename)
+            if isempty(strLocalFilename)
+               [~, strLocalFilename] = fileparts(tempname());
+               strLocalFilename = [strLocalFilename '.mat'];
+            end               
+         end
+            
+         % - Get local and cache filenames for each file
+         cstrLocalFilenames(~vbCacheHit) = cellfun(@getLocalFilename, cstrLocalFilenames(~vbCacheHit), 'UniformOutput', false);
+         cstrCacheFilenames(~vbCacheHit) = cellfun(@(f)ccObj.CachedFilename(f), cstrLocalFilenames(~vbCacheHit), 'UniformOutput', false);
+         
+         % - Ensure any required cache subdirectories exist
+         w = warning('off', 'MATLAB:MKDIR:DirectoryExists');         
+         cellfun(@(c)mkdir(fileparts(c)), cstrCacheFilenames(~vbCacheHit));
+         warning(w);
+            
+         % - Check if the filename exists and warn
+         vbFileExists = cellfun(@(f)exist(f, 'file'), cstrCacheFilenames(~vbCacheHit));
+         if any(vbFileExists)
+            warning('CloudCacher:FileExists', 'A local file already exists; overwriting.');
+         end
+            
+         % - Download data from the provided URLs and save
+         vnMisses = find(~vbCacheHit);
+         for nMiss = vnMisses
+            fEval(nMiss) = parfeval(@websave, 1, cstrCacheFilenames{nMiss}, cstrURLs{nMiss}, varargin{:}); %#ok<AGROW>
+         end
+         
+         % - Wait for download results
+         for nMiss = vnMisses
+            try
+               % - Get the next completed result
+               [nIdx, strLocalFilename] = fetchNext(fEval(vnMisses));
+               cstrLocalFilenames{vnMisses(nIdx)} = strLocalFilename;
+               
+               % - Store the local filename in the cache
+               ccObj.mapCachedData(cstrURLs{nMiss}) = cstrLocalFilenames{nMiss};
+
+               % - Save the cache manifest
+               ccObj.SaveManifest();
+               
+               % - Display some progress
+               if (bProgress)
+                  fprintf('Downloaded URL [%s]...\n', cstrURLs{nMiss});
+               end
+
+            catch meCause
+               % - Report a warning when the download did not complete
+               warning(getReport(meCause, 'extended', 'hyperlinks', 'on')); 
+            end
+         end
+      end
+      
       function data = webread(ccObj, strURL, strLocalFilename, varargin)
          % webread - METHOD - Cached replacement for webread function
          %
