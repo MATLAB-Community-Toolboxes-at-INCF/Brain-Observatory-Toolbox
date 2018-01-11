@@ -316,11 +316,11 @@ classdef CloudCacher < handle
                delete(ccObj.CachedFileForURL(strURL));
                
             catch mE_Cause
-               % - Raise an error if we couldn't delete the file
+               % - Raise a warning if we couldn't delete the file
                mE_Base = MException('CloudCacher:CouldNotDeleteCacheFile', ...
                                     'Cached URL could not be deleted from the cache.');
                mE_Base.addCause(mE_Cause);
-               throw(mE_Base);
+               warning(getReport(mE_Base, 'extended', 'hyperlinks', 'on'));
             end
          end
       end
