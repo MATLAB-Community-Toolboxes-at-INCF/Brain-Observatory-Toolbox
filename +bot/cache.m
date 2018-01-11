@@ -124,10 +124,24 @@ classdef cache < handle
    %% Methods to manage manifests and caching
    
    methods
-      function cstrLocalFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs)
+      function cstrCacheFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs, bUseParallel)
          % CacheFilesForSessionIDs - METHOD Download NWB files containing experimental data for the given session IDs
          %
-         % Usage: cstrLocalFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs)
+         % Usage: cstrCacheFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs <, bUseParallel>)
+         %
+         % `vnSessionIDs` is a list of session IDs obtained from the
+         % sessions table. The NWB data files for these sessions will be
+         % downloaded and cached, if they have not already been cached.
+         %
+         % The optional argument `bUseParallel` allows you to specify
+         % whether a pool of workers should be used to download several
+         % data files simultaneously. A pool will *not* be created if one
+         % does not already exist. By default, a pool will be used.
+         
+         % - Default arguments
+         if ~exist('bUseParallel', 'var') || isempty(bUseParallel)
+             bUseParallel = true;
+         end
          
          % - Loop over session IDs
          for nSessIndex = numel(vnSessionIDs):-1:1
@@ -143,26 +157,35 @@ classdef cache < handle
             else
                % - Cache the corresponding NWB file
                cstrURLs{nSessIndex} = [oCache.strABOBaseUrl tSession.well_known_files.download_link];
-               cstrLocalFiles{nSessIndex} = tSession.well_known_files.path;               
+               cstrLocalFiles{nSessIndex} = tSession.well_known_files.path;
+               vbIsInCache(nSessIndex) = oCache.IsInCache(cstrURLs{nSessIndex});
+               if vbIsInCache(nSessIndex)
+                cstrCacheFiles{nSessIndex} = oCache.sCacheFiles.ccCache.CachedFileForURL(cstrURLs{nSessIndex});
+               end
             end
          end
          
+         % - Can we exit immediately, if all sessions are cached?
+         if all(vbIsInCache)
+             return;
+         end
+         
          % - Cache all sessions in parallel
-         if ~isempty(gcp('nocreate'))
+         if numel(vnSessionIDs) > 1 && bUseParallel && ~isempty(gcp('nocreate'))
             fprintf('Downloading URLs in parallel...\n');
-            oCache.sCacheFiles.ccCache.pwebsave(cstrLocalFiles, cstrURLs, true);
+            cstrCacheFiles = oCache.sCacheFiles.ccCache.pwebsave(cstrLocalFiles, cstrURLs, true);
          
          else
             % - Cache sessions sequentially
             for nSessIndex = numel(vnSessionIDs):-1:1
                try
                   % - Provide some progress text
-                  if ~oCache.sCacheFiles.ccCache.IsInCache(cstrURLs{nSessIndex})
+                  if ~vbIsInCache(nSessIndex)
                      fprintf('Downloading URL: [%s]...\n', cstrURLs{nSessIndex});
                   end
                   
                   % - Try to cache the NWB file
-                  cstrLocalFiles{nSessIndex} = oCache.CacheFile(cstrURLs{nSessIndex}, cstrLocalFiles{nSessIndex});
+                  cstrCacheFiles{nSessIndex} = oCache.CacheFile(cstrURLs{nSessIndex}, cstrLocalFiles{nSessIndex});
                   
                catch mE_Cause
                   % - Raise an error on failure

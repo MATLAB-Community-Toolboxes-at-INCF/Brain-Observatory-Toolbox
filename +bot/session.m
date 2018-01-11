@@ -183,14 +183,15 @@ classdef session
    end
    
    methods
-      function strLocalFile = EnsureCached(bos)
+      function strCacheFile = EnsureCached(bos)
          % EnsureCached - METHOD Ensure the NWB file corresponding to this session is cached
          %
-         % Usage: strLocalFile = EnsureCached(bos)
+         % Usage: strCachelFile = EnsureCached(bos)
          %
          % This method will force the session data to be downloaded and cached,
          % if it is not already available.
-         strLocalFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
+         strCacheFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
+         strCacheFile = strCacheFile{1};
       end
       
       function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
