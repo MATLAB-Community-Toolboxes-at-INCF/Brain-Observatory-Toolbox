@@ -10,7 +10,7 @@ classdef CloudCacher < handle
       strCacheDir;                        % File directory in which data is cached
       strManifestFile;                    % .mat file containing the cache manifest
       bTemporaryCache = false;            % Boolean flag: should cache be deleted on variable deletion?
-      mapCachedData = containers.Map();   % Map containing URLs that have been cached
+      mapCachedData = containers.Map();   % Map containing URLs that have been cached, maps to cache-relative filenames
    end
    
    properties (SetAccess = immutable)
@@ -56,31 +56,31 @@ classdef CloudCacher < handle
          end
       end
       
-      function strCacheFilename = websave(ccObj, strLocalFilename, strURL, varargin)
+      function strCacheFilename = websave(ccObj, strRelativeFilename, strURL, varargin)
          % websave - METHOD Cached replacement for websave function
          %
-         % Usage: strCacheFilename = ccObj.websave(strLocalFilename, strURL, ...)
+         % Usage: strCacheFilename = ccObj.websave(strRelativeFilename, strURL, ...)
          %
          % Replaces the Matlab `websave` function, with a cached method.
-         % Optional arguments are passed to `websave`.
+         % Optional additional arguments are passed to `websave`.
          
          try
             % - Is the URL already in the cache?
             if ccObj.IsInCache(strURL) && exist(ccObj.CachedFileForURL(strURL), 'file')
-               % - Yes, so read the local file
+               % - Yes, so read the cached file
                strCacheFilename = ccObj.CachedFileForURL(strURL);
                
             else
                % - No, so we need to download and cache it
                
                % - Get a filename for the cache
-               if ~exist('strLocalFilename', 'var') || isempty(strLocalFilename)
-                  [~, strLocalFilename] = fileparts(tempname());
-                  strLocalFilename = [strLocalFilename '.mat'];
+               if isempty(strRelativeFilename)
+                  [~, strRelativeFilename] = fileparts(tempname());
+                  strRelativeFilename = [strRelativeFilename '.mat'];
                end
                
                % - Convert the filename to a file in the cache
-               strCacheFilename = ccObj.CachedFilename(strLocalFilename);
+               strCacheFilename = ccObj.CachedFilename(strRelativeFilename);
                
                % - Ensure any required cache subdirectories exist
                w = warning('off', 'MATLAB:MKDIR:DirectoryExists');
@@ -89,14 +89,14 @@ classdef CloudCacher < handle
                
                % - Check if the filename exists and warn
                if exist(strCacheFilename, 'file')
-                  warning('CloudCacher:FileExists', 'The specific local file already exists; overwriting.');
+                  warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
                end
                
                % - Download data from the provided URL and save
                strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
                
                % - Add URL to cache and save manifest
-               ccObj.mapCachedData(strURL) = strLocalFilename;
+               ccObj.mapCachedData(strURL) = strRelativeFilename;
                ccObj.SaveManifest();
             end
             
@@ -108,13 +108,13 @@ classdef CloudCacher < handle
          end
       end
       
-      function cstrCacheFilenames = pwebsave(ccObj, cstrLocalFilenames, cstrURLs, bProgress, varargin)
+      function cstrCacheFilenames = pwebsave(ccObj, cstrRelativeFilenames, cstrURLs, bProgress, varargin)
          % pwebsave - METHOD Parallel websave of several URLs
          %
-         % Usage: cstrCachedFilename = pwebsave(ccObj, cstrLocalFilenames, cstrURLs, bProgress, varargin)
-         
+         % Usage: cstrCachedFilename = pwebsave(ccObj, cstrRelativeFilenames, cstrURLs, bProgress, varargin)
+         %
          % Replaces the Matlab `websave` function, with a cached method.
-         % Optional arguments are passed to `websave`.
+         % Optional additional varargin arguments are passed to `websave`.
          
          % - Are the URLs already in the cache?
          vbCacheHit = cellfun(@(u)(ccObj.IsInCache(u) && exist(ccObj.CachedFileForURL(u), 'file')), cstrURLs);
@@ -134,17 +134,17 @@ classdef CloudCacher < handle
                'A parallel pool must exist to use ''pwebsave''.');
          end
          
-         % - Helper funciton to generate local filenames
-         function strLocalFilename = getLocalFilename(strLocalFilename)
-            if isempty(strLocalFilename)
-               [~, strLocalFilename] = fileparts(tempname());
-               strLocalFilename = [strLocalFilename '.mat'];
+         % - Helper function to generate cache-relative filenames
+         function strRelativeFilename = getRelativeFilename(strRelativeFilename)
+            if isempty(strRelativeFilename)
+               [~, strRelativeFilename] = fileparts(tempname());
+               strRelativeFilename = [strRelativeFilename '.mat'];
             end               
          end
             
-         % - Get local and cache filenames for each file
-         cstrLocalFilenames(~vbCacheHit) = cellfun(@getLocalFilename, cstrLocalFilenames(~vbCacheHit), 'UniformOutput', false);
-         cstrCacheFilenames(~vbCacheHit) = cellfun(@(f)ccObj.CachedFilename(f), cstrLocalFilenames(~vbCacheHit), 'UniformOutput', false);
+         % - Get relative and cache filenames for each file
+         cstrRelativeFilenames(~vbCacheHit) = cellfun(@getRelativeFilename, cstrRelativeFilenames(~vbCacheHit), 'UniformOutput', false);
+         cstrCacheFilenames(~vbCacheHit) = cellfun(@(f)ccObj.CachedFilename(f), cstrRelativeFilenames(~vbCacheHit), 'UniformOutput', false);
          
          % - Ensure any required cache subdirectories exist
          w = warning('off', 'MATLAB:MKDIR:DirectoryExists');         
@@ -154,7 +154,7 @@ classdef CloudCacher < handle
          % - Check if the filename exists and warn
          vbFileExists = cellfun(@(f)exist(f, 'file'), cstrCacheFilenames(~vbCacheHit));
          if any(vbFileExists)
-            warning('CloudCacher:FileExists', 'A local file already exists; overwriting.');
+            warning('CloudCacher:FileExists', 'A cached file already exists; overwriting.');
          end
             
          % - Download data from the provided URLs and save
@@ -167,11 +167,11 @@ classdef CloudCacher < handle
          for nMiss = vnMisses
             try
                % - Get the next completed result
-               [nIdx, strLocalFilename] = fetchNext(fEval(vnMisses));
-               cstrLocalFilenames{vnMisses(nIdx)} = strLocalFilename;
+               [nIdx, strCacheFilename] = fetchNext(fEval(vnMisses));
+               cstrCacheFilenames{vnMisses(nIdx)} = strCacheFilename;
                
-               % - Store the local filename in the cache
-               ccObj.mapCachedData(cstrURLs{nMiss}) = cstrLocalFilenames{nMiss};
+               % - Store the relative filename in the cache
+               ccObj.mapCachedData(cstrURLs{nMiss}) = cstrRelativeFilenames{nMiss};
 
                % - Save the cache manifest
                ccObj.SaveManifest();
@@ -183,15 +183,16 @@ classdef CloudCacher < handle
 
             catch meCause
                % - Report a warning when the download did not complete
-               warning(getReport(meCause, 'extended', 'hyperlinks', 'on')); 
+               warning(getReport(meCause, 'extended', 'hyperlinks', 'on'));
+               cstrCacheFilenames{nMiss} = '';
             end
          end
       end
       
-      function data = webread(ccObj, strURL, strLocalFilename, varargin)
+      function data = webread(ccObj, strURL, strRelativeFilename, varargin)
          % webread - METHOD - Cached replacement for webread function
          %
-         % Usage: data = ccObj.webread(strURL, strLocalFilename, ...)
+         % Usage: data = ccObj.webread(strURL, strRelativeFilename, ...)
          %
          % Replaces the Matlab `webread` function with a cached method.
          % Optional arguments are passed to `webread`.
@@ -199,7 +200,7 @@ classdef CloudCacher < handle
          try
             % - Is the URL already in the cache?
             if ccObj.IsInCache(strURL) && exist(ccObj.CachedFileForURL(strURL), 'file')
-               % - Yes, so read the local file
+               % - Yes, so read the cached file
                strCachedFilename = ccObj.CachedFileForURL(strURL);
                sData = load(strCachedFilename);
                data = sData.data;
@@ -208,13 +209,13 @@ classdef CloudCacher < handle
                % - No, so we need to download and cache it
                
                % - Get a filename for the cache
-               if ~exist('strLocalFilename', 'var') || isempty(strLocalFilename)
-                  [~, strLocalFilename] = fileparts(tempname());
-                  strLocalFilename = [strLocalFilename '.mat'];
+               if ~exist('strRelativeFilename', 'var') || isempty(strRelativeFilename)
+                  [~, strRelativeFilename] = fileparts(tempname());
+                  strRelativeFilename = [strRelativeFilename '.mat'];
                end
                
                % - Convert the filename to a file in the cache
-               strCacheFilename = ccObj.CachedFilename(strLocalFilename);
+               strCacheFilename = ccObj.CachedFilename(strRelativeFilename);
 
                % - Ensure any required cache subdirectories exist
                w = warning('off', 'MATLAB:MKDIR:DirectoryExists');
@@ -223,7 +224,7 @@ classdef CloudCacher < handle
 
                % - Check if the filename exists and warn
                if exist(strCacheFilename, 'file')
-                  warning('CloudCacher:FileExists', 'The specific local file already exists; overwriting.');
+                  warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
                end
                
                % - Download data from the provided URL and save
@@ -231,7 +232,7 @@ classdef CloudCacher < handle
                save(strCacheFilename, 'data');
 
                % - Add URL to cache and save manifest
-               ccObj.mapCachedData(strURL) = strLocalFilename;
+               ccObj.mapCachedData(strURL) = strRelativeFilename;
                ccObj.SaveManifest();
             end
             
@@ -254,8 +255,20 @@ classdef CloudCacher < handle
          strFile = fullfile(ccObj.strCacheDir, strFilename);
       end
       
+      function strFile = RelativeFilename(ccObj, strCachedFilename)
+          % RelativeFilename - METHOD Return the cache-relative location of a given cached file 
+          %
+          % Usage: strFile = RelativeFilename(ccObj, strCachedFilename)
+          %
+          % This method does NOT indicate whether or not the file exists in
+          % the cache. If `strCachedFilename` is not a path in the cache,
+          % then `strFile` will be empty.
+          
+          strFile = sscanf(strCachedFilename, [ccObj.strCacheDir '%s']);
+      end
+      
       function strFile = CachedFileForURL(ccObj, strURL)
-         % CachedFileForURL - METHOD Return the file name corresponding to a cached URL
+         % CachedFileForURL - METHOD Return the full file path corresponding to a cached URL
          %
          % Usage: strFile = CachedFileForURL(ccObj, strURL)
          %

@@ -162,14 +162,14 @@ classdef cache < handle
                   end
                   
                   % - Try to cache the NWB file
-                  cstrLocalFiles{nSessIndex} = oCache.CacheFile(strURL, strLocalFile);
+                  cstrLocalFiles{nSessIndex} = oCache.CacheFile(cstrURLs{nSessIndex}, cstrLocalFiles{nSessIndex});
                   
                catch mE_Cause
                   % - Raise an error on failure
                   mE_Base = MException('BOT:CouldNotCacheURL', ...
                      'The NWB file for a session ID [%d] could not be cached.', ...
                      vnSessionIDs(nSessIndex));
-                  mE_Base.addCause(mE_Cause);
+                  mE_Base = mE_Base.addCause(mE_Cause);
                   throw(mE_Base);
                end
             end
