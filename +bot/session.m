@@ -294,7 +294,7 @@ classdef session
          
          % - Read imaging timestamps from NWB file
          vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
-            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1', 'timestamps'));     
             
          % - Convert to 'duration'
@@ -314,7 +314,7 @@ classdef session
          
          % - Read list of specimen IDs
          vnCellSpecimenIDs = h5read(bos.strLocalNWBFileLocation, ...
-            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            h5path('processing', bos.strPipelineDataset, ...
                'ImageSegmentation', 'cell_specimen_ids'));
       end
       
@@ -373,7 +373,7 @@ classdef session
                            
          % - Read requested fluorescence traces
          mfTraces = h5read(bos.strLocalNWBFileLocation, ...
-            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
          
          % - Subselect traces
@@ -411,7 +411,7 @@ classdef session
                            
          % - Read requested fluorescence traces
          mfTraces = h5read(bos.strLocalNWBFileLocation, ...
-            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1', 'data'));
          
          % - Subselect traces
@@ -442,11 +442,11 @@ classdef session
          sMetadata = bos.get_metadata();
          if str2double(sMetadata.pipeline_version) >= 2.0
             vfR = h5read(bos.strLocalNWBFileLocation, ...
-               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               h5path('processing', bos.strPipelineDataset, ...
                   'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
          else
             vfR = h5read(bos.strLocalNWBFileLocation, ...
-               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               h5path('processing', bos.strPipelineDataset, ...
                   'Fluorescence', 'imaging_plane_1', 'r'));
          end
          
@@ -487,11 +487,11 @@ classdef session
          sMetadata = bos.get_metadata();
          if str2double(sMetadata.pipeline_version) >= 2.0
             mfTraces = h5read(bos.strLocalNWBFileLocation, ...
-               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               h5path('processing', bos.strPipelineDataset, ...
                   'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
          else
             mfTraces = h5read(bos.strLocalNWBFileLocation, ...
-               fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+               h5path('processing', bos.strPipelineDataset, ...
                   'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
          end
          
@@ -567,12 +567,12 @@ classdef session
                            
          % - Read timestamps and response traces
          vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
-            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            h5path('processing', bos.strPipelineDataset, ...
                'DfOverF', 'imaging_plane_1', 'timestamps'));
          vtTimestamps = seconds(vtTimestamps);
          
          mfdFF = h5read(bos.strLocalNWBFileLocation, ...
-            fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+            h5path('processing', bos.strPipelineDataset, ...
                'DfOverF', 'imaging_plane_1', 'data'));
          
          % - Subsample response traces to requested cell specimens
@@ -588,7 +588,7 @@ classdef session
          % experimental session.
 
          % - Build a key for this stimulus
-         strKey = fullfile(filesep, 'stimulus', 'presentation', 'spontaneous_stimulus');
+         strKey = h5path('stimulus', 'presentation', 'spontaneous_stimulus');
          
          % - Read and convert stimulus data from the NWB file
          try
@@ -632,7 +632,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Get list of stimuli from NWB file
-         strKey = fullfile(filesep, 'stimulus', 'presentation');
+         strKey = h5path('stimulus', 'presentation');
          sKeys = h5info(nwb_file, strKey);
          [~, cStimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
          
@@ -776,7 +776,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract the maximum projection from the session
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1', 'reference_images', ...
             'maximum_intensity_projection_image', 'data');
          mfMaxProjection = h5read(nwb_file, strKey);
@@ -795,7 +795,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract list of ROI IDs from NWB file
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'roi_ids');
          vnROIIDs = cellfun(@str2num, h5read(nwb_file, strKey));
       end
@@ -815,7 +815,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Build a base key for the running speed data
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'BehavioralTimeSeries', 'running_speed');
          vfRunningSpeed = h5read(nwb_file, fullfile(strKey, 'data'));
          vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
@@ -838,7 +838,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Try to locate the motion correction data
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'MotionCorrection', '2p_image_series');
          
          try
@@ -902,7 +902,7 @@ classdef session
          end
          
          % - Extract data from NWB file
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'EyeTracking', location_key);
          
          try
@@ -940,7 +940,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract session data from NWB file
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'PupilTracking', 'pupil_size');
          
          try
@@ -977,7 +977,7 @@ classdef session
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
          
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1');
          
          % - Get list of ROI names
@@ -1020,7 +1020,7 @@ classdef session
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
          
-         strKey = fullfile(filesep, 'processing', bos.strPipelineDataset, ...
+         strKey = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1');
          
          % - Get list of ROI names
@@ -1066,7 +1066,7 @@ classdef session
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract stimulus template from NWB file
-         strKey = fullfile(filesep, 'stimulus', 'templates', ...
+         strKey = h5path('stimulus', 'templates', ...
             [strStimulusName '_image_stack'], 'data');
          
          try
@@ -1259,7 +1259,7 @@ function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, s
 	% get_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
 
    % - Build a key for this stimulus
-   strKey = fullfile(filesep, 'stimulus', 'presentation', stimulus_name);
+   strKey = h5path('stimulus', 'presentation', stimulus_name);
    
    % - Read and convert stimulus data from the NWB file
    try
@@ -1287,13 +1287,13 @@ function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimu
    % get_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
 
    % - Build a key for this stimulus
-   strKey = fullfile(filesep, 'stimulus', 'presentation', stimulus_name);
+   strKey = h5path('stimulus', 'presentation', stimulus_name);
    
    % - Attempt to read data from this key, otherwise correct
    try
       h5info(nwb_file, strKey);
    catch
-      strKey = fullfile(filesep, 'stimulus', 'presentation', [stimulus_name '_stimulus']);
+      strKey = h5path('stimulus', 'presentation', [stimulus_name '_stimulus']);
    end
    
    % - Read and convert stimulus data from the NWB file
@@ -1537,3 +1537,13 @@ function [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coo
    mbMask = mfPixelFraction >= threshold;
 end
 
+function strPath = h5path(varargin)
+   % h5path - FUNCTION Generate a path for an HDF5 file
+   %
+   % Usage: strPath = h5path(strPart1, strPart2, ...)
+   
+   strPath = fullfile(filesep, varargin{:});
+   if ispc
+      strPath = strrep(strPath, filesep, '/');
+   end
+end
