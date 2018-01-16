@@ -1193,6 +1193,9 @@ classdef session
          if ~issorted(vnFrameIndex)
             vnFrameIndex = sort(vnFrameIndex);
          end
+         
+         % - Ensure that the frame index is a column vector
+         vnFrameIndex = reshape(vnFrameIndex, [], 1);
 
          % - Identify search frames that are outside registered epochs
          vbValidFrame = vnFrameIndex >= mnEpochStartEndFrames(1, 1) & vnFrameIndex <= mnEpochStartEndFrames(end, 2);
@@ -1209,7 +1212,7 @@ classdef session
          vnEndEpochIndex = fhBSSL_int32([mnEpochStartEndFrames(1, 1); mnEpochStartEndFrames(:, 2)], int32(vnFrameIndex(vbValidFrame)));
          
          % - Valid frames must fall within a registered stimulus epoch
-         vbValidFrame = vbValidFrame & (vnStartEpochIndex == vnEndEpochIndex);
+         vbValidFrame(vbValidFrame) = vbValidFrame(vbValidFrame) & (vnStartEpochIndex == vnEndEpochIndex);
          
          % - Were any frames found?
          if ~any(vbValidFrame)
