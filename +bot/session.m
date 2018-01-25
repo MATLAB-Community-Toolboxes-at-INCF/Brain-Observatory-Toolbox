@@ -594,8 +594,8 @@ classdef session
             % - Read data from the NWB file
             bos.EnsureCached();
             nwb_file = bos.strLocalNWBFileLocation;
-            events = h5read(nwb_file, fullfile(strKey, 'data'))';
-            frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'))';
+            events = h5read(nwb_file, h5path(strKey, 'data'))';
+            frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'))';
 
             % - Locate start and stop events
             start_inds = find(events == 1);
@@ -816,8 +816,8 @@ classdef session
          % - Build a base key for the running speed data
          strKey = h5path('processing', bos.strPipelineDataset, ...
             'BehavioralTimeSeries', 'running_speed');
-         vfRunningSpeed = h5read(nwb_file, fullfile(strKey, 'data'));
-         vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
+         vfRunningSpeed = h5read(nwb_file, h5path(strKey, 'data'));
+         vtTimestamps = seconds(h5read(nwb_file, h5path(strKey, 'timestamps')));
          
          % - Align with imaging timestamps
          vtImageTimestamps = bos.get_fluorescence_timestamps();
@@ -841,12 +841,12 @@ classdef session
             'MotionCorrection', '2p_image_series');
          
          try
-            h5info(nwb_file, fullfile(strKey, 'xy_translation'));
-            strKey = fullfile(strKey, 'xy_translation');
+            h5info(nwb_file, h5path(strKey, 'xy_translation'));
+            strKey = h5path(strKey, 'xy_translation');
          catch
             try
-               h5info(nwb_file, fullfile(strKey, 'xy_translations'));
-               strKey = fullfile(strKey, 'xy_translations');
+               h5info(nwb_file, h5path(strKey, 'xy_translations'));
+               strKey = h5path(strKey, 'xy_translations');
             catch
                error('BOT:MotionCorrectionNotFound', ...
                      'Could not file motion correction data.');
@@ -854,9 +854,9 @@ classdef session
          end
          
          % - Extract motion correction data from session
-         motion_log = h5read(nwb_file, fullfile(strKey, 'data'));
-         motion_time = h5read(nwb_file, fullfile(strKey, 'timestamps'));
-         motion_names = h5read(nwb_file, fullfile(strKey, 'feature_description'));
+         motion_log = h5read(nwb_file, h5path(strKey, 'data'));
+         motion_time = h5read(nwb_file, h5path(strKey, 'timestamps'));
+         motion_names = h5read(nwb_file, h5path(strKey, 'feature_description'));
          
          % - Create a motion correction table
          tMotionCorrection = array2table(motion_log', 'VariableNames', motion_names);
@@ -906,8 +906,8 @@ classdef session
          
          try
             % - Try to read the eye tracking data from the NWB file
-            mfPupilLocation = h5read(nwb_file, fullfile(strKey, 'data'))';
-            vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
+            mfPupilLocation = h5read(nwb_file, h5path(strKey, 'data'))';
+            vtTimestamps = seconds(h5read(nwb_file, h5path(strKey, 'timestamps')));
             
          catch meCause
             % - Couldn't find the eye tracking data
@@ -944,8 +944,8 @@ classdef session
          
          try
             % - Try to read the eye tracking data from the NWB file
-            vfPupilAreas = h5read(nwb_file, fullfile(strKey, 'data'));
-            vtTimestamps = seconds(h5read(nwb_file, fullfile(strKey, 'timestamps')));
+            vfPupilAreas = h5read(nwb_file, h5path(strKey, 'data'));
+            vtTimestamps = seconds(h5read(nwb_file, h5path(strKey, 'timestamps')));
             
          catch meCause
             % - Couldn't find the eye tracking data
@@ -980,7 +980,7 @@ classdef session
             'ImageSegmentation', 'imaging_plane_1');
          
          % - Get list of ROI names
-         cstrRoiList = deblank(h5read(nwb_file, fullfile(strKey, 'roi_list')));
+         cstrRoiList = deblank(h5read(nwb_file, h5path(strKey, 'roi_list')));
          
          % - Select only requested cell specimen IDs
          vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
@@ -989,7 +989,7 @@ classdef session
          tbROIMasks = [];
          for nCellIndex = vnCellIndices'
             % - Get a logical mask for this ROI
-            mbThisMask = logical(h5read(nwb_file, fullfile(strKey, cstrRoiList{nCellIndex}, 'img_mask')));
+            mbThisMask = logical(h5read(nwb_file, h5path(strKey, cstrRoiList{nCellIndex}, 'img_mask')));
             
             % - Build a logical tensor of ROI masks
             if isempty(tbROIMasks)
@@ -1023,7 +1023,7 @@ classdef session
             'ImageSegmentation', 'imaging_plane_1');
          
          % - Get list of ROI names
-         cstrRoiList = deblank(h5read(nwb_file, fullfile(strKey, 'roi_list')));
+         cstrRoiList = deblank(h5read(nwb_file, h5path(strKey, 'roi_list')));
          
          % - Select only requested cell specimen IDs
          vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
@@ -1038,7 +1038,7 @@ classdef session
          % - Loop over ROIs, extract masks
          for nCellIndex = numel(vnCellIndices):-1:1
             % - Get a logical mask for this ROI
-            mbThisMask = logical(h5read(nwb_file, fullfile(strKey, cstrRoiList{vnCellIndices(nCellIndex)}, 'img_mask')));
+            mbThisMask = logical(h5read(nwb_file, h5path(strKey, cstrRoiList{vnCellIndices(nCellIndex)}, 'img_mask')));
 
             % - Build up a CC structure containing these ROIs
             sROIs.PixelIdxList{nCellIndex} = find(mbThisMask);
@@ -1266,9 +1266,9 @@ function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, s
    % - Read and convert stimulus data from the NWB file
    try
       % - Read data from the NWB file
-      stim_data = h5read(nwb_file, fullfile(strKey, 'data'));
-      features = deblank(h5read(nwb_file, fullfile(strKey, 'features')));
-      frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'));
+      stim_data = h5read(nwb_file, h5path(strKey, 'data'));
+      features = deblank(h5read(nwb_file, h5path(strKey, 'features')));
+      frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
       
       % - Create a stimulus table to return
       stimulus_table = array2table(stim_data', 'VariableNames', features);
@@ -1301,8 +1301,8 @@ function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimu
    % - Read and convert stimulus data from the NWB file
    try
       % - Read data from the NWB file
-      inds = h5read(nwb_file, fullfile(strKey, 'data')) + 1;
-      frame_dur = h5read(nwb_file, fullfile(strKey, 'frame_duration'));
+      inds = h5read(nwb_file, h5path(strKey, 'data')) + 1;
+      frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
       
       % - Create a stimulus table to return
       stimulus_table = array2table(inds, 'VariableNames', {'frame'});
