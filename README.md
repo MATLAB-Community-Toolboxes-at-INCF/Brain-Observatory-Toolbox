@@ -1,8 +1,6 @@
 # Brain-Observatory-Toolbox
 A MATLAB toolbox for interacting with the [Allen Brain Observatory](http://observatory.brain-map.org/visualcoding)
 
-A Matlab toolbox for interacting with the [Allen Brain Observatory](http://observatory.brain-map.org/visualcoding).
-
 ## Installation
 
 Clone the Brain Observatory Toolbox repository using `git`, or download a release as a `.zip` file. Add the base directory to the `matlab` path; *do not* add the directory `+bot` to the matlab path.
@@ -183,4 +181,4 @@ The methods `get_stimulus_table()` and `get_stimulus_template()` can then be use
 
 All data accessed by this toolbox comes from the Allen Brain Observatory © 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: http://observatory.brain-map.org/visualcoding
 
-This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to Mathworks for their advice. 
+This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to MathWorks for their advice. 
