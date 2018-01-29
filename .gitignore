@@ -10,7 +10,8 @@ raster_files/
 
 trash*
 
-*/private*
++bot/Cache
 
-private*
+*/*.mex*
 
+*.mex*
