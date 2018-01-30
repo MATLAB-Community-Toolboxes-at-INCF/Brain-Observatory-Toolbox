@@ -1,6 +1,5 @@
-# Brain Observatory Toolbox
-
-A Matlab toolbox for interacting with the [Allen Brain Observatory](http://observatory.brain-map.org/visualcoding).
+# Brain-Observatory-Toolbox
+A MATLAB toolbox for interacting with the [Allen Brain Observatory](http://observatory.brain-map.org/visualcoding)
 
 ## Installation
 
@@ -71,6 +70,7 @@ ans =
 
 Only 138 experimental sessions are now available. Let's filter further by whether or not eye tracking information is available, then by imaging depth and CRE line
 
+This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to MathWorks for their advice. 
 
 ````matlab
 >> bosf.filter_session_by_eye_tracking(true);
@@ -181,4 +181,4 @@ The methods `get_stimulus_table()` and `get_stimulus_template()` can then be use
 
 All data accessed by this toolbox comes from the Allen Brain Observatory © 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: http://observatory.brain-map.org/visualcoding
 
-This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to Mathworks for their advice. 
+This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to MathWorks for their advice. 
