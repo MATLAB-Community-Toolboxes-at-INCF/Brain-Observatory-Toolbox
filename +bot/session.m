@@ -1355,7 +1355,7 @@ function epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
    
 	% - Assign a default max_cuts
    if ~exist('max_cuts', 'var') || isempty(max_cuts)
-      max_cuts = 2;
+      max_cuts = 3;
    end
    
    % - Determine frame deltas and cut indices
