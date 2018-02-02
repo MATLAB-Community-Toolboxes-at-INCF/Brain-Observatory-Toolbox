@@ -99,6 +99,7 @@ classdef sessionfilter < handle
          if ~bosf.failed
             failed_container_id = bosf.bocCache.tAllContainers((bosf.bocCache.tAllContainers.failed == 1), :).id;
             bosf.filtered_session_table = bosf.bocCache.tAllSessions(~ismember(bosf.bocCache.tAllSessions.experiment_container_id, failed_container_id), :);
+            
          end
       end
       
