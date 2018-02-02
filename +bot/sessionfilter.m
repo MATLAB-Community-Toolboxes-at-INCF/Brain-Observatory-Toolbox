@@ -104,27 +104,27 @@ classdef sessionfilter < handle
       
       function result = get_total_num_of_containers(bosf,varargin)
          % get_total_num_of_containers - METHOD Return the total number of experiment containers from tAllSessions
-         result = size(bosf.bocCache.tAllSessions, 1) * 3;
+         result = size(bosf.filtered_session_table, 1) / 3;
       end
       
       
       function result = get_all_imaging_depths(bosf)
          % get_all_imaging_depths - METHOD Return all the cortical depths from tAllSessions
-         result = unique(bosf.bocCache.tAllSessions.imaging_depth);
+         result = unique(bosf.filtered_session_table.imaging_depth);
       end
       
       
       function result = get_all_targeted_structures(bosf)
          % get_all_targeted_structures - METHOD Return all the brain areas from tAllSessions
          
-         targeted_structure_table = struct2table(bosf.bocCache.tAllSessions.targeted_structure);
+         targeted_structure_table = struct2table(bosf.filtered_session_table.targeted_structure);
          result = categories(categorical(targeted_structure_table.acronym));
       end
       
       
       function result = get_all_session_types (bosf)
          % get_all_session_types - METHOD Return all the session types from tAllSessions
-         result = categories(categorical(bosf.bocCache.tAllSessions.stimulus_name));
+         result = categories(categorical(bosf.filtered_session_table.stimulus_name));
       end
       
       
@@ -141,7 +141,7 @@ classdef sessionfilter < handle
       
       function result = get_all_cre_lines (bosf)
          % get_all_cre_lines - METHOD Return all cre lines from tAllSessions
-         result = categories(categorical(bosf.bocCache.tAllSessions.cre_line));
+         result = categories(categorical(bosf.filtered_session_table.cre_line));
       end
       
       
@@ -170,10 +170,10 @@ classdef sessionfilter < handle
          for cur_depth = 1: size(bosf.get_all_imaging_depths(),1)
             for cur_structure = 1: size(bosf.get_all_targeted_structures,1)
                % - Find matching imaging depths
-               vbMatchImDepth = bosf.bocCache.tAllSessions.imaging_depth == all_depths(cur_depth);
+               vbMatchImDepth = bosf.filtered_session_table.imaging_depth == all_depths(cur_depth);
 
                % - Find matching targeted structures
-               exp_targeted_structure_session_table = [bosf.bocCache.tAllSessions.targeted_structure];
+               exp_targeted_structure_session_table = [bosf.filtered_session_table.targeted_structure];
                vbMatchTargeted = ismember({exp_targeted_structure_session_table.acronym}, all_structures{cur_structure})';
                
                % - Build summary matrix
