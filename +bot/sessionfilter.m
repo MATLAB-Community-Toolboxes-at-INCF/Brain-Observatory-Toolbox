@@ -240,9 +240,14 @@ classdef sessionfilter < handle
         end
         
         function acronym = get_targeted_structure_acronyms(bosf)
-            % get_targeted_structure_acronyms - METHOD Return targeted structure acronyms for sessions in filtered_session_table
-            exp_targeted_structure_session_table = struct2table(bosf.filtered_session_table.targeted_structure);
-            acronym = categorical(exp_targeted_structure_session_table.acronym);
+            if size(bosf.filtered_session_table,1) > 1
+                exp_targeted_structure_session_table = struct2table(bosf.filtered_session_table.targeted_structure);
+                acronym = categorical(exp_targeted_structure_session_table.acronym);
+                
+            elseif size(bosf.filtered_session_table,1) == 1
+                acronym = categorical(cellstr(bosf.filtered_session_table.targeted_structure.acronym));
+            end
+               
         end
         
         function bosf = filter_sessions_by_targeted_structure(bosf, structure)
