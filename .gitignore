@@ -10,11 +10,13 @@ raster/
 
 trash/
 
+*.asv
+*/*.asv
 
 +bot/Cache
 
-*/*.mex*
+*/*mex*
 
-*.mex*
+*mex*
 
 private*
