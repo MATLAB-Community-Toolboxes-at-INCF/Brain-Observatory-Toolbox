@@ -72,6 +72,7 @@ classdef cache < handle
             
             % - A global class instance exists, and is the correct version
             oCache = sUserData.BOT_GLOBAL_CACHE;
+            return;
          end
          
          %% - Set up a cache object, if no object exists
