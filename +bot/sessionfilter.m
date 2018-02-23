@@ -58,8 +58,8 @@ classdef sessionfilter < handle
         session_id;                      % A vector containing all the session ids from filtered_session_table
         session_type;                    % A categorical array containing all the session types from filtered_session_table
         cre_line;                        % A categorical array containing all the cre lines from filtered_session_table
-        eye_tracking_avail;              % A boolean vector containing all condtions if eye tracking is available or not from filtered_session_table
-        failed = false;                  % Boolean flag: should failed sessions be included?
+        eye_tracking_avail;              % A boolean vector containing all conditions if eye tracking is available or not from filtered_session_table
+%         failed = false;                  % Boolean flag: should failed sessions be included?
     end
     
     %% - Private properties
@@ -69,20 +69,9 @@ classdef sessionfilter < handle
     
     %% Constructor
     methods
-        function bosf = sessionfilter(bIncludeFailed)
-            % bot.sessionfilter - CONSTRUCTOR Get a fresh Session Filter object
-            %
-            % Usage: bosf = bot.sessionfilter(<bIncludeFailed>)
-            %
-            % Create a session filter object. By default, failed sessions are
-            % immediately excluded. They can optionally be included using the
-            % argument `bIncludeFailed`.
-            
-            % - Check arguments, set 'failed' flag
-            if exist('bIncludeFailed', 'var') && ~isempty(bIncludeFailed)
-                bosf.failed = bIncludeFailed;
-            end
-            
+        
+        function bosf = sessionfilter()
+             
             % - Get the unfiltered session table, clear all filters
             clear_filters(bosf);
         end
@@ -94,16 +83,10 @@ classdef sessionfilter < handle
     methods
         function clear_filters(bosf)
             % clear_filters - METHOD Clear all session table filters
-            bosf.valid_session_table = bosf.bocCache.tAllSessions;
-            
-            % - Exclude failed sessions, if requested
-            if ~bosf.failed
-                failed_container_id = bosf.bocCache.tAllContainers((bosf.bocCache.tAllContainers.failed == 1), :).id;
-                bosf.valid_session_table = bosf.bocCache.tAllSessions(~ismember(bosf.bocCache.tAllSessions.experiment_container_id, failed_container_id), :);
-                
-            end
+            failed_container_id = bosf.bocCache.tAllContainers((bosf.bocCache.tAllContainers.failed == 1), :).id;
+            bosf.valid_session_table = bosf.bocCache.tAllSessions(~ismember(bosf.bocCache.tAllSessions.experiment_container_id, failed_container_id), :);
             bosf.filtered_session_table = bosf.valid_session_table;
-            
+
             
         end
         

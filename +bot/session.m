@@ -107,7 +107,7 @@ classdef session
    %% - Constructor
    methods
       function bsObj = session(nSessionID)
-         % bot.session - CONSTRUCTOR Construct an object containing a Brain Observatory experimental sesion
+         % bot.session - CONSTRUCTOR Construct an object containing a Brain Observatory experimental session
          %
          % Usage: bsObj = bot.session(nSessionID)
          %        vbsObj = bot.session(vnSessionIDs)
