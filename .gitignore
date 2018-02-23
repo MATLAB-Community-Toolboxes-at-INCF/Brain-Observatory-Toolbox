@@ -2,16 +2,21 @@ nwb_files/
 
 raster_files/
 
+raster/
+
 */*.m~
 
 *.m~
 
-*/trash*
+trash/
 
-trash*
+*.asv
+*/*.asv
 
 +bot/Cache
 
-*/*.mex*
+*/*mex*
 
-*.mex*
+*mex*
+
+private*
