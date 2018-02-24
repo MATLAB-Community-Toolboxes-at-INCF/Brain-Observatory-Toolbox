@@ -49,8 +49,9 @@ classdef cache < handle
    end
    
    properties (Access = private, Transient = true)
-      bManifestsLoaded = false;         % Flag that indicates whether manifests have been loaded
-      manifests;                        % Structure containing Allen Brain Observatory manifests
+      bManifestsLoaded = false;              % Flag that indicates whether manifests have been loaded
+      manifests;                             % Structure containing Allen Brain Observatory manifests
+      strGATrackingID = 'UA-114632844-1';    % Tracking ID for Google Analytics
    end
    
    properties
@@ -93,6 +94,22 @@ classdef cache < handle
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
          set(0, 'UserData', sUserData);
+         
+         % - Send a tracking hit to Google Analytics, once per installation
+         fhGAHit = @()bot.internal.ga.event(oCache.strGATrackingID, ...
+                        bot.internal.GetUniqueUID(), [], ...
+                        'once-per-installation', 'cache.construct', [], [], ...
+                        'bot', oCache.strVersion, ...
+                        'matlab', [], true);
+         bot.internal.call_once_ever(oCache.strCacheDir, 'first_toolbox_use', fhGAHit);
+
+         % - Send a tracking hit to Google Analytics, once per session
+         fhGAHit = @()bot.internal.ga.event(oCache.strGATrackingID, ...
+                        bot.internal.GetUniqueUID(), [], ...
+                        'once-per-session', 'cache.construct', [], [], ...
+                        'bot', oCache.strVersion, ...
+                        'matlab', [], true);
+         bot.internal.call_once_per_session('toolbox_init_session', fhGAHit);      
       end
    end
    
