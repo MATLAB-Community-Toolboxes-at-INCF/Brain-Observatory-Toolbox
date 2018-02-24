@@ -51,8 +51,11 @@ classdef cache < handle
    properties (Access = private, Transient = true)
       bManifestsLoaded = false;              % Flag that indicates whether manifests have been loaded
       manifests;                             % Structure containing Allen Brain Observatory manifests
-      strGATrackingID = 'UA-114632844-1';    % Tracking ID for Google Analytics
    end
+
+   properties (Access = {?bot.cache, ?bot.session})
+      strGATrackingID = 'UA-114632844-1';    % Tracking ID for Google Analytics
+   end      
    
    properties
       strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for Allen Brain Observatory
@@ -100,16 +103,16 @@ classdef cache < handle
                         bot.internal.GetUniqueUID(), [], ...
                         'once-per-installation', 'cache.construct', [], [], ...
                         'bot', oCache.strVersion, ...
-                        'matlab', [], true);
+                        'matlab');
          bot.internal.call_once_ever(oCache.strCacheDir, 'first_toolbox_use', fhGAHit);
 
-         % - Send a tracking hit to Google Analytics, once per session
-         fhGAHit = @()bot.internal.ga.event(oCache.strGATrackingID, ...
-                        bot.internal.GetUniqueUID(), [], ...
-                        'once-per-session', 'cache.construct', [], [], ...
-                        'bot', oCache.strVersion, ...
-                        'matlab', [], true);
-         bot.internal.call_once_per_session('toolbox_init_session', fhGAHit);      
+%          % - Send a tracking hit to Google Analytics, once per session
+%          fhGAHit = @()bot.internal.ga.event(oCache.strGATrackingID, ...
+%                         bot.internal.GetUniqueUID(), [], ...
+%                         'once-per-session', 'cache.construct', [], [], ...
+%                         'bot', oCache.strVersion, ...
+%                         'matlab');
+%          bot.internal.call_once_per_session('toolbox_init_session', fhGAHit);      
       end
    end
    

@@ -49,7 +49,7 @@ end
 
 % - Set up required request parameters
 sReq.v = 1;
-sReq.ds = 'matlab';
+sReq.ds = ['matlab_' computer];
 sReq.tid = strTrackingID;
 
 % - Include session control
