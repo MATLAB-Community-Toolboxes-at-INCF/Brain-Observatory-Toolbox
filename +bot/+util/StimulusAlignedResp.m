@@ -21,8 +21,8 @@ function mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp, fhMetric, vnFluo
 % function handle with the signature `vfStimResp = fhMetric(mfRawResp)`.
 % The metric function must accept a [UxN] matrix `mfRawResp`, where N is
 % the number of ROIs as above, and U is an arbitrary number of frames. It
-% must return a [Ux1] vector `vfStimResp`, containing the stimulus response
-% for each ROI.
+% must return an [Nx1] vector `vfStimResp`, containing the stimulus
+% response for each ROI.
 %
 % The optional argument `vnFluoresenceTimeIndices` can be used to specify
 % which fluorescence time indices correspond to each row in `mfResp`. By
