@@ -11,7 +11,7 @@ Some aspects of the toolbox make use of accelerated `.mex` files, and therefore 
 
 #### Privacy information
 
-We track the usage of this toolbox along with some demographics, for us to understand the demand for the toolbox.
+We track the usage of this toolbox along with some demographics using the Google Analytics API, for us to understand the demand for the toolbox.
 
 ## Getting started
 
