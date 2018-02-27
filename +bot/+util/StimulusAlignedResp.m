@@ -53,12 +53,12 @@ vbDirtyEnd = [vbDirtyEnd; false];
 
 % - Helper function for finding "clean" response frames (where the stimulus
 % did not change mid-frame)
-   function vnFluorFrames = clean_frames(nStart, nEnd, bDirtyStart, bDirtyEnd, ~)
+   function vnFluorFrames = clean_frames(nStart, nEnd, bDirtyStart, bDirtyEnd)
       [~, vnFluorFrames] = ismember((double(nStart) + double(bDirtyStart)):(double(nEnd) - double(bDirtyEnd)), vnFluoresenceTimeIndices);
    end
 
 % - Get lists of clean fluorescence frames for each stimulus presentation period
-cvnFluorFrameInds = arrayfun(@clean_frames, tStimulus.('start_frame'), tStimulus.('end_frame'), vbDirtyStart, vbDirtyEnd, tStimulus.('frame'), 'UniformOutput', false);
+cvnFluorFrameInds = arrayfun(@clean_frames, tStimulus.('start_frame'), tStimulus.('end_frame'), vbDirtyStart, vbDirtyEnd, 'UniformOutput', false);
 
 % - Helper function for computing the stimulus response metric over a set
 % of frames
