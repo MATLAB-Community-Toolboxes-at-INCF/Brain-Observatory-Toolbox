@@ -46,7 +46,8 @@ if numel(vnFluoresenceTimeIndices) ~= size(mfResp, 1)
          'The number of frames in `vnFluoresenceTimeIndices` must match the number of rows in `mfResp`.');
 end
 
-% - Which stimulus periods are dirty? i.e. overlapping fluorescence frames
+% - Which flourescence frames are dirty? i.e. fluorescence frame overlaps
+% multiple stimuli
 vbDirtyEnd = tStimulus{1:end-1, 'end_frame'} == tStimulus{2:end, 'start_frame'};
 vbDirtyStart = [false; vbDirtyEnd(1:end)];
 vbDirtyEnd = [vbDirtyEnd; false];
