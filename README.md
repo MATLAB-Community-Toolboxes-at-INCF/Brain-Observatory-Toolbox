@@ -9,6 +9,10 @@ Clone the Brain Observatory Toolbox repository using `git`, or download a releas
 
 Some aspects of the toolbox make use of accelerated `.mex` files, and therefore require `mex` to be configured. These files will be compiled automatically when needed; if `mex` is not available, then `matlab` native versions will be used.
 
+#### Privacy information
+
+We track the usage of this toolbox along with some demographics using the Google Analytics API, for us to understand the demand for the toolbox.
+
 ## Getting started
 
 The toolbox classes are contained within the `bot` namespace within matlab. Once the toolbox is added to the `matlab` path, you can access the main classes:
@@ -181,4 +185,4 @@ The methods `get_stimulus_table()` and `get_stimulus_template()` can then be use
 
 All data accessed by this toolbox comes from the Allen Brain Observatory © 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: http://observatory.brain-map.org/visualcoding
 
-This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to MathWorks for their advice. 
+This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to MathWorks for their advice.

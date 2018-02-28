@@ -167,6 +167,13 @@ classdef session
          
          % - Extract the appropriate table row from the manifest
          bsObj.sSessionInfo = table2struct(bsObj.bocCache.tAllSessions(find(vbManifestRow, 1, 'first'), :));
+         
+%          % - Send a hit to Google Analytics on each session construction
+%          bot.internal.ga.event(bsObj.bocCache.strGATrackingID, ...
+%             bot.internal.GetUniqueUID(), [], ...
+%             'transient', 'session.construct', 'bot.session', [], ...
+%             'bot', bsObj.bocCache.strVersion, ...
+%             'matlab');
       end
    end
    
