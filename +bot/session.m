@@ -710,6 +710,9 @@ classdef session
          % chosen stimulus. The individual stimulus frames can be accessed with
          % method bos.get_stimulus_template().
 
+         % - Ensure the NWB file is cached
+         bos.EnsureCached();         
+         
          % - Return a stimulus table for one of the stimulus types
          if ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
             tStimulusTable = get_abstract_feature_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
@@ -1171,6 +1174,9 @@ classdef session
          % is not recommended, since it can use a large amount of redundant
          % memory storage. Stimulus templates can only be returned for stimuli
          % that use them (i.e. locally sparse noise, natural movies, etc.)
+         
+         % - Ensure NWB file is cached
+         bos.EnsureCached();
          
          % - Obtain and cache the master stimulus table for this session
          %   Also handles to accelerated search functions
