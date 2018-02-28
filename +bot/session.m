@@ -710,6 +710,9 @@ classdef session
          % chosen stimulus. The individual stimulus frames can be accessed with
          % method bos.get_stimulus_template().
 
+         % - Ensure the NWB file is cached
+         bos.EnsureCached();         
+         
          % - Return a stimulus table for one of the stimulus types
          if ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
             tStimulusTable = get_abstract_feature_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
@@ -1172,6 +1175,9 @@ classdef session
          % memory storage. Stimulus templates can only be returned for stimuli
          % that use them (i.e. locally sparse noise, natural movies, etc.)
          
+         % - Ensure NWB file is cached
+         bos.EnsureCached();
+         
          % - Obtain and cache the master stimulus table for this session
          %   Also handles to accelerated search functions
          if isempty(bos.smCachedStimulusTable)
@@ -1356,7 +1362,7 @@ function epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
    
 	% - Assign a default max_cuts
    if ~exist('max_cuts', 'var') || isempty(max_cuts)
-      max_cuts = 2;
+      max_cuts = 3;
    end
    
    % - Determine frame deltas and cut indices
