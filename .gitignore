@@ -1,14 +1,7 @@
-nwb_files/
-
-raster_files/
-
 raster/
 
 */*.m~
-
 *.m~
-
-trash/
 
 *.asv
 */*.asv
@@ -19,4 +12,4 @@ trash/
 
 *mex*
 
-private*
+Cindy/
