@@ -140,7 +140,7 @@ strURL = 'https://www.google-analytics.com/collect';
 weboptions('RequestMethod','post');
 
 cRequest = [fieldnames(sReq) struct2cell(sReq)]';
-webwrite(strURL, cRequest{:});
+oResult = webwrite(strURL, cRequest{:}); %#ok<NASGU>
 
 %% --- END of collect FUNCTION ---
 
