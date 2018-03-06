@@ -35,7 +35,7 @@
 classdef cache < handle
    
    properties (SetAccess = immutable)
-      strVersion = '0.02 alpha';       % Version string for cache class
+      strVersion = '0.3';              % Version string for cache class
    end
    
    properties (SetAccess = private)
