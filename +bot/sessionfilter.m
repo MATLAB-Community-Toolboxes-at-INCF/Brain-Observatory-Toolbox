@@ -284,7 +284,7 @@ classdef sessionfilter < handle
         
         function session_type = get.session_type(bosf)
             % get.session_type - GETTER METHOD Access `session_type` property
-            session_type = categorical(bosf.filtered_session_table{:, 'stimulus_name'});
+            session_type = categories(categorical(bosf.filtered_session_table{:, 'stimulus_name'}));
         end
         
         function targeted_structure = get.targeted_structure(bosf)
