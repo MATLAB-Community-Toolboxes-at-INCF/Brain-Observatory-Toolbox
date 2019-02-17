@@ -1,8 +1,8 @@
-function mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp, fhMetric, vnFluoresenceTimeIndices)
+function mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp, fhMetric, vnFluoresenceTimeIndices, bPermitUnclean)
 
 % StimulusAlignedResp - FUNCTION Return a matrix of responses, aligned over a set of stimulus presentations
 %
-% Usage: mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp <, fhMetric, vnFluoresenceTimeIndices>)
+% Usage: mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp <, fhMetric, vnFluoresenceTimeIndices, bPermitUnclean>)
 %
 % This function accepts a matrix `mfResp` of calcium responses (or inferred
 % spikes), and computes the average response for a set of stimulus
@@ -29,6 +29,13 @@ function mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp, fhMetric, vnFluo
 % default, this is simply 1:size(mfResp, 1). This argument can be used if
 % `mfResp` contains only a temporal subset of the full session responses.
 %
+% The optional argument `bPermitUnclean` can be used to control whether
+% only clean response frames are returned. "Clean" frames are responses
+% frames that only correspond to a single stimulus presentation.
+% "Non-clean" frames are response frames that span multiple stimulus
+% presenatations. By default (bPermitUnclean = false), non-clean response
+% frames are replaced with NaNs.
+%
 % `mfAlignedResp` will be a [VxN] matrix, where N is the number of ROIs and
 % V is the number of stimulus presentations.
 
@@ -41,6 +48,10 @@ if ~exist('vnFluoresenceTimeIndices', 'var') || isempty(vnFluoresenceTimeIndices
    vnFluoresenceTimeIndices = 1:size(mfResp, 1);
 end
 
+if ~exist('bPermitUnclean', 'var') || isempty(bPermitUnclean)
+   bPermitUnclean = false;
+end
+
 if numel(vnFluoresenceTimeIndices) ~= size(mfResp, 1)
    error('BOT:Usage', ...
          'The number of frames in `vnFluoresenceTimeIndices` must match the number of rows in `mfResp`.');
@@ -48,7 +59,13 @@ end
 
 % - Which flourescence frames are dirty? i.e. fluorescence frame overlaps
 % multiple stimuli
-vbDirtyEnd = tStimulus{1:end-1, 'end_frame'} == tStimulus{2:end, 'start_frame'};
+
+if bPermitUnclean
+   vbDirtyEnd = false(size(tStimulus, 1)-1, 1);
+else
+   vbDirtyEnd = tStimulus{1:end-1, 'end_frame'} == tStimulus{2:end, 'start_frame'};
+end
+
 vbDirtyStart = [false; vbDirtyEnd(1:end)];
 vbDirtyEnd = [vbDirtyEnd; false];
 
