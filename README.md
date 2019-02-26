@@ -74,8 +74,6 @@ ans =
 
 Only 138 experimental sessions are now available. Let's filter further by whether or not eye tracking information is available, then by imaging depth and CRE line
 
-This engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. We are also grateful to MathWorks for their advice. 
-
 ````matlab
 >> bosf.filter_session_by_eye_tracking(true);
 >> bosf.imaging_depth
