@@ -269,7 +269,7 @@ classdef cache < handle
          catch mE_cause
             % - Throw an error if manifests could not be loaded
             mEBase = MException('BOT:LoadManifestsFailed', ...
-               'Unable to load Allen BRain Observatory manifests.');
+               'Unable to load Allen Brain Observatory manifests.');
             mEBase.addCause(mE_cause);
             throw(mEBase);
          end
@@ -335,13 +335,23 @@ classdef cache < handle
          
          % - Download container manifest
          options1 = weboptions('ContentType','JSON','TimeOut',60);
-         
          container_manifest_raw = webread(container_manifest_url,options1);
-         manifests.container_manifest = struct2table(container_manifest_raw.msg);
+         
+         % Convert response message to a table
+         if isa(container_manifest_raw.msg, 'cell')
+            manifests.container_manifest = cell_messages_to_table(container_manifest_raw.msg);
+         else
+            manifests.container_manifest = struct2table(container_manifest_raw.msg);
+         end
          
          % - Download session manifest
          session_manifest_raw = webread(session_manifest_url,options1);
-         manifests.session_manifest = struct2table(session_manifest_raw.msg);
+
+         if isa(session_manifest_raw.msg, 'cell')
+            manifests.session_manifest = cell_messages_to_table(session_manifest_raw.msg);
+         else
+            manifests.session_manifest = struct2table(session_manifest_raw.msg);
+         end
          
          % - Download cell ID mapping
          options2 = weboptions('ContentType','table','TimeOut',60);
@@ -368,4 +378,24 @@ classdef cache < handle
       end
    end
 end   
+
+function tMessages = cell_messages_to_table(cMessages)
+   % - Get an exhaustive list of fieldnames
+   cFieldnames = cellfun(@fieldnames, cMessages, 'UniformOutput', false);
+   cFieldnames = unique(vertcat(cFieldnames{:}), 'stable');
+   
+   % - Make sure every message has all required field names
+   function sData = enforce_fields(sData)
+      vbHasField = cellfun(@(c)isfield(sData, c), cFieldnames);
+      
+      for strField = cFieldnames(~vbHasField)'
+         sData.(strField{1}) = [];
+      end
+   end
+
+   cMessages = cellfun(@(c)enforce_fields(c), cMessages, 'UniformOutput', false);
+   
+   % - Convert to a table
+   tMessages = struct2table([cMessages{:}]);
+end
    
