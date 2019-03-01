@@ -181,24 +181,41 @@ classdef session
    %% - Matlab BOT methods
    
    methods (Access = private)
+      function strNWBURL = GetNWBURL(bos)
+         % GetNWBURL - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
+         %
+         % Usage: strNWBURL = GetNWBURL(bos)
+         
+         % - Get well known files
+         vs_well_known_files = bos.sSessionInfo.well_known_files;
+         
+         % - Find (first) NWB file
+         vsTypes = [vs_well_known_files.well_known_file_type];
+         cstrTypeNames = {vsTypes.name};
+         nNWBFile = find(cellfun(@(c)strcmp(c, 'NWBOphys'), cstrTypeNames), 1, 'first');
+         
+         % - Build URL
+         strNWBURL = [bos.bocCache.strABOBaseUrl vs_well_known_files(nNWBFile).download_link];
+      end
+      
       function bNWBFileIsCached = IsNWBFileCached(bos)
          % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
          %
          % Usage: bNWBFileIsCached = IsNWBFileCached(bos)
-         bNWBFileIsCached =  bos.bocCache.IsInCache([bos.bocCache.strABOBaseUrl bos.sSessionInfo.well_known_files.download_link]);
+         bNWBFileIsCached =  bos.bocCache.IsInCache(GetNWBURL(bos));
       end
    end
    
    methods
       function strCacheFile = EnsureCached(bos)
-         % EnsureCached - METHOD Ensure the NWB file corresponding to this session is cached
+         % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
          %
          % Usage: strCachelFile = EnsureCached(bos)
          %
          % This method will force the session data to be downloaded and cached,
          % if it is not already available.
-         strCacheFile = bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
-         strCacheFile = strCacheFile{1};
+         bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
+         strCacheFile = bos.strLocalNWBFileLocation;
       end
       
       function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
@@ -209,7 +226,7 @@ classdef session
             strLocalNWBFileLocation = [];
          else
             % - Get the local file location for the session NWB URL
-            strLocalNWBFileLocation = bos.bocCache.sCacheFiles.ccCache.CachedFileForURL([bos.bocCache.strABOBaseUrl bos.sSessionInfo.well_known_files.download_link]);
+            strLocalNWBFileLocation = bos.bocCache.sCacheFiles.ccCache.CachedFileForURL(GetNWBURL(bos));
          end
       end
    end
@@ -222,7 +239,7 @@ classdef session
          %
          % Usage: sMetadata = get_metadata(bos)
 
-         % - Ensure the file has been cached
+         % - Ensure the data has been cached
          EnsureCached(bos);
          
          % - Attempt to read each of the metadata fields from the NWB file
