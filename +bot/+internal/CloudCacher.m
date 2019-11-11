@@ -38,7 +38,7 @@ classdef CloudCacher < handle
          end
          
          % - Does the cache directory exist?
-         if ~isdir(ccObj.strCacheDir)
+         if ~isfolder(ccObj.strCacheDir)
             mkdir(ccObj.strCacheDir);
          end
          
@@ -286,8 +286,8 @@ classdef CloudCacher < handle
          % This function writes the cache manifest to disk. Should not need
          % to be called by the end user.
          
-         mapCachedData = ccObj.mapCachedData; %#ok<NASGU,PROP>
-         strVersion = ccObj.strVersion; %#ok<NASGU,PROP>
+         mapCachedData = ccObj.mapCachedData; %#ok<PROP>
+         strVersion = ccObj.strVersion; %#ok<PROP>
          save(ccObj.strManifestFile, 'mapCachedData', 'strVersion');
       end
       
