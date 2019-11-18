@@ -306,7 +306,7 @@ classdef cache < handle
    
    methods (Static)
       function manifests = UpdateManifest
-         % STATIC METHOD - Check and update file manifest from Allen Brain Observatory API
+         % STATIC METHOD - Check and update file manifests from Allen Brain Observatory API
          %
          % Usage: manifests = bot.cache.UpdateManifest()
          
@@ -354,37 +354,42 @@ classdef cache < handle
          % - Specify URLs for download
          container_manifest_url = 'http://api.brain-map.org/api/v2/data/query.json?q=model::ExperimentContainer,rma::include,ophys_experiments,isi_experiment,specimen%28donor%28conditions,age,transgenic_lines%29%29,targeted_structure,rma::options%5Bnum_rows$eq%27all%27%5D%5Bcount$eqfalse%5D';
          session_manifest_url = 'http://api.brain-map.org/api/v2/data/query.json?q=model::OphysExperiment,rma::include,experiment_container,well_known_files%28well_known_file_type%29,targeted_structure,specimen%28donor%28age,transgenic_lines%29%29,rma::options%5Bnum_rows$eq%27all%27%5D%5Bcount$eqfalse%5D';
-         cell_id_mapping_url = 'http://api.brain-map.org/api/v2/well_known_file_download/590985414';
-         
-         % - Download container manifest
+         cell_id_mapping_url = 'http://api.brain-map.org/api/v2/well_known_file_download/590985414';         
+         ecphys_manifest_url = 'http://api.brain-map.org/api/v2/data/query.json?criteria=model::EcephysSession,rma::include,specimen(donor(age)),well_known_files(well_known_file_type),rma::options%5Bnum_rows$eq%27all%27%5D%5Bcount$eqfalse%5D%5Border%24eq%27id%27%5D';
+         ecphys_units_url = "http://api.brain-map.org/api/v2/data/query.json?criteria=model::EcephysUnit,rma::options%5Bnum_rows$eq%27all%27%5D%5Bcount$eqfalse%5D";
+
+         %% - Download container manifest
          options1 = weboptions('ContentType','JSON','TimeOut',60);
-         container_manifest_raw = webread(container_manifest_url,options1);
+         container_manifest_raw = webread(container_manifest_url, options1);
          
          % Convert response message to a table
          if isa(container_manifest_raw.msg, 'cell')
-            manifests.container_manifest = cell_messages_to_table(container_manifest_raw.msg);
+            manifestscontainer_manifest = cell_messages_to_table(container_manifest_raw.msg);
          else
             manifests.container_manifest = struct2table(container_manifest_raw.msg);
          end
          
-         % - Download session manifest
-         session_manifest_raw = webread(session_manifest_url,options1);
+         %% - Download session manifest
+         ophys_session_manifest_raw = webread(session_manifest_url,options1);
 
-         if isa(session_manifest_raw.msg, 'cell')
-            manifests.session_manifest = cell_messages_to_table(session_manifest_raw.msg);
+         if isa(ophys_session_manifest_raw.msg, 'cell')
+            ophys_session_manifest = cell_messages_to_table(ophys_session_manifest_raw.msg);
          else
-            manifests.session_manifest = struct2table(session_manifest_raw.msg);
+            ophys_session_manifest = struct2table(ophys_session_manifest_raw.msg);
          end
          
-         % - Download cell ID mapping
-         options2 = weboptions('ContentType','table','TimeOut',60);
-         manifests.cell_id_mapping = webread(cell_id_mapping_url,options2);
+         % - Label as ophys sessions
+         ophys_session_manifest = addvars(ophys_session_manifest, ...
+            repmat({'ophys'}, size(ophys_session_manifest, 1), 1), ...
+            'NewVariableNames', 'BOT_session_type', ...
+            'before', 1);
          
-         % - Create cre_line table from specimen field of session_manifest and
-         % append it back to session_manifest table
-         % cre_line is important, makes life easier if it's explicit
+         % - Create `cre_line` variable from specimen field of session
+         % manifests and append it back to session_manifest tables.
+         % `cre_line` is important, makes life easier if it's explicit
          
-         tAllSessions = manifests.session_manifest;
+         % - Extract from OPhys sessions manifest
+         tAllSessions = ophys_session_manifest;
          cre_line = cell(size(tAllSessions,1),1);
          for i = 1:size(tAllSessions,1)
             donor_info = tAllSessions(i,:).specimen.donor;
@@ -393,11 +398,54 @@ classdef cache < handle
                & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
          end
          
-         manifests.session_manifest = [tAllSessions, cre_line];
-         manifests.session_manifest.Properties.VariableNames{'Var15'} = 'cre_line';
+         ophys_session_manifest = addvar(ophys_session_manifest, cre_line, ...
+            'NewVariableNames', 'cre_line');
+
+         % - Convert experiment containiner variables to integer
+         ophys_session_manifest{:, 'experiment_container_id'} = uint32(ophys_session_manifest{:, 'experiment_container_id'});
+
+         %% - Download ECPhys session manifest
+         ecphys_session_manifest_raw = webread(ecphys_manifest_url,options1);
          
-         % - Convert columns to integer and categorical variables
-         manifests.session_manifest{:, 2} = uint32(manifests.session_manifest{:, 2});
+         if isa(ecphys_session_manifest_raw.msg, 'cell')
+            ecphys_session_manifest = cell_messages_to_table(ecphys_session_manifest_raw.msg);
+         else
+            ecphys_session_manifest = struct2table(ecphys_session_manifest_raw.msg);
+         end
+         
+         % - Label as ecphys sessions
+         ecphys_session_manifest = addvars(ecphys_session_manifest, ...
+            repmat({'ecphys'}, size(ecphys_session_manifest, 1), 1), ...
+            'NewVariableNames', 'BOT_session_type', ...
+            'before', 1);
+
+         % - Post-process ECPhys manifest
+         age_in_days = arrayfun(@(s)s.donor.age.days, ecphys_session_manifest.specimen);
+         cSex = arrayfun(@(s)s.donor.sex, ecphys_session_manifest.specimen, 'UniformOutput', false);
+         cGenotype = arrayfun(@(s)s.donor.full_genotype, ecphys_session_manifest.specimen, 'UniformOutput', false);
+         
+         vbWT = cellfun(@isempty, cGenotype);
+         if any(vbWT)
+            cGenotype{vbWT} = 'wt';
+         end
+         
+         cWkf_types = arrayfun(@(s)s.well_known_file_type.name, ecphys_session_manifest.well_known_files, 'UniformOutput', false);
+         has_nwb = cWkf_types == "EcephysNwb";
+         
+         % - Add variables
+         ecphys_session_manifest = addvars(ecphys_session_manifest, age_in_days, cSex, cGenotype, has_nwb, ...
+            'NewVariableNames', {'age_in_days', 'sex', 'genotype', 'has_nwb'});
+         
+         % - Rename variables
+         ecphys_session_manifest.Properties.VariableNames(ecphys_session_manifest.Properties.VariableNames == "stimulus_name") = "session_type";
+         
+         %% Download ECPhys units
+         ecphys_units_raw = webread(ecphys_units_url, options1);
+         
+         
+         %% - Download cell ID mapping
+         options2 = weboptions('ContentType','table','TimeOut',60);
+         manifests.cell_id_mapping = webread(cell_id_mapping_url,options2);
       end
    end
 end   
