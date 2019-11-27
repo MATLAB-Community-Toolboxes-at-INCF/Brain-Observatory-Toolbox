@@ -30,7 +30,11 @@ end
 % - Build a URL
 strURL = string(strScheme) + "://" + string(strHost) + "/" + ...
    string(strRMAPrefix) + "/" + string(strFormat) + "?" + ...
-   string(strModel) + string(strQueryString);
+   string(strModel);
+
+if ~isempty(strQueryString)
+   strURL = strURL + "," + strQueryString;
+end
 
 % - Set up options
 options = weboptions('ContentType', 'JSON', 'TimeOut', 60);
@@ -46,7 +50,7 @@ while isempty(nTotalRows) || nStartRow < nTotalRows
    
    % - Perform query
    response_raw = webread(strURLQueryPage, options);
-
+   
    % - Convert response to a table
    if isa(response_raw.msg, 'cell')
       response_page = cell_messages_to_table(response_raw.msg);
@@ -73,4 +77,27 @@ while isempty(nTotalRows) || nStartRow < nTotalRows
    if (nStartRow < nTotalRows)
       fprintf('Downloading.... [%.0f%%]\n', round(nStartRow / nTotalRows * 100))
    end
+end
+
+end
+
+function tMessages = cell_messages_to_table(cMessages)
+% - Get an exhaustive list of fieldnames
+cFieldnames = cellfun(@fieldnames, cMessages, 'UniformOutput', false);
+cFieldnames = unique(vertcat(cFieldnames{:}), 'stable');
+
+% - Make sure every message has all required field names
+   function sData = enforce_fields(sData)
+      vbHasField = cellfun(@(c)isfield(sData, c), cFieldnames);
+      
+      for strField = cFieldnames(~vbHasField)'
+         sData.(strField{1}) = [];
+      end
+   end
+
+cMessages = cellfun(@(c)enforce_fields(c), cMessages, 'UniformOutput', false);
+
+% - Convert to a table
+tMessages = struct2table([cMessages{:}]);
+
 end
