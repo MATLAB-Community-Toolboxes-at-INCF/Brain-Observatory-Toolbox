@@ -145,6 +145,7 @@ classdef test < matlab.unittest.TestCase
       end
       
       function testStimulusExtraction(testCase)
+         %% Test OPhys session stimulus extraction methods
          % - Create a bot.session object
          s = bot.session(528402271);
 
