@@ -322,9 +322,28 @@ classdef CloudCacher < handle
                mE_Base.addCause(mE_Cause);
                warning(getReport(mE_Base, 'extended', 'hyperlinks', 'on'));
             end
+
+            % - Remove URL from map
+            ccObj.mapCachedData.remove(strURL);
          end
       end
       
+      function RemoveURLsMatchingSubstring(ccObj, strSubstring)
+         % RemoveURLsMatchingSubstring - METHOD Remove all URLs from the cache containing a specified substring
+         %
+         % Usage: ccObj.RemoveURLsMatchingSubstring(strSubstring)
+         %
+         % This method uses the `contains` function to test whether a URL contains
+         % the substring in `strSubstring`.
+         
+         % - Find keys matching the substring
+         cstrAllKeys = ccObj.mapCachedData.keys();
+         vbMatchingKeys = contains(cstrAllKeys, strSubstring);
+
+         % - Remove matching URLs
+         cellfun(@ccObj.RemoveURL, cstrAllKeys(vbMatchingKeys));
+      end
+
       function delete(ccObj)
          % delete - METHOD Delete the cache object and clean up
          %
