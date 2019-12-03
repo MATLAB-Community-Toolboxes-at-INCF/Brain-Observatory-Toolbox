@@ -67,12 +67,12 @@ classdef test < matlab.unittest.TestCase
          bosf.filter_session_by_eye_tracking(true);
          
          % Container ID
-         tContainers = boc.tAllContainers;
+         tContainers = boc.tOPhysContainers;
          bosf.clear_filters();
          bosf.filter_sessions_by_container_id(tContainers{1, 'id'});
          
          % Session ID
-         tSessions = boc.tAllSessions;
+         tSessions = boc.tOPhysSessions;
          bosf.clear_filters();
          bosf.filter_sessions_by_session_id(tSessions{1, 'id'});
          
