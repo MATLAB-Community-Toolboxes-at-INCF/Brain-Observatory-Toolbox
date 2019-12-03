@@ -43,20 +43,16 @@ classdef cache < handle
    end
    
    properties (SetAccess = private, Dependent = true)
-      tAllOPhysSessions;                   % Table of all OPhys experimental sessions
-      tAllOPhysContainers;                 % Table of all OPhys experimental containers
-      tAllECEPhysSessions;                 % Table of all ECEPhys experimental sessions
-      tAllECEPhysChannels;                 % Table of all ECEPhys channels
-      tAllECEPhysProbes;                   % Table of all ECEPhys probes
-      tAllECEPhysUnits;                    % Table of all ECEPhys units
+      tOPhysSessions;                   % Table of all OPhys experimental sessions
+      tOPhysContainers;                 % Table of all OPhys experimental containers
+      tECEPhysSessions;                 % Table of all ECEPhys experimental sessions
+      tECEPhysChannels;                 % Table of all ECEPhys channels
+      tECEPhysProbes;                   % Table of all ECEPhys probes
+      tECEPhysUnits;                    % Table of all ECEPhys units
    end
    
    properties (Access = private, Transient = true)
-      CACHED_ophys_manifests;
-      CACHED_tECEPhysSessions;
-      CACHED_tECEPhysChannels;
-      CACHED_tECEPhysProbes;
-      CACHED_tECEPhysUnits;
+      sAPIAccess;                      % Structure containing memoized API access functions
    end
 
    properties (Access = {?bot.cache, ?bot.session})
@@ -107,6 +103,22 @@ classdef cache < handle
          oCache.sCacheFiles.manifests = [oCache.strCacheDir filesep 'manifests.mat'];
          oCache.sCacheFiles.ccCache = bot.internal.CloudCacher(oCache.strCacheDir);
          
+         % - Memoize API access functions
+         oCache.sAPIAccess.get_ophys_manifests_info_from_api = memoize(@oCache.get_ophys_manifests_info_from_api);
+         oCache.sAPIAccess.get_ecephys_sessions = memoize(@oCache.get_ecephys_sessions);
+         oCache.sAPIAccess.get_ecephys_channels = memoize(@oCache.get_ecephys_channels);
+         oCache.sAPIAccess.get_ecephys_probes = memoize(@oCache.get_ecephys_probes);
+         oCache.sAPIAccess.get_ecephys_units = memoize(@oCache.get_ecephys_units);
+         
+         oCache.sAPIAccess.tAnnotatedECEPhysChannels = memoize(@oCache.get_tAnnotatedECEPhysChannels);
+         oCache.sAPIAccess.tAnnotatedECEPhysProbes = memoize(@oCache.get_tAnnotatedECEPhysProbes);
+         oCache.sAPIAccess.tAnnotatedECEPhysUnits = memoize(@oCache.get_tAnnotatedECEPhysUnits);
+
+         oCache.sAPIAccess.tAllECEPhysSessions = memoize(@oCache.get_tAllECEPhysSessions);
+         oCache.sAPIAccess.tAllECEPhysChannels = memoize(@oCache.get_tAllECEPhysChannels);
+         oCache.sAPIAccess.tAllECEPhysProbes = memoize(@oCache.get_tAllECEPhysProbes);
+         oCache.sAPIAccess.tAllECEPhysUnits = memoize(@oCache.get_tAllECEPhysUnits);
+         
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
          set(0, 'UserData', sUserData);
@@ -136,85 +148,146 @@ classdef cache < handle
    end
    
    
-   %% Getter and Setter methods
+   %% OPhys getter methods
    
    methods
-      function tOPhysSessions = get.tAllOPhysSessions(oCache)
+      function tOPhysSessions = get.tOPhysSessions(oCache)
          % METHOD - Return the table of all OPhys experimental sessions
-         
-         % - Fetch the ophys manifests
-         if isempty(oCache.CACHED_ophys_manifests)
-            oCache.CACHED_ophys_manifests = oCache.get_ophys_manifests_info_from_api();
-         end
-         
-         % - Return sessions table
-         tOPhysSessions = oCache.CACHED_ophys_manifests.ophys_session_manifest;         
+         ophys_manifests = oCache.sAPIAccess.get_ophys_manifests_info_from_api();
+         tOPhysSessions = ophys_manifests.ophys_session_manifest;
       end
       
-      function tOPhysContainers = get.tAllOPhysContainers(oCache)
+      function tOPhysContainers = get.tOPhysContainers(oCache)
          % METHOD - Return the table of all OPhys experimental containers
-         
-         % - Fetch the ophys manifests
-         if isempty(oCache.CACHED_ophys_manifests)
-            oCache.CACHED_ophys_manifests = oCache.get_ophys_manifests_info_from_api();
-         end
-         
-         % - Return container table
-         tOPhysContainers = oCache.CACHED_ophys_manifests.ophys_container_manifest;
+         ophys_manifests = oCache.sAPIAccess.get_ophys_manifests_info_from_api();
+         tOPhysContainers = ophys_manifests.ophys_container_manifest;
       end      
+   end
+  
+   %% ECEPhys top level getter methods
+   
+   methods
+      function tECEPhysSessions = get.tECEPhysSessions(oCache)
+         % GETTER - Return the table of ECEPhys experimental sessions
+         tECEPhysSessions = oCache.sAPIAccess.tAllECEPhysSessions();
+      end
       
-      function tECEPhysSessions = get.tAllECEPhysSessions(oCache)
+      function tECEPhysUnits = get.tECEPhysUnits(oCache)
+         % GETTER - Return the table of ECEPhys experimental units
+         tECEPhysUnits = oCache.sAPIAccess.tAllECEPhysUnits();
+      end
+      
+      function tECEPhysProbes = get.tECEPhysProbes(oCache)
+         % GETTER - Return the table of ECEPhys experimental probes
+         tECEPhysProbes = oCache.sAPIAccess.tAllECEPhysProbes();
+      end
+      
+      function tECEPhysChannels = get.tECEPhysChannels(oCache)
+         % GETTER - Return the table of ECEPhys experimental channels
+         tECEPhysChannels = oCache.sAPIAccess.tAllECEPhysChannels();
+      end
+   end
+   
+   %% ECEPhys low level getter methods
+   
+   methods      
+      function tECEPhysSessions = get_tAllECEPhysSessions(oCache)
          % METHOD - Return the table of all ECEPhys experimental sessions
-
-         % - Fetch the ecephys sessions menifest
-         if isempty(oCache.CACHED_tECEPhysSessions)
-            oCache.CACHED_tECEPhysSessions = oCache.get_ecephys_sessions();
-         end
          
-         tECEPhysSessions = oCache.CACHED_tECEPhysSessions;
+         % - Get table of ECEPhys sessions
+         tECEPhysSessions = oCache.sAPIAccess.get_ecephys_sessions();
+         tAnnotatedECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
+         tAnnotatedECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
+         tAnnotatedECEPhysProbes = oCache.sAPIAccess.tAnnotatedECEPhysProbes();
          
          % - Count numbers of units, channels and probes
-%          oCache.tECEPhysUnits
+         tECEPhysSessions = count_owned(tECEPhysSessions, tAnnotatedECEPhysUnits, ...
+            "id", "ecephys_session_id", "unit_count");
+         tECEPhysSessions = count_owned(tECEPhysSessions, tAnnotatedECEPhysChannels, ...
+            "id", "ecephys_session_id", "channel_count");
+         tECEPhysSessions = count_owned(tECEPhysSessions, tAnnotatedECEPhysProbes, ...
+            "id", "ecephys_session_id", "probe_count");
+
+         % - Get structure acronyms
+         tECEPhysSessions = get_grouped_uniques(tECEPhysSessions, tAnnotatedECEPhysChannels, ...
+            'id', 'ecephys_session_id', 'ecephys_structure_acronym', 'ecephys_structure_acronyms');
          
+         % - Rename variables
+         tECEPhysSessions = rename_variables(tECEPhysSessions, 'genotype', 'full_genotype');
       end
       
-      function tECEPhysUnits = get.tAllECEPhysUnits(oCache)
-         % METHOD - Return the table of all ECEPhys recorded units
+      function tAnnotatedECEPhysUnits = get_tAnnotatedECEPhysUnits(oCache)
+         % METHOD - Return table of annotated ECEPhys units
 
-         % - Fetch the ecephys units menifest
-         if isempty(oCache.CACHED_tECEPhysUnits)
-            oCache.CACHED_tECEPhysUnits = oCache.get_ecephys_units();
-         end
-         
          % - Annotate units
-         tECEPhysUnits = join(oCache.CACHED_tECEPhysUnits, oCache.tAllECEPhysChannels, ...
-            'LeftKeys', 'ecephys_channel_id', 'RightKeys', 'id');
-      end
-      
-      function tECEPhysProbes = get.tAllECEPhysProbes(oCache)
-         % METHOD - Return the table of all ECEPhys recorded probes
+         tAnnotatedECEPhysUnits = oCache.sAPIAccess.get_ecephys_units();
+         tAnnotatedECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
 
-         % - Fetch the ecephys units menifest
-         if isempty(oCache.CACHED_tECEPhysProbes)
-            oCache.CACHED_tECEPhysProbes = oCache.get_ecephys_probes();
-         end
-         
-         % - Annotate probes and return
-         tECEPhysProbes = join(oCache.CACHED_tECEPhysProbes, oCache.tAllECEPhysSessions, 'LeftKeys', 'ecephys_session_id', 'RightKeys', 'id');
+         tAnnotatedECEPhysUnits = join(tAnnotatedECEPhysUnits, tAnnotatedECEPhysChannels, ...
+            'LeftKeys', 'ecephys_channel_id', 'RightKeys', 'id');
+
+         % - Rename variables
+         tAnnotatedECEPhysUnits = rename_variables(tAnnotatedECEPhysUnits, ...
+            'name', 'probe_name', ...
+            'phase', 'probe_phase', ...
+            'sampling_rate', 'probe_sampling_rate', ...
+            'lfp_sampling_rate', 'probe_lfp_sampling_rate', ...
+            'local_index', 'peak_channel');
       end
       
-      function tECEPhysChannels = get.tAllECEPhysChannels(oCache)
+      function tECEPhysUnits = get_tAllECEPhysUnits(oCache)
+         % METHOD - Return the table of all ECEPhys recorded units
+         tECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
+      end
+      
+      function tAnnotatedECEPhysProbes = get_tAnnotatedECEPhysProbes(oCache)
+         % METHOD - Return the annotate table of ECEPhys probes
+         % - Annotate probes and return
+         tAnnotatedECEPhysProbes = oCache.sAPIAccess.get_ecephys_probes();
+         tSessions = oCache.sAPIAccess.get_ecephys_sessions();
+         tAnnotatedECEPhysProbes = join(tAnnotatedECEPhysProbes, tSessions, 'LeftKeys', 'ecephys_session_id', 'RightKeys', 'id');
+      end
+      
+      function tECEPhysProbes = get_tAllECEPhysProbes(oCache)
+         % METHOD - Return the table of all ECEPhys recorded probes
+         
+         % - Get the annotated probes
+         tECEPhysProbes = oCache.sAPIAccess.tAnnotatedECEPhysProbes();
+         tAnnotatedECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
+         tAnnotatedECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
+
+         % - Count units and channels
+         tECEPhysProbes = count_owned(tECEPhysProbes, tAnnotatedECEPhysUnits, ...
+            'id', 'ecephys_probe_id', 'unit_count');
+         tECEPhysProbes = count_owned(tECEPhysProbes, tAnnotatedECEPhysChannels, ...
+            'id', 'ecephys_probe_id', 'channel_count');
+         
+         % - Get structure acronyms
+         tECEPhysProbes = get_grouped_uniques(tECEPhysProbes, tAnnotatedECEPhysChannels, ...
+            'id', 'ecephys_probe_id', 'ecephys_structure_acronym', 'ecephys_structure_acronyms');         
+      end
+      
+      function tAnnotatedECEPhysChannels = get_tAnnotatedECEPhysChannels(oCache)
+         % - METHOD - Return the annotated table of ECEPhys channels
+         tAnnotatedECEPhysChannels = oCache.sAPIAccess.get_ecephys_channels();
+         tAnnotatedECEPhysProbes = oCache.sAPIAccess.tAnnotatedECEPhysProbes();
+         tAnnotatedECEPhysChannels = join(tAnnotatedECEPhysChannels, tAnnotatedECEPhysProbes, ...
+            'LeftKeys', 'ecephys_probe_id', 'RightKeys', 'id');
+      end
+      
+      function tECEPhysChannels = get_tAllECEPhysChannels(oCache)
          % METHOD - Return the table of all ECEPhys recorded channels
 
-         % - Fetch the ecephys units menifest
-         if isempty(oCache.CACHED_tECEPhysChannels)
-            oCache.CACHED_tECEPhysChannels = oCache.get_ecephys_channels();
-         end
+         % - Get annotated channels
+         tECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
+         tAnnotatedECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
          
-         % - Return channels
-         tECEPhysChannels = oCache.CACHED_tECEPhysChannels;      
-         tECEPhysChannels = join(tECEPhysChannels, oCache.tAllECEPhysProbes, ...
-            'LeftKeys', 'ecephys_probe_id', 'RightKeys', 'id');
+         % - Count owned units
+         tECEPhysChannels = count_owned(tECEPhysChannels, tAnnotatedECEPhysUnits, ...
+            'id', 'ecephys_channel_id', 'unit_count');
+
+         % - Rename variables
+         tECEPhysChannels = rename_variables(tECEPhysChannels, 'name', 'probe_name');
       end
    end
 
@@ -227,9 +300,10 @@ classdef cache < handle
          %
          % Usage: cstrCacheFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs <, bUseParallel, nNumTries>)
          %
-         % `vnSessionIDs` is a list of session IDs obtained from the
-         % sessions table. The data files for these sessions will be
-         % downloaded and cached, if they have not already been cached.
+         % `vnSessionIDs` is a list of session IDs obtained from either the
+         % OPhys or ECEPhys sessions table. The data files for these
+         % sessions will be downloaded and cached, if they have not already
+         % been cached.
          %
          % The optional argument `bUseParallel` allows you to specify
          % whether a pool of workers should be used to download several
@@ -251,8 +325,15 @@ classdef cache < handle
          
          % - Loop over session IDs
          for nSessIndex = numel(vnSessionIDs):-1:1
-            % - Find this session in the sessions table
-            tSession = oCache.tAllSessions(oCache.tAllSessions.id == vnSessionIDs(nSessIndex), :);
+            % - Find this session in the sessions tables
+            vbOPhysSession = oCache.tOPhysSessions.id == vnSessionIDs(nSessIndex);
+            vbECEPhysSession = oCache.tECEPhysSessions.id == vnSessionIDs(nSessIndex);
+
+            if any(vbOPhysSession)
+               tSession = oCache.tOPhysSessions(vbOPhysSession, :);
+            else
+               tSession = oCache.tECEPhysSessions(vbECEPhysSession, :);
+            end
             
             % - Check to see if the session exists
             if isempty(tSession)
@@ -262,21 +343,25 @@ classdef cache < handle
             
             else
                % - Cache the corresponding session data files
-               vs_well_known_files = tSession.well_known_files{1};
+               if iscell(tSession.well_known_files)
+                  vs_well_known_files = tSession.well_known_files{1};
+               else
+                  vs_well_known_files = tSession.well_known_files;
+               end
                cstrURLs{nSessIndex} = arrayfun(@(s)strcat(oCache.strABOBaseUrl, s.download_link), vs_well_known_files, 'UniformOutput', false);
                cstrLocalFiles{nSessIndex} = {vs_well_known_files.path}';
-               cvbIsInCache{nSessIndex} = oCache.IsInCache(cstrURLs{nSessIndex});
+               cvbIsURLInCache{nSessIndex} = oCache.IsURLInCache(cstrURLs{nSessIndex});
             end
          end
          
          % - Consolidate all URLs to download
          cstrURLs = [cstrURLs{:}];
          cstrLocalFiles = [cstrLocalFiles{:}];
-         vbIsInCache = [cvbIsInCache{:}];
+         vbIsURLInCache = [cvbIsURLInCache{:}];
          
          % - Cache all sessions in parallel
          if numel(vnSessionIDs) > 1 && bUseParallel && ~isempty(gcp('nocreate'))
-            if any(~vbIsInCache)
+            if any(~vbIsURLInCache)
                fprintf('Downloading URLs in parallel...\n');
             end
             
@@ -294,7 +379,7 @@ classdef cache < handle
             % - Cache sessions sequentially
             for nURLIndex = numel(cstrURLs):-1:1
                % - Provide some progress text
-               if ~vbIsInCache(nURLIndex)
+               if ~vbIsURLInCache(nURLIndex)
                   fprintf('Downloading URL: [%s]...\n', cstrURLs{nURLIndex});
                end
 
@@ -319,6 +404,29 @@ classdef cache < handle
             end
          end         
       end
+
+      function UpdateManifests(oCache)
+         % - Invalidate manifests in cache
+         oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::ExperimentContainer');
+         oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::OphysExperiment');
+         oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysSession');
+         oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysUnit');
+         oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysProbe');
+         oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysChannel');
+
+         % - Clear all caches for memoized access functions
+         for strField = fieldnames(oCache.sAPIAccess)'
+            oCache.sAPIAccess.(strField{1}).clearCache();
+         end
+         
+         % - Force re-download of all manifests
+         oCache.tOPhysSessions;
+         oCache.tOPhysContainers;
+         oCache.tECEPhysSessions;
+         oCache.tECEPhysProbes;
+         oCache.tECEPhysChannels;
+         oCache.tECEPhysUnits;
+      end
    end
    
    %% Private methods
@@ -332,16 +440,18 @@ classdef cache < handle
          strFile = oCache.sCacheFiles.ccCache.websave(strLocalFile, strURL);
       end
       
-      function bIsInCache = IsInCache(oCache, strURL)
-         % IsInCache - METHOD Is the provided URL already cached?
+      function bIsURLInCache = IsURLInCache(oCache, strURL)
+         % IsURLInCache - METHOD Is the provided URL already cached?
          %
-         % Usage: bIsInCache = IsInCache(oCache, strURL)
-         bIsInCache = oCache.sCacheFiles.ccCache.IsInCache(strURL);
+         % Usage: bIsURLInCache = IsURLInCache(oCache, strURL)
+         bIsURLInCache = oCache.sCacheFiles.ccCache.IsInCache(strURL);
       end
       
       function tResponse = CachedAPICall(oCache, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme)
-         % CachedAPICall - METHOD Return the (hopefully cached) contents of
-         % an Allen Brain Observatory API call
+         % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Observatory API call
+         %
+         % Usage: tResponse = CachedAPICall(oCache, strModel, strQueryString, ...)
+         %        tResponse = CachedAPICall(..., <nPageSize>, <strFormat>, <strRMAPrefix>, <strHost>, <strScheme>)
          
          DEF_strScheme = "http";
          DEF_strHost = "api.brain-map.org";
@@ -441,14 +551,14 @@ classdef cache < handle
             % - Convert to a table
             tMessages = struct2table([cMessages{:}]);
          end
-      end
+      end      
    end
    
    %% Private methods
    
    methods (Access = private)
+      %% Low-level getter method fro OPhys manifest
       function [ophys_manifests] = get_ophys_manifests_info_from_api(oCache)
-         
          % get_ophys_manifests_info_from_api - PRIVATE METHOD Download the Allen Brain Observatory manifests from the web
          %
          % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(oCache)
@@ -501,9 +611,12 @@ classdef cache < handle
          options = weboptions('ContentType', 'table', 'TimeOut', 60);
          ophys_manifests.cell_id_mapping = oCache.sCacheFiles.ccCache.webread(cell_id_mapping_url, [], options);
       end
-
+      
+      %% Low-level getter methods for ECEPhys sessions
+      
       function [ecephys_session_manifest] = get_ecephys_sessions(oCache)
-         %% - Download ECEPhys session manifest
+         % - Fetch the ecephys sessions manifest
+         % - Download ECEPhys session manifest
          disp('Fetching ECEPhys sessions manifest...');
          ecephys_session_manifest = oCache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
          
@@ -525,7 +638,7 @@ classdef cache < handle
          
          cWkf_types = arrayfun(@(s)s.well_known_file_type.name, ecephys_session_manifest.well_known_files, 'UniformOutput', false);
          has_nwb = cWkf_types == "EcephysNwb";
-                  
+         
          % - Add variables
          ecephys_session_manifest = addvars(ecephys_session_manifest, age_in_days, cSex, cGenotype, has_nwb, ...
             'NewVariableNames', {'age_in_days', 'sex', 'genotype', 'has_nwb'});
@@ -535,7 +648,8 @@ classdef cache < handle
       end
       
       function [ecephys_unit_manifest] = get_ecephys_units(oCache)
-         %% Download ECEPhys units
+         % - Fetch the ecephys units manifest
+         % - Download ECEPhys units
          disp('Fetching ECEPhys units manifest...');
          ecephys_unit_manifest = oCache.CachedAPICall('criteria=model::EcephysUnit', '');
          
@@ -592,17 +706,27 @@ classdef cache < handle
       end
       
       function [ecephys_probes_manifest] = get_ecephys_probes(oCache)
-         %% Download ECEPhys probes
+         % - Fetch the ecephys probes manifest
          disp('Fetching ECEPhys probes manifest...');
          ecephys_probes_manifest = oCache.CachedAPICall('criteria=model::EcephysProbe', '');
          
          % - Rename variables
          ecephys_probes_manifest = rename_variables(ecephys_probes_manifest, ...
             "use_lfp_data", "has_lfp_data");
+         
+         % - Divide the lfp sampling by the subsampling factor for clearer presentation (if provided)
+         if all(ismember({'lfp_sampling_rate', 'lfp_temporal_subsampling_factor'}, ...
+               ecephys_probes_manifest.Properties.VariableNames))
+            cfTSF = ecephys_probes_manifest.lfp_temporal_subsampling_factor;
+            cfTSF(cellfun(@isempty, cfTSF)) = {1};
+            vfTSF = cell2mat(cfTSF);
+            ecephys_probes_manifest.lfp_sampling_rate = ...
+               ecephys_probes_manifest.lfp_sampling_rate ./ vfTSF;
+         end
       end
       
       function [ecephys_channels_manifest] = get_ecephys_channels(oCache)
-         %% Download ECEPhys channels
+         % - Fetch the ecephys units manifest
          disp('Fetching ECEPhys channels manifest...');
          ecephys_channels_manifest = oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ecephys_structure_id,structures.acronym as ecephys_structure_acronym']");
          
@@ -632,36 +756,153 @@ classdef cache < handle
    end
 end
 
-function tMessages = cell_messages_to_table(cMessages)
-   % - Get an exhaustive list of fieldnames
-   cFieldnames = cellfun(@fieldnames, cMessages, 'UniformOutput', false);
-   cFieldnames = unique(vertcat(cFieldnames{:}), 'stable');
-   
-   % - Make sure every message has all required field names
-   function sData = enforce_fields(sData)
-      vbHasField = cellfun(@(c)isfield(sData, c), cFieldnames);
-      
-      for strField = cFieldnames(~vbHasField)'
-         sData.(strField{1}) = [];
-      end
-   end
+%% Utility functions
 
-   cMessages = cellfun(@(c)enforce_fields(c), cMessages, 'UniformOutput', false);
-   
-   % - Convert to a table
-   tMessages = struct2table([cMessages{:}]);
-end
+% function tMessages = cell_messages_to_table(cMessages)
+%    % cell_messages_to_table — FUNCTION Convert a cell array of messages to a table structure
+%    %
+%    %  Usage: tMessages = cell_messages_to_table(cMessages)
+% 
+%    % - Get an exhaustive list of fieldnames
+%    cFieldnames = cellfun(@fieldnames, cMessages, 'UniformOutput', false);
+%    cFieldnames = unique(vertcat(cFieldnames{:}), 'stable');
+%    
+%    % - Make sure every message has all required field names
+%    function sData = enforce_fields(sData)
+%       vbHasField = cellfun(@(c)isfield(sData, c), cFieldnames);
+%       
+%       for strField = cFieldnames(~vbHasField)'
+%          sData.(strField{1}) = [];
+%       end
+%    end
+% 
+%    cMessages = cellfun(@(c)enforce_fields(c), cMessages, 'UniformOutput', false);
+%    
+%    % - Convert to a table
+%    tMessages = struct2table([cMessages{:}]);
+% end
 
 function tRename = rename_variables(tRename, varargin)
+   % rename_variables - FUNCTION Rename variables in a table
+   %
+   % Usage: tRename = rename_variables(tRename, 'var_source_A', 'var_dest_A', 'var_source_B', 'var_dest_B', ...)
+   %
+   % Source variables will be renamed (if found) to destination variable
+   % names.
 
-for nVar = 1:2:numel(varargin)
-   vbVarIndex = tRename.Properties.VariableNames == string(varargin{nVar});
-   if any(vbVarIndex)
-      tRename.Properties.VariableNames(vbVarIndex) = string(varargin{nVar + 1});
+   % - Loop over pairs of source/dest names
+   for nVar = 1:2:numel(varargin)
+      % - Find variables matching the source name
+      vbVarIndex = tRename.Properties.VariableNames == string(varargin{nVar});
+      
+      if any(vbVarIndex)
+         % - Rename this variable to the destination name
+         tRename.Properties.VariableNames(vbVarIndex) = string(varargin{nVar + 1});
+      end
    end
 end
 
+function tReturn = get_grouped_uniques(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strScanVar, strSourceNewVar)
+   % get_grouped_uniques - FUNCTION Find unique values in a table, grouped by a particular key
+   %
+   % tReturn = get_grouped_uniques(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strScanVar, strSourceNewVar)
+   %
+   % `tSource` and `tScan` are both tables, which can be joined by matching
+   % variables `tSource.(strGroupingVarSource)` with
+   % `tScan.(strGroupingVarScan)`.
+   %
+   % This function finds all `tScan` rows that match `tSource` rows
+   % (essentially a join on strGroupingVarSource ==> strGroupingVarScan),
+   % then collects all unique values of `tScan.(strScanVar)` in those rows.
+   % The collection of unique values is then copied to the new variable
+   % `tSource.(strSourcewVar)` for all those matching source rows in
+   % `tSource`.
+   
+   % - Get list of keys in `tScan`.(`strGroupingVarScan`)
+   voAllKeysScan = tScan.(strGroupingVarScan);
+   
+   % - Get list of keys in `tSource`.(`strGroupingVarSource`)
+   voAllKeysSource = tSource.(strGroupingVarSource);
+   
+   % - Make a new cell array for `tSource` to contain unique values
+   cGroups = cell(size(tSource, 1), 1);
+   
+   % - Loop over unique scan keys
+   for nSourceRow = 1:numel(voAllKeysSource)
+      % - Get the key for this row
+      oKey = voAllKeysSource(nSourceRow);
+      
+      % - Find rows in scan matching this group (can be cells; `==` doesn't work)
+      if iscell(voAllKeysScan)
+         vbScanGroupRows = arrayfun(@(o)isequal(o, oKey), voAllKeysScan);
+      else
+         vbScanGroupRows = voAllKeysScan == oKey;
+      end
+      
+      % - Extract all values in `tScan`.(`strScanVar`) for the matching rows
+      voAllValues = reshape(tScan{vbScanGroupRows, strScanVar}, [], 1);
+      
+      % - Find unique values for this group
+      if iscell(voAllValues)
+         % - Handle "empty" values
+         vbEmptyValues = cellfun(@isempty, voAllValues);
+         if any(vbEmptyValues)
+            voUniqueValues = [unique(voAllValues(~vbEmptyValues)); {[]}];
+         else
+            voUniqueValues = unique(voAllValues);
+         end
+      else
+         voUniqueValues = unique(voAllValues);
+      end
+      
+      % - Assign these unique values to row in `tSource`
+      cGroups(nSourceRow) = {voUniqueValues};
+   end   
+   
+   % - Add the groups to `tSource`
+   tReturn = addvars(tSource, cGroups, 'NewVariableNames', strSourceNewVar);   
 end
 
-function count_unique
+
+function tReturn = count_owned(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strSourceNewVar)
+   % count_owned - FUNCTION Count the number of rows in `tScan` owned by a particular variable value
+   %
+   % Usage: tReturn = count_owned(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strSourceNewVar)
+   %
+   % This function finds the number of rows in `tScan` that are
+   % conceptually owned by values of an index variable in `tSource`, by
+   % performing a join between `tSource.(strGroupingVarSource)` and
+   % `tScan.(strGroupingVarScan)`.
+   %
+   % The count of rows in `tScan` is then added to the new variable in
+   % `tSource.(strSourceNewVar)`.
+
+   % - Get list of keys in `tScan`.(`strGroupingVarScan`)
+   voAllKeysScan = tScan.(strGroupingVarScan);
+   
+   % - Get list of keys in `tSource`.(`strGroupingVarSource`)
+   voAllKeysSource = tSource.(strGroupingVarSource);
+   
+   % - Make a new variable for `tSource` to contain counts
+   vnCounts = nan(size(tSource, 1), 1);
+   
+   % - Loop over unique source keys
+   for nSourceRow = 1:numel(voAllKeysSource)
+      % - Get the key for this row
+      oKey = voAllKeysSource(nSourceRow);
+      
+      % - Find rows in scan matching this group (can be cells; `==` doesn't work)
+      if iscell(voAllKeysScan)
+         vbScanGroupRows = arrayfun(@(o)isequal(o, oKey), voAllKeysScan);
+      else
+         vbScanGroupRows = voAllKeysScan == oKey;
+      end
+            
+      % - Assign these counts to matching group rows in `tSource`
+      vnCounts(nSourceRow) = nnz(vbScanGroupRows);
+   end
+   
+   % - Add the counts to the table
+   tReturn = addvars(tSource, vnCounts, 'NewVariableNames', strSourceNewVar);
 end
+
