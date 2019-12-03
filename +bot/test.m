@@ -9,10 +9,14 @@ classdef test < matlab.unittest.TestCase
       end
       
       function testGetTables(testCase)
-         %% Test retrieving the OPhys experiment tables
+         %% Test retrieving all OPhys and ECEPhys manifest tables
          boc = bot.cache;
-         tSessions = boc.tAllSessions;
-         tContainers = boc.tAllContainers;
+         boc.tOPhysSessions;                   % Table of all OPhys experimental sessions
+         boc.tOPhysContainers;                 % Table of all OPhys experimental containers
+         boc.tECEPhysSessions;                 % Table of all ECEPhys experimental sessions
+         boc.tECEPhysChannels;                 % Table of all ECEPhys channels
+         boc.tECEPhysProbes;                   % Table of all ECEPhys probes
+         boc.tECEPhysUnits;                    % Table of all ECEPhys units
       end
       
       function testGetSessionFilter(testCase)
@@ -185,7 +189,7 @@ classdef test < matlab.unittest.TestCase
          boc = bot.cache(tempdir);
          
          % - Ensure the manifests are refreshed
-         boc.UpdateManifest();
+         boc.UpdateManifests();
          
          % - Download files for a session
          boc.CacheFilesForSessionIDs(566752133);
