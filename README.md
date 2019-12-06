@@ -15,7 +15,8 @@ We track the usage of this toolbox along with some demographics using the Google
 
 ## Getting started
 
-The toolbox classes are contained within the `bot` namespace within matlab. Once the toolbox is added to the `matlab` path, you can access the main classes:
+### Toolbox interface
+The toolbox classes are contained within the `bot` namespace within MATLAB. Once the toolbox is added to the `matlab` path, you can access the main classes:
 
 `bot.sessionfilter` — Retrieve and manage lists of available experimental sessions, filtering them by various experimental parameters.
 
@@ -23,8 +24,8 @@ The toolbox classes are contained within the `bot` namespace within matlab. Once
 
 `bot.cache` — Internal class that manages caching of experimental data.
 
-## Example usage
-
+### Example usage
+To see how the toolbox enables retrieving, filtering, and acccessing the Allen Brain Observatory dataset, see the [Ophys Quick Start Example|https://www.mathworks.com/matlabcentral/fileexchange/66276-emeyers-brain-observatory-toolbox]. 
 
 #### Acknowledgements
 
