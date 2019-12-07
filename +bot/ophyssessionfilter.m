@@ -1,18 +1,19 @@
-%% CLASS bot.sessionfilter - Utility operations for filtering experimental sessions
+%% CLASS bot.ophyssessionfilter - Utility operations for filtering OPhys experimental sessions
 %
-% This class implements a mechanism for searching the experimental data sets
-% within the Allen Brain Observatory. It mimics some functionality of the python
-% class `brain_observatory_cache` from the Allen SDK.
+% This class implements a mechanism for searching the optical physiology
+% experimental data sets within the Allen Brain Observatory. It mimics some
+% functionality of the python class `brain_observatory_cache` from the
+% Allen SDK.
 %
-% Note: `bot.sessionfilter` is a handle class, which means that copies of an
-% object point to the same object. This means you should create new
-% sessionfilter objects if you want to keep the results of several filtering
-% chains.
+% Note: `bot.ophyssessionfilter` is a handle class, which means that copies
+% of an object point to the same object. This means you should create new
+% `ophyssessionfilter` objects if you want to keep the results of several
+% filtering chains.
 %
 % Construction:
-% >> bosf = bot.sessionfilter()
+% >> bosf = bot.ophyssessionfilter()
 % bosf =
-%   sessionfilter with properties:
+%   ophyssessionfilter with properties:
 %     filtered_session_table: [543x15 table]
 %                   stimulus: {9x1 cell}
 %         targeted_structure: {6x1 cell}
@@ -46,7 +47,7 @@
 
 
 %% Class definition
-classdef sessionfilter < handle
+classdef ophyssessionfilter < handle
     %% - Properties for global filtering of sessions table, included for backwards compatibility
     properties (SetAccess = private, Transient = true, Hidden = false)
         valid_session_table = nan;       % A table of all valid sessions, which by default contains all sessions excluding failed ones
@@ -70,7 +71,7 @@ classdef sessionfilter < handle
     %% Constructor
     methods
         
-        function bosf = sessionfilter()
+        function bosf = ophyssessionfilter()
              
             % - Get the unfiltered session table, clear all filters
             clear_filters(bosf);

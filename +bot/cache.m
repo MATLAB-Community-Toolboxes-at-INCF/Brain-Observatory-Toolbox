@@ -7,8 +7,8 @@
 % Construction:
 % >> boc = bot.cache()
 %
-% Get information about all experimental sessions:
-% >> boc.tAllSessions
+% Get information about all OPhys experimental sessions:
+% >> boc.tOphysSessions
 % ans = 
 %      date_of_acquisition      experiment_container_id    fail_eye_tracking  ...  
 %     ______________________    _______________________    _________________  ...  
@@ -16,11 +16,11 @@
 %     '2016-07-06T15:22:01Z'    5.2755e+08                 false              ...
 %     ...
 %
-% Force an update of the Allen Brain Observatory manifest:
-% >> boc.UpdateManifest()
+% Force an update of the Allen Brain Observatory manifests:
+% >> boc.UpdateManifests()
 %
 % Access data from an experimental session:
-% >> nSessionID = boc.tAllSessions(1, 'id');
+% >> nSessionID = boc.tOphysSessions(1, 'id');
 % >> bos = bot.session(nSessionID)
 % bos = 
 %   session with properties:
