@@ -431,7 +431,7 @@ classdef cache < handle
    
    %% Private methods
    
-   methods (Access = {?bot.session})
+   methods (Access = {?bot.ophyssession})
       function strFile = CacheFile(oCache, strURL, strLocalFile)
          % CacheFile - METHOD Check for cached version of Brain Observatory file, and return local location on disk
          %
