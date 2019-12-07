@@ -318,7 +318,7 @@ switch stimulus
       % so in session C where there is only 4deg, 4deg is simply named as
       % locally_sparse_noise
       
-      %         this doesn't work in older version of matlab
+      %         this doesn't work in older version of MATLAB
       %         if  string(bos.sSessionInfo.stimulus_name) == 'three_session_C2'
       if isequal(bos.sSessionInfo.stimulus_name, 'three_session_C2')
          stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/timestamps'));
@@ -377,7 +377,7 @@ switch stimulus
       parsed_frame_indices = nan(length(frame_indices), 1);
       
       % parse index of blank from -1 to 119, and increment the rest (cuz
-      % matlab starts at 1 not 0)
+      % MATLAB starts at 1 not 0)
       % parsed_frame_indexs range from 1 t0 119
       for iFrame = 1 : length(frame_indices)
          if frame_indices(iFrame, 1)~= -1

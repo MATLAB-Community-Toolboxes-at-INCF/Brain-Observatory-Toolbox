@@ -354,7 +354,7 @@ classdef cache < handle
          % Usage: [manifests] = get_manifests_info_from_api
          %
          % Download `container_manifest`, `session_manifest`, `cell_id_mapping`
-         % from Allen Brain Observatory API as matlab tables. Returns the tables as fields
+         % from Allen Brain Observatory API as MATLAB tables. Returns the tables as fields
          % of a structure. Converts various columns to appropriate formats,
          % including categorical arrays.
          

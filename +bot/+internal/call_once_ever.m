@@ -6,7 +6,7 @@ function [bExecute, bError] = call_once_ever(strCacheDir, strKey, fhFunction)
 %
 % `strKey` must be a reasonable string that could be used as a file name.
 % `fhFunction` is a function handle, which will be executed only once per
-% matlab installation (as long as the source directories for the BOT are
+% MATLAB installation (as long as the source directories for the BOT are
 % not wiped).
 %
 % `bExecute` will be a boolean, indicating whether or not `fhFunction` was

@@ -23,7 +23,7 @@ function [fhBSSL_double, fhBSSL_int32] = get_mex_handles
       fhBSSL_double = @bot.internal.BinarySearchSortedList_double_mex;
       
    else
-      % - Just use the slow matlab version
+      % - Just use the slow MATLAB version
       warning('BOT:MEXCompilation', ...
          '--- BrainObservatoryToolbox: Could not compile MEX functions.  Using slow matlab versions.');
       
