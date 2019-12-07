@@ -12,7 +12,7 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 % `fluorescence_trace_type` is one of {'raw', 'demixed', 'neuropil_corrected',
 % 'DfOverF'}.
 %
-% `session_id` is a valid Allen Brain Observatory session ID.
+% `session_id` is a valid session ID from an Allen Brain Observatory dataset[1].
 %
 % `stimulus` is one of {'static_gratings', 'drifting_gratings',
 % 'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg', 'natural_scenes',
@@ -20,6 +20,9 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 %
 % `raster_dir_name` is a path under which to store the raster format .mat files.
 % It will be created if it does not already exist.
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+
 
 % - Permitted arguments
 cstrTraceTypes = {'raw', 'demixed', 'neuropil_corrected', 'DfOverF'};

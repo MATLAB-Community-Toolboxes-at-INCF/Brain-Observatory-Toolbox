@@ -1,6 +1,6 @@
-%% bot.session - CLASS Represent an experimental container from the Allen Brain Observatory
+%% bot.session - CLASS Represent an experimental container from an Allen Brain Observatory dataset [1]
 %
-% This is the main interface to access data from a brain observatory
+% This is the main interface to access data from an Allen Brain Observatory
 % experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
 % identify an experimental session of interest. Then use `bot.session` to access
 % data associated with that session id.
@@ -58,6 +58,9 @@
 %        ...
 %
 % See method documentation for further information.
+% 
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+
 
 classdef session
    
@@ -107,7 +110,7 @@ classdef session
    %% - Constructor
    methods
       function bsObj = session(nSessionID)
-         % bot.session - CONSTRUCTOR Construct an object containing a Brain Observatory experimental session
+         % bot.session - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
          % Usage: bsObj = bot.session(nSessionID)
          %        vbsObj = bot.session(vnSessionIDs)
@@ -154,7 +157,7 @@ classdef session
          vbManifestRow = bsObj.bocCache.tAllSessions.id == nSessionID;
          if ~any(vbManifestRow)
             error('BOT:InvalidSessionID', ...
-                  'The provided session ID [%d] does not match any session in the Brain Observatory manifest.', ...
+                  'The provided session ID [%d] does not match any session in the Allen Brain Observatory manifest.', ...
                   nSessionID);
          end
          

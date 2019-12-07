@@ -1,8 +1,11 @@
 %% CLASS bot.cache - Cache and cloud access class for Brain Observatory Toolbox
 %
-% This class is used internally by the Brain Observatory Toolbox. It can also be
-% used to obtain a raw list of all available experimental sessions from the
-% Allen Brain Observatory.
+% This class is used internally by the Brain Observatory Toolbox to access
+% data from the Allen Brain Observatory resource [1] via the Allen Brain
+% Atlas API [2].
+% 
+% This class can be used to obtain a raw list of available experimental
+% sessions from an Allen Brain Observatory dataset.
 %
 % Construction:
 % >> boc = bot.cache()
@@ -16,7 +19,7 @@
 %     '2016-07-06T15:22:01Z'    5.2755e+08                 false              ...
 %     ...
 %
-% Force an update of the Allen Brain Observatory manifest:
+% Force an update of the manifest representing Allen Brain Observatory dataset contents:
 % >> boc.UpdateManifest()
 %
 % Access data from an experimental session:
@@ -29,6 +32,10 @@
 %     strLocalNWBFileLocation: []
 %
 % (See documentation for the `bot.session` class for more information)
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+% [2] Copyright 2015 Allen Brain Atlas API. Allen Brain Observatory. Available from: brain-map.org/api/index.html
+%   
 
 
 %% Class definition
@@ -39,7 +46,7 @@ classdef cache < handle
    end
    
    properties (SetAccess = private)
-      strCacheDir;                     % Path to location of cached Brain Observatory data
+      strCacheDir;                     % Path to location of cached data from the Allen Brain Observatory resource
       sCacheFiles;                     % Structure containing file paths of cached files, as well as cloud cacher
    end
    
@@ -50,7 +57,7 @@ classdef cache < handle
    
    properties (Access = private, Transient = true)
       bManifestsLoaded = false;              % Flag that indicates whether manifests have been loaded
-      manifests;                             % Structure containing Allen Brain Observatory manifests
+      manifests;                             % Structure containing manifest representing contents from an Allen Brain Observatory dataset
    end
 
    properties (Access = {?bot.cache, ?bot.session})
@@ -58,13 +65,13 @@ classdef cache < handle
    end      
    
    properties
-      strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for Allen Brain Observatory
+      strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for accessing Allen Brain Observatory datasets via the Allen Brain Atlas API
    end
    
    %% Constructor
    methods
       function oCache = cache
-         % CONSTRUCTOR - Returns an object for managing data access to the Allen Brain Observatory
+         % CONSTRUCTOR - Returns an object for managing data access from an Allen Brain Observatory dataset
          %
          % Usage: oCache = bot.cache()
          
@@ -186,7 +193,7 @@ classdef cache < handle
             % - Check to see if the session exists
             if isempty(tSession)
                error('BOT:InvalidSessionID', ...
-                     'The provided session ID [%d] was not found in the Brain Observatory manifest.', ...
+                     'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
                      vnSessionIDs(nSessIndex));
             
             else
@@ -254,7 +261,7 @@ classdef cache < handle
    
    methods (Access = {?bot.session})
       function strFile = CacheFile(oCache, strURL, strLocalFile)
-         % CacheFile - METHOD Check for cached version of Brain Observatory file, and return local location on disk
+         % CacheFile - METHOD Check for cached version of Allen Brain Observatory dataset file, and return local location on disk
          %
          % Usage: strFile = CacheFile(oCache, strURL, strLocalFile)
          
@@ -306,7 +313,7 @@ classdef cache < handle
    
    methods (Static)
       function manifests = UpdateManifest
-         % STATIC METHOD - Check and update file manifest from Allen Brain Observatory API
+         % STATIC METHOD - Check and update file manifest via the Allen Brain Observatory API
          %
          % Usage: manifests = bot.cache.UpdateManifest()
          
@@ -316,7 +323,7 @@ classdef cache < handle
             % - Get a cache object
             oCache = bot.cache();
             
-            % - Download the manifest from the Allen Brain API
+            % - Download the manifest via the Allen Brain Atlas API
             fprintf('Downloading Allen Brain Observatory manifests...\n');
             manifests = bot.cache.get_manifests_info_from_api();
             
@@ -342,12 +349,12 @@ classdef cache < handle
    methods (Access = private, Static = true)
       function [manifests] = get_manifests_info_from_api
          
-         % get_manifests_info_from_api - PRIVATE METHOD Download the Allen Brain Observatory manifests from the web
+         % get_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory datasets via the Allen Brain Atlas API
          %
          % Usage: [manifests] = get_manifests_info_from_api
          %
          % Download `container_manifest`, `session_manifest`, `cell_id_mapping`
-         % from brain observatory api as matlab tables. Returns the tables as fields
+         % from Allen Brain Observatory API as matlab tables. Returns the tables as fields
          % of a structure. Converts various columns to appropriate formats,
          % including categorical arrays.
          

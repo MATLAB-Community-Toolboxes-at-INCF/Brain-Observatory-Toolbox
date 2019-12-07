@@ -1,8 +1,7 @@
 %% CLASS bot.sessionfilter - Utility operations for filtering experimental sessions
 %
-% This class implements a mechanism for searching the experimental data sets
-% within the Allen Brain Observatory. It mimics some functionality of the python
-% class `brain_observatory_cache` from the Allen SDK.
+% This class implements a mechanism for searching the experimental datasets
+% within the Allen Brain Observatory [1]. 
 %
 % Note: `bot.sessionfilter` is a handle class, which means that copies of an
 % object point to the same object. This means you should create new
@@ -43,6 +42,9 @@
 %
 % Clear filters and start again:
 % >> bosf.clear_filters();
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+
 
 
 %% Class definition
