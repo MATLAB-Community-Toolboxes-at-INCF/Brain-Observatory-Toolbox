@@ -63,28 +63,35 @@ classdef cache < handle
    
    %% Constructor
    methods
-      function oCache = cache
+      function oCache = cache(strCacheDir)
          % CONSTRUCTOR - Returns an object for managing data access to the Allen Brain Observatory
          %
-         % Usage: oCache = bot.cache()
+         % Usage: oCache = bot.cache(<strCacheDir>)
+         
+         % - Check if a cache directory has been provided
+         if ~exist('strCacheDir', 'var') || isempty(strCacheDir)
+            % - Get the default cache directory
+            strBOTDir = fileparts(which('bot.cache'));
+            oCache.strCacheDir = [strBOTDir filesep 'Cache'];
+         else
+            oCache.strCacheDir = strCacheDir;
+         end
          
          % - Find and return the global cache object, if one exists
          sUserData = get(0, 'UserData');
          if isfield(sUserData, 'BOT_GLOBAL_CACHE') && ...
-               isa(sUserData.BOT_GLOBAL_CACHE, 'BOT_cache') && ...
-               isequal(sUserData.BOT_GLOBAL_CACHE.strVersion, oCache.strVersion)
+               isa(sUserData.BOT_GLOBAL_CACHE, 'bot.cache') && ...
+               isequal(sUserData.BOT_GLOBAL_CACHE.strVersion, oCache.strVersion) && ...
+               (~exist('strCacheDir', 'var') || isempty(strCacheDir))
             
-            % - A global class instance exists, and is the correct version
+            % - A global class instance exists, and is the correct version,
+            % and no "user" cache directory has been provided
             oCache = sUserData.BOT_GLOBAL_CACHE;
             return;
          end
          
          %% - Set up a cache object, if no object exists
-         
-         % - Get the cache directory
-         strBOTDir = fileparts(which('bot.cache'));
-         oCache.strCacheDir = [strBOTDir filesep 'Cache'];
-         
+
          % - Ensure the cache directory exists
          if ~exist(oCache.strCacheDir, 'dir')
             mkdir(oCache.strCacheDir);
