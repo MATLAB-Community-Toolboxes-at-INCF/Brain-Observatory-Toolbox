@@ -190,7 +190,7 @@ classdef cache < handle
    
    %% ECEPhys low level getter methods
    
-   methods      
+   methods(Access = private)
       function tECEPhysSessions = get_tAllECEPhysSessions(oCache)
          % METHOD - Return the table of all ECEPhys experimental sessions
          
