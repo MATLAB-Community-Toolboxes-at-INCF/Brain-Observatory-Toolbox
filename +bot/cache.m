@@ -45,10 +45,10 @@ classdef cache < handle
    properties (SetAccess = private, Dependent = true)
       tOPhysSessions;                   % Table of all OPhys experimental sessions
       tOPhysContainers;                 % Table of all OPhys experimental containers
-      tECEPhysSessions;                 % Table of all ECEPhys experimental sessions
-      tECEPhysChannels;                 % Table of all ECEPhys channels
-      tECEPhysProbes;                   % Table of all ECEPhys probes
-      tECEPhysUnits;                    % Table of all ECEPhys units
+      tEPhysSessions;                 % Table of all EPhys experimental sessions
+      tEPhysChannels;                 % Table of all EPhys channels
+      tEPhysProbes;                   % Table of all EPhys probes
+      tEPhysUnits;                    % Table of all EPhys units
    end
    
    properties (Access = private, Transient = true)
@@ -105,19 +105,19 @@ classdef cache < handle
          
          % - Memoize API access functions
          oCache.sAPIAccess.get_ophys_manifests_info_from_api = memoize(@oCache.get_ophys_manifests_info_from_api);
-         oCache.sAPIAccess.get_ecephys_sessions = memoize(@oCache.get_ecephys_sessions);
-         oCache.sAPIAccess.get_ecephys_channels = memoize(@oCache.get_ecephys_channels);
-         oCache.sAPIAccess.get_ecephys_probes = memoize(@oCache.get_ecephys_probes);
-         oCache.sAPIAccess.get_ecephys_units = memoize(@oCache.get_ecephys_units);
+         oCache.sAPIAccess.get_ephys_sessions = memoize(@oCache.get_ephys_sessions);
+         oCache.sAPIAccess.get_ephys_channels = memoize(@oCache.get_ephys_channels);
+         oCache.sAPIAccess.get_ephys_probes = memoize(@oCache.get_ephys_probes);
+         oCache.sAPIAccess.get_ephys_units = memoize(@oCache.get_ephys_units);
          
-         oCache.sAPIAccess.tAnnotatedECEPhysChannels = memoize(@oCache.get_tAnnotatedECEPhysChannels);
-         oCache.sAPIAccess.tAnnotatedECEPhysProbes = memoize(@oCache.get_tAnnotatedECEPhysProbes);
-         oCache.sAPIAccess.tAnnotatedECEPhysUnits = memoize(@oCache.get_tAnnotatedECEPhysUnits);
+         oCache.sAPIAccess.tAnnotatedEPhysChannels = memoize(@oCache.get_tAnnotatedEPhysChannels);
+         oCache.sAPIAccess.tAnnotatedEPhysProbes = memoize(@oCache.get_tAnnotatedEPhysProbes);
+         oCache.sAPIAccess.tAnnotatedEPhysUnits = memoize(@oCache.get_tAnnotatedEPhysUnits);
 
-         oCache.sAPIAccess.tAllECEPhysSessions = memoize(@oCache.get_tAllECEPhysSessions);
-         oCache.sAPIAccess.tAllECEPhysChannels = memoize(@oCache.get_tAllECEPhysChannels);
-         oCache.sAPIAccess.tAllECEPhysProbes = memoize(@oCache.get_tAllECEPhysProbes);
-         oCache.sAPIAccess.tAllECEPhysUnits = memoize(@oCache.get_tAllECEPhysUnits);
+         oCache.sAPIAccess.tAllEPhysSessions = memoize(@oCache.get_tAllEPhysSessions);
+         oCache.sAPIAccess.tAllEPhysChannels = memoize(@oCache.get_tAllEPhysChannels);
+         oCache.sAPIAccess.tAllEPhysProbes = memoize(@oCache.get_tAllEPhysProbes);
+         oCache.sAPIAccess.tAllEPhysUnits = memoize(@oCache.get_tAllEPhysUnits);
          
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
@@ -164,70 +164,70 @@ classdef cache < handle
       end      
    end
   
-   %% ECEPhys top level getter methods
+   %% EPhys top level getter methods
    
    methods
-      function tECEPhysSessions = get.tECEPhysSessions(oCache)
-         % GETTER - Return the table of ECEPhys experimental sessions
-         tECEPhysSessions = oCache.sAPIAccess.tAllECEPhysSessions();
+      function tEPhysSessions = get.tEPhysSessions(oCache)
+         % GETTER - Return the table of EPhys experimental sessions
+         tEPhysSessions = oCache.sAPIAccess.tAllEPhysSessions();
       end
       
-      function tECEPhysUnits = get.tECEPhysUnits(oCache)
-         % GETTER - Return the table of ECEPhys experimental units
-         tECEPhysUnits = oCache.sAPIAccess.tAllECEPhysUnits();
+      function tEPhysUnits = get.tEPhysUnits(oCache)
+         % GETTER - Return the table of EPhys experimental units
+         tEPhysUnits = oCache.sAPIAccess.tAllEPhysUnits();
       end
       
-      function tECEPhysProbes = get.tECEPhysProbes(oCache)
-         % GETTER - Return the table of ECEPhys experimental probes
-         tECEPhysProbes = oCache.sAPIAccess.tAllECEPhysProbes();
+      function tEPhysProbes = get.tEPhysProbes(oCache)
+         % GETTER - Return the table of EPhys experimental probes
+         tEPhysProbes = oCache.sAPIAccess.tAllEPhysProbes();
       end
       
-      function tECEPhysChannels = get.tECEPhysChannels(oCache)
-         % GETTER - Return the table of ECEPhys experimental channels
-         tECEPhysChannels = oCache.sAPIAccess.tAllECEPhysChannels();
+      function tEPhysChannels = get.tEPhysChannels(oCache)
+         % GETTER - Return the table of EPhys experimental channels
+         tEPhysChannels = oCache.sAPIAccess.tAllEPhysChannels();
       end
    end
    
-   %% ECEPhys low level getter methods
+   %% EPhys low level getter methods
    
    methods(Access = private)
-      function tECEPhysSessions = get_tAllECEPhysSessions(oCache)
-         % METHOD - Return the table of all ECEPhys experimental sessions
+      function tEPhysSessions = get_tAllEPhysSessions(oCache)
+         % METHOD - Return the table of all EPhys experimental sessions
          
-         % - Get table of ECEPhys sessions
-         tECEPhysSessions = oCache.sAPIAccess.get_ecephys_sessions();
-         tAnnotatedECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
-         tAnnotatedECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
-         tAnnotatedECEPhysProbes = oCache.sAPIAccess.tAnnotatedECEPhysProbes();
+         % - Get table of EPhys sessions
+         tEPhysSessions = oCache.sAPIAccess.get_ephys_sessions();
+         tAnnotatedEPhysUnits = oCache.sAPIAccess.tAnnotatedEPhysUnits();
+         tAnnotatedEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
+         tAnnotatedEPhysProbes = oCache.sAPIAccess.tAnnotatedEPhysProbes();
          
          % - Count numbers of units, channels and probes
-         tECEPhysSessions = count_owned(tECEPhysSessions, tAnnotatedECEPhysUnits, ...
-            "id", "ecephys_session_id", "unit_count");
-         tECEPhysSessions = count_owned(tECEPhysSessions, tAnnotatedECEPhysChannels, ...
-            "id", "ecephys_session_id", "channel_count");
-         tECEPhysSessions = count_owned(tECEPhysSessions, tAnnotatedECEPhysProbes, ...
-            "id", "ecephys_session_id", "probe_count");
+         tEPhysSessions = count_owned(tEPhysSessions, tAnnotatedEPhysUnits, ...
+            "id", "ephys_session_id", "unit_count");
+         tEPhysSessions = count_owned(tEPhysSessions, tAnnotatedEPhysChannels, ...
+            "id", "ephys_session_id", "channel_count");
+         tEPhysSessions = count_owned(tEPhysSessions, tAnnotatedEPhysProbes, ...
+            "id", "ephys_session_id", "probe_count");
 
          % - Get structure acronyms
-         tECEPhysSessions = get_grouped_uniques(tECEPhysSessions, tAnnotatedECEPhysChannels, ...
-            'id', 'ecephys_session_id', 'ecephys_structure_acronym', 'ecephys_structure_acronyms');
+         tEPhysSessions = get_grouped_uniques(tEPhysSessions, tAnnotatedEPhysChannels, ...
+            'id', 'ephys_session_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
          
          % - Rename variables
-         tECEPhysSessions = rename_variables(tECEPhysSessions, 'genotype', 'full_genotype');
+         tEPhysSessions = rename_variables(tEPhysSessions, 'genotype', 'full_genotype');
       end
       
-      function tAnnotatedECEPhysUnits = get_tAnnotatedECEPhysUnits(oCache)
-         % METHOD - Return table of annotated ECEPhys units
+      function tAnnotatedEPhysUnits = get_tAnnotatedEPhysUnits(oCache)
+         % METHOD - Return table of annotated EPhys units
 
          % - Annotate units
-         tAnnotatedECEPhysUnits = oCache.sAPIAccess.get_ecephys_units();
-         tAnnotatedECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
+         tAnnotatedEPhysUnits = oCache.sAPIAccess.get_ephys_units();
+         tAnnotatedEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
 
-         tAnnotatedECEPhysUnits = join(tAnnotatedECEPhysUnits, tAnnotatedECEPhysChannels, ...
-            'LeftKeys', 'ecephys_channel_id', 'RightKeys', 'id');
+         tAnnotatedEPhysUnits = join(tAnnotatedEPhysUnits, tAnnotatedEPhysChannels, ...
+            'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
 
          % - Rename variables
-         tAnnotatedECEPhysUnits = rename_variables(tAnnotatedECEPhysUnits, ...
+         tAnnotatedEPhysUnits = rename_variables(tAnnotatedEPhysUnits, ...
             'name', 'probe_name', ...
             'phase', 'probe_phase', ...
             'sampling_rate', 'probe_sampling_rate', ...
@@ -235,59 +235,59 @@ classdef cache < handle
             'local_index', 'peak_channel');
       end
       
-      function tECEPhysUnits = get_tAllECEPhysUnits(oCache)
-         % METHOD - Return the table of all ECEPhys recorded units
-         tECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
+      function tEPhysUnits = get_tAllEPhysUnits(oCache)
+         % METHOD - Return the table of all EPhys recorded units
+         tEPhysUnits = oCache.sAPIAccess.tAnnotatedEPhysUnits();
       end
       
-      function tAnnotatedECEPhysProbes = get_tAnnotatedECEPhysProbes(oCache)
-         % METHOD - Return the annotate table of ECEPhys probes
+      function tAnnotatedEPhysProbes = get_tAnnotatedEPhysProbes(oCache)
+         % METHOD - Return the annotate table of EPhys probes
          % - Annotate probes and return
-         tAnnotatedECEPhysProbes = oCache.sAPIAccess.get_ecephys_probes();
-         tSessions = oCache.sAPIAccess.get_ecephys_sessions();
-         tAnnotatedECEPhysProbes = join(tAnnotatedECEPhysProbes, tSessions, 'LeftKeys', 'ecephys_session_id', 'RightKeys', 'id');
+         tAnnotatedEPhysProbes = oCache.sAPIAccess.get_ephys_probes();
+         tSessions = oCache.sAPIAccess.get_ephys_sessions();
+         tAnnotatedEPhysProbes = join(tAnnotatedEPhysProbes, tSessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       
-      function tECEPhysProbes = get_tAllECEPhysProbes(oCache)
-         % METHOD - Return the table of all ECEPhys recorded probes
+      function tEPhysProbes = get_tAllEPhysProbes(oCache)
+         % METHOD - Return the table of all EPhys recorded probes
          
          % - Get the annotated probes
-         tECEPhysProbes = oCache.sAPIAccess.tAnnotatedECEPhysProbes();
-         tAnnotatedECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
-         tAnnotatedECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
+         tEPhysProbes = oCache.sAPIAccess.tAnnotatedEPhysProbes();
+         tAnnotatedEPhysUnits = oCache.sAPIAccess.tAnnotatedEPhysUnits();
+         tAnnotatedEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
 
          % - Count units and channels
-         tECEPhysProbes = count_owned(tECEPhysProbes, tAnnotatedECEPhysUnits, ...
-            'id', 'ecephys_probe_id', 'unit_count');
-         tECEPhysProbes = count_owned(tECEPhysProbes, tAnnotatedECEPhysChannels, ...
-            'id', 'ecephys_probe_id', 'channel_count');
+         tEPhysProbes = count_owned(tEPhysProbes, tAnnotatedEPhysUnits, ...
+            'id', 'ephys_probe_id', 'unit_count');
+         tEPhysProbes = count_owned(tEPhysProbes, tAnnotatedEPhysChannels, ...
+            'id', 'ephys_probe_id', 'channel_count');
          
          % - Get structure acronyms
-         tECEPhysProbes = get_grouped_uniques(tECEPhysProbes, tAnnotatedECEPhysChannels, ...
-            'id', 'ecephys_probe_id', 'ecephys_structure_acronym', 'ecephys_structure_acronyms');         
+         tEPhysProbes = get_grouped_uniques(tEPhysProbes, tAnnotatedEPhysChannels, ...
+            'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');         
       end
       
-      function tAnnotatedECEPhysChannels = get_tAnnotatedECEPhysChannels(oCache)
-         % - METHOD - Return the annotated table of ECEPhys channels
-         tAnnotatedECEPhysChannels = oCache.sAPIAccess.get_ecephys_channels();
-         tAnnotatedECEPhysProbes = oCache.sAPIAccess.tAnnotatedECEPhysProbes();
-         tAnnotatedECEPhysChannels = join(tAnnotatedECEPhysChannels, tAnnotatedECEPhysProbes, ...
-            'LeftKeys', 'ecephys_probe_id', 'RightKeys', 'id');
+      function tAnnotatedEPhysChannels = get_tAnnotatedEPhysChannels(oCache)
+         % - METHOD - Return the annotated table of EPhys channels
+         tAnnotatedEPhysChannels = oCache.sAPIAccess.get_ephys_channels();
+         tAnnotatedEPhysProbes = oCache.sAPIAccess.tAnnotatedEPhysProbes();
+         tAnnotatedEPhysChannels = join(tAnnotatedEPhysChannels, tAnnotatedEPhysProbes, ...
+            'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end
       
-      function tECEPhysChannels = get_tAllECEPhysChannels(oCache)
-         % METHOD - Return the table of all ECEPhys recorded channels
+      function tEPhysChannels = get_tAllEPhysChannels(oCache)
+         % METHOD - Return the table of all EPhys recorded channels
 
          % - Get annotated channels
-         tECEPhysChannels = oCache.sAPIAccess.tAnnotatedECEPhysChannels();
-         tAnnotatedECEPhysUnits = oCache.sAPIAccess.tAnnotatedECEPhysUnits();
+         tEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
+         tAnnotatedEPhysUnits = oCache.sAPIAccess.tAnnotatedEPhysUnits();
          
          % - Count owned units
-         tECEPhysChannels = count_owned(tECEPhysChannels, tAnnotatedECEPhysUnits, ...
-            'id', 'ecephys_channel_id', 'unit_count');
+         tEPhysChannels = count_owned(tEPhysChannels, tAnnotatedEPhysUnits, ...
+            'id', 'ephys_channel_id', 'unit_count');
 
          % - Rename variables
-         tECEPhysChannels = rename_variables(tECEPhysChannels, 'name', 'probe_name');
+         tEPhysChannels = rename_variables(tEPhysChannels, 'name', 'probe_name');
       end
    end
 
@@ -301,7 +301,7 @@ classdef cache < handle
          % Usage: cstrCacheFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs <, bUseParallel, nNumTries>)
          %
          % `vnSessionIDs` is a list of session IDs obtained from either the
-         % OPhys or ECEPhys sessions table. The data files for these
+         % OPhys or EPhys sessions table. The data files for these
          % sessions will be downloaded and cached, if they have not already
          % been cached.
          %
@@ -327,12 +327,12 @@ classdef cache < handle
          for nSessIndex = numel(vnSessionIDs):-1:1
             % - Find this session in the sessions tables
             vbOPhysSession = oCache.tOPhysSessions.id == vnSessionIDs(nSessIndex);
-            vbECEPhysSession = oCache.tECEPhysSessions.id == vnSessionIDs(nSessIndex);
+            vbEPhysSession = oCache.tEPhysSessions.id == vnSessionIDs(nSessIndex);
 
             if any(vbOPhysSession)
                tSession = oCache.tOPhysSessions(vbOPhysSession, :);
             else
-               tSession = oCache.tECEPhysSessions(vbECEPhysSession, :);
+               tSession = oCache.tEPhysSessions(vbEPhysSession, :);
             end
             
             % - Check to see if the session exists
@@ -422,10 +422,10 @@ classdef cache < handle
          % - Force re-download of all manifests
          oCache.tOPhysSessions;
          oCache.tOPhysContainers;
-         oCache.tECEPhysSessions;
-         oCache.tECEPhysProbes;
-         oCache.tECEPhysChannels;
-         oCache.tECEPhysUnits;
+         oCache.tEPhysSessions;
+         oCache.tEPhysProbes;
+         oCache.tEPhysChannels;
+         oCache.tEPhysUnits;
       end
    end
    
@@ -589,7 +589,7 @@ classdef cache < handle
 
          % - Label as ophys sessions
          ophys_session_manifest = addvars(ophys_session_manifest, ...
-            repmat(categorical({'OPhys'}, {'ECEPhys', 'OPhys'}), size(ophys_session_manifest, 1), 1), ...
+            repmat(categorical({'OPhys'}, {'EPhys', 'OPhys'}), size(ophys_session_manifest, 1), 1), ...
             'NewVariableNames', 'BOT_session_type', ...
             'before', 1);
          
@@ -624,57 +624,57 @@ classdef cache < handle
          ophys_manifests.cell_id_mapping = oCache.sCacheFiles.ccCache.webread(cell_id_mapping_url, [], options);
       end
       
-      %% Low-level getter methods for ECEPhys sessions
+      %% Low-level getter methods for EPhys sessions
       
-      function [ecephys_session_manifest] = get_ecephys_sessions(oCache)
-         % - Fetch the ecephys sessions manifest
-         % - Download ECEPhys session manifest
-         disp('Fetching ECEPhys sessions manifest...');
-         ecephys_session_manifest = oCache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
+      function [ephys_session_manifest] = get_ephys_sessions(oCache)
+         % - Fetch the ephys sessions manifest
+         % - Download EPhys session manifest
+         disp('Fetching EPhys sessions manifest...');
+         ephys_session_manifest = oCache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
          
-         % - Label as ECEPhys sessions
-         ecephys_session_manifest = addvars(ecephys_session_manifest, ...
-            repmat(categorical({'ECEPhys'}, {'ECEPhys', 'OPhys'}), size(ecephys_session_manifest, 1), 1), ...
+         % - Label as EPhys sessions
+         ephys_session_manifest = addvars(ephys_session_manifest, ...
+            repmat(categorical({'EPhys'}, {'EPhys', 'OPhys'}), size(ephys_session_manifest, 1), 1), ...
             'NewVariableNames', 'BOT_session_type', ...
             'before', 1);
          
-         % - Post-process ECEPhys manifest
-         age_in_days = arrayfun(@(s)s.donor.age.days, ecephys_session_manifest.specimen);
-         cSex = arrayfun(@(s)s.donor.sex, ecephys_session_manifest.specimen, 'UniformOutput', false);
-         cGenotype = arrayfun(@(s)s.donor.full_genotype, ecephys_session_manifest.specimen, 'UniformOutput', false);
+         % - Post-process EPhys manifest
+         age_in_days = arrayfun(@(s)s.donor.age.days, ephys_session_manifest.specimen);
+         cSex = arrayfun(@(s)s.donor.sex, ephys_session_manifest.specimen, 'UniformOutput', false);
+         cGenotype = arrayfun(@(s)s.donor.full_genotype, ephys_session_manifest.specimen, 'UniformOutput', false);
          
          vbWT = cellfun(@isempty, cGenotype);
          if any(vbWT)
             cGenotype{vbWT} = 'wt';
          end
          
-         cWkf_types = arrayfun(@(s)s.well_known_file_type.name, ecephys_session_manifest.well_known_files, 'UniformOutput', false);
+         cWkf_types = arrayfun(@(s)s.well_known_file_type.name, ephys_session_manifest.well_known_files, 'UniformOutput', false);
          has_nwb = cWkf_types == "EcephysNwb";
          
          % - Add variables
-         ecephys_session_manifest = addvars(ecephys_session_manifest, age_in_days, cSex, cGenotype, has_nwb, ...
+         ephys_session_manifest = addvars(ephys_session_manifest, age_in_days, cSex, cGenotype, has_nwb, ...
             'NewVariableNames', {'age_in_days', 'sex', 'genotype', 'has_nwb'});
          
          % - Rename variables
-         ecephys_session_manifest = rename_variables(ecephys_session_manifest, "stimulus_name", "session_type");
+         ephys_session_manifest = rename_variables(ephys_session_manifest, "stimulus_name", "session_type");
          
          % - Convert variables to useful types
-         ecephys_session_manifest.date_of_acquisition = datetime(ecephys_session_manifest.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-         ecephys_session_manifest.id = uint32(ecephys_session_manifest.id);
-         ecephys_session_manifest.isi_experiment_id = uint32(ecephys_session_manifest.isi_experiment_id);
-         ecephys_session_manifest.published_at = datetime(ecephys_session_manifest.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-         ecephys_session_manifest.specimen_id = uint32(ecephys_session_manifest.specimen_id);
-         ecephys_session_manifest.sex = categorical(ecephys_session_manifest.sex, {'M', 'F'});
+         ephys_session_manifest.date_of_acquisition = datetime(ephys_session_manifest.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+         ephys_session_manifest.id = uint32(ephys_session_manifest.id);
+         ephys_session_manifest.isi_experiment_id = uint32(ephys_session_manifest.isi_experiment_id);
+         ephys_session_manifest.published_at = datetime(ephys_session_manifest.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+         ephys_session_manifest.specimen_id = uint32(ephys_session_manifest.specimen_id);
+         ephys_session_manifest.sex = categorical(ephys_session_manifest.sex, {'M', 'F'});
       end
       
-      function [ecephys_unit_manifest] = get_ecephys_units(oCache)
-         % - Fetch the ecephys units manifest
-         % - Download ECEPhys units
-         disp('Fetching ECEPhys units manifest...');
-         ecephys_unit_manifest = oCache.CachedAPICall('criteria=model::EcephysUnit', '');
+      function [ephys_unit_manifest] = get_ephys_units(oCache)
+         % - Fetch the ephys units manifest
+         % - Download EPhys units
+         disp('Fetching EPhys units manifest...');
+         ephys_unit_manifest = oCache.CachedAPICall('criteria=model::EcephysUnit', '');
          
          % - Rename variables
-         ecephys_unit_manifest = rename_variables(ecephys_unit_manifest, ...
+         ephys_unit_manifest = rename_variables(ephys_unit_manifest, ...
             'PT_ratio', 'waveform_PT_ratio', ...
             'amplitude', 'waveform_amplitude', ...
             'duration', 'waveform_duration', ...
@@ -711,75 +711,75 @@ classdef cache < handle
          end
          
          % - Filter units
-         ecephys_unit_manifest = ...
-            ecephys_unit_manifest(ecephys_unit_manifest.amplitude_cutoff <= sFilterValues.amplitude_cutoff_maximum & ...
-            ecephys_unit_manifest.presence_ratio >= sFilterValues.presence_ratio_minimum & ...
-            ecephys_unit_manifest.isi_violations <= sFilterValues.isi_violations_maximum, :);
+         ephys_unit_manifest = ...
+            ephys_unit_manifest(ephys_unit_manifest.amplitude_cutoff <= sFilterValues.amplitude_cutoff_maximum & ...
+            ephys_unit_manifest.presence_ratio >= sFilterValues.presence_ratio_minimum & ...
+            ephys_unit_manifest.isi_violations <= sFilterValues.isi_violations_maximum, :);
          
-         if any(ecephys_unit_manifest.Properties.VariableNames == "quality")
-            ecephys_unit_manifest = ecephys_unit_manifest(ecephys_unit_manifest.quality == "good", :);
+         if any(ephys_unit_manifest.Properties.VariableNames == "quality")
+            ephys_unit_manifest = ephys_unit_manifest(ephys_unit_manifest.quality == "good", :);
          end
          
-         if any(ecephys_unit_manifest.Properties.VariableNames == "ecephys_structure_id")
-            ecephys_unit_manifest = ecephys_unit_manifest(~isempty(ecephys_unit_manifest.ecephys_structure_id), :);
+         if any(ephys_unit_manifest.Properties.VariableNames == "ephys_structure_id")
+            ephys_unit_manifest = ephys_unit_manifest(~isempty(ephys_unit_manifest.ephys_structure_id), :);
          end
          
          % - Convert variables to useful types
-         ecephys_unit_manifest.ecephys_channel_id = uint32(ecephys_unit_manifest.ecephys_channel_id);
-         ecephys_unit_manifest.id = uint32(ecephys_unit_manifest.id);
+         ephys_unit_manifest.ephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
+         ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
-      function [ecephys_probes_manifest] = get_ecephys_probes(oCache)
-         % - Fetch the ecephys probes manifest
-         disp('Fetching ECEPhys probes manifest...');
-         ecephys_probes_manifest = oCache.CachedAPICall('criteria=model::EcephysProbe', '');
+      function [ephys_probes_manifest] = get_ephys_probes(oCache)
+         % - Fetch the ephys probes manifest
+         disp('Fetching EPhys probes manifest...');
+         ephys_probes_manifest = oCache.CachedAPICall('criteria=model::EcephysProbe', '');
          
          % - Rename variables
-         ecephys_probes_manifest = rename_variables(ecephys_probes_manifest, ...
+         ephys_probes_manifest = rename_variables(ephys_probes_manifest, ...
             "use_lfp_data", "has_lfp_data");
          
          % - Divide the lfp sampling by the subsampling factor for clearer presentation (if provided)
          if all(ismember({'lfp_sampling_rate', 'lfp_temporal_subsampling_factor'}, ...
-               ecephys_probes_manifest.Properties.VariableNames))
-            cfTSF = ecephys_probes_manifest.lfp_temporal_subsampling_factor;
+               ephys_probes_manifest.Properties.VariableNames))
+            cfTSF = ephys_probes_manifest.lfp_temporal_subsampling_factor;
             cfTSF(cellfun(@isempty, cfTSF)) = {1};
             vfTSF = cell2mat(cfTSF);
-            ecephys_probes_manifest.lfp_sampling_rate = ...
-               ecephys_probes_manifest.lfp_sampling_rate ./ vfTSF;
+            ephys_probes_manifest.lfp_sampling_rate = ...
+               ephys_probes_manifest.lfp_sampling_rate ./ vfTSF;
          end
          
          % - Convert variables to useful types
-         ecephys_probes_manifest.ecephys_session_id = uint32(ecephys_probes_manifest.ecephys_session_id);
-         ecephys_probes_manifest.id = uint32(ecephys_probes_manifest.id);
+         ephys_probes_manifest.ephys_session_id = uint32(ephys_probes_manifest.ephys_session_id);
+         ephys_probes_manifest.id = uint32(ephys_probes_manifest.id);
       end
       
-      function [ecephys_channels_manifest] = get_ecephys_channels(oCache)
-         % - Fetch the ecephys units manifest
-         disp('Fetching ECEPhys channels manifest...');
-         ecephys_channels_manifest = oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ecephys_structure_id,structures.acronym as ecephys_structure_acronym']");
+      function [ephys_channels_manifest] = get_ephys_channels(oCache)
+         % - Fetch the ephys units manifest
+         disp('Fetching EPhys channels manifest...');
+         ephys_channels_manifest = oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ephys_channels.id,ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
          
          % - Convert columns to reasonable formats
-         id = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.id, 'UniformOutput', false)));
-         ecephys_probe_id = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.ecephys_probe_id, 'UniformOutput', false)));
-         local_index = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.local_index, 'UniformOutput', false)));
-         probe_horizontal_position = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.probe_horizontal_position, 'UniformOutput', false)));
-         probe_vertical_position = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.probe_vertical_position, 'UniformOutput', false)));
-         anterior_posterior_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.anterior_posterior_ccf_coordinate, 'UniformOutput', false)));
-         dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
-         left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ecephys_channels_manifest.left_right_ccf_coordinate, 'UniformOutput', false)));
+         id = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.id, 'UniformOutput', false)));
+         ephys_probe_id = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.ephys_probe_id, 'UniformOutput', false)));
+         local_index = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.local_index, 'UniformOutput', false)));
+         probe_horizontal_position = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.probe_horizontal_position, 'UniformOutput', false)));
+         probe_vertical_position = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.probe_vertical_position, 'UniformOutput', false)));
+         anterior_posterior_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.anterior_posterior_ccf_coordinate, 'UniformOutput', false)));
+         dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
+         left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.left_right_ccf_coordinate, 'UniformOutput', false)));
          
-         es_id = ecephys_channels_manifest.ecephys_structure_id;
-         ecephys_structure_id(~cellfun(@isempty, es_id)) = cellfun(@str2num, es_id(~cellfun(@isempty, es_id)), 'UniformOutput', false);
-         ecephys_structure_id(cellfun(@isempty, es_id)) = {[]};
-         ecephys_structure_id = ecephys_structure_id';
+         es_id = ephys_channels_manifest.ephys_structure_id;
+         ephys_structure_id(~cellfun(@isempty, es_id)) = cellfun(@str2num, es_id(~cellfun(@isempty, es_id)), 'UniformOutput', false);
+         ephys_structure_id(cellfun(@isempty, es_id)) = {[]};
+         ephys_structure_id = ephys_structure_id';
          
-         ecephys_structure_acronym = ecephys_channels_manifest.ecephys_structure_acronym;
+         ephys_structure_acronym = ephys_channels_manifest.ephys_structure_acronym;
          
          % - Rebuild table
-         ecephys_channels_manifest = table(id, ecephys_probe_id, local_index, ...
+         ephys_channels_manifest = table(id, ephys_probe_id, local_index, ...
             probe_horizontal_position, probe_vertical_position, ...
             anterior_posterior_ccf_coordinate, dorsal_ventral_ccf_coordinate, ...
-            left_right_ccf_coordinate, ecephys_structure_id, ecephys_structure_acronym);
+            left_right_ccf_coordinate, ephys_structure_id, ephys_structure_acronym);
       end
    end
 end

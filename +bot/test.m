@@ -9,14 +9,14 @@ classdef test < matlab.unittest.TestCase
       end
       
       function testGetTables(testCase)
-         %% Test retrieving all OPhys and ECEPhys manifest tables
+         %% Test retrieving all OPhys and EPhys manifest tables
          boc = bot.cache;
          boc.tOPhysSessions;                   % Table of all OPhys experimental sessions
          boc.tOPhysContainers;                 % Table of all OPhys experimental containers
-         boc.tECEPhysSessions;                 % Table of all ECEPhys experimental sessions
-         boc.tECEPhysChannels;                 % Table of all ECEPhys channels
-         boc.tECEPhysProbes;                   % Table of all ECEPhys probes
-         boc.tECEPhysUnits;                    % Table of all ECEPhys units
+         boc.tEPhysSessions;                 % Table of all EPhys experimental sessions
+         boc.tEPhysChannels;                 % Table of all EPhys channels
+         boc.tEPhysProbes;                   % Table of all EPhys probes
+         boc.tEPhysUnits;                    % Table of all EPhys units
       end
       
       function testGetOPhysSessionFilter(testCase)
