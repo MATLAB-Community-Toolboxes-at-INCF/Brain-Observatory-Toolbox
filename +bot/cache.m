@@ -224,7 +224,7 @@ classdef cache < handle
          tAnnotatedEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
 
          tAnnotatedEPhysUnits = join(tAnnotatedEPhysUnits, tAnnotatedEPhysChannels, ...
-            'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
+            'LeftKeys', 'ecephys_channel_id', 'RightKeys', 'id');
 
          % - Rename variables
          tAnnotatedEPhysUnits = rename_variables(tAnnotatedEPhysUnits, ...
@@ -284,7 +284,7 @@ classdef cache < handle
          
          % - Count owned units
          tEPhysChannels = count_owned(tEPhysChannels, tAnnotatedEPhysUnits, ...
-            'id', 'ephys_channel_id', 'unit_count');
+            'id', 'ecephys_channel_id', 'unit_count');
 
          % - Rename variables
          tEPhysChannels = rename_variables(tEPhysChannels, 'name', 'probe_name');
@@ -503,6 +503,11 @@ classdef cache < handle
             
             % - Perform query
             response_raw = oCache.sCacheFiles.ccCache.webread(strURLQueryPage, [], options);
+            
+            % - Was there an error?
+            if ~response_raw.success
+               error('BOT:DataAccess', 'Error querying Allen Brain API for URL [%s]', strURLQueryPage);
+            end
             
             % - Convert response to a table
             if isa(response_raw.msg, 'cell')
@@ -725,7 +730,7 @@ classdef cache < handle
          end
          
          % - Convert variables to useful types
-         ephys_unit_manifest.ephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
+         ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ecephys_channel_id);
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
