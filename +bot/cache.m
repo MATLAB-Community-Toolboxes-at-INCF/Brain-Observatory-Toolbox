@@ -528,7 +528,7 @@ classdef cache < handle
             
             % - Display progress if we didn't finish
             if (nStartRow < nTotalRows)
-               fprintf('Downloading.... [%.0f%%]\n', round(nStartRow / nTotalRows * 100))
+               fprintf('Fetching.... [%.0f%%]\n', round(nStartRow / nTotalRows * 100))
             end
          end
          
@@ -574,14 +574,22 @@ classdef cache < handle
          cell_id_mapping_url = 'http://api.brain-map.org/api/v2/well_known_file_download/590985414';         
 
          %% - Fetch OPhys container manifest
-         ophys_manifests.ophys_container_manifest = oCache.CachedAPICall('criteria=model::ExperimentContainer', 'rma::include,ophys_experiments,isi_experiment,specimen(donor(conditions,age,transgenic_lines)),targeted_structure');
+         ophys_container_manifest = oCache.CachedAPICall('criteria=model::ExperimentContainer', 'rma::include,ophys_experiments,isi_experiment,specimen(donor(conditions,age,transgenic_lines)),targeted_structure');
+
+         % - Convert varibales to useful types
+         ophys_container_manifest.id = uint32(ophys_container_manifest.id);
+         ophys_container_manifest.failed_facet = uint32(ophys_container_manifest.failed_facet);
+         ophys_container_manifest.isi_experiment_id = uint32(ophys_container_manifest.isi_experiment_id);
+         ophys_container_manifest.specimen_id = uint32(ophys_container_manifest.specimen_id);
+
+         ophys_manifests.ophys_container_manifest = ophys_container_manifest;
          
          %% - Fetch OPhys session manifest
          ophys_session_manifest = oCache.CachedAPICall('criteria=model::OphysExperiment', 'rma::include,experiment_container,well_known_files(well_known_file_type),targeted_structure,specimen(donor(age,transgenic_lines))');
 
          % - Label as ophys sessions
          ophys_session_manifest = addvars(ophys_session_manifest, ...
-            repmat({'ophys'}, size(ophys_session_manifest, 1), 1), ...
+            repmat(categorical({'OPhys'}, {'ECEPhys', 'OPhys'}), size(ophys_session_manifest, 1), 1), ...
             'NewVariableNames', 'BOT_session_type', ...
             'before', 1);
          
@@ -602,8 +610,12 @@ classdef cache < handle
          ophys_session_manifest = addvars(ophys_session_manifest, cre_line, ...
             'NewVariableNames', 'cre_line');
 
-         % - Convert experiment containiner variables to integer
-         ophys_session_manifest{:, 'experiment_container_id'} = uint32(ophys_session_manifest{:, 'experiment_container_id'});
+         % - Convert experiment containiner variables to useful types
+         ophys_session_manifest.experiment_container_id = uint32(ophys_session_manifest.experiment_container_id);
+         ophys_session_manifest.id = uint32(ophys_session_manifest.id);
+         ophys_session_manifest.date_of_acquisition = datetime(ophys_session_manifest.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+         ophys_session_manifest.specimen_id = uint32(ophys_session_manifest.specimen_id);
+         
          ophys_manifests.ophys_session_manifest = ophys_session_manifest;
          
          %% - Fetch cell ID mapping
@@ -622,7 +634,7 @@ classdef cache < handle
          
          % - Label as ECEPhys sessions
          ecephys_session_manifest = addvars(ecephys_session_manifest, ...
-            repmat({'ECEPhys'}, size(ecephys_session_manifest, 1), 1), ...
+            repmat(categorical({'ECEPhys'}, {'ECEPhys', 'OPhys'}), size(ecephys_session_manifest, 1), 1), ...
             'NewVariableNames', 'BOT_session_type', ...
             'before', 1);
          
@@ -645,6 +657,14 @@ classdef cache < handle
          
          % - Rename variables
          ecephys_session_manifest = rename_variables(ecephys_session_manifest, "stimulus_name", "session_type");
+         
+         % - Convert variables to useful types
+         ecephys_session_manifest.date_of_acquisition = datetime(ecephys_session_manifest.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+         ecephys_session_manifest.id = uint32(ecephys_session_manifest.id);
+         ecephys_session_manifest.isi_experiment_id = uint32(ecephys_session_manifest.isi_experiment_id);
+         ecephys_session_manifest.published_at = datetime(ecephys_session_manifest.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+         ecephys_session_manifest.specimen_id = uint32(ecephys_session_manifest.specimen_id);
+         ecephys_session_manifest.sex = categorical(ecephys_session_manifest.sex, {'M', 'F'});
       end
       
       function [ecephys_unit_manifest] = get_ecephys_units(oCache)
@@ -703,6 +723,10 @@ classdef cache < handle
          if any(ecephys_unit_manifest.Properties.VariableNames == "ecephys_structure_id")
             ecephys_unit_manifest = ecephys_unit_manifest(~isempty(ecephys_unit_manifest.ecephys_structure_id), :);
          end
+         
+         % - Convert variables to useful types
+         ecephys_unit_manifest.ecephys_channel_id = uint32(ecephys_unit_manifest.ecephys_channel_id);
+         ecephys_unit_manifest.id = uint32(ecephys_unit_manifest.id);
       end
       
       function [ecephys_probes_manifest] = get_ecephys_probes(oCache)
@@ -723,6 +747,10 @@ classdef cache < handle
             ecephys_probes_manifest.lfp_sampling_rate = ...
                ecephys_probes_manifest.lfp_sampling_rate ./ vfTSF;
          end
+         
+         % - Convert variables to useful types
+         ecephys_probes_manifest.ecephys_session_id = uint32(ecephys_probes_manifest.ecephys_session_id);
+         ecephys_probes_manifest.id = uint32(ecephys_probes_manifest.id);
       end
       
       function [ecephys_channels_manifest] = get_ecephys_channels(oCache)
