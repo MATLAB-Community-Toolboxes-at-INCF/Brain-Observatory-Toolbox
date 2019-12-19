@@ -224,7 +224,7 @@ classdef cache < handle
          tAnnotatedEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
 
          tAnnotatedEPhysUnits = join(tAnnotatedEPhysUnits, tAnnotatedEPhysChannels, ...
-            'LeftKeys', 'ecephys_channel_id', 'RightKeys', 'id');
+            'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
 
          % - Rename variables
          tAnnotatedEPhysUnits = rename_variables(tAnnotatedEPhysUnits, ...
@@ -284,7 +284,7 @@ classdef cache < handle
          
          % - Count owned units
          tEPhysChannels = count_owned(tEPhysChannels, tAnnotatedEPhysUnits, ...
-            'id', 'ecephys_channel_id', 'unit_count');
+            'id', 'ephys_channel_id', 'unit_count');
 
          % - Rename variables
          tEPhysChannels = rename_variables(tEPhysChannels, 'name', 'probe_name');
@@ -689,7 +689,8 @@ classdef cache < handle
             'spread', 'waveform_spread', ...
             'velocity_above', 'waveform_velocity_above', ...
             'velocity_below', 'waveform_velocity_below', ...
-            'l_ratio', 'L_ratio');
+            'l_ratio', 'L_ratio', ...
+            'ecephys_channel_id', 'ephys_channel_id');
          
          % - Set default filter values
          if ~exist('sFilterValues', 'var') || isempty(sFilterValues) %#ok<NODEF>
@@ -730,7 +731,7 @@ classdef cache < handle
          end
          
          % - Convert variables to useful types
-         ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ecephys_channel_id);
+         ephys_unit_manifest.ephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
@@ -741,7 +742,7 @@ classdef cache < handle
          
          % - Rename variables
          ephys_probes_manifest = rename_variables(ephys_probes_manifest, ...
-            "use_lfp_data", "has_lfp_data");
+            "use_lfp_data", "has_lfp_data", "ecephys_session_id", "ephys_session_id");
          
          % - Divide the lfp sampling by the subsampling factor for clearer presentation (if provided)
          if all(ismember({'lfp_sampling_rate', 'lfp_temporal_subsampling_factor'}, ...
@@ -761,7 +762,7 @@ classdef cache < handle
       function [ephys_channels_manifest] = get_ephys_channels(oCache)
          % - Fetch the ephys units manifest
          disp('Fetching EPhys channels manifest...');
-         ephys_channels_manifest = oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ephys_channels.id,ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
+         ephys_channels_manifest = oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
          
          % - Convert columns to reasonable formats
          id = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.id, 'UniformOutput', false)));
