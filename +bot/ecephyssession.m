@@ -1,8 +1,8 @@
-%% CLASS bot.ecephyssession - Encapsulate and provide data access to an ECEPhys session dataset from the Allen Brain Observatory
+%% CLASS bot.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
 
 
-classdef ecephyssession
+classdef ephyssession
    %% Properties
    properties      
       units;                           % A table whose rows are sorted units (putative neurons) and whose columns are characteristics of those units
@@ -22,8 +22,8 @@ classdef ecephyssession
       num_channels;                 % Number of channels recorded in this session
       num_stimulus_presentations;   % Number of stimulus presentations in this session
       stimulus_names;               % Names of stimuli presented in this session
-      structure_acronyms;           % ECEPhys structures recorded across all channels in this session
-      structurewise_unit_counts;    % Numbers of units (putative neurons) recorded in each of the ECEPhys structures recorded in this session
+      structure_acronyms;           % EPhys structures recorded across all channels in this session
+      structurewise_unit_counts;    % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
       
       rig_geometry_data;            % Metadata about the geometry of the rig used in this session
       rig_equipment_name;           % Metadata: name of the rig used in this session
@@ -79,7 +79,7 @@ classdef ecephyssession
    
    %% Constructor
    methods
-      function oSession = ecephyssession
+      function oSession = ephyssession
          % CONSTRUCTOR
          
          % - Memoize property access functions
