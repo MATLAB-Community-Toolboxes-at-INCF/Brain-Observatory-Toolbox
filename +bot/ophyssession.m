@@ -1,12 +1,12 @@
-%% bot.session - CLASS Represent an experimental container from the Allen Brain Observatory
+%% bot.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
 %
 % This is the main interface to access data from a brain observatory
-% experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
-% identify an experimental session of interest. Then use `bot.session` to access
+% experimental session. Use the `bot.cache` or `bot.ophyssessionfilter` classes to
+% identify an experimental session of interest. Then use `bot.ophyssession` to access
 % data associated with that session id.
 %
 % Construction:
-% >> bos = bot.session(nSessionID);
+% >> bos = bot.opyssession(nSessionID);
 %
 % Get session metadata:
 % >> bos.get_metadata()
@@ -59,7 +59,7 @@
 %
 % See method documentation for further information.
 
-classdef session
+classdef ophyssession
    
    %% - Public properties
    properties (SetAccess = private)
@@ -106,12 +106,12 @@ classdef session
    
    %% - Constructor
    methods
-      function bsObj = session(nSessionID)
-         % bot.session - CONSTRUCTOR Construct an object containing a Brain Observatory experimental session
+      function bsObj = ophyssession(nSessionID)
+         % bot.ophyssession - CONSTRUCTOR Construct an object containing a Brain Observatory experimental OPhys session
          %
-         % Usage: bsObj = bot.session(nSessionID)
-         %        vbsObj = bot.session(vnSessionIDs)
-         %        bsObj = bot.session(tSessionRow)
+         % Usage: bsObj = bot.ophyssession(nSessionID)
+         %        vbsObj = bot.ophyssession(vnSessionIDs)
+         %        bsObj = bot.ophyssession(tSessionRow)
 
          % - Support zero arguments
          if nargin == 0
@@ -134,7 +134,7 @@ classdef session
          
          % - Check for a numeric argument
          if ~isnumeric(nSessionID)
-            help bot.session/session;
+            help bot.ophyssession/ophyssession;
             error('BOT:Usage', ...
                   'The session ID must be numeric.');
          end
@@ -143,7 +143,7 @@ classdef session
          if numel(nSessionID) > 1
             % - Loop over session IDs and construct an object for each
             for nSessIndex = numel(nSessionID):-1:1
-               bsObj(nSessIndex) = bot.session(nSessionID(nSessIndex));
+               bsObj(nSessIndex) = bot.ophyssession(nSessionID(nSessIndex));
             end
             return;
          end
@@ -154,7 +154,7 @@ classdef session
          vbManifestRow = bsObj.bocCache.tOPhysSessions.id == nSessionID;
          if ~any(vbManifestRow)
             error('BOT:InvalidSessionID', ...
-                  'The provided session ID [%d] does not match any session in the Brain Observatory manifest.', ...
+                  'The provided session ID [%d] does not match any OPhys session in the Brain Observatory manifest.', ...
                   nSessionID);
          end
          
@@ -171,7 +171,7 @@ classdef session
 %          % - Send a hit to Google Analytics on each session construction
 %          bot.internal.ga.event(bsObj.bocCache.strGATrackingID, ...
 %             bot.internal.GetUniqueUID(), [], ...
-%             'transient', 'session.construct', 'bot.session', [], ...
+%             'transient', 'session.construct', 'bot.ophyssession', [], ...
 %             'bot', bsObj.bocCache.strVersion, ...
 %             'matlab');
       end
