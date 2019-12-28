@@ -431,7 +431,7 @@ classdef cache < handle
    
    %% Private methods
    
-   methods (Access = {?bot.session})
+   methods (Access = {?bot.ophyssession, ?bot.ephyssession})
       function strFile = CacheFile(oCache, strURL, strLocalFile)
          % CacheFile - METHOD Check for cached version of Brain Observatory file, and return local location on disk
          %
@@ -670,6 +670,8 @@ classdef cache < handle
          ephys_session_manifest.published_at = datetime(ephys_session_manifest.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
          ephys_session_manifest.specimen_id = uint32(ephys_session_manifest.specimen_id);
          ephys_session_manifest.sex = categorical(ephys_session_manifest.sex, {'M', 'F'});
+         ephys_session_manifest.session_type = categorical(ephys_session_manifest.session_type);
+         ephys_session_manifest.genotype = string(ephys_session_manifest.genotype);
       end
       
       function [ephys_unit_manifest] = get_ephys_units(oCache)
@@ -731,7 +733,7 @@ classdef cache < handle
          end
          
          % - Convert variables to useful types
-         ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ecephys_channel_id);
+         ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
