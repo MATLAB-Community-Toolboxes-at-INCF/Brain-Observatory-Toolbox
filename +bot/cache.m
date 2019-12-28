@@ -114,10 +114,10 @@ classdef cache < handle
          oCache.sAPIAccess.tAnnotatedEPhysProbes = memoize(@oCache.get_tAnnotatedEPhysProbes);
          oCache.sAPIAccess.tAnnotatedEPhysUnits = memoize(@oCache.get_tAnnotatedEPhysUnits);
 
-         oCache.sAPIAccess.tAllEPhysSessions = memoize(@oCache.get_tAllEPhysSessions);
-         oCache.sAPIAccess.tAllEPhysChannels = memoize(@oCache.get_tAllEPhysChannels);
-         oCache.sAPIAccess.tAllEPhysProbes = memoize(@oCache.get_tAllEPhysProbes);
-         oCache.sAPIAccess.tAllEPhysUnits = memoize(@oCache.get_tAllEPhysUnits);
+         oCache.sAPIAccess.tEPhysSessions = memoize(@oCache.get_tEPhysSessions);
+         oCache.sAPIAccess.tEPhysChannels = memoize(@oCache.get_tEPhysChannels);
+         oCache.sAPIAccess.tEPhysProbes = memoize(@oCache.get_tEPhysProbes);
+         oCache.sAPIAccess.tEPhysUnits = memoize(@oCache.get_tEPhysUnits);
          
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
@@ -169,29 +169,29 @@ classdef cache < handle
    methods
       function tEPhysSessions = get.tEPhysSessions(oCache)
          % GETTER - Return the table of EPhys experimental sessions
-         tEPhysSessions = oCache.sAPIAccess.tAllEPhysSessions();
+         tEPhysSessions = oCache.sAPIAccess.tEPhysSessions();
       end
       
       function tEPhysUnits = get.tEPhysUnits(oCache)
          % GETTER - Return the table of EPhys experimental units
-         tEPhysUnits = oCache.sAPIAccess.tAllEPhysUnits();
+         tEPhysUnits = oCache.sAPIAccess.tEPhysUnits();
       end
       
       function tEPhysProbes = get.tEPhysProbes(oCache)
          % GETTER - Return the table of EPhys experimental probes
-         tEPhysProbes = oCache.sAPIAccess.tAllEPhysProbes();
+         tEPhysProbes = oCache.sAPIAccess.tEPhysProbes();
       end
       
       function tEPhysChannels = get.tEPhysChannels(oCache)
          % GETTER - Return the table of EPhys experimental channels
-         tEPhysChannels = oCache.sAPIAccess.tAllEPhysChannels();
+         tEPhysChannels = oCache.sAPIAccess.tEPhysChannels();
       end
    end
    
    %% EPhys low level getter methods
    
    methods(Access = private)
-      function tEPhysSessions = get_tAllEPhysSessions(oCache)
+      function tEPhysSessions = get_tEPhysSessions(oCache)
          % METHOD - Return the table of all EPhys experimental sessions
          
          % - Get table of EPhys sessions
@@ -235,7 +235,7 @@ classdef cache < handle
             'local_index', 'peak_channel');
       end
       
-      function tEPhysUnits = get_tAllEPhysUnits(oCache)
+      function tEPhysUnits = get_tEPhysUnits(oCache)
          % METHOD - Return the table of all EPhys recorded units
          tEPhysUnits = oCache.sAPIAccess.tAnnotatedEPhysUnits();
       end
@@ -248,7 +248,7 @@ classdef cache < handle
          tAnnotatedEPhysProbes = join(tAnnotatedEPhysProbes, tSessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       
-      function tEPhysProbes = get_tAllEPhysProbes(oCache)
+      function tEPhysProbes = get_tEPhysProbes(oCache)
          % METHOD - Return the table of all EPhys recorded probes
          
          % - Get the annotated probes
@@ -275,7 +275,7 @@ classdef cache < handle
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end
       
-      function tEPhysChannels = get_tAllEPhysChannels(oCache)
+      function tEPhysChannels = get_tEPhysChannels(oCache)
          % METHOD - Return the table of all EPhys recorded channels
 
          % - Get annotated channels
@@ -284,7 +284,7 @@ classdef cache < handle
          
          % - Count owned units
          tEPhysChannels = count_owned(tEPhysChannels, tAnnotatedEPhysUnits, ...
-            'id', 'ephys_channel_id', 'unit_count');
+            'id', 'ecephys_channel_id', 'unit_count');
 
          % - Rename variables
          tEPhysChannels = rename_variables(tEPhysChannels, 'name', 'probe_name');
@@ -670,6 +670,8 @@ classdef cache < handle
          ephys_session_manifest.published_at = datetime(ephys_session_manifest.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
          ephys_session_manifest.specimen_id = uint32(ephys_session_manifest.specimen_id);
          ephys_session_manifest.sex = categorical(ephys_session_manifest.sex, {'M', 'F'});
+         ephys_session_manifest.session_type = categorical(ephys_session_manifest.session_type);
+         ephys_session_manifest.genotype = string(ephys_session_manifest.genotype);
       end
       
       function [ephys_unit_manifest] = get_ephys_units(oCache)
@@ -731,7 +733,7 @@ classdef cache < handle
          end
          
          % - Convert variables to useful types
-         ephys_unit_manifest.ephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
+         ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
