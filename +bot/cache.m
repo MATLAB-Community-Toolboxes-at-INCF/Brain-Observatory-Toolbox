@@ -21,14 +21,14 @@
 %
 % Access data from an experimental session:
 % >> nSessionID = boc.tOphysSessions(1, 'id');
-% >> bos = bot.session(nSessionID)
+% >> bos = bot.ophyssession(nSessionID)
 % bos = 
 %   session with properties:
 % 
 %                sSessionInfo: [1x1 struct]
 %     strLocalNWBFileLocation: []
 %
-% (See documentation for the `bot.session` class for more information)
+% (See documentation for the `bot.ophyssession` class for more information)
 
 %% Class definition
 classdef cache < handle
@@ -55,7 +55,7 @@ classdef cache < handle
       sAPIAccess;                      % Structure containing memoized API access functions
    end
 
-   properties (Access = {?bot.cache, ?bot.session})
+   properties (Access = {?bot.cache, ?bot.ophyssession})
       strGATrackingID = 'UA-114632844-1';    % Tracking ID for Google Analytics
    end      
    

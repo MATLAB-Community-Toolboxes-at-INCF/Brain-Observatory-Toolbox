@@ -2,7 +2,7 @@
 
 
 
-classdef ephyssession
+classdef ecephyssession < handle
    %% Properties
    properties      
       units;                           % A table whose rows are sorted units (putative neurons) and whose columns are characteristics of those units

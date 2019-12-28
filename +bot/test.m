@@ -103,7 +103,7 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
          
-         % - Create some bot.session objects
+         % - Create some bot.ophyssession objects
          bot.ophyssession(vIDs(1));
          bot.ophyssession(vIDs(1:2));
          bot.ophyssession(bosf.valid_session_table(1, :));
