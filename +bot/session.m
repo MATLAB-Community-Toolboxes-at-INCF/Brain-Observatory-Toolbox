@@ -151,7 +151,7 @@ classdef session
          % - We should try to construct an object with this session ID
          %   First check that the session exists in the Allen Brain
          %   Observatory manifest
-         vbManifestRow = bsObj.bocCache.tAllSessions.id == nSessionID;
+         vbManifestRow = bsObj.bocCache.tOPhysSessions.id == nSessionID;
          if ~any(vbManifestRow)
             error('BOT:InvalidSessionID', ...
                   'The provided session ID [%d] does not match any session in the Brain Observatory manifest.', ...
@@ -166,7 +166,7 @@ classdef session
          end
          
          % - Extract the appropriate table row from the manifest
-         bsObj.sSessionInfo = table2struct(bsObj.bocCache.tAllSessions(find(vbManifestRow, 1, 'first'), :));
+         bsObj.sSessionInfo = table2struct(bsObj.bocCache.tOPhysSessions(find(vbManifestRow, 1, 'first'), :));
          
 %          % - Send a hit to Google Analytics on each session construction
 %          bot.internal.ga.event(bsObj.bocCache.strGATrackingID, ...
@@ -202,7 +202,7 @@ classdef session
          % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
          %
          % Usage: bNWBFileIsCached = IsNWBFileCached(bos)
-         bNWBFileIsCached =  bos.bocCache.IsInCache(GetNWBURL(bos));
+         bNWBFileIsCached =  bos.bocCache.IsURLInCache(GetNWBURL(bos));
       end
    end
    

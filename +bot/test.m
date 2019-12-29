@@ -9,21 +9,25 @@ classdef test < matlab.unittest.TestCase
       end
       
       function testGetTables(testCase)
-         %% Test retrieving the OPhys experiment tables
+         %% Test retrieving all OPhys and EPhys manifest tables
          boc = bot.cache;
-         tSessions = boc.tAllSessions;
-         tContainers = boc.tAllContainers;
+         boc.tOPhysSessions;                   % Table of all OPhys experimental sessions
+         boc.tOPhysContainers;                 % Table of all OPhys experimental containers
+         boc.tEPhysSessions;                 % Table of all EPhys experimental sessions
+         boc.tEPhysChannels;                 % Table of all EPhys channels
+         boc.tEPhysProbes;                   % Table of all EPhys probes
+         boc.tEPhysUnits;                    % Table of all EPhys units
       end
       
-      function testGetSessionFilter(testCase)
+      function testGetOPhysSessionFilter(testCase)
          %% Test creating a session filter object
-         bosf = bot.sessionfilter;
+         bosf = bot.ophyssessionfilter;
          bosf.clear_filters();
       end
       
-      function testSessionFilterGetAllMethods(testCase)
-         %% Test the "get all" methods for the session filter class
-         bosf = bot.sessionfilter;
+      function testOphysSessionFilterGetAllMethods(testCase)
+         %% Test the "get all" methods for the OPhys session filter class
+         bosf = bot.ophyssessionfilter;
          
          bosf.get_all_cre_lines();
          bosf.get_all_imaging_depths();
@@ -32,9 +36,9 @@ classdef test < matlab.unittest.TestCase
          bosf.get_all_targeted_structures();
       end
       
-      function testSessionFilterGetSummaryMethods(testCase)
-         %% Test the "get summary" methods for the session filter class
-         bosf = bot.sessionfilter;
+      function testOPhysSessionFilterGetSummaryMethods(testCase)
+         %% Test the "get summary" methods for the OPhys session filter class
+         bosf = bot.ophyssessionfilter;
          
          bosf.get_summary_of_containers_along_depths_and_structures();
          bosf.get_summary_of_containers_along_imaging_depths();
@@ -43,10 +47,10 @@ classdef test < matlab.unittest.TestCase
          bosf.get_total_num_of_containers();
       end
       
-      function testSessionFilterMethods(testCase)
-         %% Test using the session filter filtering methods
+      function testOPhysSessionFilterMethods(testCase)
+         %% Test using the OPhys session filter filtering methods
          boc = bot.cache;
-         bosf = bot.sessionfilter;
+         bosf = bot.ophyssessionfilter;
          
          % CRE lines
          cre_lines = bosf.get_all_cre_lines();
@@ -63,12 +67,12 @@ classdef test < matlab.unittest.TestCase
          bosf.filter_session_by_eye_tracking(true);
          
          % Container ID
-         tContainers = boc.tAllContainers;
+         tContainers = boc.tOPhysContainers;
          bosf.clear_filters();
          bosf.filter_sessions_by_container_id(tContainers{1, 'id'});
          
          % Session ID
-         tSessions = boc.tAllSessions;
+         tSessions = boc.tOPhysSessions;
          bosf.clear_filters();
          bosf.filter_sessions_by_session_id(tSessions{1, 'id'});
          
@@ -94,7 +98,7 @@ classdef test < matlab.unittest.TestCase
       
       function testObtainSessionObject(testCase)
          %% Test creation of a session object
-         bosf = bot.sessionfilter();
+         bosf = bot.ophyssessionfilter();
          
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
@@ -115,7 +119,7 @@ classdef test < matlab.unittest.TestCase
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.session class
+         %% Test data access methods of the bot.session class for OPhys data
          % - Create a bot.session object
          s = bot.session(528402271);
 
@@ -185,7 +189,7 @@ classdef test < matlab.unittest.TestCase
          boc = bot.cache(tempdir);
          
          % - Ensure the manifests are refreshed
-         boc.UpdateManifest();
+         boc.UpdateManifests();
          
          % - Download files for a session
          boc.CacheFilesForSessionIDs(566752133);

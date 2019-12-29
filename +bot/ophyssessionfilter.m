@@ -1,18 +1,19 @@
-%% CLASS bot.sessionfilter - Utility operations for filtering experimental sessions
+%% CLASS bot.ophyssessionfilter - Utility operations for filtering OPhys experimental sessions
 %
-% This class implements a mechanism for searching the experimental data sets
-% within the Allen Brain Observatory. It mimics some functionality of the python
-% class `brain_observatory_cache` from the Allen SDK.
+% This class implements a mechanism for searching the optical physiology
+% experimental data sets within the Allen Brain Observatory. It mimics some
+% functionality of the python class `brain_observatory_cache` from the
+% Allen SDK.
 %
-% Note: `bot.sessionfilter` is a handle class, which means that copies of an
-% object point to the same object. This means you should create new
-% sessionfilter objects if you want to keep the results of several filtering
-% chains.
+% Note: `bot.ophyssessionfilter` is a handle class, which means that copies
+% of an object point to the same object. This means you should create new
+% `ophyssessionfilter` objects if you want to keep the results of several
+% filtering chains.
 %
 % Construction:
-% >> bosf = bot.sessionfilter()
+% >> bosf = bot.ophyssessionfilter()
 % bosf =
-%   sessionfilter with properties:
+%   ophyssessionfilter with properties:
 %     filtered_session_table: [543x15 table]
 %                   stimulus: {9x1 cell}
 %         targeted_structure: {6x1 cell}
@@ -46,7 +47,7 @@
 
 
 %% Class definition
-classdef sessionfilter < handle
+classdef ophyssessionfilter < handle
     %% - Properties for global filtering of sessions table, included for backwards compatibility
     properties (SetAccess = private, Transient = true, Hidden = false)
         valid_session_table = nan;       % A table of all valid sessions, which by default contains all sessions excluding failed ones
@@ -70,7 +71,7 @@ classdef sessionfilter < handle
     %% Constructor
     methods
         
-        function bosf = sessionfilter()
+        function bosf = ophyssessionfilter()
              
             % - Get the unfiltered session table, clear all filters
             clear_filters(bosf);
@@ -83,27 +84,27 @@ classdef sessionfilter < handle
     methods
         function clear_filters(bosf)
             % clear_filters - METHOD Clear all session table filters
-            failed_container_id = bosf.bocCache.tAllContainers((bosf.bocCache.tAllContainers.failed == 1), :).id;
-            bosf.valid_session_table = bosf.bocCache.tAllSessions(~ismember(bosf.bocCache.tAllSessions.experiment_container_id, failed_container_id), :);
+            failed_container_id = bosf.bocCache.tOPhysContainers((bosf.bocCache.tOPhysContainers.failed == 1), :).id;
+            bosf.valid_session_table = bosf.bocCache.tOPhysSessions(~ismember(bosf.bocCache.tOPhysSessions.experiment_container_id, failed_container_id), :);
             bosf.filtered_session_table = bosf.valid_session_table;
 
             
         end
         
         function result = get_total_num_of_containers(bosf,varargin)
-            % get_total_num_of_containers - METHOD Return the total number of experiment containers from tAllSessions
+            % get_total_num_of_containers - METHOD Return the total number of experiment containers from tOPhysSessions
             result = size(bosf.valid_session_table, 1) / 3;
         end
         
         
         function result = get_all_imaging_depths(bosf)
-            % get_all_imaging_depths - METHOD Return all the cortical depths from tAllSessions
+            % get_all_imaging_depths - METHOD Return all the cortical depths from tOPhysSessions
             result = unique(bosf.valid_session_table.imaging_depth);
         end
         
         
         function result = get_all_targeted_structures(bosf)
-            % get_all_targeted_structures - METHOD Return all the brain areas from tAllSessions
+            % get_all_targeted_structures - METHOD Return all the brain areas from tOPhysSessions
             
             targeted_structure_table = struct2table(bosf.valid_session_table.targeted_structure);
             result = categories(categorical(targeted_structure_table.acronym));
@@ -111,13 +112,13 @@ classdef sessionfilter < handle
         
         
         function result = get_all_session_types (bosf)
-            % get_all_session_types - METHOD Return all the session types from tAllSessions
+            % get_all_session_types - METHOD Return all the session types from tOPhysSessions
             result = categories(categorical(bosf.valid_session_table.stimulus_name));
         end
         
         
         function result = get_all_stimuli(bosf)
-            % get_all_stimuli - METHOD Return all stimulus types from tAllSessions
+            % get_all_stimuli - METHOD Return all stimulus types from tOPhysSessions
             
             session_by_stimuli = bosf.get_session_by_stimuli();
             result = [];
@@ -128,19 +129,19 @@ classdef sessionfilter < handle
         end
         
         function result = get_all_cre_lines (bosf)
-            % get_all_cre_lines - METHOD Return all cre lines from tAllSessions
+            % get_all_cre_lines - METHOD Return all cre lines from tOPhysSessions
             result = categories(categorical(bosf.valid_session_table.cre_line));
         end
         
         
         function get_summary_of_containers_along_imaging_depths(bosf)
             % get_summary_of_containers_along_imaging_depths - METHOD Return the number of experiment containers recorded at each cortical depth
-            summary(categorical(cellstr(num2str((bosf.bocCache.tAllContainers.imaging_depth)))))
+            summary(categorical(cellstr(num2str((bosf.bocCache.tOPhysContainers.imaging_depth)))))
         end
         
         function get_summary_of_containers_along_targeted_structures (bosf)
             % get_summary_of_containers_along_targeted_structures - METHOD Return the number of experiment containers recorded in each brain region
-            container_targeted_structure_table = struct2table(bosf.bocCache.tAllContainers.targeted_structure);
+            container_targeted_structure_table = struct2table(bosf.bocCache.tOPhysContainers.targeted_structure);
             summary(categorical(cellstr(container_targeted_structure_table.acronym)))
         end
         
