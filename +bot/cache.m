@@ -569,7 +569,7 @@ classdef cache < handle
          % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(oCache)
          %
          % Download `container_manifest`, `session_manifest`, `cell_id_mapping`
-         % from brain observatory api as matlab tables. Returns the tables as fields
+         % from brain observatory api as MATLAB tables. Returns the tables as fields
          % of a structure. Converts various columns to appropriate formats,
          % including categorical arrays.
          

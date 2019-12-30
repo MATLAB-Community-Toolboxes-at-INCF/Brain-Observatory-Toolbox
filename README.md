@@ -3,11 +3,11 @@ A MATLAB toolbox for interacting with the [Allen Brain Observatory](http://obser
 
 ## Installation
 
-Clone the Brain Observatory Toolbox repository using `git`, or download a release as a `.zip` file. Add the base directory to the `matlab` path; *do not* add the directory `+bot` to the matlab path.
+Clone the Brain Observatory Toolbox repository using `git`, or download a release as a `.zip` file. Add the base directory to the `MATLAB` path; *do not* add the directory `+bot` to the MATLAB path.
 
 #### Additional requirements
 
-Some aspects of the toolbox make use of accelerated `.mex` files, and therefore require `mex` to be configured. These files will be compiled automatically when needed; if `mex` is not available, then `matlab` native versions will be used.
+Some aspects of the toolbox make use of accelerated `.mex` files, and therefore require `mex` to be configured. These files will be compiled automatically when needed; if `mex` is not available, then `MATLAB` native versions will be used.
 
 #### Privacy information
 
@@ -15,7 +15,7 @@ We track the usage of this toolbox along with some demographics using the Google
 
 ## Getting started
 
-The toolbox classes are contained within the `bot` namespace within matlab. Once the toolbox is added to the `matlab` path, you can access the main classes:
+The toolbox classes are contained within the `bot` namespace within MATLAB. Once the toolbox is added to the `MATLAB` path, you can access the main classes:
 
 `bot.sessionfilter` — Retrieve and manage lists of available experimental sessions, filtering them by various experimental parameters.
 
