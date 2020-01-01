@@ -1,5 +1,5 @@
 # Brain-Observatory-Toolbox
-A MATLAB toolbox for interacting with the Allen Brain Observatory datasets \[1\]. Currently the Visual Coding - 2P dataset \[2\] of neural recordings based on two-photon calcium imaging is supported.
+A MATLAB toolbox for interacting with the Allen Brain Observatory datasets \[1\]. Currently the Visual Coding - 2P dataset \[2\] is supported, consisting of neural recordings based on two-photon calcium imaging.
 
 ## Installation
 
