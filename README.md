@@ -4,7 +4,7 @@ A MATLAB toolbox for interacting with the Allen Brain Observatory datasets \[1\]
 ## Installation
 
 1. Clone the Brain Observatory Toolbox repository using `git`, or download a release as a `.zip` file.
-2. Add the base directory to the `MATLAB` path. Note it is not needed to add the subdirectory `+bot` to the MATLAB path.
+2. Add the base directory to the MATLAB path. Note it is not needed to add the subdirectory `+bot` to the MATLAB path.
 
 #### Optional requirements
 
@@ -18,7 +18,7 @@ We track the usage of this toolbox along with some demographics using the Google
 
 ### Toolbox interface
 
-The toolbox classes are contained within the `bot` namespace. Once the toolbox is added to the `MATLAB` path, you can access the three main classes:
+The toolbox classes are contained within the `bot` namespace. Once the toolbox is added to the MATLAB path, you can access the three main classes:
 
 `bot.sessionfilter` — Retrieve and manage lists of available experimental sessions, filtering them by various experimental parameters.
 
