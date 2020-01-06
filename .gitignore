@@ -13,3 +13,6 @@ raster/
 *mex*
 
 Cindy/
+
+*.prj
+resources/
