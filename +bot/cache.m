@@ -334,11 +334,11 @@ classdef cache < handle
          for nSessIndex = numel(vnSessionIDs):-1:1
             % - Find this session in the sessions tables
             vbOPhysSession = oCache.tOPhysSessions.id == vnSessionIDs(nSessIndex);
-            vbEPhysSession = oCache.tEPhysSessions.id == vnSessionIDs(nSessIndex);
 
             if any(vbOPhysSession)
                tSession = oCache.tOPhysSessions(vbOPhysSession, :);
             else
+               vbEPhysSession = oCache.tEPhysSessions.id == vnSessionIDs(nSessIndex);
                tSession = oCache.tEPhysSessions(vbEPhysSession, :);
             end
             
