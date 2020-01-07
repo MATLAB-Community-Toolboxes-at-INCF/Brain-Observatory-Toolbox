@@ -1,17 +1,17 @@
-%% CLASS bot.ophyssessionfilter - Utility operations for filtering OPhys experimental sessions
+%% CLASS bot.sessionfilter - Utility operations for filtering OPhys experimental sessions
 %
 % This class implements a mechanism for searching the optical physiology
 % experimental datasets within the Allen Brain Observatory [1]. 
 %
-% Note: `bot.ophyssessionfilter` is a handle class, which means that copies
+% Note: `bot.sessionfilter` is a handle class, which means that copies
 % of an object point to the same object. This means you should create new
-% `ophyssessionfilter` objects if you want to keep the results of several
+% `sessionfilter` objects if you want to keep the results of several
 % filtering chains.
 %
 % Construction:
-% >> bosf = bot.ophyssessionfilter()
+% >> bosf = bot.sessionfilter()
 % bosf =
-%   ophyssessionfilter with properties:
+%   sessionfilter with properties:
 %     filtered_session_table: [543x15 table]
 %                   stimulus: {9x1 cell}
 %         targeted_structure: {6x1 cell}
@@ -47,7 +47,7 @@
 
 
 %% Class definition
-classdef ophyssessionfilter < handle
+classdef sessionfilter < handle
     %% - Properties for global filtering of sessions table, included for backwards compatibility
     properties (SetAccess = private, Transient = true, Hidden = false)
         valid_session_table = nan;       % A table of all valid sessions, which by default contains all sessions excluding failed ones
@@ -71,7 +71,7 @@ classdef ophyssessionfilter < handle
     %% Constructor
     methods
         
-        function bosf = ophyssessionfilter()
+        function bosf = sessionfilter()
              
             % - Get the unfiltered session table, clear all filters
             clear_filters(bosf);
