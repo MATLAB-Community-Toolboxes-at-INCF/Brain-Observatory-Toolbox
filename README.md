@@ -10,10 +10,6 @@ A MATLAB toolbox for interacting with the Allen Brain Observatory datasets \[1\]
 
 Some aspects of the toolbox can make use of accelerated `.mex` files, which require a `mex` compiler to be configured in MATLAB. These files will be compiled automatically when needed. If a `mex` compiler is not configured, then MATLAB native versions will be used.
 
-#### Privacy information
-
-We track the usage of this toolbox along with some demographics using the Google Analytics API, for us to understand the demand for the toolbox.
-
 ## Getting started
 
 ### Toolbox interface
