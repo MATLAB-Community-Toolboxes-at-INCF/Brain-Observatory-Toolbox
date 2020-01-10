@@ -61,10 +61,6 @@ classdef cache < handle
    properties (Access = private, Transient = true)
       sAPIAccess;                      % Structure containing memoized API access functions
    end
-
-   properties (Access = {?bot.cache, ?bot.session})
-      strGATrackingID = 'UA-114632844-1';    % Tracking ID for Google Analytics
-   end      
    
    properties
       strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for the Allen Brain Observatory resource
