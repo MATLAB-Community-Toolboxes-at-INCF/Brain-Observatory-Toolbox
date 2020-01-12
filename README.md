@@ -1,6 +1,8 @@
 # Brain-Observatory-Toolbox
 A MATLAB toolbox for interacting with the Allen Brain Observatory datasets \[1\]. Currently the Visual Coding - 2P dataset \[2\] is supported, consisting of neural recordings based on two-photon calcium imaging.
 
+The Brain Observatory Toolbox (BOT) enables users to conveniently work with the experimental neural datasets available from the Allen Brain Observatory. The BOT helps you search and filter the datasets; download and manage the data; and provides useful methods to assist in analysing neural responses and behavioural data.
+
 ## Installation
 
 1. Clone the Brain Observatory Toolbox repository using `git`, or download a release as a `.zip` file.
