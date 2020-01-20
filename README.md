@@ -25,7 +25,7 @@ The toolbox classes are contained within the `bot` namespace. Once the toolbox i
 `bot.cache` — Internal class that manages caching of experimental data.
 
 ### Example usage
-See the [Ophys Quick Start Example](https://www.mathworks.com/matlabcentral/fileexchange/66276-emeyers-brain-observatory-toolbox) for an illustration of how these toolbox classes enable retrieving, filtering, and acccessing the Visual Coding - 2P dataset from the Allen Brain Observatory.
+See the [Ophys Quick Start Example](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Ff8904f7a-8904-2deb-4404-99caae194d40%2Ffiles%2FOphysQuickStart.mlx&embed=web) for an illustration of how these toolbox classes enable retrieving, filtering, and acccessing the Visual Coding - 2P dataset from the Allen Brain Observatory.
 
 ----
 #### References
