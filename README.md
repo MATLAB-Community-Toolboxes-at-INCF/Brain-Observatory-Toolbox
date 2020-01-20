@@ -27,6 +27,7 @@ The toolbox classes are contained within the `bot` namespace. Once the toolbox i
 ### Example usage
 See the [Ophys Quick Start Example](https://www.mathworks.com/matlabcentral/fileexchange/66276-emeyers-brain-observatory-toolbox) for an illustration of how these toolbox classes enable retrieving, filtering, and acccessing the Visual Coding - 2P dataset from the Allen Brain Observatory.
 
+----
 #### References
 
 [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
