@@ -1,8 +1,11 @@
 %% CLASS bot.cache - Cache and cloud access class for Brain Observatory Toolbox
 %
-% This class is used internally by the Brain Observatory Toolbox. It can also be
-% used to obtain a raw list of all available experimental sessions from the
-% Allen Brain Observatory.
+% This class is used internally by the Brain Observatory Toolbox to access
+% data from the Allen Brain Observatory resource [1] via the Allen Brain
+% Atlas API [2].
+% 
+% This class can be used to obtain a raw list of available experimental
+% sessions from an Allen Brain Observatory dataset.
 %
 % Construction:
 % >> boc = bot.cache()
@@ -16,19 +19,23 @@
 %     '2016-07-06T15:22:01Z'    5.2755e+08                 false              ...
 %     ...
 %
-% Force an update of the Allen Brain Observatory manifests:
+% Force an update of the manifest representing Allen Brain Observatory dataset contents:
 % >> boc.UpdateManifests()
 %
 % Access data from an experimental session:
 % >> nSessionID = boc.tOphysSessions(1, 'id');
-% >> bos = bot.ophyssession(nSessionID)
+% >> bos = bot.session(nSessionID)
 % bos = 
 %   session with properties:
 % 
 %                sSessionInfo: [1x1 struct]
 %     strLocalNWBFileLocation: []
 %
-% (See documentation for the `bot.ophyssession` class for more information)
+% (See documentation for the `bot.session` class for more information)
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+% [2] Copyright 2015 Allen Brain Atlas API. Allen Brain Observatory. Available from: brain-map.org/api/index.html
+%   
 
 %% Class definition
 classdef cache < handle
@@ -38,7 +45,7 @@ classdef cache < handle
    end
    
    properties (SetAccess = private)
-      strCacheDir;                     % Path to location of cached Brain Observatory data
+      strCacheDir;                     % Path to location of cached data from the Allen Brain Observatory resource
       sCacheFiles;                     % Structure containing file paths of cached files, as well as cloud cacher
    end
    
@@ -54,19 +61,15 @@ classdef cache < handle
    properties (Access = private, Transient = true)
       sAPIAccess;                      % Structure containing memoized API access functions
    end
-
-   properties (Access = {?bot.cache, ?bot.ophyssession})
-      strGATrackingID = 'UA-114632844-1';    % Tracking ID for Google Analytics
-   end      
    
    properties
-      strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for Allen Brain Observatory
+      strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for the Allen Brain Observatory resource
    end
    
    %% Constructor
    methods
       function oCache = cache(strCacheDir)
-         % CONSTRUCTOR - Returns an object for managing data access to the Allen Brain Observatory
+         % CONSTRUCTOR - Returns an object for managing data access from an Allen Brain Observatory dataset
          %
          % Usage: oCache = bot.cache(<strCacheDir>)
          
@@ -122,28 +125,7 @@ classdef cache < handle
          % - Assign the cache object to a global cache
          sUserData.BOT_GLOBAL_CACHE = oCache;
          set(0, 'UserData', sUserData);
-         
-         % - Send a tracking hit to Google Analytics, once per installation
-         fhGAHit = @()bot.internal.ga.event(oCache.strGATrackingID, ...
-                        [], bot.internal.GetUniqueUID(), ...
-                        'once-per-installation', 'cache.construct', 'bot.cache', [], ...
-                        'bot', oCache.strVersion, ...
-                        'matlab');
-         bot.internal.call_once_ever(oCache.strCacheDir, 'first_toolbox_use', fhGAHit);
-
-         fhGAPV = @()bot.internal.ga.collect(oCache.strGATrackingID, 'pageview', ...
-             [], bot.internal.GetUniqueUID(), ...
-             '', 'analytics.bot', 'first-installation/bot/cache/construct', 'First installation', ...
-             [], [], [], [], [], 'bot', oCache.strVersion, 'matlab');            
-         bot.internal.call_once_ever(oCache.strCacheDir, 'first_toolbox_use_pageview', fhGAPV);
-         
-%          % - Send a tracking hit to Google Analytics, once per session
-%          fhGAHit = @()bot.internal.ga.event(oCache.strGATrackingID, ...
-%                         bot.internal.GetUniqueUID(), [], ...
-%                         'once-per-session', 'cache.construct', 'bot.cache', [], ...
-%                         'bot', oCache.strVersion, ...
-%                         'matlab');
-%          bot.internal.call_once_per_session('toolbox_init_session', fhGAHit);      
+             
       end
    end
    
@@ -224,7 +206,7 @@ classdef cache < handle
          tAnnotatedEPhysChannels = oCache.sAPIAccess.tAnnotatedEPhysChannels();
 
          tAnnotatedEPhysUnits = join(tAnnotatedEPhysUnits, tAnnotatedEPhysChannels, ...
-            'LeftKeys', 'ecephys_channel_id', 'RightKeys', 'id');
+            'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
 
          % - Rename variables
          tAnnotatedEPhysUnits = rename_variables(tAnnotatedEPhysUnits, ...
@@ -327,18 +309,18 @@ classdef cache < handle
          for nSessIndex = numel(vnSessionIDs):-1:1
             % - Find this session in the sessions tables
             vbOPhysSession = oCache.tOPhysSessions.id == vnSessionIDs(nSessIndex);
-            vbEPhysSession = oCache.tEPhysSessions.id == vnSessionIDs(nSessIndex);
 
             if any(vbOPhysSession)
                tSession = oCache.tOPhysSessions(vbOPhysSession, :);
             else
+               vbEPhysSession = oCache.tEPhysSessions.id == vnSessionIDs(nSessIndex);
                tSession = oCache.tEPhysSessions(vbEPhysSession, :);
             end
             
             % - Check to see if the session exists
             if isempty(tSession)
                error('BOT:InvalidSessionID', ...
-                     'The provided session ID [%d] was not found in the Brain Observatory manifest.', ...
+                     'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
                      vnSessionIDs(nSessIndex));
             
             else
@@ -431,9 +413,9 @@ classdef cache < handle
    
    %% Private methods
    
-   methods (Access = {?bot.ophyssession, ?bot.ephyssession})
+   methods (Access = {?bot.session})
       function strFile = CacheFile(oCache, strURL, strLocalFile)
-         % CacheFile - METHOD Check for cached version of Brain Observatory file, and return local location on disk
+         % CacheFile - METHOD Check for cached version of Allen Brain Observatory dataset file, and return local location on disk
          %
          % Usage: strFile = CacheFile(oCache, strURL, strLocalFile)
          
@@ -448,7 +430,7 @@ classdef cache < handle
       end
       
       function tResponse = CachedAPICall(oCache, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme)
-         % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Observatory API call
+         % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Atlas API call
          %
          % Usage: tResponse = CachedAPICall(oCache, strModel, strQueryString, ...)
          %        tResponse = CachedAPICall(..., <nPageSize>, <strFormat>, <strRMAPrefix>, <strHost>, <strScheme>)
@@ -506,7 +488,7 @@ classdef cache < handle
             
             % - Was there an error?
             if ~response_raw.success
-               error('BOT:DataAccess', 'Error querying Allen Brain API for URL [%s]', strURLQueryPage);
+               error('BOT:DataAccess', 'Error querying Allen Brain Atlas API for URL [%s]', strURLQueryPage);
             end
             
             % - Convert response to a table
@@ -564,12 +546,12 @@ classdef cache < handle
    methods (Access = private)
       %% Low-level getter method fro OPhys manifest
       function [ophys_manifests] = get_ophys_manifests_info_from_api(oCache)
-         % get_ophys_manifests_info_from_api - PRIVATE METHOD Download the Allen Brain Observatory manifests from the web
+         % get_ophys_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory dataset via the Allen Brain Atlas API
          %
          % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(oCache)
          %
-         % Download `container_manifest`, `session_manifest`, `cell_id_mapping`
-         % from brain observatory api as matlab tables. Returns the tables as fields
+         % Download `container_manifest`, `session_manifest`,
+         % `cell_id_mapping` as MATLAB tables. Returns the tables as fields
          % of a structure. Converts various columns to appropriate formats,
          % including categorical arrays.
          

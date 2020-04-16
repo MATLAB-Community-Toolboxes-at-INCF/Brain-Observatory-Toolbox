@@ -1,7 +1,7 @@
 %% bot.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
 %
-% This is the main interface to access data from a brain observatory
-% experimental session. Use the `bot.cache` or `bot.ophyssessionfilter` classes to
+% This is the main interface to access data from an Allen Brain Observatory
+% experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
 % identify an experimental session of interest. Then use `bot.ophyssession` to access
 % data associated with that session id.
 %
@@ -58,6 +58,9 @@
 %        ...
 %
 % See method documentation for further information.
+% 
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+
 
 classdef ophyssession
    
@@ -107,7 +110,7 @@ classdef ophyssession
    %% - Constructor
    methods
       function bsObj = ophyssession(nSessionID)
-         % bot.ophyssession - CONSTRUCTOR Construct an object containing a Brain Observatory experimental OPhys session
+         % bot.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
          % Usage: bsObj = bot.ophyssession(nSessionID)
          %        vbsObj = bot.ophyssession(vnSessionIDs)
@@ -149,12 +152,12 @@ classdef ophyssession
          end
             
          % - We should try to construct an object with this session ID
-         %   First check that the session exists in the Allen Brain
-         %   Observatory manifest
+         %   First check that the session exists in the manifest of the
+         %   Allen Brain Observatory dataset
          vbManifestRow = bsObj.bocCache.tOPhysSessions.id == nSessionID;
          if ~any(vbManifestRow)
             error('BOT:InvalidSessionID', ...
-                  'The provided session ID [%d] does not match any OPhys session in the Brain Observatory manifest.', ...
+                  'The provided session ID [%d] does not match any session in the manifest of the Allen Brain Observatory dataset.', ...
                   nSessionID);
          end
          
@@ -168,12 +171,6 @@ classdef ophyssession
          % - Extract the appropriate table row from the manifest
          bsObj.sSessionInfo = table2struct(bsObj.bocCache.tOPhysSessions(find(vbManifestRow, 1, 'first'), :));
          
-%          % - Send a hit to Google Analytics on each session construction
-%          bot.internal.ga.event(bsObj.bocCache.strGATrackingID, ...
-%             bot.internal.GetUniqueUID(), [], ...
-%             'transient', 'session.construct', 'bot.ophyssession', [], ...
-%             'bot', bsObj.bocCache.strVersion, ...
-%             'matlab');
       end
    end
    

@@ -12,7 +12,7 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 % `fluorescence_trace_type` is one of {'raw', 'demixed', 'neuropil_corrected',
 % 'DfOverF'}.
 %
-% `session_id` is a valid Allen Brain Observatory session ID.
+% `session_id` is a valid session ID from an Allen Brain Observatory dataset[1].
 %
 % `stimulus` is one of {'static_gratings', 'drifting_gratings',
 % 'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg', 'natural_scenes',
@@ -20,6 +20,9 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 %
 % `raster_dir_name` is a path under which to store the raster format .mat files.
 % It will be created if it does not already exist.
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+
 
 % - Permitted arguments
 cstrTraceTypes = {'raw', 'demixed', 'neuropil_corrected', 'DfOverF'};
@@ -315,7 +318,7 @@ switch stimulus
       % so in session C where there is only 4deg, 4deg is simply named as
       % locally_sparse_noise
       
-      %         this doesn't work in older version of matlab
+      %         this doesn't work in older version of MATLAB
       %         if  string(bos.sSessionInfo.stimulus_name) == 'three_session_C2'
       if isequal(bos.sSessionInfo.stimulus_name, 'three_session_C2')
          stimulus_onset_times = h5read(nwb_name, strcat('/stimulus/presentation/', stimulus, '_stimulus/timestamps'));
@@ -374,7 +377,7 @@ switch stimulus
       parsed_frame_indices = nan(length(frame_indices), 1);
       
       % parse index of blank from -1 to 119, and increment the rest (cuz
-      % matlab starts at 1 not 0)
+      % MATLAB starts at 1 not 0)
       % parsed_frame_indexs range from 1 t0 119
       for iFrame = 1 : length(frame_indices)
          if frame_indices(iFrame, 1)~= -1
