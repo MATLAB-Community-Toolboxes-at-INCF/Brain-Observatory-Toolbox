@@ -18,7 +18,7 @@ classdef session_base
 
          % - Handle calling with no arguments
          if nargin == 0
-            return
+            return;
          end
          
          % - Assign session information
@@ -125,9 +125,9 @@ classdef session_base
                else
                   vs_well_known_files = tSession.well_known_files;
                end
-               cstrURLs{nSessIndex} = arrayfun(@(s)strcat(oCache.strABOBaseUrl, s.download_link), vs_well_known_files, 'UniformOutput', false);
+               cstrURLs{nSessIndex} = arrayfun(@(s)strcat(sess.bocCache.strABOBaseUrl, s.download_link), vs_well_known_files, 'UniformOutput', false);
                cstrLocalFiles{nSessIndex} = {vs_well_known_files.path}';
-               cvbIsURLInCache{nSessIndex} = oCache.IsURLInCache(cstrURLs{nSessIndex});
+               cvbIsURLInCache{nSessIndex} = sess.bocCache.IsURLInCache(cstrURLs{nSessIndex});
             end
          end
          
@@ -145,7 +145,7 @@ classdef session_base
             bSuccess = false;
             while ~bSuccess && (nNumTries > 0)
                try
-                  cstrCacheFiles = oCache.sCacheFiles.ccCache.pwebsave(cstrLocalFiles, [cstrURLs{:}], true);
+                  cstrCacheFiles = sess.bocCache.ccCache.pwebsave(cstrLocalFiles, [cstrURLs{:}], true);
                   bSuccess = true;
                catch
                   nNumTries = nNumTries - 1;
@@ -164,7 +164,7 @@ classdef session_base
                bSuccess = false;
                while ~bSuccess && (nNumTries > 0)
                   try
-                     cstrCacheFiles{nURLIndex} = oCache.CacheFile(cstrURLs{nURLIndex}, cstrLocalFiles{nURLIndex});
+                     cstrCacheFiles{nURLIndex} = sess.bocCache.CacheFile(cstrURLs{nURLIndex}, cstrLocalFiles{nURLIndex});
                      bSuccess = true;
                   catch mE_Cause
                      nNumTries = nNumTries - 1;

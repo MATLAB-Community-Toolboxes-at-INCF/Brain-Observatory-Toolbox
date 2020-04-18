@@ -103,7 +103,7 @@ classdef ophyssession < bot.session_base
    
    %% - Constructor
    methods
-      function bsObj = ophyssession(nSessionID)
+      function bsObj = ophyssession(varargin)
          % bot.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
          % Usage: bsObj = bot.ophyssession(nSessionID)
@@ -111,7 +111,11 @@ classdef ophyssession < bot.session_base
          %        bsObj = bot.ophyssession(tSessionRow)
          
          % - Call super-class constructor
-         bsObj = bsObj@bot.session_base(nSessionID);
+         bsObj = bsObj@bot.session_base(varargin{:});
+         
+         if nargin == 0
+            return;
+         end
          
          % - Ensure that we were given an OPhys session
          if bsObj.sSessionInfo.BOT_session_type ~= "OPhys"
@@ -157,7 +161,7 @@ classdef ophyssession < bot.session_base
          %
          % This method will force the session data to be downloaded and cached,
          % if it is not already available.
-         bos.bocCache.CacheFilesForSessionIDs(bos.sSessionInfo.id);
+         bos.CacheFilesForSessionIDs(bos.sSessionInfo.id);
          strCacheFile = bos.strLocalNWBFileLocation;
       end
       
@@ -169,7 +173,7 @@ classdef ophyssession < bot.session_base
             strLocalNWBFileLocation = [];
          else
             % - Get the local file location for the session NWB URL
-            strLocalNWBFileLocation = bos.bocCache.sCacheFiles.ccCache.CachedFileForURL(GetNWBURL(bos));
+            strLocalNWBFileLocation = bos.bocCache.ccCache.CachedFileForURL(GetNWBURL(bos));
          end
       end
    end

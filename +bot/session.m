@@ -5,17 +5,23 @@ if nargin == 0
    return;
 end
 
-% - Get the table rows for these sessions
-tManifestRow = bot.session_base.find_manifest_row(nSessionID);
+% - Is we were given a table, extract the IDs
+if istable(nSessionID)
+   nSessionID = nSessionID.id;
+end
 
 % - Were we given an array of session IDs?
-if size(tManifestRow, 1) > 1
-   for nIndex = size(tManifestRow, 1):-1:1
-      nSessionID = tManifestRow.id(nIndex);
-      new_sess(nIndex) = bot.session(nSessionID);
+if numel(nSessionID) > 1
+   % - Loop over session IDs and build session objects
+   for nIndex = numel(nSessionID):-1:1
+      nThisSessionID = nSessionID(nIndex);
+      new_sess(nIndex) = bot.session(nThisSessionID);
    end
    return;
 end
+
+% - Get the table rows for this session
+tManifestRow = bot.session_base.find_manifest_row(nSessionID);
 
 % - Build a session object from this single ID and return
 if tManifestRow.BOT_session_type == "OPhys"

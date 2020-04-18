@@ -112,7 +112,7 @@ classdef test < matlab.unittest.TestCase
          
          % - Create some bot.ophyssession objects
          bot.ophyssession(vIDs(1));
-         bot.ophyssession(vIDs(1:2));
+         bot.session(vIDs(1:2));
          bot.ophyssession(bosf.valid_session_table(1, :));
       end
       
@@ -189,17 +189,6 @@ classdef test < matlab.unittest.TestCase
          % - Get the sparse noise stimulus template
          s.get_stimulus_template('locally_sparse_noise_4deg');
          s.get_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
-      end
-      
-      function testCache(testCase)
-         %% - Get a cache object, for a temporary directory
-         boc = bot.cache(tempdir);
-         
-         % - Ensure the manifests are refreshed
-         boc.UpdateManifests();
-         
-         % - Download files for a session
-         boc.CacheFilesForSessionIDs(566752133);
-      end
+      end      
    end
 end

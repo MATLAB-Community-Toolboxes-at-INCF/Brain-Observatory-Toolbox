@@ -77,10 +77,24 @@ classdef ephyssession < bot.session_base
    
    %% Constructor
    methods
-      function oSession = Aephyssession(nSessionID)
-         % CONSTRUCTOR
+      function bsObj = ephyssession(varargin)
+         % bot.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+         %
+         % Usage: bsObj = bot.ophyssession(nSessionID)
+         %        vbsObj = bot.ophyssession(vnSessionIDs)
+         %        bsObj = bot.ophyssession(tSessionRow)
          
-         % - Memoize property access functions
+         % - Call super-class constructor
+         bsObj = bsObj@bot.session_base(varargin{:});
+         
+         if nargin == 0
+            return;
+         end
+         
+         % - Ensure that we were given an OPhys session
+         if bsObj.sSessionInfo.BOT_session_type ~= "EPhys"
+            error('BOT:Usage', '`bot.ephyssession` objects may only refer to EPhys experimental sessions.');
+         end
       end
    end
    
