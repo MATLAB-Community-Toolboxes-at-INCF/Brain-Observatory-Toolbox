@@ -5,18 +5,25 @@ classdef test < matlab.unittest.TestCase
    methods (Test)
       function testCreateCache(testCase) %#ok<*MANU>
          %% Test creating a BOT cache
-         boc = bot.cache; %#ok<*NASGU>
+         boc = bot.internal.cache; %#ok<*NASGU>
       end
       
-      function testGetTables(testCase)
-         %% Test retrieving all OPhys and EPhys manifest tables
-         boc = bot.cache;
-         boc.tOPhysSessions;                   % Table of all OPhys experimental sessions
-         boc.tOPhysContainers;                 % Table of all OPhys experimental containers
-         boc.tEPhysSessions;                 % Table of all EPhys experimental sessions
-         boc.tEPhysChannels;                 % Table of all EPhys channels
-         boc.tEPhysProbes;                   % Table of all EPhys probes
-         boc.tEPhysUnits;                    % Table of all EPhys units
+      function testOphysTables(testCase)
+         %% Test retrieving all OPhys manifest tables
+         bom = bot.manifest('ophys');
+         bom = bot.ophysmanifest;
+         bom.tOPhysSessions;                   % Table of all OPhys experimental sessions
+         bom.tOPhysContainers;                 % Table of all OPhys experimental containers
+      end
+      
+      function testEphysTables(testCase)
+         %% Test retrieving EPhys manifest tables
+         bom = bot.manifest('ephys');
+         bom = bot.ephysmanifest;
+         bom.tEPhysSessions;                 % Table of all EPhys experimental sessions
+         bom.tEPhysChannels;                 % Table of all EPhys channels
+         bom.tEPhysProbes;                   % Table of all EPhys probes
+         bom.tEPhysUnits;                    % Table of all EPhys units
       end
       
       function testGetOPhysSessionFilter(testCase)
