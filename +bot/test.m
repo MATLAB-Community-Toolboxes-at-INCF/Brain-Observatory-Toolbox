@@ -28,13 +28,13 @@ classdef test < matlab.unittest.TestCase
       
       function testGetOPhysSessionFilter(testCase)
          %% Test creating a session filter object
-         bosf = bot.ophyssessionfilter;
+         bosf = bot.util.ophyssessionfilter;
          bosf.clear_filters();
       end
       
       function testOphysSessionFilterGetAllMethods(testCase)
          %% Test the "get all" methods for the OPhys session filter class
-         bosf = bot.ophyssessionfilter;
+         bosf = bot.util.ophyssessionfilter;
          
          bosf.get_all_cre_lines();
          bosf.get_all_imaging_depths();
@@ -45,7 +45,7 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysSessionFilterGetSummaryMethods(testCase)
          %% Test the "get summary" methods for the OPhys session filter class
-         bosf = bot.ophyssessionfilter;
+         bosf = bot.util.ophyssessionfilter;
          
          bosf.get_summary_of_containers_along_depths_and_structures();
          bosf.get_summary_of_containers_along_imaging_depths();
@@ -56,8 +56,8 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysSessionFilterMethods(testCase)
          %% Test using the OPhys session filter filtering methods
-         boc = bot.cache;
-         bosf = bot.ophyssessionfilter;
+         bom = bot.ophysmanifest;
+         bosf = bot.util.ophyssessionfilter;
          
          % CRE lines
          cre_lines = bosf.get_all_cre_lines();
@@ -74,12 +74,12 @@ classdef test < matlab.unittest.TestCase
          bosf.filter_session_by_eye_tracking(true);
          
          % Container ID
-         tContainers = boc.tOPhysContainers;
+         tContainers = bom.tOPhysContainers;
          bosf.clear_filters();
          bosf.filter_sessions_by_container_id(tContainers{1, 'id'});
          
          % Session ID
-         tSessions = boc.tOPhysSessions;
+         tSessions = bom.tOPhysSessions;
          bosf.clear_filters();
          bosf.filter_sessions_by_session_id(tSessions{1, 'id'});
          
@@ -105,7 +105,7 @@ classdef test < matlab.unittest.TestCase
       
       function testObtainSessionObject(testCase)
          %% Test creation of an OPhys session object
-         bosf = bot.ophyssessionfilter();
+         bosf = bot.util.ophyssessionfilter();
          
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};

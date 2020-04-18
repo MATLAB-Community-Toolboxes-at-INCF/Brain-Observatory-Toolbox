@@ -2,7 +2,7 @@
 
 
 
-classdef ecephyssession < handle
+classdef ephyssession < bot.session_base
    %% Properties
    properties      
       units;                           % A table whose rows are sorted units (putative neurons) and whose columns are characteristics of those units
@@ -36,8 +36,6 @@ classdef ecephyssession < handle
       
    %% Private properties
    properties (Hidden = true, Access = private, Transient = true)
-      bocCache = bot.cache();       % Private handle to the BOT cache object
-      
       sPropertyCache;               % Structure for cached property access methods
 
       spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
@@ -79,7 +77,7 @@ classdef ecephyssession < handle
    
    %% Constructor
    methods
-      function oSession = ephyssession
+      function oSession = Aephyssession(nSessionID)
          % CONSTRUCTOR
          
          % - Memoize property access functions

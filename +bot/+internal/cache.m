@@ -43,7 +43,7 @@ classdef cache < handle
          % - Find and return the global cache object, if one exists
          sUserData = get(0, 'UserData');
          if isfield(sUserData, 'BOT_GLOBAL_CACHE') && ...
-               isa(sUserData.BOT_GLOBAL_CACHE, 'bot.cache') && ...
+               isa(sUserData.BOT_GLOBAL_CACHE, 'bot.internal.cache') && ...
                isequal(sUserData.BOT_GLOBAL_CACHE.strVersion, oCache.strVersion) && ...
                (~exist('strCacheDir', 'var') || isempty(strCacheDir))
             
@@ -73,116 +73,6 @@ classdef cache < handle
    %% Methods to manage manifests and caching
    
    methods
-      function cstrCacheFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs, bUseParallel, nNumTries)
-         % CacheFilesForSessionIDs - METHOD Download data files containing experimental data for the given session IDs
-         %
-         % Usage: cstrCacheFiles = CacheFilesForSessionIDs(oCache, vnSessionIDs <, bUseParallel, nNumTries>)
-         %
-         % `vnSessionIDs` is a list of session IDs obtained from either the
-         % OPhys or EPhys sessions table. The data files for these
-         % sessions will be downloaded and cached, if they have not already
-         % been cached.
-         %
-         % The optional argument `bUseParallel` allows you to specify
-         % whether a pool of workers should be used to download several
-         % data files simultaneously. A pool will *not* be created if one
-         % does not already exist. By default, a pool will be used.
-         %
-         % The optional argument `nNumTries` allows you to specify how many
-         % attempts should be made to download each file befire giving up.
-         % Default: 3
-         
-         % - Default arguments
-         if ~exist('bUseParallel', 'var') || isempty(bUseParallel)
-            bUseParallel = true;
-         end
-         
-         if ~exist('nNumTries', 'var') || isempty(nNumTries)
-            nNumTries = 3;
-         end
-         
-         % - Loop over session IDs
-         for nSessIndex = numel(vnSessionIDs):-1:1
-            % - Find this session in the sessions tables
-            vbOPhysSession = oCache.tOPhysSessions.id == vnSessionIDs(nSessIndex);
-            
-            if any(vbOPhysSession)
-               tSession = oCache.tOPhysSessions(vbOPhysSession, :);
-            else
-               vbEPhysSession = oCache.tEPhysSessions.id == vnSessionIDs(nSessIndex);
-               tSession = oCache.tEPhysSessions(vbEPhysSession, :);
-            end
-            
-            % - Check to see if the session exists
-            if isempty(tSession)
-               error('BOT:InvalidSessionID', ...
-                  'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
-                  vnSessionIDs(nSessIndex));
-               
-            else
-               % - Cache the corresponding session data files
-               if iscell(tSession.well_known_files)
-                  vs_well_known_files = tSession.well_known_files{1};
-               else
-                  vs_well_known_files = tSession.well_known_files;
-               end
-               cstrURLs{nSessIndex} = arrayfun(@(s)strcat(oCache.strABOBaseUrl, s.download_link), vs_well_known_files, 'UniformOutput', false);
-               cstrLocalFiles{nSessIndex} = {vs_well_known_files.path}';
-               cvbIsURLInCache{nSessIndex} = oCache.IsURLInCache(cstrURLs{nSessIndex});
-            end
-         end
-         
-         % - Consolidate all URLs to download
-         cstrURLs = [cstrURLs{:}];
-         cstrLocalFiles = [cstrLocalFiles{:}];
-         vbIsURLInCache = [cvbIsURLInCache{:}];
-         
-         % - Cache all sessions in parallel
-         if numel(vnSessionIDs) > 1 && bUseParallel && ~isempty(gcp('nocreate'))
-            if any(~vbIsURLInCache)
-               fprintf('Downloading URLs in parallel...\n');
-            end
-            
-            bSuccess = false;
-            while ~bSuccess && (nNumTries > 0)
-               try
-                  cstrCacheFiles = oCache.sCacheFiles.ccCache.pwebsave(cstrLocalFiles, [cstrURLs{:}], true);
-                  bSuccess = true;
-               catch
-                  nNumTries = nNumTries - 1;
-               end
-            end
-            
-         else
-            % - Cache sessions sequentially
-            for nURLIndex = numel(cstrURLs):-1:1
-               % - Provide some progress text
-               if ~vbIsURLInCache(nURLIndex)
-                  fprintf('Downloading URL: [%s]...\n', cstrURLs{nURLIndex});
-               end
-               
-               % - Try to cache the data file
-               bSuccess = false;
-               while ~bSuccess && (nNumTries > 0)
-                  try
-                     cstrCacheFiles{nURLIndex} = oCache.CacheFile(cstrURLs{nURLIndex}, cstrLocalFiles{nURLIndex});
-                     bSuccess = true;
-                  catch mE_Cause
-                     nNumTries = nNumTries - 1;
-                  end
-               end
-               
-               % - Raise an error on failure
-               if ~bSuccess
-                  mE_Base = MException('BOT:CouldNotCacheURL', ...
-                     'A data file could not be cached.');
-                  mE_Base = mE_Base.addCause(mE_Cause);
-                  throw(mE_Base);
-               end
-            end
-         end
-      end
-      
       function InsertObject(oCache, strKey, object)
          % InsertObject - METHOD Insert an object into the object cache
          %

@@ -49,9 +49,23 @@ classdef ophysmanifest < handle
    
    %% Constructor
    methods
-      function oManifest = ophysmanifest(oManifest) %#ok<INUSD>
+      function oManifest = ophysmanifest()
+         % - Find and return the global manifest object, if one exists
+         sUserData = get(0, 'UserData');
+         if isfield(sUserData, 'BOT_GLOBAL_OPHYS_MANIFEST') && ...
+               isa(sUserData.BOT_GLOBAL_OPHYS_MANIFEST, 'bot.ophysmanifest')
+            
+            % - A global class instance exists
+            oManifest = sUserData.BOT_GLOBAL_OPHYS_MANIFEST;
+            return;
+         end
+         
          % Memoize manifest getter
          oManifest.sAPIAccess.get_cached_ophys_manifests = memoize(@oManifest.get_cached_ophys_manifests);
+         
+         % - Assign the manifest object to a global cache
+         sUserData.BOT_GLOBAL_OPHYS_MANIFEST = oManifest;
+         set(0, 'UserData', sUserData);
       end
    end
    
@@ -74,7 +88,7 @@ classdef ophysmanifest < handle
          % - Invalidate API manifests in cache
          oManifest.oCache.ccCache.RemoveURLsMatchingSubstring('criteria=model::ExperimentContainer');
          oManifest.oCache.ccCache.RemoveURLsMatchingSubstring('criteria=model::OphysExperiment');
-
+         
          % - Remove cached manifest tables
          oManifest.oCache.RemoveObject('allen_brain_observatory_ophys_manifests')
          
@@ -158,7 +172,7 @@ classdef ophysmanifest < handle
          
          if oManifest.oCache.IsObjectInCache(strKey)
             ophys_manifests = oManifest.oCache.RetrieveObject(strKey);
-         
+            
          else
             ophys_manifests = get_ophys_manifests_info_from_api(oManifest);
             oManifest.oCache.InsertObject(strKey, ophys_manifests);

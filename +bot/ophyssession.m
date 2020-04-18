@@ -10,7 +10,7 @@
 %
 % Get session metadata:
 % >> bos.get_metadata()
-% ans = 
+% ans =
 %                         age: '73 days'
 %                         sex: 'female'
 %               imaging_depth: '375 microns'
@@ -43,43 +43,37 @@
 %
 % Obtain stimulus information:
 % >> bos.get_stimulus_epoch_table()
-% ans = 
+% ans =
 %          stimulus          start_frame    end_frame
 %     ___________________    ___________    _________
-%     'static_gratings'        745           15191   
-%     'natural_scenes'       16095           30542   
+%     'static_gratings'        745           15191
+%     'natural_scenes'       16095           30542
 %        ...
 %
 % >> bos.get_stimulus(vnFrameNumbers)
-% ans = 
+% ans =
 %     frame    start_frame    end_frame    repeat        stimulus         ...
 %     _____    ___________    _________    ______    _________________    ...
 %     0        797            804          NaN       'static_gratings'    ...
 %        ...
 %
 % See method documentation for further information.
-% 
+%
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession
+classdef ophyssession < bot.session_base
    
    %% - Public properties
-   properties (SetAccess = private)
-      sSessionInfo;              % Structure containing session metadata
-   end
-
    properties (SetAccess = private, Dependent = true)
       strLocalNWBFileLocation;   % Local location of the NWB file corresponding to this session, if it has been cached
    end
    
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
-      bocCache = bot.cache();                            % Private handle to the BOT cache object
-      
       strSupportedPipelineVersion = '2.0';               % Pipeline version supported by this class
       strPipelineDataset = 'brain_observatory_pipeline'; % Key in NWB file containing the analysed data
-
+      
       FILE_METADATA_MAPPING = struct(...                 % Location of session metadata in NWB file
          'age',                     '/general/subject/age', ...
          'sex',                     '/general/subject/sex', ...
@@ -100,9 +94,9 @@ classdef ophyssession
       STIMULUS_TABLE_TYPES = struct(...                  % Stimulus information
          'abstract_feature_series',       {{'drifting_gratings', 'static_gratings'}}, ...
          'indexed_time_series',           {{'natural_scenes', 'locally_sparse_noise', ...
-                                            'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg'}}, ...
+         'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg'}}, ...
          'repeated_indexed_time_series',  {{'natural_movie_one', 'natural_movie_two', 'natural_movie_three'}});
-   
+      
       smCachedStimulusTable = bot.internal.SimpleMap();  % Internally cached master stimulus table, for searching stimuli
    end
    
@@ -115,62 +109,14 @@ classdef ophyssession
          % Usage: bsObj = bot.ophyssession(nSessionID)
          %        vbsObj = bot.ophyssession(vnSessionIDs)
          %        bsObj = bot.ophyssession(tSessionRow)
-
-         % - Support zero arguments
-         if nargin == 0
-            return;
-         end
          
-         % - Were we provided a table?
-         if istable(nSessionID)
-            tSession = nSessionID;
-            
-            % - Check for an 'id' column
-            if ~ismember(tSession.Properties.VariableNames, 'id')
-               error('BOT:InvalidSessionTable', ...
-                     'The provided table does not describe an experimental session.');
-            end
-            
-            % - Extract the session IDs
-            nSessionID = tSession.id;
-         end
+         % - Call super-class constructor
+         bsObj = bsObj@bot.session_base(nSessionID);
          
-         % - Check for a numeric argument
-         if ~isnumeric(nSessionID)
-            help bot.ophyssession/ophyssession;
-            error('BOT:Usage', ...
-                  'The session ID must be numeric.');
+         % - Ensure that we were given an OPhys session
+         if bsObj.sSessionInfo.BOT_session_type ~= "OPhys"
+            error('BOT:Usage', '`bot.ophyssession` objects may only refer to OPhys experimental sessions.');
          end
-         
-         % - Were we provided a vector of session IDs?
-         if numel(nSessionID) > 1
-            % - Loop over session IDs and construct an object for each
-            for nSessIndex = numel(nSessionID):-1:1
-               bsObj(nSessIndex) = bot.ophyssession(nSessionID(nSessIndex));
-            end
-            return;
-         end
-            
-         % - We should try to construct an object with this session ID
-         %   First check that the session exists in the manifest of the
-         %   Allen Brain Observatory dataset
-         vbManifestRow = bsObj.bocCache.tOPhysSessions.id == nSessionID;
-         if ~any(vbManifestRow)
-            error('BOT:InvalidSessionID', ...
-                  'The provided session ID [%d] does not match any session in the manifest of the Allen Brain Observatory dataset.', ...
-                  nSessionID);
-         end
-         
-         % - Raise a warning if multiple sessions were found
-         if nnz(vbManifestRow) > 1
-            warning('BOT:MatchedMultipleSessions', ...
-                    'The provided session ID [%d] matched multiple containers. This probably shouldn''t happen. I''m returning the first match.', ...
-                    nSessionID);
-         end
-         
-         % - Extract the appropriate table row from the manifest
-         bsObj.sSessionInfo = table2struct(bsObj.bocCache.tOPhysSessions(find(vbManifestRow, 1, 'first'), :));
-         
       end
    end
    
@@ -230,12 +176,12 @@ classdef ophyssession
    
    
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
-   methods (Hidden = false)      
+   methods (Hidden = false)
       function sMetadata = get_metadata(bos)
          % get_metadata - METHOD Read metadata from the NWB file
          %
          % Usage: sMetadata = get_metadata(bos)
-
+         
          % - Ensure the data has been cached
          EnsureCached(bos);
          
@@ -269,7 +215,7 @@ classdef ophyssession
          if isfield(sMetadata, 'ophys_experiment_id') && ~isempty(sMetadata.ophys_experiment_id)
             sMetadata.ophys_experiment_id = str2double(sMetadata.ophys_experiment_id);
          end
-
+         
          % - Try to convert the experiment container ID
          if isfield(sMetadata, 'experiment_container_id') && ~isempty(sMetadata.experiment_container_id)
             sMetadata.experiment_container_id = str2double(sMetadata.experiment_container_id);
@@ -277,16 +223,16 @@ classdef ophyssession
          
          % - Convert the start time to a date
          
-%         # convert start time to a date object
-%         session_start_time = meta.get('session_start_time')
-%         if isinstance(session_start_time, basestring):
-%             meta['session_start_time'] = dateutil.parser.parse(session_start_time)
-
+         %         # convert start time to a date object
+         %         session_start_time = meta.get('session_start_time')
+         %         if isinstance(session_start_time, basestring):
+         %             meta['session_start_time'] = dateutil.parser.parse(session_start_time)
+         
          % - Parse the age in days
          if isfield(sMetadata, 'age') && ~isempty(sMetadata.age)
             sMetadata.age_days = sscanf(sMetadata.age, '%d days');
          end
-
+         
          % - Parse the device string
          if isfield(sMetadata, 'device_string') && ~isempty(sMetadata.device_string)
             [~, cMatches] = regexp(sMetadata.device_string, '(.*?)\.\s(.*?)\sPlease*', 'match', 'tokens');
@@ -316,8 +262,8 @@ classdef ophyssession
          % - Read imaging timestamps from NWB file
          vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1', 'timestamps'));     
-            
+            'Fluorescence', 'imaging_plane_1', 'timestamps'));
+         
          % - Convert to 'duration'
          vtTimestamps = seconds(vtTimestamps);
       end
@@ -336,7 +282,7 @@ classdef ophyssession
          % - Read list of specimen IDs
          vnCellSpecimenIDs = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
-               'ImageSegmentation', 'cell_specimen_ids'));
+            'ImageSegmentation', 'cell_specimen_ids'));
       end
       
       function vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
@@ -351,13 +297,13 @@ classdef ophyssession
          
          % - Ensure the file has been cached
          EnsureCached(bos);
-
+         
          % - Read all cell specimen IDs
          vnAllCellSpecimenIDs = bos.get_cell_specimen_ids();
          
          % - Find provided IDs in list
          [vbFound, vnCellSpecimenIndices] = ismember(vnCellSpecimenIDs, vnAllCellSpecimenIDs);
-
+         
          % - Raise an error if specimens not found
          assert(all(vbFound), 'BOT:NotFound', ...
             'Provided cell specimen ID was not found in this session.');
@@ -381,7 +327,7 @@ classdef ophyssession
          
          % - Ensure the file has been cached
          EnsureCached(bos);
-
+         
          % - Get the fluorescence timestamps
          vtTimestamps = bos.get_fluorescence_timestamps();
          
@@ -391,15 +337,15 @@ classdef ophyssession
          else
             vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
          end
-                           
+         
          % - Read requested fluorescence traces
          mfTraces = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
+            'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
          
          % - Subselect traces
          mfTraces = mfTraces(:, vnCellSpecimenInds);
-      end      
+      end
       
       function [vtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
          % get_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
@@ -429,11 +375,11 @@ classdef ophyssession
          else
             vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
          end
-                           
+         
          % - Read requested fluorescence traces
          mfTraces = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1', 'data'));
+            'Fluorescence', 'imaging_plane_1', 'data'));
          
          % - Subselect traces
          mfTraces = mfTraces(:, vnCellSpecimenInds);
@@ -451,24 +397,24 @@ classdef ophyssession
          
          % - Ensure the file has been cached
          EnsureCached(bos);
-
+         
          % - Find cell specimen IDs, if provided
          if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
             vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
          else
             vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
          end
-                           
+         
          % - Check pipeline version and read neuropil correction R
          sMetadata = bos.get_metadata();
          if str2double(sMetadata.pipeline_version) >= 2.0
             vfR = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
-                  'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
+               'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
          else
             vfR = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
-                  'Fluorescence', 'imaging_plane_1', 'r'));
+               'Fluorescence', 'imaging_plane_1', 'r'));
          end
          
          % - Subsample R to requested cell specimens
@@ -490,10 +436,10 @@ classdef ophyssession
          % By default, traces for all cell specimens are returned. The optional
          % argument`vnCellSpecimenIDs` permits you specify which cell specimens
          % should be returned.
-
+         
          % - Ensure the file has been cached
          EnsureCached(bos);
-
+         
          % - Get the fluorescence timestamps
          vtTimestamps = bos.get_fluorescence_timestamps();
          
@@ -503,21 +449,21 @@ classdef ophyssession
          else
             vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
          end
-                           
+         
          % - Check pipeline version and read neuropil correction R
          sMetadata = bos.get_metadata();
          if str2double(sMetadata.pipeline_version) >= 2.0
             mfTraces = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
-                  'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
+               'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
          else
             mfTraces = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
-                  'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
+               'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
          end
          
          % - Subselect traces
-         mfTraces = mfTraces(:, vnCellSpecimenInds);         
+         mfTraces = mfTraces(:, vnCellSpecimenInds);
       end
       
       function [vtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
@@ -538,12 +484,12 @@ classdef ophyssession
          
          % - Ensure the file has been cached
          EnsureCached(bos);
-
+         
          % - Pass an empty matrix to return all cell specimen IDs
          if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
             vnCellSpecimenIDs = [];
          end
-            
+         
          % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
          sMetadata = bos.get_metadata();
          if str2double(sMetadata.pipeline_version) >= 2.0
@@ -557,7 +503,7 @@ classdef ophyssession
          [~, mfNeuropilTraces] = bos.get_neuropil_traces(vnCellSpecimenIDs);
          
          % - Correct fluorescence traces using neuropil demixing model
-         mfTraces = mfTraces - bsxfun(@times, mfNeuropilTraces, reshape(vfR, 1, []));         
+         mfTraces = mfTraces - bsxfun(@times, mfNeuropilTraces, reshape(vfR, 1, []));
       end
       
       function [vtTimestamps, mfdFF] = get_dff_traces(bos, vnCellSpecimenIDs)
@@ -575,7 +521,7 @@ classdef ophyssession
          % By default, traces for all cell specimens are returned. The optional
          % argument`vnCellSpecimenIDs` permits you specify which cell specimens
          % should be returned.
-
+         
          % - Ensure the file has been cached
          EnsureCached(bos);
          
@@ -585,16 +531,16 @@ classdef ophyssession
          else
             vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
          end
-                           
+         
          % - Read timestamps and response traces
          vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
-               'DfOverF', 'imaging_plane_1', 'timestamps'));
+            'DfOverF', 'imaging_plane_1', 'timestamps'));
          vtTimestamps = seconds(vtTimestamps);
          
          mfdFF = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
-               'DfOverF', 'imaging_plane_1', 'data'));
+            'DfOverF', 'imaging_plane_1', 'data'));
          
          % - Subsample response traces to requested cell specimens
          mfdFF = mfdFF(:, vnCellSpecimenInds);
@@ -607,7 +553,7 @@ classdef ophyssession
          %
          % Return information about the epochs of spontaneous activity in this
          % experimental session.
-
+         
          % - Build a key for this stimulus
          strKey = h5path('stimulus', 'presentation', 'spontaneous_stimulus');
          
@@ -618,21 +564,21 @@ classdef ophyssession
             nwb_file = bos.strLocalNWBFileLocation;
             events = h5read(nwb_file, h5path(strKey, 'data'))';
             frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'))';
-
+            
             % - Locate start and stop events
             start_inds = find(events == 1);
             stop_inds = find(events == -1);
-
+            
             % - Check spontaneous activity data
             assert(numel(start_inds) == numel(stop_inds), ...
-                   'BOT:StimulusError', 'Inconsistent start and time times in spontaneous activity stimulus table');
+               'BOT:StimulusError', 'Inconsistent start and time times in spontaneous activity stimulus table');
             
             % - Create a stimulus table to return
             stim_data = int32([frame_dur(start_inds, 1) frame_dur(stop_inds, 1)]);
             
             % - Create a stimulus table to return
             stimulus_table = array2table(stim_data, 'VariableNames', {'start_frame', 'end_frame'});
-
+            
          catch meCause
             meBase = MException('BOT:StimulusError', 'Could not read spontaneous stimulus from session.\nThe stimulus may not exist.');
             meBase = meBase.addCause(meCause);
@@ -647,7 +593,7 @@ classdef ophyssession
          %
          % `cStimuli` will be a cell array of strings, indicating which
          % individual stimulus sets were presented in this session.
-
+         
          % - Get local NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
@@ -684,9 +630,9 @@ classdef ophyssession
          % low, the assert statment in get_epoch_mask_list will halt execution.
          % In that case, make a bug report!.
          sThresholds = struct('three_session_A', 32+7,...
-                              'three_session_B', 15, ...
-                              'three_session_C', 7, ...
-                              'three_session_C2', 7);
+            'three_session_B', 15, ...
+            'three_session_C', 7, ...
+            'three_session_C2', 7);
          
          % - Get list of stimuli for this session
          cstrStimuli = bos.list_stimuli();
@@ -717,7 +663,7 @@ classdef ophyssession
          % - Rearrange columns to put 'stimulus' first
          tStimEpochs = [tStimEpochs(:, 3) tStimEpochs(:, 1:2)];
       end
-            
+      
       function tStimulusTable = get_stimulus_table(bos, strStimulusName)
          % get_stimulus_table - METHOD Return the stimulus table for the provided stimulus
          %
@@ -730,9 +676,9 @@ classdef ophyssession
          % `tStimulusTable` will be a table containing information about the
          % chosen stimulus. The individual stimulus frames can be accessed with
          % method bos.get_stimulus_template().
-
+         
          % - Ensure the NWB file is cached
-         bos.EnsureCached();         
+         bos.EnsureCached();
          
          % - Return a stimulus table for one of the stimulus types
          if ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
@@ -794,7 +740,7 @@ classdef ophyssession
          %
          % `mfMaxProjection` will be an image contianing the maximum-intensity
          % projection of the fluorescence stack obtained in this session.
-
+         
          % - Ensure session data is cached, and locate NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
@@ -833,7 +779,7 @@ classdef ophyssession
          % corresponding to fluorescence timestamps. `vfRunningSpeed` will be a
          % Tx1 vector containing instantaneous running speeds at each
          % corresponding time point, in cm/s.
-      
+         
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
@@ -874,7 +820,7 @@ classdef ophyssession
                strKey = h5path(strKey, 'xy_translations');
             catch
                error('BOT:MotionCorrectionNotFound', ...
-                     'Could not file motion correction data.');
+                  'Could not file motion correction data.');
             end
          end
          
@@ -1052,19 +998,19 @@ classdef ophyssession
          
          % - Select only requested cell specimen IDs
          vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
-
+         
          % - Initialise a CC structure
          sROIs = struct('Connectivity', 8, ...
-                        'ImageSize', {[]}, ...
-                        'NumObjects', numel(vnCellIndices), ...
-                        'PixelIdxList', {{}}, ...
-                        'Labels', {{}});
-
+            'ImageSize', {[]}, ...
+            'NumObjects', numel(vnCellIndices), ...
+            'PixelIdxList', {{}}, ...
+            'Labels', {{}});
+         
          % - Loop over ROIs, extract masks
          for nCellIndex = numel(vnCellIndices):-1:1
             % - Get a logical mask for this ROI
             mbThisMask = logical(h5read(nwb_file, h5path(strKey, cstrRoiList{vnCellIndices(nCellIndex)}, 'img_mask')));
-
+            
             % - Build up a CC structure containing these ROIs
             sROIs.PixelIdxList{nCellIndex} = find(mbThisMask);
             sROIs.Labels{nCellIndex} = cstrRoiList{vnCellIndices(nCellIndex)};
@@ -1073,7 +1019,7 @@ classdef ophyssession
          % - Fill in CC structure
          sROIs.ImageSize = size(mbThisMask);
       end
-
+      
       function tfStimulusTemplate = get_stimulus_template(bos, strStimulusName)
          % get_stimulus_template - METHOD Return the stimulus template for the provided stimulus
          %
@@ -1131,7 +1077,7 @@ classdef ophyssession
             'locally_sparse_noise', [16 28], ...
             'locally_sparse_noise_4deg', [16 28], ...
             'locally_sparse_noise_8deg', [8 14]);
-
+         
          % - By default, mask off screen regions
          if ~exist('bMaskOffScreen', 'var') || isempty(bMaskOffScreen)
             bMaskOffScreen = true;
@@ -1189,7 +1135,7 @@ classdef ophyssession
          % stimuli with a corresponding stimulus template (see method
          % get_stimulus_template()), the column 'frame' contains an index
          % indicating which stimulus frame was presented at that point in time.
-         %         
+         %
          % Note: The tensor `tfStimFrame` can optionally be used to return the
          % stimulus template frames associated with each valid frame index. This
          % is not recommended, since it can use a large amount of redundant
@@ -1224,7 +1170,7 @@ classdef ophyssession
          
          % - Ensure that the frame index is a column vector
          vnFrameIndex = reshape(vnFrameIndex, [], 1);
-
+         
          % - Identify search frames that are outside registered epochs
          vbValidFrame = vnFrameIndex >= mnEpochStartEndFrames(1, 1) & vnFrameIndex <= mnEpochStartEndFrames(end, 2);
          
@@ -1260,9 +1206,9 @@ classdef ophyssession
             % - Is there more than one stimulus template?
             if numel(unique(tStimulus.stimulus)) > 1
                warning('BOT:MultipleStimulusTypes', ...
-                       'Warning: Cannot extract stimulus templates for multiple stimulus types simultaneously');
+                  'Warning: Cannot extract stimulus templates for multiple stimulus types simultaneously');
                tfStimFrame = [];
-
+               
             else
                % - Get the name of this stimulus
                strStimulus = tStimulus{1, 'stimulus'};
@@ -1286,294 +1232,294 @@ end
 %% - Private utility functions
 
 function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, stimulus_name)
-	% get_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
+% get_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
 
-   % - Build a key for this stimulus
-   strKey = h5path('stimulus', 'presentation', stimulus_name);
+% - Build a key for this stimulus
+strKey = h5path('stimulus', 'presentation', stimulus_name);
+
+% - Read and convert stimulus data from the NWB file
+try
+   % - Read data from the NWB file
+   stim_data = h5read(nwb_file, h5path(strKey, 'data'));
+   features = deblank(h5read(nwb_file, h5path(strKey, 'features')));
+   frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
    
-   % - Read and convert stimulus data from the NWB file
-   try
-      % - Read data from the NWB file
-      stim_data = h5read(nwb_file, h5path(strKey, 'data'));
-      features = deblank(h5read(nwb_file, h5path(strKey, 'features')));
-      frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
-      
-      % - Create a stimulus table to return
-      stimulus_table = array2table(stim_data', 'VariableNames', features);
-      
-      % - Add start and finish frame times
-      stimulus_table.start_frame = int32(frame_dur(1, :)');
-      stimulus_table.end_frame = int32(frame_dur(2, :)');
-      
-   catch meCause
-      meBase = MException('BOT:StimulusError', ...
-         'Could not read stimulus [%s] from session.\nThe stimulus may not exist.', stimulus_name);
-      meBase = meBase.addCause(meCause);
-      throw(meBase);
-   end
+   % - Create a stimulus table to return
+   stimulus_table = array2table(stim_data', 'VariableNames', features);
+   
+   % - Add start and finish frame times
+   stimulus_table.start_frame = int32(frame_dur(1, :)');
+   stimulus_table.end_frame = int32(frame_dur(2, :)');
+   
+catch meCause
+   meBase = MException('BOT:StimulusError', ...
+      'Could not read stimulus [%s] from session.\nThe stimulus may not exist.', stimulus_name);
+   meBase = meBase.addCause(meCause);
+   throw(meBase);
+end
 end
 
 function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
-   % get_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
+% get_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
 
-   % - Build a key for this stimulus
-   strKey = h5path('stimulus', 'presentation', stimulus_name);
+% - Build a key for this stimulus
+strKey = h5path('stimulus', 'presentation', stimulus_name);
+
+% - Attempt to read data from this key, otherwise correct
+try
+   h5info(nwb_file, strKey);
+catch
+   strKey = h5path('stimulus', 'presentation', [stimulus_name '_stimulus']);
+end
+
+% - Read and convert stimulus data from the NWB file
+try
+   % - Read data from the NWB file
+   inds = h5read(nwb_file, h5path(strKey, 'data')) + 1;
+   frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
    
-   % - Attempt to read data from this key, otherwise correct
-   try
-      h5info(nwb_file, strKey);
-   catch
-      strKey = h5path('stimulus', 'presentation', [stimulus_name '_stimulus']);
-   end
+   % - Create a stimulus table to return
+   stimulus_table = array2table(inds, 'VariableNames', {'frame'});
    
-   % - Read and convert stimulus data from the NWB file
-   try
-      % - Read data from the NWB file
-      inds = h5read(nwb_file, h5path(strKey, 'data')) + 1;
-      frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
-      
-      % - Create a stimulus table to return
-      stimulus_table = array2table(inds, 'VariableNames', {'frame'});
-      
-      % - Add start and finish frame times
-      stimulus_table.start_frame = int32(frame_dur(1, :)');
-      stimulus_table.end_frame = int32(frame_dur(2, :)');
-      
-   catch meCause
-      meBase = MException('BOT:StimulusError', 'Could not read stimulus [%s] from session.\nThe stimulus may not exist.');
-      meBase = meBase.addCause(meCause);
-      throw(meBase);
-   end
+   % - Add start and finish frame times
+   stimulus_table.start_frame = int32(frame_dur(1, :)');
+   stimulus_table.end_frame = int32(frame_dur(2, :)');
+   
+catch meCause
+   meBase = MException('BOT:StimulusError', 'Could not read stimulus [%s] from session.\nThe stimulus may not exist.');
+   meBase = meBase.addCause(meCause);
+   throw(meBase);
+end
 end
 
 function stimulus_table = get_repeated_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
-   % get_repeated_indexed_time_series_stimulus_table - FUNCTION Return a stimulus table for a repeated stimulus
-   
-   % - Get the full stimulus table
-   stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
-   
-   % - Locate repeats within stimulus order
-   vnUniqueStims = unique(stimulus_table.frame);
-   cvnRepeatIndices = arrayfun(@(nStim)find(stimulus_table.frame == nStim), vnUniqueStims, 'UniformOutput', false);
-   
-   % - Switch off warnings for extending the table
-   w = warning('off', 'MATLAB:table:RowsAddedNewVars');
-   
-   % - Loop over stimulus IDs, assign repeat numbers (zero-based to match Python SDK)
-   vnRepeatIndices = nan(size(stimulus_table, 1), 1);
-   for nStimulus = 1:numel(vnUniqueStims)
-      vnRepeatIndices(cvnRepeatIndices{nStimulus}) = (1:numel(cvnRepeatIndices{nStimulus}))' - 1;
-   end
+% get_repeated_indexed_time_series_stimulus_table - FUNCTION Return a stimulus table for a repeated stimulus
 
-   % - Assign repeat column to table
-   stimulus_table.repeat = vnRepeatIndices;
+% - Get the full stimulus table
+stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
 
-   % - Restore warnings
-   warning(w);
+% - Locate repeats within stimulus order
+vnUniqueStims = unique(stimulus_table.frame);
+cvnRepeatIndices = arrayfun(@(nStim)find(stimulus_table.frame == nStim), vnUniqueStims, 'UniformOutput', false);
+
+% - Switch off warnings for extending the table
+w = warning('off', 'MATLAB:table:RowsAddedNewVars');
+
+% - Loop over stimulus IDs, assign repeat numbers (zero-based to match Python SDK)
+vnRepeatIndices = nan(size(stimulus_table, 1), 1);
+for nStimulus = 1:numel(vnUniqueStims)
+   vnRepeatIndices(cvnRepeatIndices{nStimulus}) = (1:numel(cvnRepeatIndices{nStimulus}))' - 1;
+end
+
+% - Assign repeat column to table
+stimulus_table.repeat = vnRepeatIndices;
+
+% - Restore warnings
+warning(w);
 end
 
 function epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
-   % get_epoch_mask_list - FUNCTION Cut a stimulus table into multiple epochs
-   %
-   % Usage: epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
-   
-   % - Check that a threshold was supplied
-	assert(~isempty(threshold), 'BOT:StimulusError', ...
-          'Threshold not set for this type of session.');
-   
-	% - Assign a default max_cuts
-   if ~exist('max_cuts', 'var') || isempty(max_cuts)
-      max_cuts = 3;
-   end
-   
-   % - Determine frame deltas and cut indices
-	delta = st.start_frame(2:end) - st.end_frame(1:end-1);
-	cut_inds = find(delta > threshold) + 1;
+% get_epoch_mask_list - FUNCTION Cut a stimulus table into multiple epochs
+%
+% Usage: epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
 
-   % - Are there too many epochs?
-   % See: https://gist.github.com/nicain/bce66cd073e422f07cf337b476c63be7
-   %      https://github.com/AllenInstitute/AllenSDK/issues/66
-   assert(numel(cut_inds) <= max_cuts, ...
-          'BOT:StimulusError', ...
-          'More than [%d] epochs were found.\nSee https://github.com/AllenInstitute/AllenSDK/issues/66.', ...
-          max_cuts);
-   
-	% - Loop over epochs
-   for nEpoch = numel(cut_inds)+1:-1:1
-      % - Determine first frame
-      if nEpoch == 1
-         first_ind = st{1, 'start_frame'};
-      else
-         first_ind = st{cut_inds(nEpoch-1), 'start_frame'};
-      end
-      
-      % - Determine last frame
-      if nEpoch == numel(cut_inds)+1
-         last_ind_inclusive = st{end, 'end_frame'};
-      else
-         last_ind_inclusive = st{cut_inds(nEpoch)-1, 'end_frame'};
-      end
-      
-      % - Build list of epochs
-      epoch_mask_list{nEpoch} = [first_ind last_ind_inclusive];
+% - Check that a threshold was supplied
+assert(~isempty(threshold), 'BOT:StimulusError', ...
+   'Threshold not set for this type of session.');
+
+% - Assign a default max_cuts
+if ~exist('max_cuts', 'var') || isempty(max_cuts)
+   max_cuts = 3;
+end
+
+% - Determine frame deltas and cut indices
+delta = st.start_frame(2:end) - st.end_frame(1:end-1);
+cut_inds = find(delta > threshold) + 1;
+
+% - Are there too many epochs?
+% See: https://gist.github.com/nicain/bce66cd073e422f07cf337b476c63be7
+%      https://github.com/AllenInstitute/AllenSDK/issues/66
+assert(numel(cut_inds) <= max_cuts, ...
+   'BOT:StimulusError', ...
+   'More than [%d] epochs were found.\nSee https://github.com/AllenInstitute/AllenSDK/issues/66.', ...
+   max_cuts);
+
+% - Loop over epochs
+for nEpoch = numel(cut_inds)+1:-1:1
+   % - Determine first frame
+   if nEpoch == 1
+      first_ind = st{1, 'start_frame'};
+   else
+      first_ind = st{cut_inds(nEpoch-1), 'start_frame'};
    end
+   
+   % - Determine last frame
+   if nEpoch == numel(cut_inds)+1
+      last_ind_inclusive = st{end, 'end_frame'};
+   else
+      last_ind_inclusive = st{cut_inds(nEpoch)-1, 'end_frame'};
+   end
+   
+   % - Build list of epochs
+   epoch_mask_list{nEpoch} = [first_ind last_ind_inclusive];
+end
 end
 
 function [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
-   % align_running_speed - FUNCTION Align running speed data with fluorescence time stamps
-   %
-   % Usage: [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
-   
-   % - Do we need to add time points at the beginning of the session?
-   if dxtime(1) ~= timestamps(1)
-      % - Prepend timestamps and nans
-      nFirstMatch = find(timestamps == dxtime(1), 1, 'first');
-      dxtime = [timestamps(1:nFirstMatch-1); dxtime];
-      dxcm = [nan(nFirstMatch, 1); dxcm];
-   end
-   
-   % - Do we need to add time points at the end of the session?
-   nNumMissing = numel(timestamps) - numel(dxtime);
-   if nNumMissing > 0
-      dxtime = [dxtime; timestamps(end - (nNumMissing-1):end)];
-      dxcm = [dxcm; nan(nNumMissing, 1)];
-   end
+% align_running_speed - FUNCTION Align running speed data with fluorescence time stamps
+%
+% Usage: [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
+
+% - Do we need to add time points at the beginning of the session?
+if dxtime(1) ~= timestamps(1)
+   % - Prepend timestamps and nans
+   nFirstMatch = find(timestamps == dxtime(1), 1, 'first');
+   dxtime = [timestamps(1:nFirstMatch-1); dxtime];
+   dxcm = [nan(nFirstMatch, 1); dxcm];
+end
+
+% - Do we need to add time points at the end of the session?
+nNumMissing = numel(timestamps) - numel(dxtime);
+if nNumMissing > 0
+   dxtime = [dxtime; timestamps(end - (nNumMissing-1):end)];
+   dxcm = [dxcm; nan(nNumMissing, 1)];
+end
 end
 
 function retCoords = warp_stimulus_coords(vertices, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint)
-   % warp_stimulus_coords - FUNCTION For a list of screen vertices, provides a corresponding list of texture coordinates
-   % 
-   % Usage: retCoords = warp_stimulus_coords(vertices <, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint>)
+% warp_stimulus_coords - FUNCTION For a list of screen vertices, provides a corresponding list of texture coordinates
+%
+% Usage: retCoords = warp_stimulus_coords(vertices <, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint>)
 
-   % - Assign default arguments
-   if ~exist('distance', 'var') || isempty(distance)
-      distance = 15;
-   end
+% - Assign default arguments
+if ~exist('distance', 'var') || isempty(distance)
+   distance = 15;
+end
 
-   if ~exist('mon_height_cm', 'var') || isempty(mon_height_cm)
-      mon_height_cm = 32.5;
-   end
+if ~exist('mon_height_cm', 'var') || isempty(mon_height_cm)
+   mon_height_cm = 32.5;
+end
 
-   if ~exist('mon_width_cm', 'var') || isempty(mon_width_cm)
-      mon_width_cm = 51;
-   end
+if ~exist('mon_width_cm', 'var') || isempty(mon_width_cm)
+   mon_width_cm = 51;
+end
 
-   if ~exist('mon_res', 'var') || isempty(mon_res)
-      mon_res = [1920 1200];
-   end
+if ~exist('mon_res', 'var') || isempty(mon_res)
+   mon_res = [1920 1200];
+end
 
-   if ~exist('eyepoint', 'var') || isempty(eyepoint)
-      eyepoint = [.5 .5];
-   end
-   
-   % - Convert from pixels (-1920/2 -> 1920/2) to stimulus space (-0.5 -> 0.5)
-   vertices = bsxfun(@rdivide, vertices, mon_res);
-   
-   x = (vertices(:, 1) + .5) * mon_width_cm;
-   y = (vertices(:, 2) + .5) * mon_height_cm;
-   
-   xEye = eyepoint(1) * mon_width_cm;
-   yEye = eyepoint(2) * mon_height_cm;
-   
-   x = x - xEye;
-   y = y - yEye;
-   
-   r = sqrt(x.^2 + y.^2 + distance.^2);
-   
-   azimuth = atan(x ./ distance);
-   altitude = asin(y ./ r);
-   
-   % - Calculate texture coordinates
-   tx = distance .* (1 + x ./ r) - distance;
-   ty = distance .* (1 + y ./ r) - distance;
-   
-   % - The texture coordinates (which are now lying on the sphere) need to be
-   % remapped back onto the plane of the display. This effectively stretches the
-   % coordinates away from the eyepoint.
-   
-   centralAngle = acos(cos(altitude) .* cos(abs(azimuth)));
-   
-   % - Distance froom eyepoint to texture vertex
-   arcLength = centralAngle .* distance;
-   
-   % - Remap the texture coordinates
-   theta = atan2(ty, tx);
-   tx = arcLength .* cos(theta);
-   ty = arcLength .* sin(theta);
-   
-   u_coords = tx ./ mon_width_cm;
-   v_coords = ty ./ mon_height_cm;
-   
-   retCoords = [u_coords v_coords];
-   
-   % - Convert back to pixels
-   retCoords = bsxfun(@times, retCoords, mon_res);
+if ~exist('eyepoint', 'var') || isempty(eyepoint)
+   eyepoint = [.5 .5];
+end
+
+% - Convert from pixels (-1920/2 -> 1920/2) to stimulus space (-0.5 -> 0.5)
+vertices = bsxfun(@rdivide, vertices, mon_res);
+
+x = (vertices(:, 1) + .5) * mon_width_cm;
+y = (vertices(:, 2) + .5) * mon_height_cm;
+
+xEye = eyepoint(1) * mon_width_cm;
+yEye = eyepoint(2) * mon_height_cm;
+
+x = x - xEye;
+y = y - yEye;
+
+r = sqrt(x.^2 + y.^2 + distance.^2);
+
+azimuth = atan(x ./ distance);
+altitude = asin(y ./ r);
+
+% - Calculate texture coordinates
+tx = distance .* (1 + x ./ r) - distance;
+ty = distance .* (1 + y ./ r) - distance;
+
+% - The texture coordinates (which are now lying on the sphere) need to be
+% remapped back onto the plane of the display. This effectively stretches the
+% coordinates away from the eyepoint.
+
+centralAngle = acos(cos(altitude) .* cos(abs(azimuth)));
+
+% - Distance froom eyepoint to texture vertex
+arcLength = centralAngle .* distance;
+
+% - Remap the texture coordinates
+theta = atan2(ty, tx);
+tx = arcLength .* cos(theta);
+ty = arcLength .* sin(theta);
+
+u_coords = tx ./ mon_width_cm;
+v_coords = ty ./ mon_height_cm;
+
+retCoords = [u_coords v_coords];
+
+% - Convert back to pixels
+retCoords = bsxfun(@times, retCoords, mon_res);
 end
 
 function mbMask = make_display_mask(display_shape)
-   % make_display_mask - FUNCTION Build a display-shaped mask that indicates which stimulus pixels are on screen after warping the stimulus
-   %
-   % Usage: mbMask = make_display_mask(display_shape)
+% make_display_mask - FUNCTION Build a display-shaped mask that indicates which stimulus pixels are on screen after warping the stimulus
+%
+% Usage: mbMask = make_display_mask(display_shape)
 
-   % - Assign default arguments
-   if ~exist('display_shape', 'var') || isempty(display_shape)
-      display_shape = [1920 1200];
-   end
+% - Assign default arguments
+if ~exist('display_shape', 'var') || isempty(display_shape)
+   display_shape = [1920 1200];
+end
 
-   % - Determine coordinates of the screen
-   x = (1:display_shape(1))-1 - display_shape(1) / 2;
-   y = (1:display_shape(2))-1 - display_shape(2) / 2;
-   [mX, mY] = meshgrid(x, y);
-   display_coords = [mX(:) mY(:)];
-   
-   % - Warp the coordinates to spherical distance
-   warped_coords = warp_stimulus_coords(display_coords);
-   
-   % - Determine which stimulus pixels are on-screen after warping
-   off_warped_coords = round(bsxfun(@plus, warped_coords, display_shape ./ 2));
-   mbMask = false(display_shape);
-   mbMask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
+% - Determine coordinates of the screen
+x = (1:display_shape(1))-1 - display_shape(1) / 2;
+y = (1:display_shape(2))-1 - display_shape(2) / 2;
+[mX, mY] = meshgrid(x, y);
+display_coords = [mX(:) mY(:)];
+
+% - Warp the coordinates to spherical distance
+warped_coords = warp_stimulus_coords(display_coords);
+
+% - Determine which stimulus pixels are on-screen after warping
+off_warped_coords = round(bsxfun(@plus, warped_coords, display_shape ./ 2));
+mbMask = false(display_shape);
+mbMask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
 end
 
 function [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
-   % mask_stimulus_template - FUNCTION Build a mask for a stimulus template of a given shape and display coordinates that indicates which part of the template is on screen after warping
-   %
-   % Usage: [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
+% mask_stimulus_template - FUNCTION Build a mask for a stimulus template of a given shape and display coordinates that indicates which part of the template is on screen after warping
+%
+% Usage: [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
 
-   % - Assign default arguments
-   if ~exist('display_mask', 'var')
-      display_mask = make_display_mask();
-   end
+% - Assign default arguments
+if ~exist('display_mask', 'var')
+   display_mask = make_display_mask();
+end
 
-   if ~exist('threshold', 'var') || isempty(threshold)
-      threshold = 1;
-   end
+if ~exist('threshold', 'var') || isempty(threshold)
+   threshold = 1;
+end
 
-   % - Find valid indices for the template, and masked pixels
-   template_display_coords = reshape(template_display_coords, [], 2) + 1;
-   vbValidIndices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
-   vbValidMaskIndices = display_mask(:) & vbValidIndices;
-   
-   % - Determine which template units are on the screen above the threshold
-   mfPixelFraction = accumarray(...
-      [template_display_coords(vbValidMaskIndices, 1) template_display_coords(vbValidMaskIndices, 2)], ...
-      1, template_shape);
-   mnPixelTotals = accumarray(...
-      [template_display_coords(vbValidIndices, 1) template_display_coords(vbValidIndices, 2)], ...
-      1, template_shape);
-   
-   % - Create a mask indicating which stimulus pixels should be included
-   mfPixelFraction = mfPixelFraction ./ mnPixelTotals;
-   mbMask = mfPixelFraction >= threshold;
+% - Find valid indices for the template, and masked pixels
+template_display_coords = reshape(template_display_coords, [], 2) + 1;
+vbValidIndices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
+vbValidMaskIndices = display_mask(:) & vbValidIndices;
+
+% - Determine which template units are on the screen above the threshold
+mfPixelFraction = accumarray(...
+   [template_display_coords(vbValidMaskIndices, 1) template_display_coords(vbValidMaskIndices, 2)], ...
+   1, template_shape);
+mnPixelTotals = accumarray(...
+   [template_display_coords(vbValidIndices, 1) template_display_coords(vbValidIndices, 2)], ...
+   1, template_shape);
+
+% - Create a mask indicating which stimulus pixels should be included
+mfPixelFraction = mfPixelFraction ./ mnPixelTotals;
+mbMask = mfPixelFraction >= threshold;
 end
 
 function strPath = h5path(varargin)
-   % h5path - FUNCTION Generate a path for an HDF5 file
-   %
-   % Usage: strPath = h5path(strPart1, strPart2, ...)
-   
-   strPath = fullfile(filesep, varargin{:});
-   if ispc
-      strPath = strrep(strPath, filesep, '/');
-   end
+% h5path - FUNCTION Generate a path for an HDF5 file
+%
+% Usage: strPath = h5path(strPart1, strPart2, ...)
+
+strPath = fullfile(filesep, varargin{:});
+if ispc
+   strPath = strrep(strPath, filesep, '/');
+end
 end
