@@ -1,34 +1,71 @@
-%% CLASS session
+%% bot.internal.session_base — CLASS Base class for experimental sessionss
 
-classdef session_base
-   
-   properties (SetAccess = protected)
-      sSessionInfo;              % Structure containing session metadata
-   end
-   
+%%%%%%% REFACTOR TO BOT.INTERNAL.SESSION %%%%%%%
+
+classdef session_base < handle
    properties (Access = protected)
       bocCache = bot.internal.cache();                   % Private handle to the BOT Cache
       bomOPhysManifest = bot.ophysmanifest;              % Private handle to the OPhys data manifest
       bomEPhysManifest = bot.ephysmanifest;              % Private handle to the EPhys data manifest
+      strLocalNWBFileLocation;
    end
    
    methods
       function sess = session_base(nSessionID)
          % bot.session_base - CLASS Base class for experimental sessions
-
+         
          % - Handle calling with no arguments
          if nargin == 0
             return;
          end
          
          % - Assign session information
-         sess.sSessionInfo = table2struct(sess.find_manifest_row(nSessionID));
+         sess.sMetadata = table2struct(sess.find_manifest_row(nSessionID));
       end
    end
    
+   %% - Matlab BOT methods
+   
+   methods (Abstract)
+      GetNWBURL(bos);
+   end
+      
+   methods
+      function bNWBFileIsCached = IsNWBFileCached(bos)
+         % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
+         %
+         % Usage: bNWBFileIsCached = IsNWBFileCached(bos)
+         bNWBFileIsCached =  bos.bocCache.IsURLInCache(bos.GetNWBURL());
+      end
+      
+      function strCacheFile = EnsureCached(bos)
+         % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
+         %
+         % Usage: strCachelFile = EnsureCached(bos)
+         %
+         % This method will force the session data to be downloaded and cached,
+         % if it is not already available.
+         bos.CacheFilesForSessionIDs(bos.sMetadata.id);
+         strCacheFile = bos.strLocalNWBFileLocation;
+      end      
+   end
+   
+   methods
+      function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
+         % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
+         %
+         % Usage: strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
+         if ~bos.IsNWBFileCached()
+            strLocalNWBFileLocation = [];
+         else
+            % - Get the local file location for the session NWB URL
+            strLocalNWBFileLocation = bos.bocCache.ccCache.CachedFileForURL(bos.GetNWBURL());
+         end
+      end
+   end   
    methods (Static)
       function tManifestRow = find_manifest_row(nSessionID)
-         sess = bot.session_base;
+         sess = bot.internal.session_base;
          
          % - Were we provided a table?
          if istable(nSessionID)
@@ -46,14 +83,14 @@ classdef session_base
          
          % - Check for a numeric argument
          if ~isnumeric(nSessionID)
-            help bot.session/build_session;
+            help bot.session;
             error('BOT:Usage', ...
                'The session ID must be numeric.');
          end
          
          % - Find these sessions in the sessions manifests
          vbOPhysSession = sess.bomOPhysManifest.tOPhysSessions.id == nSessionID;
-
+         
          % - Extract the appropriate table row from the manifest
          if any(vbOPhysSession)
             tManifestRow = sess.bomOPhysManifest.tOPhysSessions(vbOPhysSession, :);
@@ -67,10 +104,10 @@ classdef session_base
             error('BOT:InvalidSessionID', ...
                'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
                nSessionID);
-         end         
+         end
       end
-   end   
-
+   end
+   
    methods
       function cstrCacheFiles = CacheFilesForSessionIDs(sess, vnSessionIDs, bUseParallel, nNumTries)
          % CacheFilesForSessionIDs - METHOD Download data files containing experimental data for the given session IDs
@@ -108,7 +145,7 @@ classdef session_base
             if any(vbOPhysSession)
                tSession = sess.bomOPhysManifest.tOPhysSessions(vbOPhysSession, :);
             else
-               vbEPhysSession = sess.bomOPhysManifest.tEPhysSessions.id == vnSessionIDs(nSessIndex);
+               vbEPhysSession = sess.bomEPhysManifest.tEPhysSessions.id == vnSessionIDs(nSessIndex);
                tSession = sess.bomEPhysManifest.tEPhysSessions(vbEPhysSession, :);
             end
             

@@ -18,61 +18,128 @@ classdef ephysmanifest < handle
    %% Constructor
    methods
       function oManifest = ephysmanifest()
-         % - Find and return the global manifest object, if one exists
-         sUserData = get(0, 'UserData');
-         if isfield(sUserData, 'BOT_GLOBAL_EPHYS_MANIFEST') && ...
-               isa(sUserData.BOT_GLOBAL_EPHYS_MANIFEST, 'bot.ephysmanifest')
-            
-            % - A global class instance exists, and is the correct version,
-            % and no "user" cache directory has been provided
-            oManifest = sUserData.BOT_GLOBAL_EPHYS_MANIFEST;
-            return;
-         end
-         
-         %% Else build a new manifest object
-         
-         % Memoize manifest getters
-         oManifest.sAPIAccess.get_cached_tEPhysSessions = memoize(@oManifest.get_cached_tEPhysSessions);
-         oManifest.sAPIAccess.get_cached_tEPhysUnits = memoize(@oManifest.get_cached_tEPhysUnits);
-         oManifest.sAPIAccess.get_cached_tEPhysProbes = memoize(@oManifest.get_cached_tEPhysProbes);
-         oManifest.sAPIAccess.get_cached_tEPhysChannels = memoize(@oManifest.get_cached_tEPhysChannels);
-         
-         oManifest.sAPIAccess.get_ephys_sessions = memoize(@oManifest.get_ephys_sessions);
-         oManifest.sAPIAccess.get_ephys_channels = memoize(@oManifest.get_ephys_channels);
-         oManifest.sAPIAccess.get_ephys_probes = memoize(@oManifest.get_ephys_probes);
-         oManifest.sAPIAccess.get_ephys_units = memoize(@oManifest.get_ephys_units);
-         
-         oManifest.sAPIAccess.tAnnotatedEPhysChannels = memoize(@oManifest.get_tAnnotatedEPhysChannels);
-         oManifest.sAPIAccess.tAnnotatedEPhysProbes = memoize(@oManifest.get_tAnnotatedEPhysProbes);
-         oManifest.sAPIAccess.tAnnotatedEPhysUnits = memoize(@oManifest.get_tAnnotatedEPhysUnits);
-         
-         oManifest.sAPIAccess.tEPhysSessions = memoize(@oManifest.get_tEPhysSessions);
-         oManifest.sAPIAccess.tEPhysChannels = memoize(@oManifest.get_tEPhysChannels);
-         oManifest.sAPIAccess.tEPhysProbes = memoize(@oManifest.get_tEPhysProbes);
-         oManifest.sAPIAccess.tEPhysUnits = memoize(@oManifest.get_tEPhysUnits);
-
-         % - Assign the manifest object to a global cache
-         sUserData.BOT_GLOBAL_EPHYS_MANIFEST = oManifest;
-         set(0, 'UserData', sUserData);      
+         % - Initialise internal manifest cache
+         oManifest.sAPIAccess.tEPhysSessions = [];
+         oManifest.sAPIAccess.tEPhysChannels = [];
+         oManifest.sAPIAccess.tEPhysProbes = [];
+         oManifest.sAPIAccess.tEPhysUnits = [];
       end
    end
    
    %% Getter methods
    methods
       function tEPhysSessions = get.tEPhysSessions(oManifest)
-         tEPhysSessions = oManifest.sAPIAccess.get_cached_tEPhysSessions();
+         % - Try to get cached table
+         tEPhysSessions = oManifest.sAPIAccess.tEPhysSessions;
+         
+         % - If table is not already in-memory
+         if isempty(tEPhysSessions)
+            % - Try to retrieve table from on-disk cache
+            strKey = 'allen_brain_observatory_ephys_sessions_manifest';
+            if oManifest.oCache.IsObjectInCache(strKey)
+               tEPhysSessions = oManifest.oCache.RetrieveObject(strKey);
+            else
+               % - Construct table from API
+               tEPhysSessions = oManifest.get_tEPhysSessions();
+               
+               % - Insert object in disk cache
+               oManifest.oCache.InsertObject(strKey, tEPhysSessions);
+            end
+            
+            % - Store table in memory cache
+            oManifest.sAPIAccess.tEPhysSessions = tEPhysSessions;
+         end
       end
       
       function tEPhysChannels = get.tEPhysChannels(oManifest)
-         tEPhysChannels = oManifest.sAPIAccess.get_cached_tEPhysChannels();
+         % - Try to get cached table
+         tEPhysChannels = oManifest.sAPIAccess.tEPhysChannels;
+         
+         % - If table is not already in-memory
+         if isempty(tEPhysChannels)
+            % - Try to retrieve table from on-disk cache
+            strKey = 'allen_brain_observatory_ephys_channels_manifest';
+            if oManifest.oCache.IsObjectInCache(strKey)
+               tEPhysChannels = oManifest.oCache.RetrieveObject(strKey);
+            else
+               % - Construct table from API
+               tEPhysChannels = oManifest.get_tEPhysChannels();
+               
+               % - Insert object in disk cache
+               oManifest.oCache.InsertObject(strKey, tEPhysChannels);
+            end
+            
+            % - Store table in memory cache
+            oManifest.sAPIAccess.tEPhysChannels = tEPhysChannels;
+         end
       end
       
       function tEPhysProbes = get.tEPhysProbes(oManifest)
-         tEPhysProbes = oManifest.sAPIAccess.get_cached_tEPhysProbes();
+         % - Try to get cached table
+         tEPhysProbes = oManifest.sAPIAccess.tEPhysProbes;
+         
+         % - If table is not already in-memory
+         if isempty(tEPhysProbes)
+            % - Try to retrieve table from on-disk cache
+            strKey = 'allen_brain_observatory_ephys_probes_manifest';
+            if oManifest.oCache.IsObjectInCache(strKey)
+               tEPhysProbes = oManifest.oCache.RetrieveObject(strKey);
+            else
+               % - Construct table from API
+               tEPhysProbes = oManifest.get_tEPhysProbes();
+               
+               % - Insert object in disk cache
+               oManifest.oCache.InsertObject(strKey, tEPhysProbes);
+            end
+            
+            % - Store table in memory cache
+            oManifest.sAPIAccess.tEPhysProbes = tEPhysProbes;
+         end
       end
       
       function tEPhysUnits = get.tEPhysUnits(oManifest)
-         tEPhysUnits = oManifest.sAPIAccess.get_cached_tEPhysUnits();
+         % - Try to get cached table
+         tEPhysUnits = oManifest.sAPIAccess.tEPhysUnits;
+         
+         % - If table is not already in-memory
+         if isempty(tEPhysUnits)
+            % - Try to retrieve table from on-disk cache
+            strKey = 'allen_brain_observatory_ephys_units_manifest';
+            if oManifest.oCache.IsObjectInCache(strKey)
+               tEPhysUnits = oManifest.oCache.RetrieveObject(strKey);
+            else
+               % - Construct table from API
+               tEPhysUnits = oManifest.get_tEPhysUnits();
+               
+               % - Insert object in disk cache
+               oManifest.oCache.InsertObject(strKey, tEPhysUnits);
+            end
+            
+            % - Store table in memory cache
+            oManifest.sAPIAccess.tEPhysUnits = tEPhysUnits;
+         end
+      end
+   end
+   
+   methods
+      function sessions = session(oManifest, vnSessionIDs)
+         % - Create session objects
+         sessions = oManifest.session(vnSessionIDs);
+      end
+      
+      function probes = probe(oManifest, vnProbeIDs)
+         % - Create probe objects
+         probes = bot.internal.ephysprobe(vnProbeIDs, oManifest);
+      end
+      
+      function channels = channel(oManifest, vnChannelIDs)
+         % - Create channel objects
+         channels = bot.internal.ephyschannel(vnChannelIDs, oManifest);
+      end
+      
+      function units = unit(oManifest, vnUnitIDs)
+         % - Create unit objects
+         units = bot.internal.ephysunit(vnUnitIDs, oManifest);
       end
    end
    
@@ -99,58 +166,16 @@ classdef ephysmanifest < handle
    end
    
    methods (Access = private)
-      %% Cached getter methods for EPhys data
-      
-      function tEPhysSessions = get_cached_tEPhysSessions(oManifest)
-         strKey = 'allen_brain_observatory_ephys_sessions_manifest';
-         if oManifest.oCache.IsObjectInCache(strKey)
-            tEPhysSessions = oManifest.oCache.RetrieveObject(strKey);
-         else
-            tEPhysSessions = oManifest.sAPIAccess.tEPhysSessions();
-            oManifest.oCache.InsertObject(strKey, tEPhysSessions);
-         end
-      end
-      
-      function tEPhysUnits = get_cached_tEPhysUnits(oManifest)
-         strKey = 'allen_brain_observatory_ephys_units_manifest';
-         if oManifest.oCache.IsObjectInCache(strKey)
-            tEPhysUnits = oManifest.oCache.RetrieveObject(strKey);
-         else
-            tEPhysUnits = oManifest.sAPIAccess.tEPhysUnits();
-            oManifest.oCache.InsertObject(strKey, tEPhysUnits);
-         end
-      end
-      
-      function tEPhysProbes = get_cached_tEPhysProbes(oManifest)
-         strKey = 'allen_brain_observatory_ephys_probes_manifest';
-         if oManifest.oCache.IsObjectInCache(strKey)
-            tEPhysProbes = oManifest.oCache.RetrieveObject(strKey);
-         else
-            tEPhysProbes = oManifest.sAPIAccess.tEPhysProbes();
-            oManifest.oCache.InsertObject(strKey, tEPhysProbes);
-         end
-      end
-      
-      function tEPhysChannels = get_cached_tEPhysChannels(oManifest)
-         strKey = 'allen_brain_observatory_ephys_channels_manifest';
-         if oManifest.oCache.IsObjectInCache(strKey)
-            tEPhysChannels = oManifest.oCache.RetrieveObject(strKey);
-         else
-            tEPhysChannels = oManifest.sAPIAccess.tEPhysChannels();
-            oManifest.oCache.InsertObject(strKey, tEPhysChannels);
-         end
-      end
-      
       %% Low-level getter methods for EPhys data
       
       function tEPhysSessions = get_tEPhysSessions(oManifest)
          % METHOD - Return the table of all EPhys experimental sessions
          
          % - Get table of EPhys sessions
-         tEPhysSessions = oManifest.sAPIAccess.get_ephys_sessions();
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.tAnnotatedEPhysUnits();
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.tAnnotatedEPhysChannels();
-         tAnnotatedEPhysProbes = oManifest.sAPIAccess.tAnnotatedEPhysProbes();
+         tEPhysSessions = oManifest.get_ephys_sessions();
+         tAnnotatedEPhysUnits = oManifest.get_tAnnotatedEPhysUnits();
+         tAnnotatedEPhysChannels = oManifest.get_tAnnotatedEPhysChannels();
+         tAnnotatedEPhysProbes = oManifest.get_tAnnotatedEPhysProbes();
          
          % - Count numbers of units, channels and probes
          tEPhysSessions = count_owned(tEPhysSessions, tAnnotatedEPhysUnits, ...
@@ -170,16 +195,16 @@ classdef ephysmanifest < handle
       
       function tEPhysUnits = get_tEPhysUnits(oManifest)
          % METHOD - Return the table of all EPhys recorded units
-         tEPhysUnits = oManifest.sAPIAccess.tAnnotatedEPhysUnits();
+         tEPhysUnits = oManifest.get_tAnnotatedEPhysUnits();
       end
       
       function tEPhysProbes = get_tEPhysProbes(oManifest)
          % METHOD - Return the table of all EPhys recorded probes
          
          % - Get the annotated probes
-         tEPhysProbes = oManifest.sAPIAccess.tAnnotatedEPhysProbes();
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.tAnnotatedEPhysUnits();
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.tAnnotatedEPhysChannels();
+         tEPhysProbes = oManifest.get_tAnnotatedEPhysProbes();
+         tAnnotatedEPhysUnits = oManifest.get_tAnnotatedEPhysUnits();
+         tAnnotatedEPhysChannels = oManifest.get_tAnnotatedEPhysChannels();
          
          % - Count units and channels
          tEPhysProbes = count_owned(tEPhysProbes, tAnnotatedEPhysUnits, ...
@@ -196,8 +221,8 @@ classdef ephysmanifest < handle
          % METHOD - Return the table of all EPhys recorded channels
          
          % - Get annotated channels
-         tEPhysChannels = oManifest.sAPIAccess.tAnnotatedEPhysChannels();
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.tAnnotatedEPhysUnits();
+         tEPhysChannels = oManifest.get_tAnnotatedEPhysChannels();
+         tAnnotatedEPhysUnits = oManifest.get_tAnnotatedEPhysUnits();
          
          % - Count owned units
          tEPhysChannels = count_owned(tEPhysChannels, tAnnotatedEPhysUnits, ...
@@ -370,8 +395,8 @@ classdef ephysmanifest < handle
          % METHOD - Return table of annotated EPhys units
          
          % - Annotate units
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.get_ephys_units();
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.tAnnotatedEPhysChannels();
+         tAnnotatedEPhysUnits = oManifest.get_ephys_units();
+         tAnnotatedEPhysChannels = oManifest.get_tAnnotatedEPhysChannels();
          
          tAnnotatedEPhysUnits = join(tAnnotatedEPhysUnits, tAnnotatedEPhysChannels, ...
             'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
@@ -388,8 +413,8 @@ classdef ephysmanifest < handle
       function tAnnotatedEPhysProbes = get_tAnnotatedEPhysProbes(oManifest)
          % METHOD - Return the annotate table of EPhys probes
          % - Annotate probes and return
-         tAnnotatedEPhysProbes = oManifest.sAPIAccess.get_ephys_probes();
-         tSessions = oManifest.sAPIAccess.get_ephys_sessions();
+         tAnnotatedEPhysProbes = oManifest.get_ephys_probes();
+         tSessions = oManifest.get_ephys_sessions();
          tAnnotatedEPhysProbes = join(tAnnotatedEPhysProbes, tSessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       

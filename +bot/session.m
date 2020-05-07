@@ -1,7 +1,7 @@
 function new_sess = session(nSessionID)
 
 if nargin == 0
-   new_sess = bot.session_base;
+   new_sess = bot.internal.session_base;
    return;
 end
 
@@ -21,7 +21,7 @@ if numel(nSessionID) > 1
 end
 
 % - Get the table rows for this session
-tManifestRow = bot.session_base.find_manifest_row(nSessionID);
+tManifestRow = bot.internal.session_base.find_manifest_row(nSessionID);
 
 % - Build a session object from this single ID and return
 if tManifestRow.BOT_session_type == "OPhys"

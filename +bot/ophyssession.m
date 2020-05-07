@@ -62,7 +62,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession < bot.session_base
+classdef ophyssession < bot.internal.session_base
    
    %% - Public properties
    properties (SetAccess = private, Dependent = true)
@@ -111,30 +111,27 @@ classdef ophyssession < bot.session_base
          %        bsObj = bot.ophyssession(tSessionRow)
          
          % - Call super-class constructor
-         bsObj = bsObj@bot.session_base(varargin{:});
+         bsObj = bsObj@bot.internal.session_base(varargin{:});
          
          if nargin == 0
             return;
          end
          
          % - Ensure that we were given an OPhys session
-         if bsObj.sSessionInfo.BOT_session_type ~= "OPhys"
+         if bsObj.sMetadata.BOT_session_type ~= "OPhys"
             error('BOT:Usage', '`bot.ophyssession` objects may only refer to OPhys experimental sessions.');
          end
       end
    end
    
-   
-   %% - Matlab BOT methods
-   
-   methods (Access = private)
+   methods
       function strNWBURL = GetNWBURL(bos)
          % GetNWBURL - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
          %
          % Usage: strNWBURL = GetNWBURL(bos)
          
          % - Get well known files
-         vs_well_known_files = bos.sSessionInfo.well_known_files;
+         vs_well_known_files = bos.sMetadata.well_known_files;
          
          % - Find (first) NWB file
          vsTypes = [vs_well_known_files.well_known_file_type];
@@ -144,41 +141,8 @@ classdef ophyssession < bot.session_base
          % - Build URL
          strNWBURL = [bos.bocCache.strABOBaseUrl vs_well_known_files(nNWBFile).download_link];
       end
-      
-      function bNWBFileIsCached = IsNWBFileCached(bos)
-         % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
-         %
-         % Usage: bNWBFileIsCached = IsNWBFileCached(bos)
-         bNWBFileIsCached =  bos.bocCache.IsURLInCache(GetNWBURL(bos));
-      end
    end
-   
-   methods
-      function strCacheFile = EnsureCached(bos)
-         % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
-         %
-         % Usage: strCachelFile = EnsureCached(bos)
-         %
-         % This method will force the session data to be downloaded and cached,
-         % if it is not already available.
-         bos.CacheFilesForSessionIDs(bos.sSessionInfo.id);
-         strCacheFile = bos.strLocalNWBFileLocation;
-      end
-      
-      function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
-         % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
-         %
-         % Usage: strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
-         if ~bos.IsNWBFileCached()
-            strLocalNWBFileLocation = [];
-         else
-            % - Get the local file location for the session NWB URL
-            strLocalNWBFileLocation = bos.bocCache.ccCache.CachedFileForURL(GetNWBURL(bos));
-         end
-      end
-   end
-   
-   
+
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
    methods (Hidden = false)
       function sMetadata = get_metadata(bos)
@@ -615,7 +579,7 @@ classdef ophyssession < bot.session_base
          % get_session_type - METHOD Return the name for the stimulus set used in this session
          %
          % Usage: strSessionType = get_session_type(bos)
-         strSessionType = bos.sSessionInfo.stimulus_name;
+         strSessionType = bos.sMetadata.stimulus_name;
       end
       
       function tStimEpochs = get_stimulus_epoch_table(bos)
@@ -854,7 +818,7 @@ classdef ophyssession < bot.session_base
          % or euclidean coordinates.
          
          % - Fail quickly if eye tracking data is known not to exist
-         if bos.sSessionInfo.fail_eye_tracking
+         if bos.sMetadata.fail_eye_tracking
             error('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
          end
@@ -904,7 +868,7 @@ classdef ophyssession < bot.session_base
          % area in pixels.
          
          % - Fail quickly if eye tracking data is known not to exist
-         if bos.sSessionInfo.fail_eye_tracking
+         if bos.sMetadata.fail_eye_tracking
             error('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
          end
