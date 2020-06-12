@@ -1,6 +1,7 @@
 classdef ephysitem < handle
-   properties (SetAccess = private)
+   properties (SetAccess = protected)
       sMetadata;
+      sPropertyCache;
    end
    
    methods (Access = protected)
@@ -21,4 +22,21 @@ classdef ephysitem < handle
          item.sMetadata = table2struct(tItem);
       end
    end   
+   
+   methods (Access = protected)
+      function oData = get_cached(self, strProperty, fhAccessFun)
+         % - Check for cached property
+         if ~isfield(self.sPropertyCache, strProperty)
+            % - Use the access function
+            self.sPropertyCache.(strProperty) = fhAccessFun();
+         end
+         
+         % - Return the cached property
+         oData = self.sPropertyCache.(strProperty);
+      end
+      
+      function bInCache = in_cache(self, strProperty)
+         bInCache = isfield(self.sPropertyCache, strProperty) && ~isempty(self.sPropertyCache.(strProperty));
+      end
+   end
 end

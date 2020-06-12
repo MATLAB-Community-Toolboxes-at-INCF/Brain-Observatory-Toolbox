@@ -199,7 +199,7 @@ classdef cache < handle
             strURLQueryPage = strURL + ",rma::options[start_row$eq" + nStartRow + "][num_rows$eq" + nPageSize + "][order$eq'id']";
             
             % - Perform query
-            response_raw = oCache.sCacheFiles.ccCache.webread(strURLQueryPage, [], options);
+            response_raw = oCache.ccCache.webread(strURLQueryPage, [], options);
             
             % - Was there an error?
             if ~response_raw.success

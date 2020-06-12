@@ -2,7 +2,7 @@
 
 classdef nwb_ephys < handle
    properties (SetAccess = private)
-      strFile;                      % Path to the NWB file
+      strFile string;                            % Path to the NWB file
       
       filter_out_of_brain_units logical;  % Flag indicating whether units outside of the brain should be filtered out
       filter_by_validity logical;         % Flag indicating whether invalid units should be filtered out
@@ -22,7 +22,7 @@ classdef nwb_ephys < handle
          
          % - Verify arguments
          arguments
-            strFile string;
+            strFile string = "";
             probe_lfp_paths = [];
             additional_unit_metrics = [];
             external_channel_columns = [];
@@ -31,6 +31,11 @@ classdef nwb_ephys < handle
             amplitude_cutoff_maximum = 0.1;
             presence_ratio_minimum = 0.95;
             isi_violations_maximum = 0.5;
+         end
+         
+         % - Handle no-argument calling
+         if nargin == 0
+            return;
          end
          
          try
@@ -68,7 +73,7 @@ classdef nwb_ephys < handle
       function time = get_session_start_time(self)
          % - Read the session start time from the NWB file
          t = h5read(self.strFile, '/session_start_time');
-         time = datetime(t{1},'TimeZone','UTC','Format','yyyy-MM-dd''T''HH:mm:ssXXXXX');
+         time = datetime(t,'TimeZone','UTC','Format','yyyy-MM-dd''T''HH:mm:ssXXXXX');
       end
       
       function stimulus_presentations = get_stimulus_presentations(self)
@@ -81,6 +86,10 @@ classdef nwb_ephys < handle
          % - Read from the cached NWB file, return as a table
          stimulus_presentations = bot.nwb.table_from_datasets(self.strFile, ...
             strEpochsKey, cstrIgnoreKeys);
+         
+         % - Rename 'id' columns
+         stimulus_presentations = rename_variables(stimulus_presentations, ...
+            'id', 'stimulus_presentation_id');
          
          % - Filter out colour triplets to a "color_triplet" variable
          if ismember('color', stimulus_presentations.Properties.VariableNames)
@@ -107,17 +116,6 @@ classdef nwb_ephys < handle
          end
       end 
       
-      function probe_nwbfile = get_probe_nwbfile(self, probe_id)
-         if isempty(self.probe_lfp_paths)
-            error('BOT:NoSeparateProbeNWB', 'This session does not contain separate probe NWB files.');
-            
-         elseif probe_id > numel(self.probe_lfp_paths)
-            error('BOT:Usage', 'No probe LFP NWB file is recorded for probe %d', probe_id);
-         end
-         
-         probe_nwbfile = self.probe_lfp_paths(probe_id);
-      end
-      
       function probes = get_probes(self)
          % - Retrieve the electrode groups (probes) from the NWB file
          sElectrodes = h5info(self.strFile, '/general/extracellular_ephys');
@@ -138,7 +136,7 @@ classdef nwb_ephys < handle
                'location', s.location, ...
                'sampling_rate', s.sampling_rate, ...
                'lfp_sampling_rate', s.lfp_sampling_rate, ...
-               'has_lfp_data', str2num(lower(s.has_lfp_data))); %#ok<ST2NM>
+               'has_lfp_data', str2num(string(lower(s.has_lfp_data)))); %#ok<ST2NM>
          end
       end
       
@@ -181,7 +179,6 @@ classdef nwb_ephys < handle
       
       function spike_amplitudes = get_spike_amplitudes(self)
          units_table = self.get_full_units_table();
-         spike_amplitudes = units_table.spike_amplitudes;
          spike_amplitudes = units_table(:, {'id', 'spike_amplitudes'});
          spike_amplitudes.Properties.VariableNames(1) = "unit_id";
       end
@@ -200,32 +197,17 @@ classdef nwb_ephys < handle
          end
       end
       
-      function lfp = get_lfp(self, probe_id)
-         lfp_file = self.get_probe_nwbfile(probe_id);
-         error('BOT:NotImplemented', 'This method is not implemented');
+      function running_speed = get_running_speed(self, include_rotation)
+         arguments
+            self;
+            include_rotation logical = false;
+         end
          
-         %         lfp = lfp_file.get_acquisition(f'probe_{probe_id}_lfp')
-         %         series = lfp.get_electrical_series(f'probe_{probe_id}_lfp_data')
-         %
-         %         electrodes = lfp_file.electrodes.to_dataframe()
-         %
-         %         data = series.data[:]
-         %         timestamps = series.timestamps[:]
-         %
-         %         return xr.DataArray(
-         %             name="LFP",
-         %             data=data,
-         %             dims=['time', 'channel'],
-         %             coords=[timestamps, electrodes.index.values]
-         %         )
-      end
-      
-      function running_speed = get_running_speed(oSession, include_rotation)
          % - Identify where in the NWB file the data is located
          strEpochsKey = '/processing/running/running_speed';
          
          % - Read from the cached NWB file, return as a table
-         running_speed_raw = bot.nwb.table_from_datasets(oSession.EnsureCached(), strEpochsKey);
+         running_speed_raw = bot.nwb.table_from_datasets(self.strFile, strEpochsKey);
          
          % - Construct return table
          start_time = running_speed_raw.timestamps(:, 1);
@@ -328,25 +310,6 @@ classdef nwb_ephys < handle
          % - Read the identifier from the NWB file
          id = h5read(self.strFile, '/identifier');
          id = uint32(str2double(id));
-      end
-      
-      function csd = get_current_source_density(self, probe_id)
-         error('BOT:NotImplemented', 'This method is not implemented');
-         %         csd_mod = self.get_probe_nwbfile(probe_id).get_processing_module("current_source_density")
-         %         csd_ts = csd_mod["current_source_density"]
-         %
-         %         csd = xr.DataArray(
-         %             name="CSD",
-         %             data=csd_ts.data[:],
-         %             dims=["virtual_channel_index", "time"],
-         %             coords={
-         %                 "virtual_channel_index": np.arange(csd_ts.data.shape[0]),
-         %                 "time": csd_ts.timestamps[:],
-         %                 "vertical_position": (("virtual_channel_index",), csd_ts.control[:, 1]),
-         %                 "horizontal_position": (("virtual_channel_index",), csd_ts.control[:, 0])
-         %             }
-         %         )
-         %         return csd
       end
       
       function tos = get_optogenetic_stimulation(self)
@@ -466,10 +429,4 @@ function row = remove_invalid_spikes(row, times_key, amps_key)
    % - Reassign valid spikes
    row.(times_key) = {spike_times(order)};
    row.(amps_key) = {amps(order)};
-end
-
-function a = test(varargin)
-   a = 1;
-   disp(size(varargin));
-   disp(varargin);
 end

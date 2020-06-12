@@ -50,22 +50,8 @@ classdef ophysmanifest < handle
    %% Constructor
    methods
       function oManifest = ophysmanifest()
-         % - Find and return the global manifest object, if one exists
-         sUserData = get(0, 'UserData');
-         if isfield(sUserData, 'BOT_GLOBAL_OPHYS_MANIFEST') && ...
-               isa(sUserData.BOT_GLOBAL_OPHYS_MANIFEST, 'bot.ophysmanifest')
-            
-            % - A global class instance exists
-            oManifest = sUserData.BOT_GLOBAL_OPHYS_MANIFEST;
-            return;
-         end
-         
          % Memoize manifest getter
          oManifest.sAPIAccess.get_cached_ophys_manifests = memoize(@oManifest.get_cached_ophys_manifests);
-         
-         % - Assign the manifest object to a global cache
-         sUserData.BOT_GLOBAL_OPHYS_MANIFEST = oManifest;
-         set(0, 'UserData', sUserData);
       end
    end
    
