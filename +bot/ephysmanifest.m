@@ -418,10 +418,10 @@ classdef ephysmanifest < handle
          tAnnotatedEPhysProbes = join(tAnnotatedEPhysProbes, tSessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       
-      function tAnnotatedEPhysChannels = get_tAnnotatedEPhysChannels(oCache)
+      function tAnnotatedEPhysChannels = get_tAnnotatedEPhysChannels(oManifest)
          % - METHOD - Return the annotated table of EPhys channels
-         tAnnotatedEPhysChannels = oCache.sAPIAccess.get_ephys_channels();
-         tAnnotatedEPhysProbes = oCache.sAPIAccess.tAnnotatedEPhysProbes();
+         tAnnotatedEPhysChannels = oManifest.get_ephys_channels();
+         tAnnotatedEPhysProbes = oManifest.sAPIAccess.tAnnotatedEPhysProbes();
          tAnnotatedEPhysChannels = join(tAnnotatedEPhysChannels, tAnnotatedEPhysProbes, ...
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end
