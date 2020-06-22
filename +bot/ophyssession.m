@@ -64,9 +64,8 @@
 
 classdef ophyssession < bot.internal.session_base
    
-   %% - Public properties
-   properties (SetAccess = private, Dependent = true)
-      strLocalNWBFileLocation;   % Local location of the NWB file corresponding to this session, if it has been cached
+   properties (SetAccess = private)
+      sMetadata
    end
    
    %% - Private properties
@@ -103,20 +102,28 @@ classdef ophyssession < bot.internal.session_base
    
    %% - Constructor
    methods
-      function bsObj = ophyssession(varargin)
+      function bsObj = ophyssession(nID)
          % bot.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
          % Usage: bsObj = bot.ophyssession(nSessionID)
          %        vbsObj = bot.ophyssession(vnSessionIDs)
          %        bsObj = bot.ophyssession(tSessionRow)
          
-         % - Call super-class constructor
-         bsObj = bsObj@bot.internal.session_base(varargin{:});
-         
          if nargin == 0
             return;
          end
          
+         % - Handle a vector of session IDs
+         if numel(nID) > 1
+            for nIndex = numel(nID):-1:1
+               bsObj(nID) = bot.ophyssession(nID(nIndex));
+            end
+            return;
+         end
+         
+         % - Assign session information
+         bsObj.sMetadata = table2struct(bsObj.find_manifest_row(nID));
+
          % - Ensure that we were given an OPhys session
          if bsObj.sMetadata.BOT_session_type ~= "OPhys"
             error('BOT:Usage', '`bot.ophyssession` objects may only refer to OPhys experimental sessions.');

@@ -18,18 +18,15 @@ classdef session_base < handle
          if nargin == 0
             return;
          end
-         
-         % - Assign session information
-         sess.sMetadata = table2struct(sess.find_manifest_row(nSessionID));
       end
    end
    
    %% - Matlab BOT methods
    
-   methods (Abstract)
-      GetNWBURL(bos);
-   end
-      
+%    methods (Abstract)
+%       GetNWBURL(bos)
+%    end
+%       
    methods
       function bNWBFileIsCached = IsNWBFileCached(bos)
          % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached

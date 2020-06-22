@@ -94,7 +94,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          % - Handle a vector of session IDs
          if numel(nID) > 1
             for nIndex = numel(nID):-1:1
-               bsObj(nID) = bot.ephyssession(nID(nIndex));
+               bsObj(nID) = bot.ephyssession(nID(nIndex), oManifest);
             end
             return;
          end
