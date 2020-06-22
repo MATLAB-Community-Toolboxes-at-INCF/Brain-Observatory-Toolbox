@@ -903,8 +903,8 @@ methods (Access = public)
             'Expected exactly one natural movie template with number %d, found %d.', number, size(well_known_files, 1));
       end
       
-      download_link = well_known_files.download_link;
-      strLocalFile = boc.CacheFile(download_link, well_known_files.path);
+      strDownloadURL = self.bocCache.strABOBaseUrl + well_known_files.download_link;
+      strLocalFile = self.bocCache.CacheFile(strDownloadURL, well_known_files.path);
       
       
       %         well_known_files = self.stimulus_templates[self.stimulus_templates["movie_number"] == number]
