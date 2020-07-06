@@ -368,19 +368,16 @@ classdef ephysmanifest < handle
          ephys_channels_manifest = oManifest.oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
          
          % - Convert columns to reasonable formats
-         id = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.id, 'UniformOutput', false)));
-         ephys_probe_id = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.ephys_probe_id, 'UniformOutput', false)));
-         local_index = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.local_index, 'UniformOutput', false)));
-         probe_horizontal_position = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.probe_horizontal_position, 'UniformOutput', false)));
-         probe_vertical_position = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.probe_vertical_position, 'UniformOutput', false)));
-         anterior_posterior_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.anterior_posterior_ccf_coordinate, 'UniformOutput', false)));
-         dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
-         left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num, ephys_channels_manifest.left_right_ccf_coordinate, 'UniformOutput', false)));
+         id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.id, 'UniformOutput', false)));
+         ephys_probe_id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.ephys_probe_id, 'UniformOutput', false)));
+         local_index = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.local_index, 'UniformOutput', false)));
+         probe_horizontal_position = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.probe_horizontal_position, 'UniformOutput', false)));
+         probe_vertical_position = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.probe_vertical_position, 'UniformOutput', false)));
+         anterior_posterior_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.anterior_posterior_ccf_coordinate, 'UniformOutput', false)));
+         dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
+         left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.left_right_ccf_coordinate, 'UniformOutput', false)));
          
-         es_id = ephys_channels_manifest.ephys_structure_id;
-         ephys_structure_id(~cellfun(@isempty, es_id)) = cellfun(@str2num, es_id(~cellfun(@isempty, es_id)), 'UniformOutput', false);
-         ephys_structure_id(cellfun(@isempty, es_id)) = {[]};
-         ephys_structure_id = ephys_structure_id';
+         ephys_structure_id = cellfun(@str2num_nan, ephys_channels_manifest.ephys_structure_id, 'UniformOutput', false);
          
          ephys_structure_acronym = ephys_channels_manifest.ephys_structure_acronym;
          
@@ -421,7 +418,7 @@ classdef ephysmanifest < handle
       function tAnnotatedEPhysChannels = get_tAnnotatedEPhysChannels(oManifest)
          % - METHOD - Return the annotated table of EPhys channels
          tAnnotatedEPhysChannels = oManifest.get_ephys_channels();
-         tAnnotatedEPhysProbes = oManifest.sAPIAccess.tAnnotatedEPhysProbes();
+         tAnnotatedEPhysProbes = oManifest.get_tAnnotatedEPhysProbes();
          tAnnotatedEPhysChannels = join(tAnnotatedEPhysChannels, tAnnotatedEPhysProbes, ...
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end
@@ -552,4 +549,13 @@ end
 
 % - Add the counts to the table
 tReturn = addvars(tSource, vnCounts, 'NewVariableNames', strSourceNewVar);
+end
+
+
+function n = str2num_nan(s)
+   if isempty(s)
+      n = nan;
+   else
+      n = str2double(s);
+   end
 end
