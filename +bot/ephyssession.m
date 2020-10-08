@@ -91,6 +91,10 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
             return;
          end
          
+         if ~exist('oManifest', 'var') || isempty(oManifest)
+            oManifest = bot.ephysmanifest;
+         end
+         
          % - Handle a vector of session IDs
          if ~istable(nID) && numel(nID) > 1
             for nIndex = numel(nID):-1:1
