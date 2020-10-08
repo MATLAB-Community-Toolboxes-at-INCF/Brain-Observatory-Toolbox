@@ -27,5 +27,6 @@ tManifestRow = bot.internal.session_base.find_manifest_row(nSessionID);
 if tManifestRow.BOT_session_type == "OPhys"
    new_sess = bot.ophyssession(tManifestRow);
 else
-   new_sess = bot.ephyssession(tManifestRow);
+   bom = bot.ephysmanifest;
+   new_sess = bot.ephyssession(tManifestRow, bom);
 end

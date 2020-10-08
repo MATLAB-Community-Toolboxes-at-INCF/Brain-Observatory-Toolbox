@@ -92,7 +92,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          % - Handle a vector of session IDs
-         if numel(nID) > 1
+         if ~istable(nID) && numel(nID) > 1
             for nIndex = numel(nID):-1:1
                bsObj(nID) = bot.ephyssession(nID(nIndex), oManifest);
             end
@@ -101,6 +101,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          % - Assign metadata
          bsObj = bsObj.check_and_assign_metadata(nID, oManifest.tEPhysSessions, 'session');
+         nID = bsObj.sMetadata.id;
          
          % - Ensure that we were given an EPhys session
          if bsObj.sMetadata.BOT_session_type ~= "EPhys"

@@ -114,7 +114,7 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Handle a vector of session IDs
-         if numel(nID) > 1
+         if ~istable(nID) && numel(nID) > 1
             for nIndex = numel(nID):-1:1
                bsObj(nID) = bot.ophyssession(nID(nIndex));
             end
@@ -131,8 +131,8 @@ classdef ophyssession < bot.internal.session_base
       end
    end
    
-   methods
-      function strNWBURL = GetNWBURL(bos)
+   methods      
+   function strNWBURL = GetNWBURL(bos)
          % GetNWBURL - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
          %
          % Usage: strNWBURL = GetNWBURL(bos)

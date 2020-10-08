@@ -7,16 +7,22 @@ classdef ephysitem < handle
    methods (Access = protected)
       function item = check_and_assign_metadata(item, nID, tManifestTable, strType, varargin)
          % - Check usage
-         assert(isnumeric(nID), 'BOT:Usage', '`nID` must be an integer ID.');
-         nID = uint32(round(nID));
+         if istable(nID)
+            assert(size(nID, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
+            tItem = nID;
+         else
          
-         % - Locate an ID in the manifest table
-         vbTableRow = tManifestTable.id == nID;
-         if ~any(vbTableRow)
-            error('BOT:Usage', 'Item not found in %s manifest.', strType);
+            assert(isnumeric(nID), 'BOT:Usage', '`nID` must be an integer ID.');
+            nID = uint32(round(nID));
+            
+            % - Locate an ID in the manifest table
+            vbTableRow = tManifestTable.id == nID;
+            if ~any(vbTableRow)
+               error('BOT:Usage', 'Item not found in %s manifest.', strType);
+            end
+            
+            tItem = tManifestTable(vbTableRow, :);
          end
-         
-         tItem = tManifestTable(vbTableRow, :);
          
          % - Assign the table data to the metadata structure
          item.sMetadata = table2struct(tItem);
