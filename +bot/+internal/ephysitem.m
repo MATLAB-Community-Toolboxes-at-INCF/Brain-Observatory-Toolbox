@@ -11,7 +11,6 @@ classdef ephysitem < handle
             assert(size(nID, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
             tItem = nID;
          else
-         
             assert(isnumeric(nID), 'BOT:Usage', '`nID` must be an integer ID.');
             nID = uint32(round(nID));
             

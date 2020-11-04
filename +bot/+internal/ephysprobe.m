@@ -16,7 +16,7 @@ classdef ephysprobe < bot.internal.ephysitem
          end
          
          % - Handle a vector of probe IDs
-         if numel(nID) > 1
+         if ~istable(nID) && (numel(nID) > 1)
             for nIndex = numel(nID):-1:1
                probe(nIndex) = bot.internal.ephysprobe(nID(nIndex), oManifest);
             end
@@ -24,7 +24,10 @@ classdef ephysprobe < bot.internal.ephysitem
          end
          
          % - Assign metadata
-         probe = probe.check_and_assign_metadata(nID, oManifest.tEPhysProbes, 'probe');
+         probe.check_and_assign_metadata(nID, oManifest.tEPhysProbes, 'probe');
+         if istable(nID)
+            nID = probe.sMetadata.id;
+         end
          
          % - Assign associated table rows
          probe.tChannels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.ephys_probe_id == nID, :);
@@ -95,6 +98,7 @@ classdef ephysprobe < bot.internal.ephysitem
       
       function strNWBFile = EnsureCached(self)
          if ~self.IsNWBFileCached
+            boc = bot.internal.cache;
             strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.sWellKnownFile.download_link], self.sWellKnownFile.path);
          else
             strNWBFile = self.strLocalNWBFileLocation;

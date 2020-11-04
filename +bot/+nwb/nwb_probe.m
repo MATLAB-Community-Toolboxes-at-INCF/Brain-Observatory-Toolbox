@@ -29,20 +29,20 @@ classdef nwb_probe < handle
       end
       
    
-      function [csd, timestamps, horizontal_position, vertical_position] = get_current_source_density(self)
+      function [csd, timestamps, virtual_electrode_x_positions, virtual_electrode_y_positions] = get_current_source_density(self)
          % - Read CSD data
          csd = h5read(self.strFile, ...
-            '/processing/current_source_density/current_source_density/data');
+            '/processing/current_source_density/ecephys_csd/current_source_density/data');
          
          % - Read timestamps
          timestamps = h5read(self.strFile, ...
-            '/processing/current_source_density/current_source_density/timestamps');
+            '/processing/current_source_density/ecephys_csd/current_source_density/timestamps');
          
          % - Read electrode position
-         control = h5read(self.strFile, ...
-            '/processing/current_source_density/current_source_density/control')';
-         horizontal_position = control(:, 1);
-         vertical_position = control(:, 2);
+         virtual_electrode_x_positions = h5read(self.strFile, ...
+            '/processing/current_source_density/ecephys_csd/virtual_electrode_x_positions');
+         virtual_electrode_y_positions = h5read(self.strFile, ...
+            '/processing/current_source_density/ecephys_csd/virtual_electrode_y_positions');
       end
    end
 end

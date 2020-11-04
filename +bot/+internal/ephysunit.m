@@ -1,6 +1,8 @@
 classdef ephysunit < bot.internal.ephysitem
    properties (SetAccess = private)
       session;
+      channel;
+      probe;
    end
    
    methods
@@ -11,7 +13,7 @@ classdef ephysunit < bot.internal.ephysitem
          end
          
          % - Handle a vector of unit IDs
-         if numel(nID) > 1
+         if ~istable(nID) && (numel(nID) > 1)
             for nIndex = numel(nID):-1:1
                unit(nIndex) = bot.internal.ephysunit(nID(nIndex), oManifest);
             end
@@ -20,9 +22,14 @@ classdef ephysunit < bot.internal.ephysitem
          
          % - Assign metadata
          unit = unit.check_and_assign_metadata(nID, oManifest.tEPhysUnits, 'unit');
+         if istable(nID)
+            nID = unit.sMetadata.id;
+         end
          
          % - Get a handle to the corresponding experimental session
          unit.session = oManifest.session(unit.sMetadata.ephys_session_id);
+         unit.channel = oManifest.channel(unit.sMetadata.ephys_channel_id);
+         unit.probe = oManifest.probe(unit.sMetadata.ephys_probe_id);
       end
    end
 end

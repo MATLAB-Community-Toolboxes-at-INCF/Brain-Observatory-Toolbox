@@ -190,5 +190,39 @@ classdef test < matlab.unittest.TestCase
          s.get_stimulus_template('locally_sparse_noise_4deg');
          s.get_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
       end      
+      
+      function testEPhysObjects(testCase)
+         % - Get the EPhys manifest
+         bom = bot.ephysmanifest;
+         
+         % - Get a probe, by ID and by table
+         p = bom.probe(bom.tEPhysProbes{1, 'id'});
+         p = bom.probe(bom.tEPhysProbes(1, :));
+         vp = bom.probe(bom.tEPhysProbes{[1, 2], 'id'});
+         
+         % - Get channels, by ID and by table
+         c = bom.channel(bom.tEPhysChannels{1, 'id'});
+         c = bom.channel(bom.tEPhysChannels(1, :));
+         c = bom.channel(bom.tEPhysChannels{[1, 2], 'id'});
+         
+         % - Get units, by ID and by table
+         c = bom.unit(bom.tEPhysUnits{1, 'id'});
+         c = bom.unit(bom.tEPhysUnits(1, :));
+         c = bom.unit(bom.tEPhysUnits{[1, 2], 'id'});         
+      end
+      
+      function testLFPCSDExtraction(testCase)
+         % - Get the EPhys manifest
+         bom = bot.ephysmanifest;
+         
+         % - Get a probe, by ID and by table
+         p = bom.probe(bom.tEPhysProbes{1, 'id'});
+         
+         % - Access LFP data
+         p.get_lfp();
+         
+         % - Access CSD data
+         p.get_current_source_density();
+      end
    end
 end
