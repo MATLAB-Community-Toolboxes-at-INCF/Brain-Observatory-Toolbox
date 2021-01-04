@@ -5,8 +5,8 @@
 classdef session_base < handle
    properties (Access = protected)
       bocCache = bot.internal.cache();                   % Private handle to the BOT Cache
-      bomOPhysManifest = bot.ophysmanifest;              % Private handle to the OPhys data manifest
-      bomEPhysManifest = bot.ephysmanifest;              % Private handle to the EPhys data manifest
+      bomOPhysManifest = bot.internal.ophysmanifest;              % Private handle to the OPhys data manifest
+      bomEPhysManifest = bot.internal.ephysmanifest;              % Private handle to the EPhys data manifest
       strLocalNWBFileLocation;
    end
    

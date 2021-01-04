@@ -1,4 +1,4 @@
-%% CLASS bot.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
+%% CLASS bot.internal.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
 classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    %% Properties
@@ -82,23 +82,23 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    %% Constructor
    methods
       function bsObj = ephyssession(nID, oManifest)
-         % bot.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+         % bot.internal.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.ophyssession(nSessionID)
-         %        vbsObj = bot.ophyssession(vnSessionIDs)
-         %        bsObj = bot.ophyssession(tSessionRow)
+         % Usage: bsObj = bot.internal.ephyssession(nSessionID)
+         %        vbsObj = bot.internal.ephyssession(vnSessionIDs)
+         %        bsObj = bot.internal.ephyssession(tSessionRow)
          if nargin == 0
             return;
          end
          
          if ~exist('oManifest', 'var') || isempty(oManifest)
-            oManifest = bot.ephysmanifest;
+            oManifest = bot.internal.ephysmanifest;
          end
          
          % - Handle a vector of session IDs
          if ~istable(nID) && numel(nID) > 1
             for nIndex = numel(nID):-1:1
-               bsObj(nID) = bot.ephyssession(nID(nIndex), oManifest);
+               bsObj(nID) = bot.internal.ephyssession(nID(nIndex), oManifest);
             end
             return;
          end
@@ -109,7 +109,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          % - Ensure that we were given an EPhys session
          if bsObj.sMetadata.BOT_session_type ~= "EPhys"
-            error('BOT:Usage', '`bot.ephyssession` objects may only refer to EPhys experimental sessions.');
+            error('BOT:Usage', '`bot.internal.ephyssession` objects may only refer to EPhys experimental sessions.');
          end
          
          % - Assign associated table rows

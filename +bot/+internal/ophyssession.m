@@ -1,12 +1,13 @@
-%% bot.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
+%% bot.internal.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
 %
 % This is the main interface to access data from an Allen Brain Observatory
 % experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
-% identify an experimental session of interest. Then use `bot.ophyssession` to access
+% identify an experimental session of interest. Then use `bot.session` to access
 % data associated with that session id.
 %
 % Construction:
-% >> bos = bot.opyssession(nSessionID);
+% >> bos = bot.session(nSessionID);
+% >> bos = bot.internal.opyssession(nSessionID);
 %
 % Get session metadata:
 % >> bos.get_metadata()
@@ -103,11 +104,11 @@ classdef ophyssession < bot.internal.session_base
    %% - Constructor
    methods
       function bsObj = ophyssession(nID)
-         % bot.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+         % bot.internal.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.ophyssession(nSessionID)
-         %        vbsObj = bot.ophyssession(vnSessionIDs)
-         %        bsObj = bot.ophyssession(tSessionRow)
+         % Usage: bsObj = bot.internal.ophyssession(nSessionID)
+         %        vbsObj = bot.internal.ophyssession(vnSessionIDs)
+         %        bsObj = bot.internal.ophyssession(tSessionRow)
          
          if nargin == 0
             return;
@@ -116,7 +117,7 @@ classdef ophyssession < bot.internal.session_base
          % - Handle a vector of session IDs
          if ~istable(nID) && numel(nID) > 1
             for nIndex = numel(nID):-1:1
-               bsObj(nID) = bot.ophyssession(nID(nIndex));
+               bsObj(nID) = bot.internal.ophyssession(nID(nIndex));
             end
             return;
          end
@@ -126,7 +127,7 @@ classdef ophyssession < bot.internal.session_base
 
          % - Ensure that we were given an OPhys session
          if bsObj.sMetadata.BOT_session_type ~= "OPhys"
-            error('BOT:Usage', '`bot.ophyssession` objects may only refer to OPhys experimental sessions.');
+            error('BOT:Usage', '`bot.internal.ophyssession` objects may only refer to OPhys experimental sessions.');
          end
       end
    end

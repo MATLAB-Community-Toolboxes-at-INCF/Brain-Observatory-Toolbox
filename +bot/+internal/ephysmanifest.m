@@ -133,7 +133,7 @@ classdef ephysmanifest < handle
    methods
       function sessions = session(oManifest, vnSessionIDs)
          % - Create session objects
-         sessions = bot.ephyssession(vnSessionIDs, oManifest);
+         sessions = bot.internal.ephyssession(vnSessionIDs, oManifest);
       end
       
       function probes = probe(oManifest, vnProbeIDs)

@@ -68,7 +68,7 @@ classdef ophyssessionfilter < handle
    
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
-      bomOPhysManifest = bot.ophysmanifest();
+      bomOPhysManifest = bot.internal.ophysmanifest();
    end
    
    %% Constructor
@@ -76,7 +76,7 @@ classdef ophyssessionfilter < handle
       
       function bosf = ophyssessionfilter()
          % - Display warning of deprecated class
-         warning('The `bot.ophyssessionfilter` class is deprecated. Use `bot.manifest` to obtain data manifests, and filter the tables directly.');
+         warning('The `bot.util.ophyssessionfilter` class is deprecated. Use `bot.manifest` to obtain data manifests, and filter the tables directly.');
          
          % - Get the unfiltered session table, clear all filters
          clear_filters(bosf);
@@ -260,7 +260,7 @@ classdef ophyssessionfilter < handle
          % Usage: vbsSessions = get_filtered_sessions(bosf)
          
          % - Get the current table of filtered sessions, construct objects
-         vbsSessions = bot.ophyssession(bosf.filtered_session_table.id);
+         vbsSessions = bot.util.ophyssession(bosf.filtered_session_table.id);
       end
       
       %% -- Getter methods for dependent filtered sessions properties

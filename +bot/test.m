@@ -11,7 +11,7 @@ classdef test < matlab.unittest.TestCase
       function testOphysTables(testCase)
          %% Test retrieving all OPhys manifest tables
          bom = bot.manifest('ophys');
-         bom = bot.ophysmanifest;
+         bom = bot.internal.ophysmanifest;
          bom.tOPhysSessions;                   % Table of all OPhys experimental sessions
          bom.tOPhysContainers;                 % Table of all OPhys experimental containers
       end
@@ -19,7 +19,7 @@ classdef test < matlab.unittest.TestCase
       function testEphysTables(testCase)
          %% Test retrieving EPhys manifest tables
          bom = bot.manifest('ephys');
-         bom = bot.ephysmanifest;
+         bom = bot.internal.ephysmanifest;
          bom.tEPhysSessions;                 % Table of all EPhys experimental sessions
          bom.tEPhysChannels;                 % Table of all EPhys channels
          bom.tEPhysProbes;                   % Table of all EPhys probes
@@ -56,7 +56,7 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysSessionFilterMethods(testCase)
          %% Test using the OPhys session filter filtering methods
-         bom = bot.ophysmanifest;
+         bom = bot.internal.ophysmanifest;
          bosf = bot.util.ophyssessionfilter;
          
          % CRE lines
@@ -110,25 +110,25 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
          
-         % - Create some bot.ophyssession objects
-         bot.ophyssession(vIDs(1));
+         % - Create some bot.internal.ophyssession objects
+         bot.internal.ophyssession(vIDs(1));
          bot.session(vIDs(1:2));
-         bot.ophyssession(bosf.valid_session_table(1, :));
+         bot.internal.ophyssession(bosf.valid_session_table(1, :));
       end
       
       function testCacheSessionObject(testCase)
          %% Test obtaining an OPhys session object data from the cache
-         % - Create a bot.ophyssession object
-         s = bot.ophyssession(704298735);
+         % - Create a bot.internal.ophyssession object
+         s = bot.internal.ophyssession(704298735);
          
          % - Ensure the data is in the cache
          s.EnsureCached();
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.ophyssession class for OPhys data
-         % - Create a bot.ophyssession object
-         s = bot.ophyssession(528402271);
+         %% Test data access methods of the bot.internal.ophyssession class for OPhys data
+         % - Create a bot.internal.ophyssession object
+         s = bot.internal.ophyssession(528402271);
 
          % - Test summary methods
          vnCellIDs = s.get_cell_specimen_ids();
@@ -157,8 +157,8 @@ classdef test < matlab.unittest.TestCase
       
       function testStimulusExtraction(testCase)
          %% Test OPhys session stimulus extraction methods
-         % - Create a bot.ophyssession object
-         s = bot.ophyssession(528402271);
+         % - Create a bot.internal.ophyssession object
+         s = bot.internal.ophyssession(528402271);
 
          % - Get a vector of fluorescence frame IDs
          vnFrameIDs = 1:numel(s.get_fluorescence_timestamps());
@@ -184,7 +184,7 @@ classdef test < matlab.unittest.TestCase
          s.get_spontaneous_activity_stimulus_table();
          
          % - Get an OPhys session with sparse noise
-         s = bot.ophyssession(566752133);
+         s = bot.internal.ophyssession(566752133);
          
          % - Get the sparse noise stimulus template
          s.get_stimulus_template('locally_sparse_noise_4deg');
@@ -192,8 +192,10 @@ classdef test < matlab.unittest.TestCase
       end      
       
       function testEPhysObjects(testCase)
+         %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.ephysmanifest;
+         bom = bot.internal.ephysmanifest;
+         bom = bot.manifest('ephys');
          
          % - Get a probe, by ID and by table
          p = bom.probe(bom.tEPhysProbes{1, 'id'});
@@ -212,8 +214,10 @@ classdef test < matlab.unittest.TestCase
       end
       
       function testLFPCSDExtraction(testCase)
+         %% Test LFP and CSD extraction
          % - Get the EPhys manifest
-         bom = bot.ephysmanifest;
+         bom = bot.internal.ephysmanifest;
+         bom = bot.manifest('ephys');
          
          % - Get a probe, by ID and by table
          p = bom.probe(bom.tEPhysProbes{1, 'id'});

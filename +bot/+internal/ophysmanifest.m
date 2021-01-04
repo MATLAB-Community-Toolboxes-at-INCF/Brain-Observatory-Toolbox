@@ -1,11 +1,11 @@
-%% CLASS bot.ophysmanifest
+%% CLASS bot.internal.ophysmanifest
 %
 % This class can be used to obtain a raw list of available experimental
 % sessions from the Allen Brain Observatory dataset [1, 2].
 %
 % Construction:
 % >> bom = bot.manifest('ophys')
-% >> bom = bot.ophysmanifest
+% >> bom = bot.internal.ophysmanifest
 %
 % Get information about all OPhys experimental sessions:
 % >> bom.tOphysSessions
@@ -28,7 +28,7 @@
 %                sSessionInfo: [1x1 struct]
 %     strLocalNWBFileLocation: []
 %
-% (See documentation for the `bot.ophyssession` class for more information)
+% (See documentation for the `bot.internal.ophyssession` class for more information)
 %
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 % [2] Copyright 2015 Allen Brain Atlas API. Allen Brain Observatory. Available from: brain-map.org/api/index.html
