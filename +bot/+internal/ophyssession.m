@@ -66,7 +66,8 @@
 classdef ophyssession < bot.internal.session_base
    
    properties (SetAccess = private)
-      sMetadata
+      metadata
+      id
    end
    
    %% - Private properties
@@ -123,10 +124,11 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Assign session information
-         bsObj.sMetadata = table2struct(bsObj.find_manifest_row(nID));
+         bsObj.metadata = table2struct(bsObj.find_manifest_row(nID));
+         bsObj.id = nID;
 
          % - Ensure that we were given an OPhys session
-         if bsObj.sMetadata.BOT_session_type ~= "OPhys"
+         if bsObj.metadata.BOT_session_type ~= "OPhys"
             error('BOT:Usage', '`bot.internal.ophyssession` objects may only refer to OPhys experimental sessions.');
          end
       end
@@ -134,12 +136,12 @@ classdef ophyssession < bot.internal.session_base
    
    methods      
    function strNWBURL = GetNWBURL(bos)
-         % GetNWBURL - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
+         % GetNWBURL - METHOD Get the cloud URL for the NWB data file corresponding to this session
          %
          % Usage: strNWBURL = GetNWBURL(bos)
          
          % - Get well known files
-         vs_well_known_files = bos.sMetadata.well_known_files;
+         vs_well_known_files = bos.metadata.well_known_files;
          
          % - Find (first) NWB file
          vsTypes = [vs_well_known_files.well_known_file_type];
@@ -153,48 +155,48 @@ classdef ophyssession < bot.internal.session_base
 
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
    methods (Hidden = false)
-      function sMetadata = get_metadata(bos)
+      function metadata = get_metadata(bos)
          % get_metadata - METHOD Read metadata from the NWB file
          %
-         % Usage: sMetadata = get_metadata(bos)
+         % Usage: metadata = get_metadata(bos)
          
          % - Ensure the data has been cached
          EnsureCached(bos);
          
          % - Attempt to read each of the metadata fields from the NWB file
-         sMetadata = bos.FILE_METADATA_MAPPING;
+         metadata = bos.FILE_METADATA_MAPPING;
          for strFieldname = fieldnames(bos.FILE_METADATA_MAPPING)'
             % - Convert to a string (otherwise it would be a cell)
             strFieldname = strFieldname{1}; %#ok<FXSET>
             
             % - Try to read this metadata entry
             try
-               sMetadata.(strFieldname) = h5read(bos.strLocalNWBFileLocation, sMetadata.(strFieldname));
+               metadata.(strFieldname) = h5read(bos.strLocalNWBFileLocation, metadata.(strFieldname));
             catch
-               sMetadata.(strFieldname) = [];
+               metadata.(strFieldname) = [];
             end
          end
          
          % - Try to convert CRE line information
-         if isfield(sMetadata, 'genotype') && ~isempty(sMetadata.genotype)
-            sMetadata.cre_line = strsplit(sMetadata.genotype, ';');
-            sMetadata.cre_line = sMetadata.cre_line{1};
+         if isfield(metadata, 'genotype') && ~isempty(metadata.genotype)
+            metadata.cre_line = strsplit(metadata.genotype, ';');
+            metadata.cre_line = metadata.cre_line{1};
          end
          
          % - Try to extract imaging depth in ?m
-         if isfield(sMetadata, 'imaging_depth') && ~isempty(sMetadata.imaging_depth)
-            sMetadata.imaging_depth_um = strsplit(sMetadata.imaging_depth);
-            sMetadata.imaging_depth_um = str2double(sMetadata.imaging_depth_um{1});
+         if isfield(metadata, 'imaging_depth') && ~isempty(metadata.imaging_depth)
+            metadata.imaging_depth_um = strsplit(metadata.imaging_depth);
+            metadata.imaging_depth_um = str2double(metadata.imaging_depth_um{1});
          end
          
          % - Try to convert the experiment ID
-         if isfield(sMetadata, 'ophys_experiment_id') && ~isempty(sMetadata.ophys_experiment_id)
-            sMetadata.ophys_experiment_id = str2double(sMetadata.ophys_experiment_id);
+         if isfield(metadata, 'ophys_experiment_id') && ~isempty(metadata.ophys_experiment_id)
+            metadata.ophys_experiment_id = str2double(metadata.ophys_experiment_id);
          end
          
          % - Try to convert the experiment container ID
-         if isfield(sMetadata, 'experiment_container_id') && ~isempty(sMetadata.experiment_container_id)
-            sMetadata.experiment_container_id = str2double(sMetadata.experiment_container_id);
+         if isfield(metadata, 'experiment_container_id') && ~isempty(metadata.experiment_container_id)
+            metadata.experiment_container_id = str2double(metadata.experiment_container_id);
          end
          
          % - Convert the start time to a date
@@ -205,22 +207,22 @@ classdef ophyssession < bot.internal.session_base
          %             meta['session_start_time'] = dateutil.parser.parse(session_start_time)
          
          % - Parse the age in days
-         if isfield(sMetadata, 'age') && ~isempty(sMetadata.age)
-            sMetadata.age_days = sscanf(sMetadata.age, '%d days');
+         if isfield(metadata, 'age') && ~isempty(metadata.age)
+            metadata.age_days = sscanf(metadata.age, '%d days');
          end
          
          % - Parse the device string
-         if isfield(sMetadata, 'device_string') && ~isempty(sMetadata.device_string)
-            [~, cMatches] = regexp(sMetadata.device_string, '(.*?)\.\s(.*?)\sPlease*', 'match', 'tokens');
-            sMetadata.device = cMatches{1}{1};
-            sMetadata.device_name = cMatches{1}{2};
+         if isfield(metadata, 'device_string') && ~isempty(metadata.device_string)
+            [~, cMatches] = regexp(metadata.device_string, '(.*?)\.\s(.*?)\sPlease*', 'match', 'tokens');
+            metadata.device = cMatches{1}{1};
+            metadata.device_name = cMatches{1}{2};
          end
          
          % - Parse the file version
-         if isfield(sMetadata, 'generated_by') && ~isempty(sMetadata.generated_by)
-            sMetadata.pipeline_version = sMetadata.generated_by{end};
+         if isfield(metadata, 'generated_by') && ~isempty(metadata.generated_by)
+            metadata.pipeline_version = metadata.generated_by{end};
          else
-            sMetadata.pipeline_version = '0.9';
+            metadata.pipeline_version = '0.9';
          end
       end
       
@@ -382,8 +384,8 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Check pipeline version and read neuropil correction R
-         sMetadata = bos.get_metadata();
-         if str2double(sMetadata.pipeline_version) >= 2.0
+         metadata = bos.get_metadata();
+         if str2double(metadata.pipeline_version) >= 2.0
             vfR = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
@@ -427,8 +429,8 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Check pipeline version and read neuropil correction R
-         sMetadata = bos.get_metadata();
-         if str2double(sMetadata.pipeline_version) >= 2.0
+         metadata = bos.get_metadata();
+         if str2double(metadata.pipeline_version) >= 2.0
             mfTraces = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
@@ -467,8 +469,8 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
-         sMetadata = bos.get_metadata();
-         if str2double(sMetadata.pipeline_version) >= 2.0
+         metadata = bos.get_metadata();
+         if str2double(metadata.pipeline_version) >= 2.0
             [vtTimestamps, mfTraces] = bos.get_demixed_traces(vnCellSpecimenIDs);
          else
             [vtTimestamps, mfTraces] = bos.get_fluorescence_traces(vnCellSpecimenIDs);
@@ -587,7 +589,7 @@ classdef ophyssession < bot.internal.session_base
          % get_session_type - METHOD Return the name for the stimulus set used in this session
          %
          % Usage: strSessionType = get_session_type(bos)
-         strSessionType = bos.sMetadata.stimulus_name;
+         strSessionType = bos.metadata.stimulus_name;
       end
       
       function tStimEpochs = get_stimulus_epoch_table(bos)
@@ -826,7 +828,7 @@ classdef ophyssession < bot.internal.session_base
          % or euclidean coordinates.
          
          % - Fail quickly if eye tracking data is known not to exist
-         if bos.sMetadata.fail_eye_tracking
+         if bos.metadata.fail_eye_tracking
             error('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
          end
@@ -876,7 +878,7 @@ classdef ophyssession < bot.internal.session_base
          % area in pixels.
          
          % - Fail quickly if eye tracking data is known not to exist
-         if bos.sMetadata.fail_eye_tracking
+         if bos.metadata.fail_eye_tracking
             error('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
          end

@@ -197,6 +197,10 @@ classdef test < matlab.unittest.TestCase
          bom = bot.internal.ephysmanifest;
          bom = bot.manifest('ephys');
          
+         % - Get a session
+         s = bot.session(bom.tEPhysSessions{1, 'id'});
+         s = bot.session(bom.tEPhysSessions(1, :));
+         
          % - Get a probe, by ID and by table
          p = bom.probe(bom.tEPhysProbes{1, 'id'});
          p = bom.probe(bom.tEPhysProbes(1, :));

@@ -7,12 +7,10 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       tProbes;                         % A Table of all probes in this session
       tChannels;                       % A Table of all channels in this session
       
-      ephys_session_id;                % The ID for this session
-      
       inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
       running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
       mean_waveforms;                  % Maps integer unit ids to xarray.DataArrays containing mean spike waveforms for that unit
-      stimulus_presentations;       % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
+      stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
       stimulus_conditions;             % Each row is a unique permutation (within this session) of stimulus parameters presented during this experiment. Columns are as stimulus presentations, sans start_time, end_time, stimulus_block, and duration
       optogenetic_stimulation_epochs;  %
       session_start_time;              %
@@ -42,7 +40,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    %% Private properties
    properties (Hidden = true, Access = public, Transient = true)
       spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
-      metadata;                     % Metadata: structure containing metadata about this experimental session
+      nwb_metadata;
       rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
       
       nwb_file bot.nwb.nwb_ephys = bot.nwb.nwb_ephys();                % NWB file acess object
@@ -105,17 +103,17 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          % - Assign metadata
          bsObj = bsObj.check_and_assign_metadata(nID, oManifest.tEPhysSessions, 'session');
-         nID = bsObj.sMetadata.id;
+         nID = bsObj.metadata.id;
          
          % - Ensure that we were given an EPhys session
-         if bsObj.sMetadata.BOT_session_type ~= "EPhys"
+         if bsObj.metadata.BOT_session_type ~= "EPhys"
             error('BOT:Usage', '`bot.internal.ephyssession` objects may only refer to EPhys experimental sessions.');
          end
          
          % - Assign associated table rows
-         bsObj.tProbes = oManifest.tEPhysProbes(oManifest.tEPhysProbes.ephys_session_id == nID, :);
-         bsObj.tChannels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.ephys_session_id == nID, :);
-         bsObj.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ephys_session_id == nID, :);
+         bsObj.tProbes = oManifest.tEPhysProbes(oManifest.tEPhysProbes.id == nID, :);
+         bsObj.tChannels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.id == nID, :);
+         bsObj.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.id == nID, :);
       end
    end
    
@@ -237,7 +235,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    
    %% Metadata public property getters
    methods
-      function metadata = get.metadata(self)
+      function metadata = get.nwb_metadata(self)
          n = self.nwb_file;
          metadata = self.get_cached('metadata', @n.get_metadata);
       end
@@ -275,7 +273,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       end
       
       function sex = get.sex(self)
-         sex = self.sMetadata.sex;
+         sex = self.metadata.sex;
       end
       
       function full_genotype = get.full_genotype(self)
@@ -851,7 +849,7 @@ methods
       % Usage: strNWBURL = GetNWBURL(bos)
       
       % - Get well known files
-      vs_well_known_files = bos.sMetadata.well_known_files;
+      vs_well_known_files = bos.metadata.well_known_files;
       
       % - Find (first) NWB file
       vsTypes = [vs_well_known_files.well_known_file_type];

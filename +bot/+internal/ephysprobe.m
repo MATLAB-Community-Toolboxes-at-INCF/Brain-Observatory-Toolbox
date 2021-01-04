@@ -26,7 +26,7 @@ classdef ephysprobe < bot.internal.ephysitem
          % - Assign metadata
          probe.check_and_assign_metadata(nID, oManifest.tEPhysProbes, 'probe');
          if istable(nID)
-            nID = probe.sMetadata.id;
+            nID = probe.metadata.id;
          end
          
          % - Assign associated table rows
@@ -34,14 +34,14 @@ classdef ephysprobe < bot.internal.ephysitem
          probe.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ephys_probe_id == nID, :);
          
          % - Get a handle to the corresponding experimental session
-         probe.session = oManifest.session(probe.sMetadata.ephys_session_id);
+         probe.session = oManifest.session(probe.metadata.ephys_session_id);
          
          % - Identify NWB file link
          probe.sWellKnownFile = probe.get_lfp_file_link();
       end
       
       function sWellKnownFile = get_lfp_file_link(probe)
-         probe_id = probe.sMetadata.id;
+         probe_id = probe.metadata.id;
          strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
          
          boc = bot.internal.cache;

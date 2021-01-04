@@ -42,7 +42,7 @@ classdef session_base < handle
          %
          % This method will force the session data to be downloaded and cached,
          % if it is not already available.
-         bos.CacheFilesForSessionIDs(bos.sMetadata.id);
+         bos.CacheFilesForSessionIDs(bos.id);
          strCacheFile = bos.strLocalNWBFileLocation;
       end      
    end

@@ -23,13 +23,13 @@ classdef ephysunit < bot.internal.ephysitem
          % - Assign metadata
          unit = unit.check_and_assign_metadata(nID, oManifest.tEPhysUnits, 'unit');
          if istable(nID)
-            nID = unit.sMetadata.id;
+            nID = unit.metadata.id;
          end
          
          % - Get a handle to the corresponding experimental session
-         unit.session = oManifest.session(unit.sMetadata.ephys_session_id);
-         unit.channel = oManifest.channel(unit.sMetadata.ephys_channel_id);
-         unit.probe = oManifest.probe(unit.sMetadata.ephys_probe_id);
+         unit.session = oManifest.session(unit.metadata.ephys_session_id);
+         unit.channel = oManifest.channel(unit.metadata.ephys_channel_id);
+         unit.probe = oManifest.probe(unit.metadata.ephys_probe_id);
       end
    end
 end

@@ -1,6 +1,10 @@
 classdef ephysitem < handle
    properties (SetAccess = protected)
-      sMetadata;
+      metadata;
+      id;
+   end
+   
+   properties (Hidden = true)
       sPropertyCache;
    end
    
@@ -24,7 +28,8 @@ classdef ephysitem < handle
          end
          
          % - Assign the table data to the metadata structure
-         item.sMetadata = table2struct(tItem);
+         item.metadata = table2struct(tItem);
+         item.id = nID;
       end
    end   
    

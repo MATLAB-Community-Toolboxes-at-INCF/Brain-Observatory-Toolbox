@@ -23,13 +23,13 @@ classdef ephyschannel < bot.internal.ephysitem
          % - Assign metadata
          channel = channel.check_and_assign_metadata(nID, oManifest.tEPhysChannels, 'channel');
          if istable(nID)
-            nID = channel.sMetadata.id;
+            nID = channel.metadata.id;
          end
          
          % - Assign associated table rows
          channel.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ecephys_channel_id == nID, :); 
-         channel.probe = oManifest.probe(channel.sMetadata.ephys_probe_id);
-         channel.session = oManifest.session(channel.sMetadata.ephys_session_id);
+         channel.probe = oManifest.probe(channel.metadata.ephys_probe_id);
+         channel.session = oManifest.session(channel.metadata.ephys_session_id);
       end
    end
 end
