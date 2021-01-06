@@ -3,9 +3,9 @@
 classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    %% Properties
    properties (SetAccess = private)
-      tUnits;                          % A Table of all units in this session
-      tProbes;                         % A Table of all probes in this session
-      tChannels;                       % A Table of all channels in this session
+      units;                          % A Table of all units in this session
+      probes;                         % A Table of all probes in this session
+      channels;                       % A Table of all channels in this session
       
       inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
       running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
@@ -42,7 +42,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
       nwb_metadata;
       rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
-      
+
       nwb_file bot.nwb.nwb_ephys = bot.nwb.nwb_ephys();                % NWB file acess object
       
       NON_STIMULUS_PARAMETERS = [
@@ -79,41 +79,47 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    
    %% Constructor
    methods
-      function bsObj = ephyssession(nID, oManifest)
+      function session = ephyssession(id, manifest)
          % bot.internal.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.internal.ephyssession(nSessionID)
-         %        vbsObj = bot.internal.ephyssession(vnSessionIDs)
-         %        bsObj = bot.internal.ephyssession(tSessionRow)
+         % Usage: bsObj = bot.internal.ephyssession(id, manifest)
+         %        vbsObj = bot.internal.ephyssession(ids, manifest)
+         %        bsObj = bot.internal.ephyssession(session_table_row, manifest)
+         %
+         % `manifest` is the EPhys manifest object. `id` is the session ID
+         % of an EPhys experimental session. Optionally, a vector `ids` of
+         % multiple session IDs may be provided to return a vector of
+         % session objects. A table row of the EPhys sessions manifest
+         % table may also be provided as `session_table_row`.
          if nargin == 0
             return;
          end
          
-         if ~exist('oManifest', 'var') || isempty(oManifest)
-            oManifest = bot.internal.ephysmanifest;
+         if ~exist('oManifest', 'var') || isempty(manifest)
+            manifest = bot.internal.ephysmanifest;
          end
          
          % - Handle a vector of session IDs
-         if ~istable(nID) && numel(nID) > 1
-            for nIndex = numel(nID):-1:1
-               bsObj(nID) = bot.internal.ephyssession(nID(nIndex), oManifest);
+         if ~istable(id) && numel(id) > 1
+            for index = numel(id):-1:1
+               session(id) = bot.internal.ephyssession(id(index), manifest);
             end
             return;
          end
          
          % - Assign metadata
-         bsObj = bsObj.check_and_assign_metadata(nID, oManifest.tEPhysSessions, 'session');
-         nID = bsObj.metadata.id;
+         session = session.check_and_assign_metadata(id, manifest.tEPhysSessions, 'session');
+         id = session.metadata.id;
          
          % - Ensure that we were given an EPhys session
-         if bsObj.metadata.BOT_session_type ~= "EPhys"
+         if session.metadata.type ~= "EPhys"
             error('BOT:Usage', '`bot.internal.ephyssession` objects may only refer to EPhys experimental sessions.');
          end
          
          % - Assign associated table rows
-         bsObj.tProbes = oManifest.tEPhysProbes(oManifest.tEPhysProbes.id == nID, :);
-         bsObj.tChannels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.id == nID, :);
-         bsObj.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.id == nID, :);
+         session.probes = manifest.tEPhysProbes(manifest.tEPhysProbes.id == id, :);
+         session.channels = manifest.tEPhysChannels(manifest.tEPhysChannels.id == id, :);
+         session.units = manifest.tEPhysUnits(manifest.tEPhysUnits.id == id, :);
       end
    end
    
@@ -197,15 +203,15 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    %% Derived public properties
    methods
       function num_units = get.num_units(self)
-         num_units = size(self.tUnits, 1);
+         num_units = size(self.units, 1);
       end
       
       function num_probes = get.num_probes(self)
-         num_probes = size(self.tProbes, 1);
+         num_probes = size(self.probes, 1);
       end
       
       function num_channels = get.num_channels(self)
-         num_channels = size(self.tChannels, 1);
+         num_channels = size(self.channels, 1);
       end
       
       function num_stimulus_presentations = get.num_stimulus_presentations(self)
@@ -217,15 +223,15 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       end
       
       function structure_acronyms = get.structure_acronyms(self)
-         all_acronyms = self.tChannels.ephys_structure_acronym;
-         vbIsString = cellfun(@ischar, self.tChannels.ephys_structure_acronym);
-         structure_acronyms = unique(all_acronyms(vbIsString));
+         all_acronyms = self.channels.ephys_structure_acronym;
+         is_string = cellfun(@ischar, self.channels.ephys_structure_acronym);
+         structure_acronyms = unique(all_acronyms(is_string));
       end
       
       function structurewise_unit_counts = get.structurewise_unit_counts(self)
-         all_acronyms = self.tUnits.ephys_structure_acronym;
-         vbIsString = cellfun(@ischar, self.tUnits.ephys_structure_acronym);
-         [ephys_structure_acronym, ~, structurewise_unit_ids] = unique(all_acronyms(vbIsString));
+         all_acronyms = self.units.ephys_structure_acronym;
+         is_string = cellfun(@ischar, self.units.ephys_structure_acronym);
+         [ephys_structure_acronym, ~, structurewise_unit_ids] = unique(all_acronyms(is_string));
          count = accumarray(structurewise_unit_ids, 1);
          
          structurewise_unit_counts = table(ephys_structure_acronym, count);
@@ -237,7 +243,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    methods
       function metadata = get.nwb_metadata(self)
          n = self.nwb_file;
-         metadata = self.get_cached('metadata', @n.get_metadata);
+         metadata = self.get_cached('metadata', @n.fetch_nwb_metadata);
       end
       
       function rig_metadata = get.rig_metadata(self)
@@ -287,8 +293,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       function stimulus_table = get.stimulus_templates(self)
          % - Query list of stimulus templates from Allen Brain API
          ecephys_product_id = 714914585;
-         strQueryString = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
-         stimulus_table = self.bocCache.CachedAPICall('criteria=model::WellKnownFile', strQueryString);
+         query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
+         stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
          
          % - Convert table variables to sensible types
          stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
@@ -338,15 +344,15 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          self.cache_stimulus_presentations();
          
-         vbSelectStimuli = ismember(self.sPropertyCache.stimulus_presentations_raw.stimulus_name, stimulus_names);
-         filtered_presentations = self.sPropertyCache.stimulus_presentations_raw(vbSelectStimuli, :);
+         select_stimuli = ismember(self.sPropertyCache.stimulus_presentations_raw.stimulus_name, stimulus_names);
+         filtered_presentations = self.sPropertyCache.stimulus_presentations_raw(select_stimuli, :);
          filtered_ids = filtered_presentations.stimulus_presentation_id;
          
          
-         vbSelectIntervals = ismember(self.inter_presentation_intervals.from_presentation_id, filtered_ids) & ...
+         select_intervals = ismember(self.inter_presentation_intervals.from_presentation_id, filtered_ids) & ...
             ismember(self.inter_presentation_intervals.to_presentation_id, filtered_ids);
          
-         inter_presentation_intervals = self.inter_presentation_intervals(vbSelectIntervals, :);
+         inter_presentation_intervals = self.inter_presentation_intervals(select_intervals, :);
       end
       
       function presentations = get_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
@@ -370,8 +376,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          self.cache_stimulus_presentations();
          
-         vbSelectStimuli = ismember(self.sPropertyCache.stimulus_presentations_raw.stimulus_name, stimulus_names);
-         presentations = self.sPropertyCache.stimulus_presentations_raw(vbSelectStimuli, :);
+         select_stimuli = ismember(self.sPropertyCache.stimulus_presentations_raw.stimulus_name, stimulus_names);
+         presentations = self.sPropertyCache.stimulus_presentations_raw(select_stimuli, :);
          
          if ~include_detailed_parameters
             presentations = self.remove_detailed_stimulus_parameters(presentations);
@@ -409,9 +415,9 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          epochs.duration = epochs.stop_time - epochs.start_time;
          
          for strField = fieldnames(duration_thresholds)
-            vbSelectEpochs = epochs.stimulus_name ~= strField{1};
-            vbSelectEpochs = vbSelectEpochs | epochs.duration >= duration_thresholds.(strField{1});
-            epochs = epochs(vbSelectEpochs, :);
+            select_epochs = epochs.stimulus_name ~= strField{1};
+            select_epochs = select_epochs | epochs.duration >= duration_thresholds.(strField{1});
+            epochs = epochs(select_epochs, :);
          end
          
          epochs = epochs(:, ["start_time", "stop_time", "duration", "stimulus_name", "stimulus_block"]);
@@ -493,13 +499,12 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       
       % - Filter stimulus_presentations table
       stimulus_presentations = self.stimulus_presentations; %#ok<PROPLC>
-      vbSelect = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
-      stimulus_presentations = stimulus_presentations(vbSelect, :); %#ok<PROPLC>
+      select_stimuli = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
+      stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
       
       % - Filter units table
-      units = self.tUnits;
-      vbSelect = ismember(units.id, unit_ids);
-      units = units(vbSelect, :);
+      select_units = ismember(self.units.id, unit_ids);
+      units_selected = self.units(select_units, :);
       
       largest_bin_size = max(diff(bin_edges));
       
@@ -529,7 +534,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       end
       
       % - Build a histogram of spikes
-      tiled_data = build_spike_histogram(domain, self.spike_times, units.id, binarize);
+      tiled_data = build_spike_histogram(domain, self.spike_times, units_selected.id, binarize);
       
       % - Generate a time base for `tiled_data`
       time_base = bin_edges(1:end-1) + diff(bin_edges) / 2;
@@ -566,15 +571,14 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       stimulus_presentations = self.stimulus_presentations; %#ok<PROPLC>
       
       if ~isempty(stimulus_presentation_ids)
-         vbSelect = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
-         stimulus_presentations = stimulus_presentations(vbSelect, :); %#ok<PROPLC>
+         select_stimuli = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
+         stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
       end
    
       % - Filter units table
-      units = self.tUnits;
       if ~isempty(unit_ids)
-         vbSelect = ismember(units.id, unit_ids);
-         units = units(vbSelect, :);
+         select_units = ismember(self.units.id, unit_ids);
+         units_selected = self.units(select_units, :);
       end
 
       presentation_times = zeros(size(stimulus_presentations, 1) * 2, 1); %#ok<PROPLC>
@@ -586,12 +590,12 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       unit_ids = [];
       spike_times = []; %#ok<PROPLC>
       
-      for unit_index = 1:numel(units.id)
-         unit_id = units.id(unit_index);         
+      for unit_index = 1:numel(units_selected.id)
+         unit_id = units_selected.id(unit_index);         
          
          % - Extract the spike times for this unit
-         vbSelect = self.spike_times.unit_id == unit_id;
-         data = self.spike_times(vbSelect, :).spike_times{1};
+         select_stimuli = self.spike_times.unit_id == unit_id;
+         data = self.spike_times(select_stimuli, :).spike_times{1};
          
          % - Find the locations of the presentation times in the spike data
          indices = searchsorted(presentation_times, data) - 2;
@@ -639,8 +643,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       
       % - Filter stimulus_presentations table
       onset_times = self.stimulus_presentations;
-      vbSelect = ismember(onset_times.stimulus_presentation_id, all_presentation_ids);
-      onset_times = onset_times(vbSelect, {'stimulus_presentation_id', 'start_time'});
+      select_stimuli = ismember(onset_times.stimulus_presentation_id, all_presentation_ids);
+      onset_times = onset_times(select_stimuli, {'stimulus_presentation_id', 'start_time'});
 
       spikes_with_onset = join(spike_df, onset_times, 'Keys', 'stimulus_presentation_id');
       spikes_with_onset.time_since_stimulus_presentation_onset = spikes_with_onset.spike_times - spikes_with_onset.start_time;
@@ -677,8 +681,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          stimulus_presentation_ids = self.stimulus_presentations.stimulus_presentation_id;
       end
       
-      vbSelect = ismember(self.stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids);
-      presentations = self.stimulus_presentations(vbSelect, {'stimulus_presentation_id', 'stimulus_condition_id', 'duration'});
+      select_presentations = ismember(self.stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids);
+      presentations = self.stimulus_presentations(select_presentations, {'stimulus_presentation_id', 'stimulus_condition_id', 'duration'});
       
       spikes = self.presentationwise_spike_times(stimulus_presentation_ids, unit_ids);
       
@@ -699,16 +703,16 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          for row = 1:size(found_spike_counts, 1)
             % - Fill in spike counts
-            vbSCRow = (spike_counts.stimulus_presentation_id == found_spike_counts.stimulus_presentation_id(row)) & ...
+            spike_count_row = (spike_counts.stimulus_presentation_id == found_spike_counts.stimulus_presentation_id(row)) & ...
                (spike_counts.unit_id == found_spike_counts.unit_id(row));
-            spike_counts(vbSCRow, 'spike_count') = found_spike_counts(row, 'spike_count');   
+            spike_counts(spike_count_row, 'spike_count') = found_spike_counts(row, 'spike_count');   
          end
          
          for row = 1:size(spike_counts, 1)
             % - Add stimulus presentation information
-            vbStimRow = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
-            spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(vbStimRow);
-            spike_counts.duration(row) = presentations.duration(vbStimRow);
+            stimulus_row = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
+            spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(stimulus_row);
+            spike_counts.duration(row) = presentations.duration(stimulus_row);
          end
       end
       
@@ -776,8 +780,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       stimulus_presentations = self.stimulus_presentations; %#ok<PROPLC>
 
       if ~isempty(stimulus_presentation_ids)
-         vbSelect = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
-         stimulus_presentations = stimulus_presentations(vbSelect, :); %#ok<PROPLC>
+         select_stimuli = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
+         stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
       end
 
       stimulus_presentations = removevars(stimulus_presentations, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC>
@@ -788,15 +792,15 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       for colname = stimulus_presentations.Properties.VariableNames %#ok<PROPLC>
          uniques = unique(stimulus_presentations.(colname{1})); %#ok<PROPLC>
 
-         vbNulls = arrayfun(@(s)isequal(s, "null"), uniques);
-         vbNulls = vbNulls | arrayfun(@(s)isequal(s, ""), uniques);
+         is_null = arrayfun(@(s)isequal(s, "null"), uniques);
+         is_null = is_null | arrayfun(@(s)isequal(s, ""), uniques);
          if isnumeric(uniques)
-            vbNulls = vbNulls | isnan(uniques);
+            is_null = is_null | isnan(uniques);
          end
          
-         non_null = uniques(~vbNulls);
+         non_null = uniques(~is_null);
 
-         if ~drop_nulls && any(vbNulls)
+         if ~drop_nulls && any(is_null)
             non_null = [non_null; nan]; %#ok<AGROW>
          end
 
@@ -828,25 +832,25 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
 
    channel_ids = sort(channel_ids);
    
-   vbSelect = ismember(self.tChannels.id, channel_ids);
-   tChannels = self.tChannels(vbSelect, :); %#ok<PROPLC>
+   select_channels = ismember(self.channels.id, channel_ids);
+   channels_selected = self.channels(select_channels, :);
    
-   unique_probes = unique(tChannels.ephys_probe_id); %#ok<PROPLC>
+   unique_probes = unique(channels_selected.ephys_probe_id);
    if numel(unique_probes) > 1
       warning("Calculating structure boundaries across channels from multiple probes.")
    end
    
-   intervals = nan_intervals(tChannels.(structure_id_key)); %#ok<PROPLC>
-   labels = tChannels.(structure_label_key)(intervals); %#ok<PROPLC>
+   intervals = nan_intervals(channels_selected.(structure_id_key));
+   labels = channels_selected.(structure_label_key)(intervals);
    end
 end
 
 %% Private low-level data getter methods
 methods
-   function strNWBURL = GetNWBURL(bos)
-      % GetNWBURL - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
+   function nwb_url = nwb_url(bos)
+      % nwb_url - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
       %
-      % Usage: strNWBURL = GetNWBURL(bos)
+      % Usage: strNWBURL = nwb_url(bos)
       
       % - Get well known files
       vs_well_known_files = bos.metadata.well_known_files;
@@ -854,51 +858,18 @@ methods
       % - Find (first) NWB file
       vsTypes = [vs_well_known_files.well_known_file_type];
       cstrTypeNames = {vsTypes.name};
-      nNWBFile = find(cellfun(@(c)strcmp(c, 'EcephysNwb'), cstrTypeNames), 1, 'first');
+      nwb_file_index = find(cellfun(@(c)strcmp(c, 'EcephysNwb'), cstrTypeNames), 1, 'first');
       
       % - Build URL
-      strNWBURL = [bos.bocCache.strABOBaseUrl vs_well_known_files(nNWBFile).download_link];
-   end
-   
-   function tChannels = get_channels(self)
-      %     def get_channels(self) -> pd.DataFrame:
-      %         channels = self.nwbfile.electrodes.to_dataframe()
-      %         channels.drop(columns='group', inplace=True)
-      %
-      %         # Rename columns for clarity
-      %         channels.rename(
-      %             columns={"manual_structure_id": "ecephys_structure_id",
-      %                      "manual_structure_acronym": "ecephys_structure_acronym"},
-      %             inplace=True)
-      %
-      %         # these are stored as string in nwb 2, which is not ideal
-      %         # float is also not ideal, but we have nans indicating out-of-brain structures
-      %         channels["ecephys_structure_id"] = [
-      %             float(chid) if chid != ""
-      %             else np.nan
-      %             for chid in channels["ecephys_structure_id"]
-      %         ]
-      %         channels["ecephys_structure_acronym"] = [
-      %             ch_acr if ch_acr not in set(["None", ""])
-      %             else np.nan
-      %             for ch_acr in channels["ecephys_structure_acronym"]
-      %         ]
-      %
-      %         if self.external_channel_columns is not None:
-      %             external_channel_columns = self.external_channel_columns()
-      %             channels = clobbering_merge(channels, external_channel_columns, left_index=True, right_index=True)
-      %
-      %         if self.filter_by_validity:
-      %             channels = channels[channels["valid_data"]]
-      %             channels = channels.drop(columns=["valid_data"])
-      %
-      %         return channels
+      nwb_url = [bos.bot_cache.strABOBaseUrl vs_well_known_files(nwb_file_index).download_link];
    end
 end
 
 %% Private methods
 methods (Access = public)
    function get_natural_movie_template(self, number)
+      error('BOT:NotImplemented', 'This method is not implemented');
+
       well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :);
       
       if size(well_known_files, 1) ~= 1
@@ -906,9 +877,8 @@ methods (Access = public)
             'Expected exactly one natural movie template with number %d, found %d.', number, size(well_known_files, 1));
       end
       
-      strDownloadURL = self.bocCache.strABOBaseUrl + well_known_files.download_link;
-      strLocalFile = self.bocCache.CacheFile(strDownloadURL, well_known_files.path);
-      
+      download_url = self.bot_cache.strABOBaseUrl + well_known_files.download_link;
+      local_filename = self.bot_cache.CacheFile(download_url, well_known_files.path);
       
       %         well_known_files = self.stimulus_templates[self.stimulus_templates["movie_number"] == number]
       %         if well_known_files.shape[0] != 1:
@@ -919,6 +889,8 @@ methods (Access = public)
    end
    
    function get_natural_scene_template(self, number)
+      error('BOT:NotImplemented', 'This method is not implemented');
+      
       %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
       %         if well_known_files.shape[0] != 1:
       %             raise ValueError(f"expected exactly one natural scene template with number {number}, found {well_known_files}")
@@ -928,9 +900,6 @@ methods (Access = public)
    end
    
    function valid_time_points = get_valid_time_points(self, time_points, invalid_time_intevals)
-      %          all_time_points =
-      
-      
       error('BOT:NotImplemented', 'This method is not implemented');
       
       
@@ -966,8 +935,8 @@ methods (Access = public)
       invalid_times = self.invalid_times;
       
       if ~isempty(invalid_times)
-         vbMask = cellfun(@(c)any(ismember(string(c), string(tags))), invalid_times.tags);
-         invalid_times = invalid_times(vbMask, :);
+         mask = cellfun(@(c)any(ismember(string(c), string(tags))), invalid_times.tags);
+         invalid_times = invalid_times(mask, :);
       end
    end
    
@@ -990,20 +959,20 @@ methods (Access = public)
       fail_tags = "stimulus";
       invalid_times_filt = self.filter_invalid_times_by_tags(fail_tags);
       
-      vbIsNumericVar = table2array(varfun(@isnumeric, stimulus_presentations(1, :)));
+      is_numeric = table2array(varfun(@isnumeric, stimulus_presentations(1, :)));
       
       for nRowIndex = 1:size(stimulus_presentations, 1)
          sp = stimulus_presentations(nRowIndex, :);
          id = sp.stimulus_presentation_id;
          stim_epoch = [sp.start_time, sp.stop_time];
          
-         for nITIndex = 1:size(invalid_times_filt, 1)
-            it = invalid_times_filt(nITIndex, :);
+         for invalid_time_index = 1:size(invalid_times_filt, 1)
+            it = invalid_times_filt(invalid_time_index, :);
             invalid_interval = [it.start_time, it.stop_time];
             
             if overlap(stim_epoch, invalid_interval)
-               sp(1, vbIsNumericVar) = {nan};
-               sp(1, ~vbIsNumericVar) = {""};
+               sp(1, is_numeric) = {nan};
+               sp(1, ~is_numeric) = {""}; %#ok<STRSCALR>
                sp.stimulus_name = "invalid_presentation";
                sp.start_time = stim_epoch(1);
                sp.stop_time = stim_epoch(2);
@@ -1016,9 +985,9 @@ methods (Access = public)
    
    function output_spike_times = build_spike_times(self, spike_times_raw)
       % - Filter spike times by unit ID
-      retained_units = self.tUnits.id;
-      vbSelect = ismember(uint64(spike_times_raw.unit_id), uint64(retained_units));
-      output_spike_times = spike_times_raw(vbSelect, :);
+      retained_units = self.units.id;
+      select = ismember(uint64(spike_times_raw.unit_id), uint64(retained_units));
+      output_spike_times = spike_times_raw(select, :);
    end
    
    function cache_stimulus_presentations(self)
@@ -1141,7 +1110,7 @@ methods (Access = public)
    end
    
    function warn_invalid_spike_intervals(self)
-      fail_tags = self.tProbes.name;
+      fail_tags = self.probes.name;
       fail_tags{end+1} = 'all_probes';
       
       if ~isempty(self.filter_invalid_times_by_tags(fail_tags))
@@ -1151,8 +1120,8 @@ methods (Access = public)
    end
    
    function presentations = remove_detailed_stimulus_parameters(self, presentations)
-      vbMatchingVars = ismember(self.DETAILED_STIMULUS_PARAMETERS, presentations.Properties.VariableNames);
-      presentations = removevars(presentations, self.DETAILED_STIMULUS_PARAMETERS(vbMatchingVars));
+      matching_vars = ismember(self.DETAILED_STIMULUS_PARAMETERS, presentations.Properties.VariableNames);
+      presentations = removevars(presentations, self.DETAILED_STIMULUS_PARAMETERS(matching_vars));
    end
 end
 
@@ -1184,8 +1153,8 @@ if isempty(dtype)
 end
 
 % - Preallocate tiled data
-vnSliceSize = [size(time_domain, 1) - 1, size(time_domain, 2)];
-tiled_data = zeros([vnSliceSize numel(unit_ids)], dtype);
+slice_size = [size(time_domain, 1) - 1, size(time_domain, 2)];
+tiled_data = zeros([slice_size numel(unit_ids)], dtype);
 
 starts = time_domain(1:end-1, :);
 ends = time_domain(2:end, :);
@@ -1202,7 +1171,7 @@ for unit_index = 1:numel(unit_ids)
    if binarize
       tiled_data(:, :, unit_index) = counts > 0;
    else
-      tiled_data(:, :, unit_index) = reshape(counts, vnSliceSize);
+      tiled_data(:, :, unit_index) = reshape(counts, slice_size);
    end
 end
 
@@ -1274,13 +1243,13 @@ end
 
 
 function stimulus_presentations = remove_unused_stimulus_presentation_columns(stimulus_presentations)
-vbStringCol = varfun(@isstring, stimulus_presentations(1, :), 'OutputFormat', 'uniform');
+is_string_col = varfun(@isstring, stimulus_presentations(1, :), 'OutputFormat', 'uniform');
 
-vbEmptyCol = varfun(@(c)all(isempty(c)), stimulus_presentations, 'OutputFormat', 'uniform');
-vbEmptyCol(~vbStringCol) = vbEmptyCol(~vbStringCol) | varfun(@(c)all(isnan(c)), stimulus_presentations(:, ~vbStringCol), 'OutputFormat', 'uniform');
-vbEmptyCol = vbEmptyCol | varfun(@(c)all(isequal(c, 'null')), stimulus_presentations, 'OutputFormat', 'uniform');
+is_empty_col = varfun(@(c)all(isempty(c)), stimulus_presentations, 'OutputFormat', 'uniform');
+is_empty_col(~is_string_col) = is_empty_col(~is_string_col) | varfun(@(c)all(isnan(c)), stimulus_presentations(:, ~is_string_col), 'OutputFormat', 'uniform');
+is_empty_col = is_empty_col | varfun(@(c)all(isequal(c, 'null')), stimulus_presentations, 'OutputFormat', 'uniform');
 
-stimulus_presentations = stimulus_presentations(:, ~vbEmptyCol);
+stimulus_presentations = stimulus_presentations(:, ~is_empty_col);
 end
 
 
@@ -1311,34 +1280,18 @@ intervals(end+1) = numel(array);
 intervals = unique(intervals);
 end
 
-function bDistinct = is_distinct_from(left, right)
+function is_distinct = is_distinct_from(left, right)
 if isnan(left) && isnan(right)
-   bDistinct = false;
+   is_distinct = false;
 else
-   bDistinct = ~isequal(left, right);
+   is_distinct = ~isequal(left, right);
 end
 end
 
-function array_intervals(array)
-%     """ find interval bounds (bounding consecutive identical values) in an array
-%
-%     Parameters
-%     -----------
-%     array : np.ndarray
-%
-%     Returns
-%     -------
-%     np.ndarray :
-%         start and end indices of detected intervals (one longer than the number of intervals)
 
-%     changes = np.flatnonzero(np.diff(array)) + 1
-%     return np.concatenate([[0], changes, [len(array)]])
-
-end
-
-function coerce_scalar(value, message, warn)
-error('BOT:NotImplemented', 'This function is not implemented.');
-end
+% function coerce_scalar(value, message, warn)
+% error('BOT:NotImplemented', 'This function is not implemented.');
+% end
 
 
 function t = extract_summary_count_statistics(index, group)
@@ -1371,7 +1324,7 @@ t = table(stimulus_condition_id, unit_id, ...
    stimulus_presentation_count, spike_mean, spike_std, spike_sem);
 end
 
-function bIsOverlap = overlap(a, b)
+function is_overlap = overlap(a, b)
 %     """Check if the two intervals overlap
 %
 %     Parameters
@@ -1383,7 +1336,7 @@ function bIsOverlap = overlap(a, b)
 %     Returns
 %     -------
 %     bool : True if overlap, otherwise False
-bIsOverlap = max(a(1), b(1)) <= min(a(2), b(2));
+is_overlap = max(a(1), b(1)) <= min(a(2), b(2));
 end
 
 

@@ -155,21 +155,23 @@ classdef ephysmanifest < handle
    %% Update manifest method
    methods
       function UpdateManifests(oManifest)
+         boc = bot.internal.cache;
+         
          % - Invalidate manifests in cache
-         oManifest.oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysSession');
-         oManifest.oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysUnit');
-         oManifest.oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysProbe');
-         oManifest.oCache.sCacheFiles.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysChannel');
+         boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysSession');
+         boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysUnit');
+         boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysProbe');
+         boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysChannel');
          
          % - Remove cached manifest tables
-         oManifest.oCache.RemoveObject('allen_brain_observatory_ephys_sessions_manifest')
-         oManifest.oCache.RemoveObject('allen_brain_observatory_ephys_units_manifest')
-         oManifest.oCache.RemoveObject('allen_brain_observatory_ephys_probes_manifest')
-         oManifest.oCache.RemoveObject('allen_brain_observatory_ephys_channels_manifest')
+         boc.ocCache.Remove('allen_brain_observatory_ephys_sessions_manifest')
+         boc.ocCache.Remove('allen_brain_observatory_ephys_units_manifest')
+         boc.ocCache.Remove('allen_brain_observatory_ephys_probes_manifest')
+         boc.ocCache.Remove('allen_brain_observatory_ephys_channels_manifest')
          
          % - Clear all caches for memoized access functions
-         for strField = fieldnames(oManifest.sAPIAccess)'
-            oManifest.sAPIAccess.(strField{1}).clearCache();
+         for strField = fieldnames(oManifest.sAPIAccess.memoized)'
+            oManifest.sAPIAccess.memoized.(strField{1}).clearCache();
          end
       end
    end
@@ -250,7 +252,7 @@ classdef ephysmanifest < handle
          % - Label as EPhys sessions
          ephys_session_manifest = addvars(ephys_session_manifest, ...
             repmat(categorical({'EPhys'}, {'EPhys', 'OPhys'}), size(ephys_session_manifest, 1), 1), ...
-            'NewVariableNames', 'BOT_session_type', ...
+            'NewVariableNames', 'type', ...
             'before', 1);
          
          % - Post-process EPhys manifest

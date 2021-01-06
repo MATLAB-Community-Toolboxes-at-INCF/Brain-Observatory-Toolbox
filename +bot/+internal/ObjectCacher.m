@@ -179,7 +179,13 @@ classdef ObjectCacher < handle
          % key exists in the cache, then `True` is returned. Otherwise
          % `False` is returned.
          
-         bIsInCache = ocObj.mapCachedData.isKey(strKey);
+         % - Check whether the key is in the cache
+         if ocObj.mapCachedData.isKey(strKey)
+            % - Check that the cache file actually exists
+            bIsInCache = exist(ocObj.CachedFileForKey(strKey), 'file');
+         else
+            bIsInCache = false;
+         end
       end
       
       function Remove(ocObj, strKey)

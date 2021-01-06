@@ -361,7 +361,7 @@ classdef nwb_ephys < handle
          end
       end
       
-      function metadata = get_metadata(self)
+      function metadata = fetch_nwb_metadata(self)
          metadata = bot.nwb.struct_from_attributes(self.strFile, '/general/metadata');
       end
       

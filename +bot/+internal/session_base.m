@@ -4,14 +4,14 @@
 
 classdef session_base < handle
    properties (Access = protected)
-      bocCache = bot.internal.cache();                   % Private handle to the BOT Cache
+      bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
       bomOPhysManifest = bot.internal.ophysmanifest;              % Private handle to the OPhys data manifest
       bomEPhysManifest = bot.internal.ephysmanifest;              % Private handle to the EPhys data manifest
       strLocalNWBFileLocation;
    end
    
    methods
-      function sess = session_base(nSessionID)
+      function sess = session_base(~)
          % bot.session_base - CLASS Base class for experimental sessions
          
          % - Handle calling with no arguments
@@ -23,16 +23,12 @@ classdef session_base < handle
    
    %% - Matlab BOT methods
    
-%    methods (Abstract)
-%       GetNWBURL(bos)
-%    end
-%       
    methods
       function bNWBFileIsCached = IsNWBFileCached(bos)
          % IsNWBFileCached - METHOD Check if the NWB file corresponding to this session is already cached
          %
          % Usage: bNWBFileIsCached = IsNWBFileCached(bos)
-         bNWBFileIsCached =  bos.bocCache.IsURLInCache(bos.GetNWBURL());
+         bNWBFileIsCached =  bos.bot_cache.IsURLInCache(bos.nwb_url());
       end
       
       function strCacheFile = EnsureCached(bos)
@@ -56,7 +52,7 @@ classdef session_base < handle
             strLocalNWBFileLocation = [];
          else
             % - Get the local file location for the session NWB URL
-            strLocalNWBFileLocation = bos.bocCache.ccCache.CachedFileForURL(bos.GetNWBURL());
+            strLocalNWBFileLocation = bos.bot_cache.ccCache.CachedFileForURL(bos.nwb_url());
          end
       end
    end   
@@ -159,9 +155,9 @@ classdef session_base < handle
                else
                   vs_well_known_files = tSession.well_known_files;
                end
-               cstrURLs{nSessIndex} = arrayfun(@(s)strcat(sess.bocCache.strABOBaseUrl, s.download_link), vs_well_known_files, 'UniformOutput', false);
+               cstrURLs{nSessIndex} = arrayfun(@(s)strcat(sess.bot_cache.strABOBaseUrl, s.download_link), vs_well_known_files, 'UniformOutput', false);
                cstrLocalFiles{nSessIndex} = {vs_well_known_files.path}';
-               cvbIsURLInCache{nSessIndex} = sess.bocCache.IsURLInCache(cstrURLs{nSessIndex});
+               cvbIsURLInCache{nSessIndex} = sess.bot_cache.IsURLInCache(cstrURLs{nSessIndex});
             end
          end
          
@@ -179,7 +175,7 @@ classdef session_base < handle
             bSuccess = false;
             while ~bSuccess && (nNumTries > 0)
                try
-                  cstrCacheFiles = sess.bocCache.ccCache.pwebsave(cstrLocalFiles, [cstrURLs{:}], true);
+                  cstrCacheFiles = sess.bot_cache.ccCache.pwebsave(cstrLocalFiles, [cstrURLs{:}], true);
                   bSuccess = true;
                catch
                   nNumTries = nNumTries - 1;
@@ -198,7 +194,7 @@ classdef session_base < handle
                bSuccess = false;
                while ~bSuccess && (nNumTries > 0)
                   try
-                     cstrCacheFiles{nURLIndex} = sess.bocCache.CacheFile(cstrURLs{nURLIndex}, cstrLocalFiles{nURLIndex});
+                     cstrCacheFiles{nURLIndex} = sess.bot_cache.CacheFile(cstrURLs{nURLIndex}, cstrLocalFiles{nURLIndex});
                      bSuccess = true;
                   catch mE_Cause
                      nNumTries = nNumTries - 1;

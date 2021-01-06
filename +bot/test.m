@@ -128,12 +128,12 @@ classdef test < matlab.unittest.TestCase
       function testSessionDataAccess(testCase)
          %% Test data access methods of the bot.internal.ophyssession class for OPhys data
          % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(528402271);
+         s = bot.internal.ophyssession(496934409);
 
          % - Test summary methods
          vnCellIDs = s.get_cell_specimen_ids();
          s.get_cell_specimen_indices(vnCellIDs);
-         s.get_metadata();
+         s.fetch_nwb_metadata();
          s.get_session_type();
          s.get_roi_ids();
          s.list_stimuli();

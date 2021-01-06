@@ -1,6 +1,6 @@
 classdef ephyschannel < bot.internal.ephysitem
    properties (SetAccess = private)
-      tUnits;
+      units;
       session;
       probe;
    end
@@ -27,7 +27,7 @@ classdef ephyschannel < bot.internal.ephysitem
          end
          
          % - Assign associated table rows
-         channel.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ecephys_channel_id == nID, :); 
+         channel.units = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ecephys_channel_id == nID, :); 
          channel.probe = oManifest.probe(channel.metadata.ephys_probe_id);
          channel.session = oManifest.session(channel.metadata.ephys_session_id);
       end

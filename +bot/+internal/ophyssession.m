@@ -6,11 +6,11 @@
 % data associated with that session id.
 %
 % Construction:
-% >> bos = bot.session(nSessionID);
-% >> bos = bot.internal.opyssession(nSessionID);
+% >> bos = bot.session(id);
+% >> bos = bot.internal.opyssession(id);
 %
 % Get session metadata:
-% >> bos.get_metadata()
+% >> bos.fetch_nwb_metadata()
 % ans =
 %                         age: '73 days'
 %                         sex: 'female'
@@ -104,11 +104,11 @@ classdef ophyssession < bot.internal.session_base
    
    %% - Constructor
    methods
-      function bsObj = ophyssession(nID)
+      function bsObj = ophyssession(id)
          % bot.internal.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.internal.ophyssession(nSessionID)
-         %        vbsObj = bot.internal.ophyssession(vnSessionIDs)
+         % Usage: bsObj = bot.internal.ophyssession(id)
+         %        vbsObj = bot.internal.ophyssession(vids)
          %        bsObj = bot.internal.ophyssession(tSessionRow)
          
          if nargin == 0
@@ -116,64 +116,64 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Handle a vector of session IDs
-         if ~istable(nID) && numel(nID) > 1
-            for nIndex = numel(nID):-1:1
-               bsObj(nID) = bot.internal.ophyssession(nID(nIndex));
+         if ~istable(id) && numel(id) > 1
+            for nIndex = numel(id):-1:1
+               bsObj(id) = bot.internal.ophyssession(id(nIndex));
             end
             return;
          end
          
          % - Assign session information
-         bsObj.metadata = table2struct(bsObj.find_manifest_row(nID));
-         bsObj.id = nID;
+         bsObj.metadata = table2struct(bsObj.find_manifest_row(id));
+         bsObj.id = id;
 
          % - Ensure that we were given an OPhys session
-         if bsObj.metadata.BOT_session_type ~= "OPhys"
+         if bsObj.metadata.type ~= "OPhys"
             error('BOT:Usage', '`bot.internal.ophyssession` objects may only refer to OPhys experimental sessions.');
          end
       end
    end
    
    methods      
-   function strNWBURL = GetNWBURL(bos)
-         % GetNWBURL - METHOD Get the cloud URL for the NWB data file corresponding to this session
+   function nwb_url = nwb_url(bos)
+         % nwb_url - METHOD Get the cloud URL for the NWB data file corresponding to this session
          %
-         % Usage: strNWBURL = GetNWBURL(bos)
+         % Usage: nwb_url = nwb_url(bos)
          
          % - Get well known files
-         vs_well_known_files = bos.metadata.well_known_files;
+         well_known_files = bos.metadata.well_known_files;
          
          % - Find (first) NWB file
-         vsTypes = [vs_well_known_files.well_known_file_type];
-         cstrTypeNames = {vsTypes.name};
-         nNWBFile = find(cellfun(@(c)strcmp(c, 'NWBOphys'), cstrTypeNames), 1, 'first');
+         file_types = [well_known_files.well_known_file_type];
+         type_names = {file_types.name};
+         nwb_file_index = find(cellfun(@(c)strcmp(c, 'NWBOphys'), type_names), 1, 'first');
          
          % - Build URL
-         strNWBURL = [bos.bocCache.strABOBaseUrl vs_well_known_files(nNWBFile).download_link];
+         nwb_url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
       end
    end
 
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
    methods (Hidden = false)
-      function metadata = get_metadata(bos)
-         % get_metadata - METHOD Read metadata from the NWB file
+      function metadata = fetch_nwb_metadata(bos)
+         % fetch_nwb_metadata - METHOD Read metadata from the NWB file
          %
-         % Usage: metadata = get_metadata(bos)
+         % Usage: metadata = fetch_nwb_metadata(bos)
          
          % - Ensure the data has been cached
          EnsureCached(bos);
          
          % - Attempt to read each of the metadata fields from the NWB file
          metadata = bos.FILE_METADATA_MAPPING;
-         for strFieldname = fieldnames(bos.FILE_METADATA_MAPPING)'
+         for fieldname = fieldnames(bos.FILE_METADATA_MAPPING)'
             % - Convert to a string (otherwise it would be a cell)
-            strFieldname = strFieldname{1}; %#ok<FXSET>
+            fieldname = fieldname{1}; %#ok<FXSET>
             
             % - Try to read this metadata entry
             try
-               metadata.(strFieldname) = h5read(bos.strLocalNWBFileLocation, metadata.(strFieldname));
+               metadata.(fieldname) = h5read(bos.strLocalNWBFileLocation, metadata.(fieldname));
             catch
-               metadata.(strFieldname) = [];
+               metadata.(fieldname) = [];
             end
          end
          
@@ -226,50 +226,50 @@ classdef ophyssession < bot.internal.session_base
          end
       end
       
-      function vtTimestamps = get_fluorescence_timestamps(bos)
+      function timestamps = get_fluorescence_timestamps(bos)
          % get_fluorescence_timestamps - METHOD Return timestamps for the fluorescence traces, in seconds
          %
-         % Usage: vtTimestamps = get_fluorescence_timestamps(bos)
+         % Usage: timestamps = get_fluorescence_timestamps(bos)
          %
-         % `vtTimestamps` will be a vector of time points corresponding to
+         % `timestamps` will be a vector of time points corresponding to
          % fluorescence samples, in seconds.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Read imaging timestamps from NWB file
-         vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
+         timestamps = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
             'Fluorescence', 'imaging_plane_1', 'timestamps'));
          
          % - Convert to 'duration'
-         vtTimestamps = seconds(vtTimestamps);
+         timestamps = seconds(timestamps);
       end
       
-      function vnCellSpecimenIDs = get_cell_specimen_ids(bos)
+      function cell_specimen_ids = get_cell_specimen_ids(bos)
          % get_cell_specimen_ids - METHOD Return all cell specimen IDs in this session
          %
-         % Usage: vnCellSpecimenIDs = get_cell_specimen_ids(bos)
+         % Usage: cell_specimen_ids = get_cell_specimen_ids(bos)
          %
-         % `vnCellSpecimenIDs` will be a vector of IDs corresponding to the ROIs
+         % `cell_specimen_ids` will be a vector of IDs corresponding to the ROIs
          % analysed in this session.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Read list of specimen IDs
-         vnCellSpecimenIDs = h5read(bos.strLocalNWBFileLocation, ...
+         cell_specimen_ids = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'cell_specimen_ids'));
       end
       
-      function vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
+      function cell_specimen_indices = get_cell_specimen_indices(bos, cell_specimen_ids)
          % get_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
          %
-         % Usage: vnCellSpecimenIndices = get_cell_specimen_indices(bos, vnCellSpecimenIDs)
+         % Usage: cell_specimen_indices = get_cell_specimen_indices(bos, cell_specimen_ids)
          %
-         % `vnCellSpecimenIDs` is an Nx1 vector of valid cell specimen IDs.
-         % `vnCellSpecimenIndices` will be an Nx1 vector with each element
+         % `cell_specimen_ids` is an Nx1 vector of valid cell specimen IDs.
+         % `cell_specimen_indices` will be an Nx1 vector with each element
          % indicating the 1-based index of the corresponding cell specimen ID in
          % the NWB data tables and fluorescence matrices.
          
@@ -277,183 +277,184 @@ classdef ophyssession < bot.internal.session_base
          EnsureCached(bos);
          
          % - Read all cell specimen IDs
-         vnAllCellSpecimenIDs = bos.get_cell_specimen_ids();
+         all_cell_specimen_ids = bos.get_cell_specimen_ids();
          
          % - Find provided IDs in list
-         [vbFound, vnCellSpecimenIndices] = ismember(vnCellSpecimenIDs, vnAllCellSpecimenIDs);
+         [vbFound, cell_specimen_indices] = ismember(cell_specimen_ids, all_cell_specimen_ids);
          
          % - Raise an error if specimens not found
          assert(all(vbFound), 'BOT:NotFound', ...
             'Provided cell specimen ID was not found in this session.');
       end
       
-      function [vtTimestamps, mfTraces] = get_demixed_traces(bos, vnCellSpecimenIDs)
+      function [timestamps, traces] = get_demixed_traces(bos, cell_specimen_ids)
          % get_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
          %
-         % Usage: [vtTimestamps, mfTraces] = get_demixed_traces(bos <, vnCellSpecimenIDs>)
+         % Usage: [timestamps, traces] = get_demixed_traces(bos <, cell_specimen_ids>)
          %
-         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
          % will be a TxN matrix of fluorescence samples, with each row `t`
          % contianing the data for the timestamp in the corresponding entry of
-         % `vtTimestamps`. Each column `n` contains the demixed fluorescence
+         % `timestamps`. Each column `n` contains the demixed fluorescence
          % data for a single cell specimen.
          %
          % By default, traces for all cell specimens are returned. The optional
-         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % argument`cell_specimen_ids` permits you specify which cell specimens
          % should be returned.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Get the fluorescence timestamps
-         vtTimestamps = bos.get_fluorescence_timestamps();
+         timestamps = bos.get_fluorescence_timestamps();
          
          % - Find cell specimen IDs, if provided
-         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
-            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
          else
-            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Read requested fluorescence traces
-         mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+         traces = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
             'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
          
          % - Subselect traces
-         mfTraces = mfTraces(:, vnCellSpecimenInds);
+         traces = traces(:, cell_specimen_indices);
       end
       
-      function [vtTimestamps, mfTraces] = get_fluorescence_traces(bos, vnCellSpecimenIDs)
+      function [timestamps, traces] = get_fluorescence_traces(bos, cell_specimen_ids)
          % get_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
          %
-         % Usage: [vtTimestamps, mfTraces] = get_fluorescence_traces(bos <, vnCellSpecimenIDs>)
+         % Usage: [timestamps, traces] = get_fluorescence_traces(bos <, cell_specimen_ids>)
          %
-         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
          % will be a TxN matrix of fluorescence samples, with each row `t`
          % contianing the data for the timestamp in the corresponding entry of
-         % `vtTimestamps`. Each column `n` contains the demixed fluorescence
+         % `timestamps`. Each column `n` contains the demixed fluorescence
          % data for a single cell specimen.
          %
          % By default, traces for all cell specimens are returned. The optional
-         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % argument`cell_specimen_ids` permits you specify which cell specimens
          % should be returned.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Get the fluorescence timestamps
-         vtTimestamps = bos.get_fluorescence_timestamps();
+         timestamps = bos.get_fluorescence_timestamps();
          
          % - Find cell specimen IDs, if provided
-         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
-            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
          else
-            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Read requested fluorescence traces
-         mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+         traces = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
             'Fluorescence', 'imaging_plane_1', 'data'));
          
          % - Subselect traces
-         mfTraces = mfTraces(:, vnCellSpecimenInds);
+         traces = traces(:, cell_specimen_indices);
       end
       
-      function vfR = get_neuropil_r(bos, vnCellSpecimenIDs)
+      function neuropil_r = get_neuropil_r(bos, cell_specimen_ids)
          % get_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
          %
-         % Usage: vfR = get_neuropil_r(bos <, vnCellSpecimenIDs>)
+         % Usage: cell_specimen_ids = get_neuropil_r(bos <, cell_specimen_ids>)
          %
-         % `vfR` will be a vector of neuropil correction factors for each
-         % analysed cell. The optional argument `vnCellSpecimenIDs` can be used
-         % to determine for which cells data should be returned. By default,
-         % data for all cells is returned.
+         % `neuropil_r` will be a vector of neuropil correction
+         % factors for each analysed cell. The optional argument
+         % `cell_specimen_ids` can be used to determine for which cells
+         % data should be returned. By default, data for all cells is
+         % returned.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Find cell specimen IDs, if provided
-         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
-            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
          else
-            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Check pipeline version and read neuropil correction R
-         metadata = bos.get_metadata();
-         if str2double(metadata.pipeline_version) >= 2.0
-            vfR = h5read(bos.strLocalNWBFileLocation, ...
+         nwb_metadata = bos.fetch_nwb_metadata();
+         if str2double(nwb_metadata.pipeline_version) >= 2.0
+            neuropil_r = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
          else
-            vfR = h5read(bos.strLocalNWBFileLocation, ...
+            neuropil_r = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1', 'r'));
          end
          
          % - Subsample R to requested cell specimens
-         vfR = vfR(vnCellSpecimenInds);
+         neuropil_r = neuropil_r(cell_specimen_indices);
       end
       
-      function [vtTimestamps, mfTraces] = get_neuropil_traces(bos, vnCellSpecimenIDs)
+      function [timestamps, traces] = get_neuropil_traces(bos, cell_specimen_ids)
          % get_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
          %
-         % Usage: [vtTimestamps, mfTraces] = get_neuropil_traces(bos <, vnCellSpecimenIDs>)
+         % Usage: [timestamps, traces] = get_neuropil_traces(bos <, cell_specimen_ids>)
          %
-         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
          % will be a TxN matrix of neuropil fluorescence samples, with each row
          % `t` contianing the data for the timestamp in the corresponding entry
-         % of `vtTimestamps`. Each column `n` contains the neuropil response for
+         % of `timestamps`. Each column `n` contains the neuropil response for
          % a single cell specimen.
          %
          % By default, traces for all cell specimens are returned. The optional
-         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % argument`cell_specimen_ids` permits you specify which cell specimens
          % should be returned.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Get the fluorescence timestamps
-         vtTimestamps = bos.get_fluorescence_timestamps();
+         timestamps = bos.get_fluorescence_timestamps();
          
          % - Find cell specimen IDs, if provided
-         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
-            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
          else
-            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Check pipeline version and read neuropil correction R
-         metadata = bos.get_metadata();
-         if str2double(metadata.pipeline_version) >= 2.0
-            mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+         nwb_metadata = bos.fetch_nwb_metadata();
+         if str2double(nwb_metadata.pipeline_version) >= 2.0
+            traces = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
          else
-            mfTraces = h5read(bos.strLocalNWBFileLocation, ...
+            traces = h5read(bos.strLocalNWBFileLocation, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
          end
          
          % - Subselect traces
-         mfTraces = mfTraces(:, vnCellSpecimenInds);
+         traces = traces(:, cell_specimen_indices);
       end
       
-      function [vtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos, vnCellSpecimenIDs)
+      function [timestamps, traces] = get_corrected_fluorescence_traces(bos, cell_specimen_ids)
          % get_corrected_fluorescence_traces - METHOD Return corrected fluorescence traces for the provided cell specimen IDs
          %
-         % Usage: [vtTimestamps, mfTraces] = get_corrected_fluorescence_traces(bos <, vnCellSpecimenIDs>)
+         % Usage: [timestamps, traces] = get_corrected_fluorescence_traces(bos <, cell_specimen_ids>)
          %
-         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
          % will be a TxN matrix of fluorescence samples, with each row `t`
          % contianing the data for the timestamp in the corresponding entry of
-         % `vtTimestamps`. Each column `n` contains the demixed fluorescence
+         % `timestamps`. Each column `n` contains the demixed fluorescence
          % data for a single cell specimen.
          %
          % By default, traces for all cell specimens are returned. The optional
@@ -464,64 +465,64 @@ classdef ophyssession < bot.internal.session_base
          EnsureCached(bos);
          
          % - Pass an empty matrix to return all cell specimen IDs
-         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
-            vnCellSpecimenIDs = [];
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_ids = [];
          end
          
          % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
-         metadata = bos.get_metadata();
-         if str2double(metadata.pipeline_version) >= 2.0
-            [vtTimestamps, mfTraces] = bos.get_demixed_traces(vnCellSpecimenIDs);
+         nwb_metadata = bos.fetch_nwb_metadata();
+         if str2double(nwb_metadata.pipeline_version) >= 2.0
+            [timestamps, traces] = bos.get_demixed_traces(cell_specimen_ids);
          else
-            [vtTimestamps, mfTraces] = bos.get_fluorescence_traces(vnCellSpecimenIDs);
+            [timestamps, traces] = bos.get_fluorescence_traces(cell_specimen_ids);
          end
          
          % - Read neuropil correction data
-         vfR = bos.get_neuropil_r(vnCellSpecimenIDs);
-         [~, mfNeuropilTraces] = bos.get_neuropil_traces(vnCellSpecimenIDs);
+         neuropil_r = bos.get_neuropil_r(cell_specimen_ids);
+         [~, neuropil_traces] = bos.get_neuropil_traces(cell_specimen_ids);
          
          % - Correct fluorescence traces using neuropil demixing model
-         mfTraces = mfTraces - bsxfun(@times, mfNeuropilTraces, reshape(vfR, 1, []));
+         traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
       end
       
-      function [vtTimestamps, mfdFF] = get_dff_traces(bos, vnCellSpecimenIDs)
+      function [timestamps, dff_traces] = get_dff_traces(bos, cell_specimen_ids)
          % get_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
          %
-         % Usage: [vtTimestamps, mfTraces] = get_dff_traces(bos <, vnCellSpecimenIDs>)
+         % Usage: [timestamps, dff_traces] = get_dff_traces(bos <, cell_specimen_ids>)
          %
-         % `vtTimestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `mfTraces`
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `dff_traces`
          % will be a TxN matrix of fluorescence samples, with each row `t`
          % contianing the data for the timestamp in the corresponding entry of
-         % `vtTimestamps`. Each column `n` contains the delta F/F0 fluorescence
+         % `timestamps`. Each column `n` contains the delta F/F0 fluorescence
          % data for a single cell specimen.
          %
          % By default, traces for all cell specimens are returned. The optional
-         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % argument`cell_specimen_ids` permits you specify which cell specimens
          % should be returned.
          
          % - Ensure the file has been cached
          EnsureCached(bos);
          
          % - Find cell specimen IDs, if provided
-         if ~exist('vnCellSpecimenIDs', 'var') || isempty(vnCellSpecimenIDs)
-            vnCellSpecimenInds = 1:numel(bos.get_cell_specimen_ids());
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
          else
-            vnCellSpecimenInds = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Read timestamps and response traces
-         vtTimestamps = h5read(bos.strLocalNWBFileLocation, ...
+         timestamps = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
             'DfOverF', 'imaging_plane_1', 'timestamps'));
-         vtTimestamps = seconds(vtTimestamps);
+         timestamps = seconds(timestamps);
          
-         mfdFF = h5read(bos.strLocalNWBFileLocation, ...
+         dff_traces = h5read(bos.strLocalNWBFileLocation, ...
             h5path('processing', bos.strPipelineDataset, ...
             'DfOverF', 'imaging_plane_1', 'data'));
          
          % - Subsample response traces to requested cell specimens
-         mfdFF = mfdFF(:, vnCellSpecimenInds);
+         dff_traces = dff_traces(:, cell_specimen_indices);
       end
       
       function stimulus_table = get_spontaneous_activity_stimulus_table(bos)
@@ -564,12 +565,12 @@ classdef ophyssession < bot.internal.session_base
          end
       end
       
-      function cStimuli = list_stimuli(bos)
+      function stimuli = list_stimuli(bos)
          % list_stimuli - METHOD Return the list of stimuli used in this experimental session
          %
-         % Usage: cStimuli = list_stimuli(bos)
+         % Usage: stimuli = list_stimuli(bos)
          %
-         % `cStimuli` will be a cell array of strings, indicating which
+         % `stimuli` will be a cell array of strings, indicating which
          % individual stimulus sets were presented in this session.
          
          % - Get local NWB file
@@ -579,10 +580,10 @@ classdef ophyssession < bot.internal.session_base
          % - Get list of stimuli from NWB file
          strKey = h5path('stimulus', 'presentation');
          sKeys = h5info(nwb_file, strKey);
-         [~, cStimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
+         [~, stimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
          
          % - Remove trailing "_stimulus"
-         cStimuli = cellfun(@(s)strrep(s, '_stimulus', ''), cStimuli, 'UniformOutput', false);
+         stimuli = cellfun(@(s)strrep(s, '_stimulus', ''), stimuli, 'UniformOutput', false);
       end
       
       function strSessionType = get_session_type(bos)
@@ -592,12 +593,12 @@ classdef ophyssession < bot.internal.session_base
          strSessionType = bos.metadata.stimulus_name;
       end
       
-      function tStimEpochs = get_stimulus_epoch_table(bos)
+      function stimulus_epochs = get_stimulus_epoch_table(bos)
          % get_stimulus_epoch_table - METHOD Return the stimulus epoch table for this experimental session
          %
-         % Usage: tStimEpochs = get_stimulus_epoch_table(bos)
+         % Usage: stimulus_epochs = get_stimulus_epoch_table(bos)
          %
-         % `tStimEpochs` will be a table containing information about all
+         % `stimulus_epochs` will be a table containing information about all
          % stimulus epochs in this session.
          
          % - Hard-coded thresholds from Allen SDK for get_epoch_mask_list. These
@@ -607,51 +608,51 @@ classdef ophyssession < bot.internal.session_base
          % experiment into too many stimulus epochs. If these thresholds are too
          % low, the assert statment in get_epoch_mask_list will halt execution.
          % In that case, make a bug report!.
-         sThresholds = struct('three_session_A', 32+7,...
+         thresholds = struct('three_session_A', 32+7,...
             'three_session_B', 15, ...
             'three_session_C', 7, ...
             'three_session_C2', 7);
          
          % - Get list of stimuli for this session
-         cstrStimuli = bos.list_stimuli();
+         stimuli = bos.list_stimuli();
          
          % - Loop over stimuli to get stimulus tables
-         tStimEpochs = table();
-         for nStimIndex = numel(cstrStimuli):-1:1
+         stimulus_epochs = table();
+         for stim_index = numel(stimuli):-1:1
             % - Get the stimulus table for this stimulus
-            tThisStimulus = bos.get_stimulus_table(cstrStimuli{nStimIndex});
+            this_stimulus = bos.get_stimulus_table(stimuli{stim_index});
             
             % - Set "frame" column for spontaneous stimulus
-            if isequal(cstrStimuli{nStimIndex}, 'spontaneous')
-               tThisStimulus.frame = nan(size(tThisStimulus, 1), 1);
+            if isequal(stimuli{stim_index}, 'spontaneous')
+               this_stimulus.frame = nan(size(this_stimulus, 1), 1);
             end
             
             % - Get epochs for this stimulus
-            cvnTheseEpochs = get_epoch_mask_list(tThisStimulus, sThresholds.(bos.get_session_type()));
-            tTheseEpochs = array2table(int32(vertcat(cvnTheseEpochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
-            tTheseEpochs.stimulus = repmat(cstrStimuli(nStimIndex), numel(cvnTheseEpochs), 1);
+            these_epochs = get_epoch_mask_list(this_stimulus, thresholds.(bos.get_session_type()));
+            these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
+            these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
             
             % - Append to stimulus epochs table
-            tStimEpochs = vertcat(tStimEpochs, tTheseEpochs); %#ok<AGROW>
+            stimulus_epochs = vertcat(stimulus_epochs, these_epochs_table); %#ok<AGROW>
          end
          
          % - Sort by initial frame
-         tStimEpochs = sortrows(tStimEpochs, 'start_frame');
+         stimulus_epochs = sortrows(stimulus_epochs, 'start_frame');
          
          % - Rearrange columns to put 'stimulus' first
-         tStimEpochs = [tStimEpochs(:, 3) tStimEpochs(:, 1:2)];
+         stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
       end
       
-      function tStimulusTable = get_stimulus_table(bos, strStimulusName)
+      function stimulus_table = get_stimulus_table(bos, stimulus_name)
          % get_stimulus_table - METHOD Return the stimulus table for the provided stimulus
          %
-         % Usage: tStimulusTable = get_stimulus_table(bos, strStimulusName)
+         % Usage: stimulus_table = get_stimulus_table(bos, stimulus_name)
          %
-         % `strStimulusName` is a string indicating for which stimulus data
-         % should be returned. `strStimulusName` must be one of the stimuli
+         % `stimulus_name` is a string indicating for which stimulus data
+         % should be returned. `stimulus_name` must be one of the stimuli
          % returned by bos.list_stimuli().
          %
-         % `tStimulusTable` will be a table containing information about the
+         % `stimulus_table` will be a table containing information about the
          % chosen stimulus. The individual stimulus frames can be accessed with
          % method bos.get_stimulus_template().
          
@@ -659,102 +660,103 @@ classdef ophyssession < bot.internal.session_base
          bos.EnsureCached();
          
          % - Return a stimulus table for one of the stimulus types
-         if ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
-            tStimulusTable = get_abstract_feature_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
+         if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
+            stimulus_table = get_abstract_feature_series_stimulus_table(bos.strLocalNWBFileLocation, [stimulus_name '_stimulus']);
             return;
             
-         elseif ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
-            tStimulusTable = get_indexed_time_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
+         elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
+            stimulus_table = get_indexed_time_series_stimulus_table(bos.strLocalNWBFileLocation, [stimulus_name '_stimulus']);
             return;
             
-         elseif ismember(strStimulusName, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
-            tStimulusTable = get_repeated_indexed_time_series_stimulus_table(bos.strLocalNWBFileLocation, [strStimulusName '_stimulus']);
+         elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
+            stimulus_table = get_repeated_indexed_time_series_stimulus_table(bos.strLocalNWBFileLocation, [stimulus_name '_stimulus']);
             return;
             
-         elseif isequal(strStimulusName, 'spontaneous')
-            tStimulusTable = bos.get_spontaneous_activity_stimulus_table();
+         elseif isequal(stimulus_name, 'spontaneous')
+            stimulus_table = bos.get_spontaneous_activity_stimulus_table();
             return;
             
-         elseif isequal(strStimulusName, 'master')
+         elseif isequal(stimulus_name, 'master')
             % - Return a master stimulus table containing all stimuli
             % - Loop over stimuli, collect stimulus tables
-            ctStimuli = {};
-            cstrVariableNames = {};
+            stimuli = {};
+            variable_names = {};
             for strStimulus = bos.list_stimuli()
                % - Get stimulus as a string
                strStimulus = strStimulus{1}; %#ok<FXSET>
                
                % - Get stimulus table for this stimulus, annotate with stimulus name
-               ctStimuli{end+1} = bos.get_stimulus_table(strStimulus); %#ok<AGROW>
-               ctStimuli{end}.stimulus = repmat({strStimulus}, size(ctStimuli{end}, 1), 1);
+               stimuli{end+1} = bos.get_stimulus_table(strStimulus); %#ok<AGROW>
+               stimuli{end}.stimulus = repmat({strStimulus}, size(stimuli{end}, 1), 1);
                
                % - Collect all variable names
-               cstrVariableNames = union(cstrVariableNames, ctStimuli{end}.Properties.VariableNames);
+               variable_names = union(variable_names, stimuli{end}.Properties.VariableNames);
             end
             
             % - Loop over stimulus tables and merge
-            for nStimIndex = numel(ctStimuli):-1:1
+            for nStimIndex = numel(stimuli):-1:1
                % - Find missing variables in this stimulus
-               cstrMissingVariables = setdiff(cstrVariableNames, ctStimuli{nStimIndex}.Properties.VariableNames);
+               cstrMissingVariables = setdiff(variable_names, stimuli{nStimIndex}.Properties.VariableNames);
                
                % - Add missing variables to this stimulus table
-               ctStimuli{nStimIndex} = [ctStimuli{nStimIndex} array2table(nan(size(ctStimuli{nStimIndex}, 1), numel(cstrMissingVariables)), 'VariableNames', cstrMissingVariables)];
+               stimuli{nStimIndex} = [stimuli{nStimIndex} array2table(nan(size(stimuli{nStimIndex}, 1), numel(cstrMissingVariables)), 'VariableNames', cstrMissingVariables)];
             end
             
             % - Concatenate all stimuli and sort by start frame
-            tStimulusTable = vertcat(ctStimuli{:});
-            tStimulusTable = sortrows(tStimulusTable, 'start_frame');
+            stimulus_table = vertcat(stimuli{:});
+            stimulus_table = sortrows(stimulus_table, 'start_frame');
             
          else
             % - Raise an error
-            error('BOT:Argument', 'Could not find a stimulus table named [%s].', strStimulusName);
+            error('BOT:Argument', 'Could not find a stimulus table named [%s].', stimulus_name);
          end
       end
       
-      function mfMaxProjection = get_max_projection(bos)
+      function max_projection = get_max_projection(bos)
          % get_max_projection - METHOD Return the maximum-intensity projection image for this experimental session
          %
-         % Usage: mfMaxProjection = get_max_projection(bos)
+         % Usage: max_projection = get_max_projection(bos)
          %
-         % `mfMaxProjection` will be an image contianing the maximum-intensity
-         % projection of the fluorescence stack obtained in this session.
+         % `max_projection` will be an image contianing the
+         % maximum-intensity projection of the fluorescence stack obtained
+         % in this session.
          
          % - Ensure session data is cached, and locate NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract the maximum projection from the session
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1', 'reference_images', ...
             'maximum_intensity_projection_image', 'data');
-         mfMaxProjection = h5read(nwb_file, strKey);
+         max_projection = h5read(nwb_file, nwb_key);
       end
       
-      function vnROIIDs = get_roi_ids(bos)
+      function roi_ids = get_roi_ids(bos)
          % get_roi_ids - METHOD Return the list of ROI IDs for this experimental session
          %
-         % Usage: vnROIIDs = get_roi_ids(bos)
+         % Usage: roi_ids = get_roi_ids(bos)
          %
-         % `vnROIIDs` will be a vector containing all ROI IDs analysed in this
-         % session.
+         % `roi_ids` will be a vector containing all ROI IDs analysed in
+         % this session.
          
          % - Ensure session data is cached, and locate NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract list of ROI IDs from NWB file
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'roi_ids');
-         vnROIIDs = cellfun(@str2num, h5read(nwb_file, strKey));
+         roi_ids = cellfun(@str2num, h5read(nwb_file, nwb_key));
       end
       
-      function [vtTimestamps, vfRunningSpeed] = get_running_speed(bos)
+      function [timestamps, running_speed] = get_running_speed(bos)
          % get_running_speed - METHOD Return running speed in cm/s
          %
-         % Usage: [vtTimestamps, vfRunningSpeed] = get_running_speed(bos)
+         % Usage: [timestamps, running_speed] = get_running_speed(bos)
          %
-         % `vtTimestamps` will be a Tx1 vector containing times in seconds,
-         % corresponding to fluorescence timestamps. `vfRunningSpeed` will be a
+         % `timestamps` will be a Tx1 vector containing times in seconds,
+         % corresponding to fluorescence timestamps. `running_speed` will be a
          % Tx1 vector containing instantaneous running speeds at each
          % corresponding time point, in cm/s.
          
@@ -763,22 +765,22 @@ classdef ophyssession < bot.internal.session_base
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Build a base key for the running speed data
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'BehavioralTimeSeries', 'running_speed');
-         vfRunningSpeed = h5read(nwb_file, h5path(strKey, 'data'));
-         vtTimestamps = seconds(h5read(nwb_file, h5path(strKey, 'timestamps')));
+         running_speed = h5read(nwb_file, h5path(nwb_key, 'data'));
+         timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
          
          % - Align with imaging timestamps
-         vtImageTimestamps = bos.get_fluorescence_timestamps();
-         [vfRunningSpeed, vtTimestamps] = align_running_speed(vfRunningSpeed, vtTimestamps, vtImageTimestamps);
+         imaging_timestamps = bos.get_fluorescence_timestamps();
+         [running_speed, timestamps] = align_running_speed(running_speed, timestamps, imaging_timestamps);
       end
       
-      function tMotionCorrection = get_motion_correction(bos)
+      function motion_correction = get_motion_correction(bos)
          % get_motion_correction - METHOD Return the motion correction information for this experimental session
          %
-         % Usage: tMotionCorrection = get_motion_correction(bos)
+         % Usage: motion_correction = get_motion_correction(bos)
          %
-         % `tMotionCorrection` will be a table containing x/y motion correction
+         % `motion_correction` will be a table containing x/y motion correction
          % information applied in this experimental session.
          
          % - Ensure session data is cached, locate NWB file
@@ -786,16 +788,16 @@ classdef ophyssession < bot.internal.session_base
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Try to locate the motion correction data
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'MotionCorrection', '2p_image_series');
          
          try
-            h5info(nwb_file, h5path(strKey, 'xy_translation'));
-            strKey = h5path(strKey, 'xy_translation');
+            h5info(nwb_file, h5path(nwb_key, 'xy_translation'));
+            nwb_key = h5path(nwb_key, 'xy_translation');
          catch
             try
-               h5info(nwb_file, h5path(strKey, 'xy_translations'));
-               strKey = h5path(strKey, 'xy_translations');
+               h5info(nwb_file, h5path(nwb_key, 'xy_translations'));
+               nwb_key = h5path(nwb_key, 'xy_translations');
             catch
                error('BOT:MotionCorrectionNotFound', ...
                   'Could not file motion correction data.');
@@ -803,28 +805,28 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Extract motion correction data from session
-         motion_log = h5read(nwb_file, h5path(strKey, 'data'));
-         motion_time = h5read(nwb_file, h5path(strKey, 'timestamps'));
-         motion_names = h5read(nwb_file, h5path(strKey, 'feature_description'));
+         motion_log = h5read(nwb_file, h5path(nwb_key, 'data'));
+         motion_time = h5read(nwb_file, h5path(nwb_key, 'timestamps'));
+         motion_names = h5read(nwb_file, h5path(nwb_key, 'feature_description'));
          
          % - Create a motion correction table
-         tMotionCorrection = array2table(motion_log', 'VariableNames', motion_names);
-         tMotionCorrection.timestamp = motion_time;
+         motion_correction = array2table(motion_log', 'VariableNames', motion_names);
+         motion_correction.timestamp = motion_time;
       end
       
-      function [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, bAsSpherical)
+      function [timestamps, pupil_location] = get_pupil_location(bos, as_spherical_coords)
          % get_pupil_location - METHOD Return the pupil location trace for this experimental session
          %
-         % Usage: [vtTimestamps, mfPupilLocation] = get_pupil_location(bos, <bAsSpherical>)
+         % Usage: [timestamps, pupil_location] = get_pupil_location(bos, <as_spherical_coords>)
          %
-         % `vtTimestamps` will be a Tx1 vector of times in seconds,
-         % corresponding to fluorescence timestamps. `mfPupilLocation` will be a
+         % `timestamps` will be a Tx1 vector of times in seconds,
+         % corresponding to fluorescence timestamps. `pupil_location` will be a
          % Tx2 matrix, where each row contains the tracked location of the mouse
          % pupil. By default, spherical coordinates [`altitude` `azimuth`] are
          % returned in degrees, otherwise each row is [`x` `y`] in centimeters.
          % (0,0) is the center of the monitor.
          %
-         % The optional argument `bAsSpherical` can be used to select spherical
+         % The optional argument `as_spherical_coords` can be used to select spherical
          % or euclidean coordinates.
          
          % - Fail quickly if eye tracking data is known not to exist
@@ -838,42 +840,42 @@ classdef ophyssession < bot.internal.session_base
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Default for spherical coordinates
-         if ~exist('bAsSpherical', 'var') || isempty(bAsSpherical)
-            bAsSpherical = true;
+         if ~exist('bAsSpherical', 'var') || isempty(as_spherical_coords)
+            as_spherical_coords = true;
          end
          
          % - Return spherical or euclidean coordinates?
-         if bAsSpherical
+         if as_spherical_coords
             location_key = 'pupil_location_spherical';
          else
             location_key = 'pupil_location';
          end
          
          % - Extract data from NWB file
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'EyeTracking', location_key);
          
          try
             % - Try to read the eye tracking data from the NWB file
-            mfPupilLocation = h5read(nwb_file, h5path(strKey, 'data'))';
-            vtTimestamps = seconds(h5read(nwb_file, h5path(strKey, 'timestamps')));
+            pupil_location = h5read(nwb_file, h5path(nwb_key, 'data'))';
+            timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
             
-         catch meCause
+         catch cause
             % - Couldn't find the eye tracking data
-            meBase = MException('BOT:NoEyeTracking', ...
+            base = MException('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
-            meBase = meBase.addCause(meCause);
-            throw(meBase);
+            base = base.addCause(cause);
+            throw(base);
          end
       end
       
-      function [vtTimestamps, vfPupilAreas] = get_pupil_size(bos)
+      function [timestamps, pupil_areas] = get_pupil_size(bos)
          % get_pupil_size - METHOD Return the pupil area trace for this experimental session
          %
-         % Usage: [vtTimestamps, vfPupilAreas] = get_pupil_size(bos)
+         % Usage: [timestamps, pupil_areas] = get_pupil_size(bos)
          %
-         % `vtTimestamps` will be a Tx1 vector of times in seconds,
-         % corresponding to fluorescence timestamps. `vfPupilAreas` will be a
+         % `timestamps` will be a Tx1 vector of times in seconds,
+         % corresponding to fluorescence timestamps. `pupil_areas` will be a
          % Tx1 vector, each element containing the instantaneous estimated pupil
          % area in pixels.
          
@@ -888,123 +890,123 @@ classdef ophyssession < bot.internal.session_base
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract session data from NWB file
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'PupilTracking', 'pupil_size');
          
          try
             % - Try to read the eye tracking data from the NWB file
-            vfPupilAreas = h5read(nwb_file, h5path(strKey, 'data'));
-            vtTimestamps = seconds(h5read(nwb_file, h5path(strKey, 'timestamps')));
+            pupil_areas = h5read(nwb_file, h5path(nwb_key, 'data'));
+            timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
             
-         catch meCause
+         catch cause
             % - Couldn't find the eye tracking data
-            meBase = MException('BOT:NoEyeTracking', ...
+            base = MException('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
-            meBase = meBase.addCause(meCause);
-            throw(meBase);
+            base = base.addCause(cause);
+            throw(base);
          end
       end
       
-      function tbROIMasks = get_roi_mask_array(bos, vnCellSpecimenIDs)
+      function roi_masks = get_roi_mask_array(bos, cell_specimen_ids)
          % get_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
          %
-         % Usage: tbROIMasks = get_roi_mask_array(bos <, vnCellSpecimenIDs>)
+         % Usage: roi_masks = get_roi_mask_array(bos <, cell_specimen_ids>)
          %
-         % `tbROIMasks` will be a [XxYxC] boolean tensor. Each C slice
+         % `roi_masks` will be a [XxYxC] boolean tensor. Each C slice
          % corresponds to a single imaged ROI, and indicates which pixels in the
          % stack contain that ROI. The optional argument `vnCellSpecimenIDs` can
          % be used to select for which cells data should be returned. By
          % default, a mask is returned for all ROIs.
          
          % - By default, return masks for all cells
-         if ~exist('vnCellSpecimenIDs', 'var')
-            vnCellSpecimenIDs = bos.get_cell_specimen_ids;
+         if ~exist('cell_specimen_ids', 'var')
+            cell_specimen_ids = bos.get_cell_specimen_ids;
          end
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
          
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1');
          
          % - Get list of ROI names
-         cstrRoiList = deblank(h5read(nwb_file, h5path(strKey, 'roi_list')));
+         roi_list = deblank(h5read(nwb_file, h5path(nwb_key, 'roi_list')));
          
          % - Select only requested cell specimen IDs
-         vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          
          % - Loop over ROIs, extract masks
-         tbROIMasks = [];
-         for nCellIndex = vnCellIndices'
+         roi_masks = [];
+         for cell_index = cell_specimen_indices'
             % - Get a logical mask for this ROI
-            mbThisMask = logical(h5read(nwb_file, h5path(strKey, cstrRoiList{nCellIndex}, 'img_mask')));
+            this_mask = logical(h5read(nwb_file, h5path(nwb_key, roi_list{cell_index}, 'img_mask')));
             
             % - Build a logical tensor of ROI masks
-            if isempty(tbROIMasks)
-               tbROIMasks = mbThisMask;
+            if isempty(roi_masks)
+               roi_masks = this_mask;
             else
-               tbROIMasks = cat(3, tbROIMasks, mbThisMask);
+               roi_masks = cat(3, roi_masks, this_mask);
             end
          end
       end
       
-      function sROIs = get_roi_mask(bos, vnCellSpecimenIDs)
+      function roi_masks = get_roi_mask(bos, cell_specimen_ids)
          % get_roi_mask - METHOD Return connected components structure defining requested ROIs
          %
-         % Usage: sROIs = get_roi_mask(bos <, vnCellSpecimenIDs>)
+         % Usage: roi_masks = get_roi_mask(bos <, cell_specimen_ids>)
          %
-         % `sROIs` will be a structure as returned from `bwconncomp`, defining a
+         % `roi_masks` will be a structure as returned from `bwconncomp`, defining a
          % set of ROIs. This can be passed to `labelmatrix`, etc. The optional
-         % argument `vnCellSpecimenIDs` can be used to select for which cells
+         % argument `cell_specimen_ids` can be used to select for which cells
          % data should be returned. By default, a mask is returned for all ROIs.
          
          % - By default, return masks for all cells
          if ~exist('vnCellSpecimenIDs', 'var')
-            vnCellSpecimenIDs = bos.get_cell_specimen_ids;
+            cell_specimen_ids = bos.get_cell_specimen_ids;
          end
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
          nwb_file = bos.strLocalNWBFileLocation;
          
-         strKey = h5path('processing', bos.strPipelineDataset, ...
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1');
          
          % - Get list of ROI names
-         cstrRoiList = deblank(h5read(nwb_file, h5path(strKey, 'roi_list')));
+         roi_list = deblank(h5read(nwb_file, h5path(nwb_key, 'roi_list')));
          
          % - Select only requested cell specimen IDs
-         vnCellIndices = bos.get_cell_specimen_indices(vnCellSpecimenIDs);
+         cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
          
          % - Initialise a CC structure
-         sROIs = struct('Connectivity', 8, ...
+         roi_masks = struct('Connectivity', 8, ...
             'ImageSize', {[]}, ...
-            'NumObjects', numel(vnCellIndices), ...
+            'NumObjects', numel(cell_specimen_indices), ...
             'PixelIdxList', {{}}, ...
             'Labels', {{}});
          
          % - Loop over ROIs, extract masks
-         for nCellIndex = numel(vnCellIndices):-1:1
+         for cell_index = numel(cell_specimen_indices):-1:1
             % - Get a logical mask for this ROI
-            mbThisMask = logical(h5read(nwb_file, h5path(strKey, cstrRoiList{vnCellIndices(nCellIndex)}, 'img_mask')));
+            this_mask = logical(h5read(nwb_file, h5path(nwb_key, roi_list{cell_specimen_indices(cell_index)}, 'img_mask')));
             
             % - Build up a CC structure containing these ROIs
-            sROIs.PixelIdxList{nCellIndex} = find(mbThisMask);
-            sROIs.Labels{nCellIndex} = cstrRoiList{vnCellIndices(nCellIndex)};
+            roi_masks.PixelIdxList{cell_index} = find(this_mask);
+            roi_masks.Labels{cell_index} = roi_list{cell_specimen_indices(cell_index)};
          end
          
          % - Fill in CC structure
-         sROIs.ImageSize = size(mbThisMask);
+         roi_masks.ImageSize = size(this_mask);
       end
       
-      function tfStimulusTemplate = get_stimulus_template(bos, strStimulusName)
+      function stimulus_template = get_stimulus_template(bos, stimulus_name)
          % get_stimulus_template - METHOD Return the stimulus template for the provided stimulus
          %
-         % Usage: tfStimulusTemplate = get_stimulus_template(bos, strStimulusName)
+         % Usage: stimulus_template = get_stimulus_template(bos, stimulus_name)
          %
-         % `strStimulusName` is a string array, matching one of the stimuli used
-         % in this experimental session. `tfStimulusTemplate` will be an [XxYxF]
+         % `stimulus_name` is a string array, matching one of the stimuli used
+         % in this experimental session. `stimulus_template` will be an [XxYxF]
          % tensor, each F-slice corresponds to a single stimulus frame as
          % referenced in the stimulus tables ('frame', see method
          % get_stimulus_table()).
@@ -1014,67 +1016,67 @@ classdef ophyssession < bot.internal.session_base
          nwb_file = bos.strLocalNWBFileLocation;
          
          % - Extract stimulus template from NWB file
-         strKey = h5path('stimulus', 'templates', ...
-            [strStimulusName '_image_stack'], 'data');
+         nwb_key = h5path('stimulus', 'templates', ...
+            [stimulus_name '_image_stack'], 'data');
          
          try
-            tfStimulusTemplate = h5read(nwb_file, strKey);
+            stimulus_template = h5read(nwb_file, nwb_key);
             
-         catch meCause
-            meBase = MException('BOT:StimulusNotFound', ...
+         catch cause
+            base = MException('BOT:StimulusNotFound', ...
                'A template for the stimulus [%s] was not found.', ...
-               strStimulusName);
-            meBase = meBase.addCause(meCause);
-            throw(meBase);
+               stimulus_name);
+            base = base.addCause(cause);
+            throw(base);
          end
       end
       
-      function [tfStimTemplate, mbOffScreenMask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus, bMaskOffScreen)
+      function [stimulus_template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, stimulus_name, mask_off_screen)
          % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
          %
-         % Usage: [tfStimTemplate, mbOffScreenMask] = get_locally_sparse_noise_stimulus_template(bos, strStimulus <, bMaskOffScreen>)
+         % Usage: [stimulus_template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, stimulus_name <, mask_off_screen>)
          %
-         % `strStimulus` must be one of {'locally_sparse_noise',
-         % 'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg'}, and one of
-         % these stimuli must have been used in this experimental session.
-         % `tfStimTemplate` will be an [XxYxF] stimulus template, containing the
-         % set of locally sparse noise frames used in this experimental session.
-         % Each F-slice corresponds to one stimulus frame as referenced in the
-         % stimulus tables ('frame').
+         % `stimulus_name` must be one of {'locally_sparse_noise',
+         % 'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg'}, and
+         % one of these stimuli must have been used in this experimental
+         % session. `stimulus_template` will be an [XxYxF] stimulus
+         % template, containing the set of locally sparse noise frames used
+         % in this experimental session. Each F-slice corresponds to one
+         % stimulus frame as referenced in the stimulus tables ('frame').
          %
-         % `mbOffScreenMask` will be an [XxY] boolean matrix, indicating which
-         % pixels were displayed to the animal after spatial warping of the
-         % stimulus.
+         % `off_screen_mask` will be an [XxY] boolean matrix, indicating
+         % which pixels were displayed to the animal after spatial warping
+         % of the stimulus.
          %
-         % The optional argument `bMaskOffScreen` can be used to specify whether
-         % off-screen pixels should be blanked in `tfStimTemplate`. By default,
-         % off-screen pixels are blanked.
+         % The optional argument `mask_off_screen` can be used to specify
+         % whether off-screen pixels should be blanked in
+         % `stimulus_template`. By default, off-screen pixels are blanked.
          
          % - Pre-defined dimensions for locally sparse noise stimuli
-         sLocallySparseNoiseDimensions = struct(...
+         sparse_noise_dimensions = struct(...
             'locally_sparse_noise', [16 28], ...
             'locally_sparse_noise_4deg', [16 28], ...
             'locally_sparse_noise_8deg', [8 14]);
          
          % - By default, mask off screen regions
-         if ~exist('bMaskOffScreen', 'var') || isempty(bMaskOffScreen)
-            bMaskOffScreen = true;
+         if ~exist('mask_off_screen', 'var') || isempty(mask_off_screen)
+            mask_off_screen = true;
          end
          
          % - Is the provided stimulus one of the known noise stimuli?
-         if ~isfield(sLocallySparseNoiseDimensions, strStimulus)
-            cstrStimNames = fieldnames(sLocallySparseNoiseDimensions);
+         if ~isfield(sparse_noise_dimensions, stimulus_name)
+            stimulus_names = fieldnames(sparse_noise_dimensions);
             error('BOT:UnknownStimulus', ...
                '''strStimulus'' must be one of {%s}.', ...
-               sprintf('%s, ', cstrStimNames{:}));
+               sprintf('%s, ', stimulus_names{:}));
          end
          
          % - Get a stimulus template
-         tfStimTemplate = bos.get_stimulus_template(strStimulus);
-         vnTemplateSize = size(tfStimTemplate);
+         stimulus_template = bos.get_stimulus_template(stimulus_name);
+         stim_template_size = size(stimulus_template);
          
          % - Build a mapping from template to display coordinates
-         template_size = sLocallySparseNoiseDimensions.(strStimulus);
+         template_size = sparse_noise_dimensions.(stimulus_name);
          template_size = template_size([2 1]);
          template_display_size = [1260 720];
          display_size = [1920 1200];
@@ -1087,38 +1089,41 @@ classdef ophyssession < bot.internal.session_base
          template_display_coords = round(template_display_coords);
          
          % - Obtain a mask indicating which stimulus elements are off-screen after warping
-         [mbOffScreenMask, ~] = mask_stimulus_template(template_display_coords, template_size);
-         if bMaskOffScreen
+         [off_screen_mask, ~] = mask_stimulus_template(template_display_coords, template_size);
+         if mask_off_screen
             % - Mask the off-screen stimulus elements
-            tfStimTemplate = reshape(tfStimTemplate, [], vnTemplateSize(3));
-            tfStimTemplate(~mbOffScreenMask(:), :) = 64;
-            tfStimTemplate = reshape(tfStimTemplate, vnTemplateSize);
+            stimulus_template = reshape(stimulus_template, [], stim_template_size(3));
+            stimulus_template(~off_screen_mask(:), :) = 64;
+            stimulus_template = reshape(stimulus_template, stim_template_size);
          end
       end
       
-      function [tStimulus, vbValidFrame, tfStimFrame] = get_stimulus(bos, vnFrameIndex)
+      function [stimulus_info, is_valid_frame, stimulus_frame] = get_stimulus(bos, frame_indices)
          % get_stimulus - METHOD Return stimulus information for selected frame indices
          %
-         % Usage: [tStimulus, vbValidFrame, tfStimFrame] = get_stimulus(bos, vnFrameIndex)
+         % Usage: [stimulus_info, is_valid_frame, stimulus_frame] = get_stimulus(bos, frame_indices)
          %
-         % `vnFrameIndex` is a vector of fluorescence frame indices (1-based).
-         % This method finds the stimuli that correspond to these frame indices.
-         % `tStimulus` will be a table with each row corresponding to a valid
-         % frame index. `vbValidFrame` is a boolean vector indicating which
-         % frames in `vnFrameIndex` are valid stimulus frames. If a frame falls
-         % outside a registered stimulus epoch, it is considered not valid.
+         % `frame_indices` is a vector of fluorescence frame indices
+         % (1-based). This method finds the stimuli that correspond to
+         % these frame indices. `stimulus_info` will be a table with each
+         % row corresponding to a valid frame index. `is_valid_frame` is a
+         % boolean vector indicating which frames in `frame_indices` are
+         % valid stimulus frames. If a frame falls outside a registered
+         % stimulus epoch, it is considered not valid.
          %
-         % Each row in `tStimulus` indicates the full stimulus information
-         % associated with the corresponding valid frame in `vnFrameIndex`. For
-         % stimuli with a corresponding stimulus template (see method
-         % get_stimulus_template()), the column 'frame' contains an index
-         % indicating which stimulus frame was presented at that point in time.
+         % Each row in `stimulus_info` indicates the full stimulus
+         % information associated with the corresponding valid frame in
+         % `frame_indices`. For stimuli with a corresponding stimulus
+         % template (see method get_stimulus_template()), the column
+         % 'frame' contains an index indicating which stimulus frame was
+         % presented at that point in time.
          %
-         % Note: The tensor `tfStimFrame` can optionally be used to return the
-         % stimulus template frames associated with each valid frame index. This
-         % is not recommended, since it can use a large amount of redundant
-         % memory storage. Stimulus templates can only be returned for stimuli
-         % that use them (i.e. locally sparse noise, natural movies, etc.)
+         % Note: The tensor `stimulus_frame` can optionally be used to
+         % return the stimulus template frames associated with each valid
+         % frame index. This is not recommended, since it can use a large
+         % amount of redundant memory storage. Stimulus templates can only
+         % be returned for stimuli that use them (i.e. locally sparse
+         % noise, natural movies, etc.)
          
          % - Ensure NWB file is cached
          bos.EnsureCached();
@@ -1126,80 +1131,80 @@ classdef ophyssession < bot.internal.session_base
          % - Obtain and cache the master stimulus table for this session
          %   Also handles to accelerated search functions
          if isempty(bos.smCachedStimulusTable)
-            tEpochStimTable = bos.get_stimulus_epoch_table();
-            tMasterStimTable = bos.get_stimulus_table('master');
-            bos.smCachedStimulusTable(1) = tEpochStimTable;
-            bos.smCachedStimulusTable(2) = int32(tEpochStimTable{:, {'start_frame', 'end_frame'}});
-            bos.smCachedStimulusTable(3) = tMasterStimTable;
-            bos.smCachedStimulusTable(4) = int32(tMasterStimTable{:, {'start_frame', 'end_frame'}});
+            epoch_stimulus_table = bos.get_stimulus_epoch_table();
+            master_stimulus_table = bos.get_stimulus_table('master');
+            bos.smCachedStimulusTable(1) = epoch_stimulus_table;
+            bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
+            bos.smCachedStimulusTable(3) = master_stimulus_table;
+            bos.smCachedStimulusTable(4) = int32(master_stimulus_table{:, {'start_frame', 'end_frame'}});
             [bos.smCachedStimulusTable(5), bos.smCachedStimulusTable(6)] = bot.internal.get_mex_handles();
          end
          
          % - Get the matrix of start and end frames
-         mnEpochStartEndFrames = bos.smCachedStimulusTable(2);
-         tMasterStimTable = bos.smCachedStimulusTable(3);
-         mnStimulusStartEndFrames = bos.smCachedStimulusTable(4);
+         epoch_start_end_frames = bos.smCachedStimulusTable(2);
+         master_stimulus_table = bos.smCachedStimulusTable(3);
+         stimulus_start_end_frames = bos.smCachedStimulusTable(4);
          fhBSSL_int32 = bos.smCachedStimulusTable(6);
          
-         % - Ensure that `vnFrameIndex` is sorted
-         if ~issorted(vnFrameIndex)
-            vnFrameIndex = sort(vnFrameIndex);
+         % - Ensure that `frame_indices` is sorted
+         if ~issorted(frame_indices)
+            frame_indices = sort(frame_indices);
          end
          
          % - Ensure that the frame index is a column vector
-         vnFrameIndex = reshape(vnFrameIndex, [], 1);
+         frame_indices = reshape(frame_indices, [], 1);
          
          % - Identify search frames that are outside registered epochs
-         vbValidFrame = vnFrameIndex >= mnEpochStartEndFrames(1, 1) & vnFrameIndex <= mnEpochStartEndFrames(end, 2);
+         is_valid_frame = frame_indices >= epoch_start_end_frames(1, 1) & frame_indices <= epoch_start_end_frames(end, 2);
          
          % - Were any frames found?
-         if ~any(vbValidFrame)
-            tStimulus = tMasterStimTable([], :);
-            tfStimFrame = [];
+         if ~any(is_valid_frame)
+            stimulus_info = master_stimulus_table([], :);
+            stimulus_frame = [];
             return;
          end
          
          % - Find matching stimulus epochs
-         vnStartEpochIndex = fhBSSL_int32(mnEpochStartEndFrames(:, 1), int32(vnFrameIndex(vbValidFrame)));
-         vnEndEpochIndex = fhBSSL_int32([mnEpochStartEndFrames(1, 1); mnEpochStartEndFrames(:, 2)], int32(vnFrameIndex(vbValidFrame)));
+         start_epoch_index = fhBSSL_int32(epoch_start_end_frames(:, 1), int32(frame_indices(is_valid_frame)));
+         end_epoch_index = fhBSSL_int32([epoch_start_end_frames(1, 1); epoch_start_end_frames(:, 2)], int32(frame_indices(is_valid_frame)));
          
          % - Valid frames must fall within a registered stimulus epoch
-         vbValidFrame(vbValidFrame) = vbValidFrame(vbValidFrame) & (vnStartEpochIndex == vnEndEpochIndex);
+         is_valid_frame(is_valid_frame) = is_valid_frame(is_valid_frame) & (start_epoch_index == end_epoch_index);
          
          % - Were any frames found?
-         if ~any(vbValidFrame)
-            tStimulus = tMasterStimTable([], :);
-            tfStimFrame = [];
+         if ~any(is_valid_frame)
+            stimulus_info = master_stimulus_table([], :);
+            stimulus_frame = [];
             return;
          end
          
          % - Find matching stimulus frames
-         vnFoundFrameIndex = fhBSSL_int32(mnStimulusStartEndFrames(:, 1), int32(vnFrameIndex(vbValidFrame)));
+         found_frame_index = fhBSSL_int32(stimulus_start_end_frames(:, 1), int32(frame_indices(is_valid_frame)));
          
          % - Extract an excerpt from the master stimulus table corresponding to these frames
-         tStimulus = tMasterStimTable(vnFoundFrameIndex, :);
+         stimulus_info = master_stimulus_table(found_frame_index, :);
          
          % - Try to extract stimulus frames
          if nargout > 2
             % - Is there more than one stimulus template?
-            if numel(unique(tStimulus.stimulus)) > 1
+            if numel(unique(stimulus_info.stimulus)) > 1
                warning('BOT:MultipleStimulusTypes', ...
                   'Warning: Cannot extract stimulus templates for multiple stimulus types simultaneously');
-               tfStimFrame = [];
+               stimulus_frame = [];
                
             else
                % - Get the name of this stimulus
-               strStimulus = tStimulus{1, 'stimulus'};
-               strStimulus = strStimulus{1};
+               stimulus_name = stimulus_info{1, 'stimulus'};
+               stimulus_name = stimulus_name{1};
                
                % - Extract the corresponding stimulus template
                try
-                  tfStimTemplate = bos.get_stimulus_template(strStimulus);
-                  tfStimFrame = tfStimTemplate(:, :, tStimulus.frame);
+                  stimulus_template = bos.get_stimulus_template(stimulus_name);
+                  stimulus_frame = stimulus_template(:, :, stimulus_info.frame);
                   
                catch
                   % - Could not find the appropriate template, so return empty
-                  tfStimFrame = [];
+                  stimulus_frame = [];
                end
             end
          end
@@ -1213,14 +1218,14 @@ function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, s
 % get_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
 
 % - Build a key for this stimulus
-strKey = h5path('stimulus', 'presentation', stimulus_name);
+nwb_key = h5path('stimulus', 'presentation', stimulus_name);
 
 % - Read and convert stimulus data from the NWB file
 try
    % - Read data from the NWB file
-   stim_data = h5read(nwb_file, h5path(strKey, 'data'));
-   features = deblank(h5read(nwb_file, h5path(strKey, 'features')));
-   frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
+   stim_data = h5read(nwb_file, h5path(nwb_key, 'data'));
+   features = deblank(h5read(nwb_file, h5path(nwb_key, 'features')));
+   frame_dur = h5read(nwb_file, h5path(nwb_key, 'frame_duration'));
    
    % - Create a stimulus table to return
    stimulus_table = array2table(stim_data', 'VariableNames', features);
@@ -1229,11 +1234,11 @@ try
    stimulus_table.start_frame = int32(frame_dur(1, :)');
    stimulus_table.end_frame = int32(frame_dur(2, :)');
    
-catch meCause
-   meBase = MException('BOT:StimulusError', ...
+catch cause
+   base = MException('BOT:StimulusError', ...
       'Could not read stimulus [%s] from session.\nThe stimulus may not exist.', stimulus_name);
-   meBase = meBase.addCause(meCause);
-   throw(meBase);
+   base = base.addCause(cause);
+   throw(base);
 end
 end
 
@@ -1241,20 +1246,20 @@ function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimu
 % get_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
 
 % - Build a key for this stimulus
-strKey = h5path('stimulus', 'presentation', stimulus_name);
+nwb_key = h5path('stimulus', 'presentation', stimulus_name);
 
 % - Attempt to read data from this key, otherwise correct
 try
-   h5info(nwb_file, strKey);
+   h5info(nwb_file, nwb_key);
 catch
-   strKey = h5path('stimulus', 'presentation', [stimulus_name '_stimulus']);
+   nwb_key = h5path('stimulus', 'presentation', [stimulus_name '_stimulus']);
 end
 
 % - Read and convert stimulus data from the NWB file
 try
    % - Read data from the NWB file
-   inds = h5read(nwb_file, h5path(strKey, 'data')) + 1;
-   frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'));
+   inds = h5read(nwb_file, h5path(nwb_key, 'data')) + 1;
+   frame_dur = h5read(nwb_file, h5path(nwb_key, 'frame_duration'));
    
    % - Create a stimulus table to return
    stimulus_table = array2table(inds, 'VariableNames', {'frame'});
@@ -1263,10 +1268,10 @@ try
    stimulus_table.start_frame = int32(frame_dur(1, :)');
    stimulus_table.end_frame = int32(frame_dur(2, :)');
    
-catch meCause
-   meBase = MException('BOT:StimulusError', 'Could not read stimulus [%s] from session.\nThe stimulus may not exist.');
-   meBase = meBase.addCause(meCause);
-   throw(meBase);
+catch cause
+   base = MException('BOT:StimulusError', 'Could not read stimulus [%s] from session.\nThe stimulus may not exist.');
+   base = base.addCause(cause);
+   throw(base);
 end
 end
 
@@ -1277,20 +1282,20 @@ function stimulus_table = get_repeated_indexed_time_series_stimulus_table(nwb_fi
 stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
 
 % - Locate repeats within stimulus order
-vnUniqueStims = unique(stimulus_table.frame);
-cvnRepeatIndices = arrayfun(@(nStim)find(stimulus_table.frame == nStim), vnUniqueStims, 'UniformOutput', false);
+unique_stimuli = unique(stimulus_table.frame);
+repeat_indices = arrayfun(@(nStim)find(stimulus_table.frame == nStim), unique_stimuli, 'UniformOutput', false);
 
 % - Switch off warnings for extending the table
 w = warning('off', 'MATLAB:table:RowsAddedNewVars');
 
 % - Loop over stimulus IDs, assign repeat numbers (zero-based to match Python SDK)
-vnRepeatIndices = nan(size(stimulus_table, 1), 1);
-for nStimulus = 1:numel(vnUniqueStims)
-   vnRepeatIndices(cvnRepeatIndices{nStimulus}) = (1:numel(cvnRepeatIndices{nStimulus}))' - 1;
+all_repeat_indices = nan(size(stimulus_table, 1), 1);
+for nStimulus = 1:numel(unique_stimuli)
+   all_repeat_indices(repeat_indices{nStimulus}) = (1:numel(repeat_indices{nStimulus}))' - 1;
 end
 
 % - Assign repeat column to table
-stimulus_table.repeat = vnRepeatIndices;
+stimulus_table.repeat = all_repeat_indices;
 
 % - Restore warnings
 warning(w);
@@ -1351,23 +1356,23 @@ function [dxcm, dxtime] = align_running_speed(dxcm, dxtime, timestamps)
 % - Do we need to add time points at the beginning of the session?
 if dxtime(1) ~= timestamps(1)
    % - Prepend timestamps and nans
-   nFirstMatch = find(timestamps == dxtime(1), 1, 'first');
-   dxtime = [timestamps(1:nFirstMatch-1); dxtime];
-   dxcm = [nan(nFirstMatch, 1); dxcm];
+   first_match = find(timestamps == dxtime(1), 1, 'first');
+   dxtime = [timestamps(1:first_match-1); dxtime];
+   dxcm = [nan(first_match, 1); dxcm];
 end
 
 % - Do we need to add time points at the end of the session?
-nNumMissing = numel(timestamps) - numel(dxtime);
-if nNumMissing > 0
-   dxtime = [dxtime; timestamps(end - (nNumMissing-1):end)];
-   dxcm = [dxcm; nan(nNumMissing, 1)];
+num_missing = numel(timestamps) - numel(dxtime);
+if num_missing > 0
+   dxtime = [dxtime; timestamps(end - (num_missing-1):end)];
+   dxcm = [dxcm; nan(num_missing, 1)];
 end
 end
 
-function retCoords = warp_stimulus_coords(vertices, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint)
+function texture_coords = warp_stimulus_coords(vertices, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint)
 % warp_stimulus_coords - FUNCTION For a list of screen vertices, provides a corresponding list of texture coordinates
 %
-% Usage: retCoords = warp_stimulus_coords(vertices <, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint>)
+% Usage: texture_coords = warp_stimulus_coords(vertices <, distance, mon_height_cm, mon_width_cm, mon_res, eyepoint>)
 
 % - Assign default arguments
 if ~exist('distance', 'var') || isempty(distance)
@@ -1428,16 +1433,16 @@ ty = arcLength .* sin(theta);
 u_coords = tx ./ mon_width_cm;
 v_coords = ty ./ mon_height_cm;
 
-retCoords = [u_coords v_coords];
+texture_coords = [u_coords v_coords];
 
 % - Convert back to pixels
-retCoords = bsxfun(@times, retCoords, mon_res);
+texture_coords = bsxfun(@times, texture_coords, mon_res);
 end
 
-function mbMask = make_display_mask(display_shape)
+function mask = make_display_mask(display_shape)
 % make_display_mask - FUNCTION Build a display-shaped mask that indicates which stimulus pixels are on screen after warping the stimulus
 %
-% Usage: mbMask = make_display_mask(display_shape)
+% Usage: mask = make_display_mask(display_shape)
 
 % - Assign default arguments
 if ~exist('display_shape', 'var') || isempty(display_shape)
@@ -1447,22 +1452,22 @@ end
 % - Determine coordinates of the screen
 x = (1:display_shape(1))-1 - display_shape(1) / 2;
 y = (1:display_shape(2))-1 - display_shape(2) / 2;
-[mX, mY] = meshgrid(x, y);
-display_coords = [mX(:) mY(:)];
+[X, Y] = meshgrid(x, y);
+display_coords = [X(:) Y(:)];
 
 % - Warp the coordinates to spherical distance
 warped_coords = warp_stimulus_coords(display_coords);
 
 % - Determine which stimulus pixels are on-screen after warping
 off_warped_coords = round(bsxfun(@plus, warped_coords, display_shape ./ 2));
-mbMask = false(display_shape);
-mbMask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
+mask = false(display_shape);
+mask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
 end
 
-function [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
+function [mask, pixel_fraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
 % mask_stimulus_template - FUNCTION Build a mask for a stimulus template of a given shape and display coordinates that indicates which part of the template is on screen after warping
 %
-% Usage: [mbMask, mfPixelFraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
+% Usage: [mask, pixel_fraction] = mask_stimulus_template(template_display_coords, template_shape, display_mask, threshold)
 
 % - Assign default arguments
 if ~exist('display_mask', 'var')
@@ -1475,29 +1480,29 @@ end
 
 % - Find valid indices for the template, and masked pixels
 template_display_coords = reshape(template_display_coords, [], 2) + 1;
-vbValidIndices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
-vbValidMaskIndices = display_mask(:) & vbValidIndices;
+valid_indices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
+valid_mask_indices = display_mask(:) & valid_indices;
 
 % - Determine which template units are on the screen above the threshold
-mfPixelFraction = accumarray(...
-   [template_display_coords(vbValidMaskIndices, 1) template_display_coords(vbValidMaskIndices, 2)], ...
+pixel_fraction = accumarray(...
+   [template_display_coords(valid_mask_indices, 1) template_display_coords(valid_mask_indices, 2)], ...
    1, template_shape);
-mnPixelTotals = accumarray(...
-   [template_display_coords(vbValidIndices, 1) template_display_coords(vbValidIndices, 2)], ...
+pixel_totals = accumarray(...
+   [template_display_coords(valid_indices, 1) template_display_coords(valid_indices, 2)], ...
    1, template_shape);
 
 % - Create a mask indicating which stimulus pixels should be included
-mfPixelFraction = mfPixelFraction ./ mnPixelTotals;
-mbMask = mfPixelFraction >= threshold;
+pixel_fraction = pixel_fraction ./ pixel_totals;
+mask = pixel_fraction >= threshold;
 end
 
-function strPath = h5path(varargin)
-% h5path - FUNCTION Generate a path for an HDF5 file
+function nwb_key = h5path(varargin)
+% h5path - FUNCTION Generate a key path for an HDF5 file
 %
-% Usage: strPath = h5path(strPart1, strPart2, ...)
+% Usage: nwb_key = h5path(strPart1, strPart2, ...)
 
-strPath = fullfile(filesep, varargin{:});
+nwb_key = fullfile(filesep, varargin{:});
 if ispc
-   strPath = strrep(strPath, filesep, '/');
+   nwb_key = strrep(nwb_key, filesep, '/');
 end
 end

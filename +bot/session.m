@@ -43,7 +43,7 @@ end
 manifest_table_row = bot.internal.session_base.find_manifest_row(session_id);
 
 % - Build a session object from this single ID and return
-if manifest_table_row.BOT_session_type == "OPhys"
+if manifest_table_row.type == "OPhys"
    new_sess = bot.internal.ophyssession(manifest_table_row);
 else
    new_sess = bot.internal.ephyssession(manifest_table_row);

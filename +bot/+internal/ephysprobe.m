@@ -1,7 +1,7 @@
 classdef ephysprobe < bot.internal.ephysitem
    properties (SetAccess = private)
-      tChannels;
-      tUnits;
+      channels;
+      units;
       session;
       sWellKnownFile;
       strNWBURL;
@@ -30,8 +30,8 @@ classdef ephysprobe < bot.internal.ephysitem
          end
          
          % - Assign associated table rows
-         probe.tChannels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.ephys_probe_id == nID, :);
-         probe.tUnits = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ephys_probe_id == nID, :);
+         probe.channels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.ephys_probe_id == nID, :);
+         probe.units = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ephys_probe_id == nID, :);
          
          % - Get a handle to the corresponding experimental session
          probe.session = oManifest.session(probe.metadata.ephys_session_id);
