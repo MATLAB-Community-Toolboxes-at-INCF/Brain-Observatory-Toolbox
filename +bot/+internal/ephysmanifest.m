@@ -5,7 +5,7 @@
 classdef ephysmanifest < handle
    properties (Access = private, Transient = true)
       oCache = bot.internal.cache;        % BOT Cache object
-      sAPIAccess;                         % Function handles for low-level API access
+      api_access;                         % Function handles for low-level API access
    end
    
    properties (SetAccess = private, Dependent = true)
@@ -17,21 +17,21 @@ classdef ephysmanifest < handle
    
    %% Constructor
    methods
-      function oManifest = ephysmanifest()
+      function manifest = ephysmanifest()
          % - Initialise internal manifest cache
-         oManifest.sAPIAccess.tEPhysSessions = [];
-         oManifest.sAPIAccess.tEPhysChannels = [];
-         oManifest.sAPIAccess.tEPhysProbes = [];
-         oManifest.sAPIAccess.tEPhysUnits = [];
+         manifest.api_access.tEPhysSessions = [];
+         manifest.api_access.tEPhysChannels = [];
+         manifest.api_access.tEPhysProbes = [];
+         manifest.api_access.tEPhysUnits = [];
          
-         oManifest.sAPIAccess.memoized.get_ephys_sessions = memoize(@oManifest.get_ephys_sessions);
-         oManifest.sAPIAccess.memoized.get_ephys_channels = memoize(@oManifest.get_ephys_channels);
-         oManifest.sAPIAccess.memoized.get_ephys_probes = memoize(@oManifest.get_ephys_probes);
-         oManifest.sAPIAccess.memoized.get_ephys_units = memoize(@oManifest.get_ephys_units);
-         oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysUnits = memoize(@oManifest.get_tAnnotatedEPhysUnits);
-         oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysChannels = memoize(@oManifest.get_tAnnotatedEPhysChannels);
-         oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysUnits = memoize(@oManifest.get_tAnnotatedEPhysUnits);
-         oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysProbes = memoize(@oManifest.get_tAnnotatedEPhysProbes);         
+         manifest.api_access.memoized.get_ephys_sessions = memoize(@manifest.get_ephys_sessions);
+         manifest.api_access.memoized.get_ephys_channels = memoize(@manifest.get_ephys_channels);
+         manifest.api_access.memoized.get_ephys_probes = memoize(@manifest.get_ephys_probes);
+         manifest.api_access.memoized.get_ephys_units = memoize(@manifest.get_ephys_units);
+         manifest.api_access.memoized.get_tAnnotatedEPhysUnits = memoize(@manifest.get_tAnnotatedEPhysUnits);
+         manifest.api_access.memoized.get_tAnnotatedEPhysChannels = memoize(@manifest.get_tAnnotatedEPhysChannels);
+         manifest.api_access.memoized.get_tAnnotatedEPhysUnits = memoize(@manifest.get_tAnnotatedEPhysUnits);
+         manifest.api_access.memoized.get_tAnnotatedEPhysProbes = memoize(@manifest.get_tAnnotatedEPhysProbes);         
       end
    end
    
@@ -39,7 +39,7 @@ classdef ephysmanifest < handle
    methods
       function tEPhysSessions = get.tEPhysSessions(oManifest)
          % - Try to get cached table
-         tEPhysSessions = oManifest.sAPIAccess.tEPhysSessions;
+         tEPhysSessions = oManifest.api_access.tEPhysSessions;
          
          % - If table is not already in-memory
          if isempty(tEPhysSessions)
@@ -56,13 +56,13 @@ classdef ephysmanifest < handle
             end
             
             % - Store table in memory cache
-            oManifest.sAPIAccess.tEPhysSessions = tEPhysSessions;
+            oManifest.api_access.tEPhysSessions = tEPhysSessions;
          end
       end
       
       function tEPhysChannels = get.tEPhysChannels(oManifest)
          % - Try to get cached table
-         tEPhysChannels = oManifest.sAPIAccess.tEPhysChannels;
+         tEPhysChannels = oManifest.api_access.tEPhysChannels;
          
          % - If table is not already in-memory
          if isempty(tEPhysChannels)
@@ -79,13 +79,13 @@ classdef ephysmanifest < handle
             end
             
             % - Store table in memory cache
-            oManifest.sAPIAccess.tEPhysChannels = tEPhysChannels;
+            oManifest.api_access.tEPhysChannels = tEPhysChannels;
          end
       end
       
       function tEPhysProbes = get.tEPhysProbes(oManifest)
          % - Try to get cached table
-         tEPhysProbes = oManifest.sAPIAccess.tEPhysProbes;
+         tEPhysProbes = oManifest.api_access.tEPhysProbes;
          
          % - If table is not already in-memory
          if isempty(tEPhysProbes)
@@ -102,13 +102,13 @@ classdef ephysmanifest < handle
             end
             
             % - Store table in memory cache
-            oManifest.sAPIAccess.tEPhysProbes = tEPhysProbes;
+            oManifest.api_access.tEPhysProbes = tEPhysProbes;
          end
       end
       
       function tEPhysUnits = get.tEPhysUnits(oManifest)
          % - Try to get cached table
-         tEPhysUnits = oManifest.sAPIAccess.tEPhysUnits;
+         tEPhysUnits = oManifest.api_access.tEPhysUnits;
          
          % - If table is not already in-memory
          if isempty(tEPhysUnits)
@@ -125,7 +125,7 @@ classdef ephysmanifest < handle
             end
             
             % - Store table in memory cache
-            oManifest.sAPIAccess.tEPhysUnits = tEPhysUnits;
+            oManifest.api_access.tEPhysUnits = tEPhysUnits;
          end
       end
    end
@@ -170,8 +170,8 @@ classdef ephysmanifest < handle
          boc.ocCache.Remove('allen_brain_observatory_ephys_channels_manifest')
          
          % - Clear all caches for memoized access functions
-         for strField = fieldnames(oManifest.sAPIAccess.memoized)'
-            oManifest.sAPIAccess.memoized.(strField{1}).clearCache();
+         for strField = fieldnames(oManifest.api_access.memoized)'
+            oManifest.api_access.memoized.(strField{1}).clearCache();
          end
       end
    end
@@ -183,10 +183,10 @@ classdef ephysmanifest < handle
          % METHOD - Return the table of all EPhys experimental sessions
                   
          % - Get table of EPhys sessions
-         tEPhysSessions = oManifest.sAPIAccess.memoized.get_ephys_sessions();
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysUnits();
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysChannels();
-         tAnnotatedEPhysProbes = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysProbes();
+         tEPhysSessions = oManifest.api_access.memoized.get_ephys_sessions();
+         tAnnotatedEPhysUnits = oManifest.api_access.memoized.get_tAnnotatedEPhysUnits();
+         tAnnotatedEPhysChannels = oManifest.api_access.memoized.get_tAnnotatedEPhysChannels();
+         tAnnotatedEPhysProbes = oManifest.api_access.memoized.get_tAnnotatedEPhysProbes();
          
          % - Count numbers of units, channels and probes
          tEPhysSessions = count_owned(tEPhysSessions, tAnnotatedEPhysUnits, ...
@@ -213,9 +213,9 @@ classdef ephysmanifest < handle
          % METHOD - Return the table of all EPhys recorded probes
          
          % - Get the annotated probes
-         tEPhysProbes = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysProbes();
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysUnits();
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysChannels();
+         tEPhysProbes = oManifest.api_access.memoized.get_tAnnotatedEPhysProbes();
+         tAnnotatedEPhysUnits = oManifest.api_access.memoized.get_tAnnotatedEPhysUnits();
+         tAnnotatedEPhysChannels = oManifest.api_access.memoized.get_tAnnotatedEPhysChannels();
          
          % - Count units and channels
          tEPhysProbes = count_owned(tEPhysProbes, tAnnotatedEPhysUnits, ...
@@ -232,8 +232,8 @@ classdef ephysmanifest < handle
          % METHOD - Return the table of all EPhys recorded channels
          
          % - Get annotated channels
-         tEPhysChannels = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysChannels();
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysUnits();
+         tEPhysChannels = oManifest.api_access.memoized.get_tAnnotatedEPhysChannels();
+         tAnnotatedEPhysUnits = oManifest.api_access.memoized.get_tAnnotatedEPhysUnits();
          
          % - Count owned units
          tEPhysChannels = count_owned(tEPhysChannels, tAnnotatedEPhysUnits, ...
@@ -403,8 +403,8 @@ classdef ephysmanifest < handle
          % METHOD - Return table of annotated EPhys units
          
          % - Annotate units
-         tAnnotatedEPhysUnits = oManifest.sAPIAccess.memoized.get_ephys_units();
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysChannels();
+         tAnnotatedEPhysUnits = oManifest.api_access.memoized.get_ephys_units();
+         tAnnotatedEPhysChannels = oManifest.api_access.memoized.get_tAnnotatedEPhysChannels();
          
          tAnnotatedEPhysUnits = join(tAnnotatedEPhysUnits, tAnnotatedEPhysChannels, ...
             'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
@@ -421,15 +421,15 @@ classdef ephysmanifest < handle
       function tAnnotatedEPhysProbes = get_tAnnotatedEPhysProbes(oManifest)
          % METHOD - Return the annotate table of EPhys probes
          % - Annotate probes and return
-         tAnnotatedEPhysProbes = oManifest.sAPIAccess.memoized.get_ephys_probes();
-         tSessions = oManifest.sAPIAccess.memoized.get_ephys_sessions();
+         tAnnotatedEPhysProbes = oManifest.api_access.memoized.get_ephys_probes();
+         tSessions = oManifest.api_access.memoized.get_ephys_sessions();
          tAnnotatedEPhysProbes = join(tAnnotatedEPhysProbes, tSessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       
       function tAnnotatedEPhysChannels = get_tAnnotatedEPhysChannels(oManifest)
          % - METHOD - Return the annotated table of EPhys channels
-         tAnnotatedEPhysChannels = oManifest.sAPIAccess.memoized.get_ephys_channels();
-         tAnnotatedEPhysProbes = oManifest.sAPIAccess.memoized.get_tAnnotatedEPhysProbes();
+         tAnnotatedEPhysChannels = oManifest.api_access.memoized.get_ephys_channels();
+         tAnnotatedEPhysProbes = oManifest.api_access.memoized.get_tAnnotatedEPhysProbes();
          tAnnotatedEPhysChannels = join(tAnnotatedEPhysChannels, tAnnotatedEPhysProbes, ...
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end

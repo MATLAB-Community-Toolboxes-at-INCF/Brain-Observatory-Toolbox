@@ -39,7 +39,7 @@
 classdef ophysmanifest < handle
    properties (Access = private, Transient = true)
       oCache = bot.internal.cache;        % BOT Cache object
-      sAPIAccess;                         % Function handles for low-level API access
+      api_access;                         % Function handles for low-level API access
    end
    
    properties (SetAccess = private, Dependent = true)
@@ -51,19 +51,19 @@ classdef ophysmanifest < handle
    methods
       function oManifest = ophysmanifest()
          % Memoize manifest getter
-         oManifest.sAPIAccess.get_cached_ophys_manifests = memoize(@oManifest.get_cached_ophys_manifests);
+         oManifest.api_access.get_cached_ophys_manifests = memoize(@oManifest.get_cached_ophys_manifests);
       end
    end
    
    %% Getters for manifest tables
    methods
       function tOPhysSessions = get.tOPhysSessions(oManifest)
-         ophys_manifests = oManifest.sAPIAccess.get_cached_ophys_manifests();
+         ophys_manifests = oManifest.api_access.get_cached_ophys_manifests();
          tOPhysSessions = ophys_manifests.ophys_session_manifest;
       end
       
       function tOPhysContainers = get.tOPhysContainers(oManifest)
-         ophys_manifests = oManifest.sAPIAccess.get_cached_ophys_manifests();
+         ophys_manifests = oManifest.api_access.get_cached_ophys_manifests();
          tOPhysContainers = ophys_manifests.ophys_container_manifest;
       end
    end
@@ -79,8 +79,8 @@ classdef ophysmanifest < handle
          oManifest.oCache.RemoveObject('allen_brain_observatory_ophys_manifests')
          
          % - Clear all caches for memoized access functions
-         for strField = fieldnames(oManifest.sAPIAccess)'
-            oManifest.sAPIAccess.(strField{1}).clearCache();
+         for strField = fieldnames(oManifest.api_access)'
+            oManifest.api_access.(strField{1}).clearCache();
          end
       end
    end

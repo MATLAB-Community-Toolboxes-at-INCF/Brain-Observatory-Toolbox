@@ -79,7 +79,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    
    %% Constructor
    methods
-      function session = ephyssession(id, manifest)
+      function session = ephyssession(session_id, manifest)
          % bot.internal.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
          % Usage: bsObj = bot.internal.ephyssession(id, manifest)
@@ -100,16 +100,16 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          % - Handle a vector of session IDs
-         if ~istable(id) && numel(id) > 1
-            for index = numel(id):-1:1
-               session(id) = bot.internal.ephyssession(id(index), manifest);
+         if ~istable(session_id) && numel(session_id) > 1
+            for index = numel(session_id):-1:1
+               session(session_id) = bot.internal.ephyssession(session_id(index), manifest);
             end
             return;
          end
          
          % - Assign metadata
-         session = session.check_and_assign_metadata(id, manifest.tEPhysSessions, 'session');
-         id = session.id;
+         session = session.check_and_assign_metadata(session_id, manifest.tEPhysSessions, 'session');
+         session_id = session.id;
          
          % - Ensure that we were given an EPhys session
          if session.metadata.type ~= "EPhys"
@@ -117,9 +117,9 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          % - Assign associated table rows
-         session.probes = manifest.tEPhysProbes(manifest.tEPhysProbes.id == id, :);
-         session.channels = manifest.tEPhysChannels(manifest.tEPhysChannels.id == id, :);
-         session.units = manifest.tEPhysUnits(manifest.tEPhysUnits.id == id, :);
+         session.probes = manifest.tEPhysProbes(manifest.tEPhysProbes.id == session_id, :);
+         session.channels = manifest.tEPhysChannels(manifest.tEPhysChannels.id == session_id, :);
+         session.units = manifest.tEPhysUnits(manifest.tEPhysUnits.id == session_id, :);
       end
    end
    
@@ -850,7 +850,7 @@ methods
    function nwb_url = nwb_url(bos)
       % nwb_url - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
       %
-      % Usage: strNWBURL = nwb_url(bos)
+      % Usage: nwb_url = nwb_url(bos)
       
       % - Get well known files
       vs_well_known_files = bos.metadata.well_known_files;

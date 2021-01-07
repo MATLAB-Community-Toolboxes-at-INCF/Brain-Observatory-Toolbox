@@ -4,34 +4,34 @@ classdef ephysprobe < bot.internal.ephysitem
       units;
       session;
       well_known_file;
-      strNWBURL;
+      nwb_url;
       local_nwb_file_location
    end
    
    methods
-      function probe = ephysprobe(nID, oManifest)
+      function probe = ephysprobe(probe_id, oManifest)
          % - Handle "no arguments" usage
          if nargin == 0
             return;
          end
          
          % - Handle a vector of probe IDs
-         if ~istable(nID) && (numel(nID) > 1)
-            for nIndex = numel(nID):-1:1
-               probe(nIndex) = bot.internal.ephysprobe(nID(nIndex), oManifest);
+         if ~istable(probe_id) && (numel(probe_id) > 1)
+            for nIndex = numel(probe_id):-1:1
+               probe(nIndex) = bot.internal.ephysprobe(probe_id(nIndex), oManifest);
             end
             return;
          end
          
          % - Assign metadata
-         probe.check_and_assign_metadata(nID, oManifest.tEPhysProbes, 'probe');
-         if istable(nID)
-            nID = probe.metadata.id;
+         probe.check_and_assign_metadata(probe_id, oManifest.tEPhysProbes, 'probe');
+         if istable(probe_id)
+            probe_id = probe.metadata.id;
          end
          
          % - Assign associated table rows
-         probe.channels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.ephys_probe_id == nID, :);
-         probe.units = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ephys_probe_id == nID, :);
+         probe.channels = oManifest.tEPhysChannels(oManifest.tEPhysChannels.ephys_probe_id == probe_id, :);
+         probe.units = oManifest.tEPhysUnits(oManifest.tEPhysUnits.ephys_probe_id == probe_id, :);
          
          % - Get a handle to the corresponding experimental session
          probe.session = oManifest.session(probe.metadata.ephys_session_id);
@@ -82,18 +82,18 @@ classdef ephysprobe < bot.internal.ephysitem
          else
             % - Get the local file location for the session NWB URL
             boc = bot.internal.cache;
-            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.strNWBURL);
+            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
          end
       end
       
-      function strNWBURL = get.strNWBURL(self)
+      function nwb_url = get.nwb_url(self)
          boc = bot.internal.cache;
-         strNWBURL = [boc.strABOBaseUrl self.well_known_file.download_link];
+         nwb_url = [boc.strABOBaseUrl self.well_known_file.download_link];
       end
       
       function bIsCached = is_nwb_cached(self)
          boc = bot.internal.cache;
-         bIsCached = boc.IsURLInCache(self.strNWBURL);
+         bIsCached = boc.IsURLInCache(self.nwb_url);
       end
       
       function strNWBFile = EnsureCached(self)
