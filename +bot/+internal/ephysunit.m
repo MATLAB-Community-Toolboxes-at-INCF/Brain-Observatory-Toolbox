@@ -6,25 +6,22 @@ classdef ephysunit < bot.internal.ephysitem
    end
    
    methods
-      function unit = ephysunit(nID, oManifest)
+      function unit = ephysunit(id, oManifest)
          % - Handle "no arguments" usage
          if nargin == 0
             return;
          end
          
          % - Handle a vector of unit IDs
-         if ~istable(nID) && (numel(nID) > 1)
-            for nIndex = numel(nID):-1:1
-               unit(nIndex) = bot.internal.ephysunit(nID(nIndex), oManifest);
+         if ~istable(id) && (numel(id) > 1)
+            for nIndex = numel(id):-1:1
+               unit(nIndex) = bot.internal.ephysunit(id(nIndex), oManifest);
             end
             return;
          end
          
          % - Assign metadata
-         unit = unit.check_and_assign_metadata(nID, oManifest.tEPhysUnits, 'unit');
-         if istable(nID)
-            nID = unit.metadata.id;
-         end
+         unit = unit.check_and_assign_metadata(id, oManifest.tEPhysUnits, 'unit');
          
          % - Get a handle to the corresponding experimental session
          unit.session = oManifest.session(unit.metadata.ephys_session_id);

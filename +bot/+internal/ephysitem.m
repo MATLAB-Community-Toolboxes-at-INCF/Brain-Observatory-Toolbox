@@ -29,7 +29,7 @@ classdef ephysitem < handle
          
          % - Assign the table data to the metadata structure
          item.metadata = table2struct(tItem);
-         item.id = nID;
+         item.id = item.metadata.id;
       end
    end   
    

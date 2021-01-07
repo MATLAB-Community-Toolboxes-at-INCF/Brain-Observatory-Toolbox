@@ -191,32 +191,65 @@ classdef test < matlab.unittest.TestCase
          s.get_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
       end      
       
-      function testEPhysObjects(testCase)
+      function testEPhysManifest(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
          bom = bot.internal.ephysmanifest;
+         bom = bot.manifest('ephys');
+      end
+      
+      function testEPhysSessions(testCase)
+         %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
          bom = bot.manifest('ephys');
          
          % - Get a session
          s = bot.session(bom.tEPhysSessions{1, 'id'});
          s = bot.session(bom.tEPhysSessions(1, :));
+      end
+
+      function testEPhysProbes(testCase)
+         %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
+         bom = bot.manifest('ephys');
          
          % - Get a probe, by ID and by table
          p = bom.probe(bom.tEPhysProbes{1, 'id'});
          p = bom.probe(bom.tEPhysProbes(1, :));
-         vp = bom.probe(bom.tEPhysProbes{[1, 2], 'id'});
+         p = bom.probe(bom.tEPhysProbes{[1, 2], 'id'});
          
+         p = bot.probe(bom.tEPhysProbes{1, 'id'});
+         p = bot.probe(bom.tEPhysProbes{[1, 2], 'id'});
+      end
+
+      function testEPhysChannels(testCase)
+         %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
+         bom = bot.manifest('ephys');
+
          % - Get channels, by ID and by table
          c = bom.channel(bom.tEPhysChannels{1, 'id'});
          c = bom.channel(bom.tEPhysChannels(1, :));
          c = bom.channel(bom.tEPhysChannels{[1, 2], 'id'});
          
-         % - Get units, by ID and by table
-         c = bom.unit(bom.tEPhysUnits{1, 'id'});
-         c = bom.unit(bom.tEPhysUnits(1, :));
-         c = bom.unit(bom.tEPhysUnits{[1, 2], 'id'});         
+         c = bot.channel(bom.tEPhysChannels(1, :));
+         c = bot.channel(bom.tEPhysChannels{[1, 2], 'id'});
       end
-      
+
+      function testEPhysUnits(testCase)
+         %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
+         bom = bot.manifest('ephys');
+         
+         % - Get units, by ID and by table
+         u = bom.unit(bom.tEPhysUnits{1, 'id'});
+         u = bom.unit(bom.tEPhysUnits(1, :));
+         u = bom.unit(bom.tEPhysUnits{[1, 2], 'id'});
+
+         u = bot.unit(915956282);
+         u = bot.unit([915956282 915956304]);
+      end
+
       function testLFPCSDExtraction(testCase)
          %% Test LFP and CSD extraction
          % - Get the EPhys manifest
