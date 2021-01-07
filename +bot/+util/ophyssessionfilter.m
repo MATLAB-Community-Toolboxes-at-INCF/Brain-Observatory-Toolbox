@@ -68,7 +68,7 @@ classdef ophyssessionfilter < handle
    
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
-      bomOPhysManifest = bot.internal.ophysmanifest();
+      ophys_manifest = bot.internal.ophysmanifest();
    end
    
    %% Constructor
@@ -89,8 +89,8 @@ classdef ophyssessionfilter < handle
    methods
       function clear_filters(bosf)
          % clear_filters - METHOD Clear all session table filters
-         failed_container_id = bosf.bomOPhysManifest.tOPhysContainers((bosf.bomOPhysManifest.tOPhysContainers.failed == 1), :).id;
-         bosf.valid_session_table = bosf.bomOPhysManifest.tOPhysSessions(~ismember(bosf.bomOPhysManifest.tOPhysSessions.experiment_container_id, failed_container_id), :);
+         failed_container_id = bosf.ophys_manifest.tOPhysContainers((bosf.ophys_manifest.tOPhysContainers.failed == 1), :).id;
+         bosf.valid_session_table = bosf.ophys_manifest.tOPhysSessions(~ismember(bosf.ophys_manifest.tOPhysSessions.experiment_container_id, failed_container_id), :);
          bosf.filtered_session_table = bosf.valid_session_table;
       end
       
@@ -139,12 +139,12 @@ classdef ophyssessionfilter < handle
       
       function get_summary_of_containers_along_imaging_depths(bosf)
          % get_summary_of_containers_along_imaging_depths - METHOD Return the number of experiment containers recorded at each cortical depth
-         summary(categorical(cellstr(num2str((bosf.bomOPhysManifest.tOPhysContainers.imaging_depth)))))
+         summary(categorical(cellstr(num2str((bosf.ophys_manifest.tOPhysContainers.imaging_depth)))))
       end
       
       function get_summary_of_containers_along_targeted_structures (bosf)
          % get_summary_of_containers_along_targeted_structures - METHOD Return the number of experiment containers recorded in each brain region
-         container_targeted_structure_table = struct2table(bosf.bomOPhysManifest.tOPhysContainers.targeted_structure);
+         container_targeted_structure_table = struct2table(bosf.ophys_manifest.tOPhysContainers.targeted_structure);
          summary(categorical(cellstr(container_targeted_structure_table.acronym)))
       end
       
