@@ -95,7 +95,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
             return;
          end
          
-         if ~exist('oManifest', 'var') || isempty(manifest)
+         if ~exist('manifest', 'var') || isempty(manifest)
             manifest = bot.internal.ephysmanifest;
          end
          
