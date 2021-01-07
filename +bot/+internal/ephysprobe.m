@@ -3,7 +3,7 @@ classdef ephysprobe < bot.internal.ephysitem
       channels;
       units;
       session;
-      sWellKnownFile;
+      well_known_file;
       strNWBURL;
       local_nwb_file_location
    end
@@ -37,15 +37,15 @@ classdef ephysprobe < bot.internal.ephysitem
          probe.session = oManifest.session(probe.metadata.ephys_session_id);
          
          % - Identify NWB file link
-         probe.sWellKnownFile = probe.get_lfp_file_link();
+         probe.well_known_file = probe.get_lfp_file_link();
       end
       
-      function sWellKnownFile = get_lfp_file_link(probe)
+      function well_known_file = get_lfp_file_link(probe)
          probe_id = probe.metadata.id;
          strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
          
          boc = bot.internal.cache;
-         sWellKnownFile = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
+         well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
       end
       
       function [lfp, timestamps] = get_lfp(self)
@@ -88,7 +88,7 @@ classdef ephysprobe < bot.internal.ephysitem
       
       function strNWBURL = get.strNWBURL(self)
          boc = bot.internal.cache;
-         strNWBURL = [boc.strABOBaseUrl self.sWellKnownFile.download_link];
+         strNWBURL = [boc.strABOBaseUrl self.well_known_file.download_link];
       end
       
       function bIsCached = is_nwb_cached(self)
@@ -99,7 +99,7 @@ classdef ephysprobe < bot.internal.ephysitem
       function strNWBFile = EnsureCached(self)
          if ~self.is_nwb_cached
             boc = bot.internal.cache;
-            strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.sWellKnownFile.download_link], self.sWellKnownFile.path);
+            strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
          else
             strNWBFile = self.local_nwb_file_location;
          end
