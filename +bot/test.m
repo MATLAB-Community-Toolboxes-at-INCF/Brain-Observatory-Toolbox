@@ -253,7 +253,6 @@ classdef test < matlab.unittest.TestCase
       function testLFPCSDExtraction(testCase)
          %% Test LFP and CSD extraction
          % - Get the EPhys manifest
-         bom = bot.internal.ephysmanifest;
          bom = bot.manifest('ephys');
          
          % - Get a probe, by ID and by table

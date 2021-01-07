@@ -6,7 +6,7 @@ classdef session_base < handle
    properties (Access = protected)
       bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
       ophys_manifest = bot.internal.ophysmanifest;              % Private handle to the OPhys data manifest
-      bomEPhysManifest = bot.internal.ephysmanifest;              % Private handle to the EPhys data manifest
+      ephys_manifest = bot.internal.ephysmanifest;              % Private handle to the EPhys data manifest
       strLocalNWBFileLocation;
    end
    
@@ -88,8 +88,8 @@ classdef session_base < handle
          if any(vbOPhysSession)
             tManifestRow = sess.ophys_manifest.tOPhysSessions(vbOPhysSession, :);
          else
-            vbEPhysSession = sess.bomEPhysManifest.tEPhysSessions.id == nSessionID;
-            tManifestRow = sess.bomEPhysManifest.tEPhysSessions(vbEPhysSession, :);
+            vbEPhysSession = sess.ephys_manifest.tEPhysSessions.id == nSessionID;
+            tManifestRow = sess.ephys_manifest.tEPhysSessions(vbEPhysSession, :);
          end
          
          % - Check to see if the session exists
@@ -138,8 +138,8 @@ classdef session_base < handle
             if any(vbOPhysSession)
                tSession = sess.ophys_manifest.tOPhysSessions(vbOPhysSession, :);
             else
-               vbEPhysSession = sess.bomEPhysManifest.tEPhysSessions.id == vnSessionIDs(nSessIndex);
-               tSession = sess.bomEPhysManifest.tEPhysSessions(vbEPhysSession, :);
+               vbEPhysSession = sess.ephys_manifest.tEPhysSessions.id == vnSessionIDs(nSessIndex);
+               tSession = sess.ephys_manifest.tEPhysSessions(vbEPhysSession, :);
             end
             
             % - Check to see if the session exists
