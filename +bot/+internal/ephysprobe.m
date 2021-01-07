@@ -51,26 +51,26 @@ classdef ephysprobe < bot.internal.ephysitem
       function [lfp, timestamps] = get_lfp(self)
          if ~self.in_cache('lfp')
             nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
-            [self.sPropertyCache.lfp, self.sPropertyCache.lfp_timestamps] = nwb_probe.get_lfp();
+            [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.get_lfp();
          end
          
-         lfp = self.sPropertyCache.lfp;
-         timestamps = self.sPropertyCache.lfp_timestamps;
+         lfp = self.property_cache.lfp;
+         timestamps = self.property_cache.lfp_timestamps;
       end
       
       function [csd, timestamps, horizontal_position, vertical_position] = get_current_source_density(self)
          if ~self.in_cache('csd')
             nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
-            [self.sPropertyCache.csd, ...
-               self.sPropertyCache.csd_timestamps, ...
-               self.sPropertyCache.horizontal_position, ...
-               self.sPropertyCache.vertical_position] = nwb_probe.get_current_source_density();
+            [self.property_cache.csd, ...
+               self.property_cache.csd_timestamps, ...
+               self.property_cache.horizontal_position, ...
+               self.property_cache.vertical_position] = nwb_probe.get_current_source_density();
          end
          
-         csd = self.sPropertyCache.csd;
-         timestamps = self.sPropertyCache.csd_timestamps;
-         horizontal_position = self.sPropertyCache.horizontal_position;
-         vertical_position = self.sPropertyCache.vertical_position;
+         csd = self.property_cache.csd;
+         timestamps = self.property_cache.csd_timestamps;
+         horizontal_position = self.property_cache.horizontal_position;
+         vertical_position = self.property_cache.vertical_position;
       end
       
       function local_nwb_file_location = get.local_nwb_file_location(self)

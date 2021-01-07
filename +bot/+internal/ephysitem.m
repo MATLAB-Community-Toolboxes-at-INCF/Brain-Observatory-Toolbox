@@ -5,48 +5,60 @@ classdef ephysitem < handle
    end
    
    properties (Hidden = true)
-      sPropertyCache;
+      property_cache;
    end
    
    methods (Access = protected)
-      function item = check_and_assign_metadata(item, nID, tManifestTable, strType, varargin)
+      function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)
          % - Check usage
-         if istable(nID)
-            assert(size(nID, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
-            tItem = nID;
+         if istable(id)
+            assert(size(id, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
+            table_row = id;
          else
-            assert(isnumeric(nID), 'BOT:Usage', '`nID` must be an integer ID.');
-            nID = uint32(round(nID));
+            assert(isnumeric(id), 'BOT:Usage', '`nID` must be an integer ID.');
+            id = uint32(round(id));
             
             % - Locate an ID in the manifest table
-            vbTableRow = tManifestTable.id == nID;
-            if ~any(vbTableRow)
-               error('BOT:Usage', 'Item not found in %s manifest.', strType);
+            matching_row = manifest_table.id == id;
+            if ~any(matching_row)
+               error('BOT:Usage', 'Item not found in %s manifest.', type);
             end
             
-            tItem = tManifestTable(vbTableRow, :);
+            table_row = manifest_table(matching_row, :);
          end
          
          % - Assign the table data to the metadata structure
-         item.metadata = table2struct(tItem);
+         item.metadata = table2struct(table_row);
          item.id = item.metadata.id;
       end
    end   
    
    methods (Access = protected)
-      function oData = get_cached(self, strProperty, fhAccessFun)
+      function data = get_cached(self, property, fun_access)
+         % get_cached - METHOD Access a cached property
+         %
+         % Usage: data = get_cached(self, property, fun_access)
+         %
+         % `property` is a string containing a property name. `fun_access`
+         % is a function handle that returns the property data, if not
+         % found in the cache. The property data will be returned from the
+         % local property cache, or else inserted after calling
+         % `fun_access`.
+         %
+         % `data` will be the cached property data.
+         
          % - Check for cached property
-         if ~isfield(self.sPropertyCache, strProperty)
+         if ~isfield(self.property_cache, property)
             % - Use the access function
-            self.sPropertyCache.(strProperty) = fhAccessFun();
+            self.property_cache.(property) = fun_access();
          end
          
          % - Return the cached property
-         oData = self.sPropertyCache.(strProperty);
+         data = self.property_cache.(property);
       end
       
       function bInCache = in_cache(self, strProperty)
-         bInCache = isfield(self.sPropertyCache, strProperty) && ~isempty(self.sPropertyCache.(strProperty));
+         bInCache = isfield(self.property_cache, strProperty) && ~isempty(self.property_cache.(strProperty));
       end
    end
 end

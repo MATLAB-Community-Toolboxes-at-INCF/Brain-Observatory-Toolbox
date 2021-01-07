@@ -128,11 +128,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       function nwb = get.nwb_file(self)
          % - Retrieve and cache the NWB file
          if ~self.in_cache('nwb_file')
-            self.sPropertyCache.nwb_file = bot.nwb.nwb_ephys(self.EnsureCached());
+            self.property_cache.nwb_file = bot.nwb.nwb_ephys(self.EnsureCached());
          end
          
          % - Return an NWB file access object
-         nwb = self.sPropertyCache.nwb_file;
+         nwb = self.property_cache.nwb_file;
       end
    end
    
@@ -150,20 +150,20 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       
       function stimulus_conditions = get.stimulus_conditions(self)
          self.cache_stimulus_presentations();
-         stimulus_conditions = self.sPropertyCache.stimulus_conditions_raw;
+         stimulus_conditions = self.property_cache.stimulus_conditions_raw;
       end
       
       function spike_times = get.spike_times(self)
          if ~self.in_cache('checked_spike_times')
             self.warn_invalid_spike_intervals();
-            self.sPropertyCache.checked_spike_times = true;
+            self.property_cache.checked_spike_times = true;
          end
          
          if ~self.in_cache('spike_times')
-            self.sPropertyCache.spike_times = self.build_spike_times(self.nwb_file.get_spike_times());
+            self.property_cache.spike_times = self.build_spike_times(self.nwb_file.get_spike_times());
          end
          
-         spike_times = self.sPropertyCache.spike_times;
+         spike_times = self.property_cache.spike_times;
       end
       
       function stimulus_presentations = get.stimulus_presentations(self)
@@ -171,7 +171,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          self.cache_stimulus_presentations();
          
          % - Clean and return stimulus presentations table
-         stimulus_presentations = self.remove_detailed_stimulus_parameters(self.sPropertyCache.stimulus_presentations_raw);
+         stimulus_presentations = self.remove_detailed_stimulus_parameters(self.property_cache.stimulus_presentations_raw);
       end
       
       function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
@@ -344,8 +344,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          self.cache_stimulus_presentations();
          
-         select_stimuli = ismember(self.sPropertyCache.stimulus_presentations_raw.stimulus_name, stimulus_names);
-         filtered_presentations = self.sPropertyCache.stimulus_presentations_raw(select_stimuli, :);
+         select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
+         filtered_presentations = self.property_cache.stimulus_presentations_raw(select_stimuli, :);
          filtered_ids = filtered_presentations.stimulus_presentation_id;
          
          
@@ -376,8 +376,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          
          self.cache_stimulus_presentations();
          
-         select_stimuli = ismember(self.sPropertyCache.stimulus_presentations_raw.stimulus_name, stimulus_names);
-         presentations = self.sPropertyCache.stimulus_presentations_raw(select_stimuli, :);
+         select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
+         presentations = self.property_cache.stimulus_presentations_raw(select_stimuli, :);
          
          if ~include_detailed_parameters
             presentations = self.remove_detailed_stimulus_parameters(presentations);
@@ -1002,8 +1002,8 @@ methods (Access = public)
          stimulus_presentations_raw = self.mask_invalid_stimulus_presentations(stimulus_presentations_raw);
          
          % - Insert into cache
-         self.sPropertyCache.stimulus_presentations_raw = stimulus_presentations_raw;
-         self.sPropertyCache.stimulus_conditions_raw = stimulus_conditions_raw;
+         self.property_cache.stimulus_presentations_raw = stimulus_presentations_raw;
+         self.property_cache.stimulus_conditions_raw = stimulus_conditions_raw;
       end
    end
    
@@ -1080,9 +1080,9 @@ methods (Access = public)
    
    function intervals = build_inter_presentation_intervals(self)
       self.cache_stimulus_presentations();
-      from_presentation_id = self.sPropertyCache.stimulus_presentations_raw.stimulus_presentation_id(1:end-1);
-      to_presentation_id = self.sPropertyCache.stimulus_presentations_raw.stimulus_presentation_id(2:end);
-      interval = self.sPropertyCache.stimulus_presentations_raw.start_time(2:end) - self.sPropertyCache.stimulus_presentations_raw.stop_time(1:end-1);
+      from_presentation_id = self.property_cache.stimulus_presentations_raw.stimulus_presentation_id(1:end-1);
+      to_presentation_id = self.property_cache.stimulus_presentations_raw.stimulus_presentation_id(2:end);
+      interval = self.property_cache.stimulus_presentations_raw.start_time(2:end) - self.property_cache.stimulus_presentations_raw.stop_time(1:end-1);
       
       intervals = table(from_presentation_id, to_presentation_id, interval);
    end
