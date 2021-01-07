@@ -5,7 +5,7 @@ classdef ephysprobe < bot.internal.ephysitem
       session;
       sWellKnownFile;
       strNWBURL;
-      strLocalNWBFileLocation;
+      local_nwb_file_location
    end
    
    methods
@@ -73,16 +73,16 @@ classdef ephysprobe < bot.internal.ephysitem
          vertical_position = self.sPropertyCache.vertical_position;
       end
       
-      function strLocalNWBFileLocation = get.strLocalNWBFileLocation(self)
-         % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
+      function local_nwb_file_location = get.local_nwb_file_location(self)
+         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
-         % Usage: strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
+         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
          if ~self.IsNWBFileCached()
-            strLocalNWBFileLocation = [];
+            local_nwb_file_location = [];
          else
             % - Get the local file location for the session NWB URL
             boc = bot.internal.cache;
-            strLocalNWBFileLocation = boc.ccCache.CachedFileForURL(self.strNWBURL);
+            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.strNWBURL);
          end
       end
       
@@ -101,7 +101,7 @@ classdef ephysprobe < bot.internal.ephysitem
             boc = bot.internal.cache;
             strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.sWellKnownFile.download_link], self.sWellKnownFile.path);
          else
-            strNWBFile = self.strLocalNWBFileLocation;
+            strNWBFile = self.local_nwb_file_location
          end
       end
    end

@@ -134,7 +134,7 @@ function raster_data = generate_raster_data(i, fluorescenece_trace, parameters_f
 
 % - Ensure data is cached locally
 bos.EnsureCached();
-nwb_name = bos.strLocalNWBFileLocation;
+nwb_name = bos.local_nwb_file_location;
 
 if isequal(bos.sSessionInfo.stimulus_name, 'three_session_C') && isequal(stimulus, 'locally_sparse_noise_4deg')
    
@@ -257,7 +257,7 @@ function raster_labels = generate_raster_labels(bos, stimulus)
 
 % - Ensure the data is cached, and obtain the local filename
 bos.EnsureCached();
-nwb_name = bos.strLocalNWBFileLocation;
+nwb_name = bos.local_nwb_file_location;
 
 switch stimulus
    case {'drifting_gratings', 'static_gratings'}

@@ -7,7 +7,7 @@ classdef session_base < handle
       bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
       ophys_manifest = bot.internal.ophysmanifest;              % Private handle to the OPhys data manifest
       ephys_manifest = bot.internal.ephysmanifest;              % Private handle to the EPhys data manifest
-      strLocalNWBFileLocation;
+      local_nwb_file_location;
    end
    
    methods
@@ -39,20 +39,20 @@ classdef session_base < handle
          % This method will force the session data to be downloaded and cached,
          % if it is not already available.
          bos.CacheFilesForSessionIDs(bos.id);
-         strCacheFile = bos.strLocalNWBFileLocation;
+         strCacheFile = bos.local_nwb_file_location;
       end      
    end
    
    methods
-      function strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
-         % get.strLocalNWBFileLocation - GETTER METHOD Return the local location of the NWB file correspoding to this session
+      function local_nwb_file_location = get.local_nwb_file_location(bos)
+         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
-         % Usage: strLocalNWBFileLocation = get.strLocalNWBFileLocation(bos)
+         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
          if ~bos.IsNWBFileCached()
-            strLocalNWBFileLocation = [];
+            local_nwb_file_location = [];
          else
             % - Get the local file location for the session NWB URL
-            strLocalNWBFileLocation = bos.bot_cache.ccCache.CachedFileForURL(bos.nwb_url());
+            local_nwb_file_location = bos.bot_cache.ccCache.CachedFileForURL(bos.nwb_url());
          end
       end
    end   

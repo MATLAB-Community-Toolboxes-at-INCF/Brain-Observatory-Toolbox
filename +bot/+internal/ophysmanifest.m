@@ -26,7 +26,7 @@
 %   ophyssession with properties:
 %
 %                sSessionInfo: [1x1 struct]
-%     strLocalNWBFileLocation: []
+%     local_nwb_file_location: []
 %
 % (See documentation for the `bot.internal.ophyssession` class for more information)
 %

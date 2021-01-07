@@ -41,7 +41,7 @@
 % ans =
 %   1x138 session array with properties:
 %     sSessionInfo
-%     strLocalNWBFileLocation
+%     local_nwb_file_location
 %
 % Clear filters and start again:
 % >> bosf.clear_filters();
