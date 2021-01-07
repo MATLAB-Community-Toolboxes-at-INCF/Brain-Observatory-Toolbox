@@ -57,8 +57,15 @@ classdef ephysitem < handle
          data = self.property_cache.(property);
       end
       
-      function bInCache = in_cache(self, strProperty)
-         bInCache = isfield(self.property_cache, strProperty) && ~isempty(self.property_cache.(strProperty));
+      function is_in_cache = in_cache(self, property)
+         % in_cache — METHOD Test if a property value has been cached
+         %
+         % Usage: is_in_cache = in_cache(self, property)
+         %
+         % `property` is a string containing a property name. `is_in_cache`
+         % will be `true` iff the property is present in the property
+         % cache.
+         is_in_cache = isfield(self.property_cache, property) && ~isempty(self.property_cache.(property));
       end
    end
 end
