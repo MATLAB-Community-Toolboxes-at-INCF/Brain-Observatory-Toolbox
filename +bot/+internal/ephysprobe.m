@@ -77,7 +77,7 @@ classdef ephysprobe < bot.internal.ephysitem
          % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
          % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
-         if ~self.IsNWBFileCached()
+         if ~self.is_nwb_cached()
             local_nwb_file_location = [];
          else
             % - Get the local file location for the session NWB URL
@@ -91,17 +91,17 @@ classdef ephysprobe < bot.internal.ephysitem
          strNWBURL = [boc.strABOBaseUrl self.sWellKnownFile.download_link];
       end
       
-      function bIsCached = IsNWBFileCached(self)
+      function bIsCached = is_nwb_cached(self)
          boc = bot.internal.cache;
          bIsCached = boc.IsURLInCache(self.strNWBURL);
       end
       
       function strNWBFile = EnsureCached(self)
-         if ~self.IsNWBFileCached
+         if ~self.is_nwb_cached
             boc = bot.internal.cache;
             strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.sWellKnownFile.download_link], self.sWellKnownFile.path);
          else
-            strNWBFile = self.local_nwb_file_location
+            strNWBFile = self.local_nwb_file_location;
          end
       end
    end
