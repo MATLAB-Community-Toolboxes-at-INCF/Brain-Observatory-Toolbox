@@ -29,7 +29,7 @@
 % Obtain fluorescence traces:
 % >> [vtTimestamps, mfTraces] = bos.get_fluorescence_traces();
 % >> [vtTimestamps, mfTraces] = bos.get_dff_traces();
-% >> [vtTimestamps, mfTraces] = bos.get_demixed_traces();
+% >> [vtTimestamps, mfTraces] = bos.fetch_demixed_traces();
 % >> [vtTimestamps, mfTraces] = bos.get_corrected_fluorescence_traces();
 % >> [vtTimestamps, mfTraces] = bos.get_neuropil_traces();
 %
@@ -76,11 +76,16 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       nwb_metadata;                 % Metadata extracted from NWB data file
       fluorescence_timestamps;      % Vector of fluorescence timestamps corresponding to imaging frames
       cell_specimen_ids;            % Vector of cell specimen IDs recorded in this session
+      spontaneous_activity_stimulus_table;   % Stimulus table describing spontaneous activity epochs
+      demixed_traces;               % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the demixed fluorescence data for a single cell specimen.
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
       default_property_list = ["metadata", "id"];
-      lazy_property_list = ["nwb_metadata", "fluorescence_timestamps", "cell_specimen_ids"];
+      lazy_property_list = ["nwb_metadata", "fluorescence_timestamps", ...
+         "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
+         "demixed_traces", ...
+         ];
    end
    
    methods (Access = protected)
@@ -324,10 +329,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             'Provided cell specimen ID was not found in this session.');
       end
       
-      function [timestamps, traces] = get_demixed_traces(bos, cell_specimen_ids)
-         % get_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
+      function traces = get.demixed_traces(bos)
+         [~, traces] = bos.fetch_demixed_traces();
+      end
+      
+      function [timestamps, traces] = fetch_demixed_traces(bos, cell_specimen_ids)
+         % fetch_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
          %
-         % Usage: [timestamps, traces] = get_demixed_traces(bos <, cell_specimen_ids>)
+         % Usage: [timestamps, traces] = fetch_demixed_traces(bos <, cell_specimen_ids>)
          %
          % `timestamps` will be a Tx1 vector of timepoints in seconds, each
          % point defining a sample time for the fluorescence samples. `traces`
@@ -506,7 +515,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          
          % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
          if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-            [timestamps, traces] = bos.get_demixed_traces(cell_specimen_ids);
+            [timestamps, traces] = bos.fetch_demixed_traces(cell_specimen_ids);
          else
             [timestamps, traces] = bos.get_fluorescence_traces(cell_specimen_ids);
          end
@@ -559,10 +568,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          dff_traces = dff_traces(:, cell_specimen_indices);
       end
       
-      function stimulus_table = get_spontaneous_activity_stimulus_table(bos)
-         % get_spontaneous_activity_stimulus_table - METHOD Return the sponaneous activity stimulus table for this experimental session
+      function stimulus_table = get.spontaneous_activity_stimulus_table(bos)
+         % get.tpontaneous_activity_stimulus_table - METHOD Return the sponaneous activity stimulus table for this experimental session
          %
-         % Usage: stimulus_table = get_spontaneous_activity_stimulus_table(bos)
+         % Usage: stimulus_table = bos.spontaneous_activity_stimulus_table
          %
          % Return information about the epochs of spontaneous activity in this
          % experimental session.
@@ -707,7 +716,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             return;
             
          elseif isequal(stimulus_name, 'spontaneous')
-            stimulus_table = bos.get_spontaneous_activity_stimulus_table();
+            stimulus_table = bos.spontaneous_activity_stimulus_table;
             return;
             
          elseif isequal(stimulus_name, 'master')

@@ -139,9 +139,9 @@ classdef test < matlab.unittest.TestCase
          s.list_stimuli();
          
          % - Test data access methods
-         s.fluorescence_timestamps();
+         s.fluorescence_timestamps;
          s.get_fluorescence_traces();
-         s.get_demixed_traces();
+         s.demixed_traces;
          s.get_corrected_fluorescence_traces();
          s.get_dff_traces();
          s.get_max_projection();
@@ -181,7 +181,7 @@ classdef test < matlab.unittest.TestCase
          s.get_stimulus_template('natural_movie_one');
          
          % - Get a spontantaneous activity stimulus table
-         s.get_spontaneous_activity_stimulus_table();
+         s.spontaneous_activity_stimulus_table;
          
          % - Get an OPhys session with sparse noise
          s = bot.internal.ophyssession(566752133);

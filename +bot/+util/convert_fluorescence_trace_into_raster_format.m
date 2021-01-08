@@ -52,7 +52,7 @@ switch fluorescence_trace_type
       [~, fluorescence_trace] = session.get_fluorescence_traces();
       
    case 'demixed'
-      [~, fluorescence_trace] = session.get_demixed_traces();
+      fluorescence_trace = session.demixed_traces;
       
    case 'neuropil_corrected'
       [~, fluorescence_trace] = session.get_corrected_fluorescence_traces();
