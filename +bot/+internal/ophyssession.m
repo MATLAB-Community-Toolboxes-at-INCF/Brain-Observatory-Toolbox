@@ -79,6 +79,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       spontaneous_activity_stimulus_table;   % Stimulus table describing spontaneous activity epochs
       demixed_traces;               % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the demixed fluorescence data for a single cell specimen.
       fluorescence_traces;          % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the fluorescence data for a single cell specimen.
+      neuropil_r;                   % vector of neuropil correction factors for each analysed cell
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
@@ -414,10 +415,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          traces = traces(:, cell_specimen_indices);
       end
       
-      function neuropil_r = get_neuropil_r(bos, cell_specimen_ids)
-         % get_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
+      function neuropil_r = get.neuropil_r(bos)
+         neuropil_r = bos.fetch_neuropil_r();
+      end
+      
+      function neuropil_r = fetch_neuropil_r(bos, cell_specimen_ids)
+         % fetch_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
          %
-         % Usage: cell_specimen_ids = get_neuropil_r(bos <, cell_specimen_ids>)
+         % Usage: cell_specimen_ids = fetch_neuropil_r(bos <, cell_specimen_ids>)
          %
          % `neuropil_r` will be a vector of neuropil correction
          % factors for each analysed cell. The optional argument
@@ -526,7 +531,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
          
          % - Read neuropil correction data
-         neuropil_r = bos.get_neuropil_r(cell_specimen_ids);
+         neuropil_r = bos.fetch_neuropil_r(cell_specimen_ids);
          [~, neuropil_traces] = bos.get_neuropil_traces(cell_specimen_ids);
          
          % - Correct fluorescence traces using neuropil demixing model

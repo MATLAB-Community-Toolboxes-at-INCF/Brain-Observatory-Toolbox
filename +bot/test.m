@@ -146,7 +146,7 @@ classdef test < matlab.unittest.TestCase
          s.get_dff_traces();
          s.get_max_projection();
          s.get_motion_correction();
-         s.get_neuropil_r();
+         s.neuropil_r;
          s.get_neuropil_traces();
          s.get_roi_mask();
          s.get_roi_mask_array();
