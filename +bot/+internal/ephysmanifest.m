@@ -37,17 +37,35 @@ classdef ephysmanifest < handle
    
    methods (Static = true)
       function manifest = instance(clear_manifest)
+         % instance - STATIC METHOD Retrieve or reset the singleton instance of the EPhys manifest
+         %
+         % Usage: manifest = instance()
+         %        instance(clear_manifest)
+         %
+         % `manifest` will be a singleton manifest object.
+         %
+         % If `clear_manifest` = `true` is provided, then the single
+         % instance will be cleared and reset.
+         
+         arguments
+            clear_manifest = false
+         end
+         
          persistent ephysmanifest
          
+         % - Construct the manifest if single instance is not present
          if isempty(ephysmanifest)
             ephysmanifest = bot.internal.ephysmanifest();
          end
          
+         % - Return the instance
+         manifest = ephysmanifest;
+         
+         % - Clear the manifest if requested
          if clear_manifest
             ephysmanifest = [];
+            clear manifest;
          end
-         
-         manifest = ephysmanifest;
       end
    end
    
@@ -191,7 +209,7 @@ classdef ephysmanifest < handle
          end
          
          % - Reset singleton instance
-         bot.internal.ephysmanifest.instance(true);         
+         bot.internal.ephysmanifest.instance(true);
       end
    end
    

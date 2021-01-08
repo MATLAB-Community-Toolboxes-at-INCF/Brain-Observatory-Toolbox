@@ -96,7 +96,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          if ~exist('manifest', 'var') || isempty(manifest)
-            manifest = bot.internal.ephysmanifest;
+            manifest = bot.internal.ephysmanifest.instance();
          end
          
          % - Handle a vector of session IDs

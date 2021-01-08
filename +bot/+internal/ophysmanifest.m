@@ -57,17 +57,35 @@ classdef ophysmanifest < handle
    
    methods (Static = true)
       function manifest = instance(clear_manifest)
+         % instance - STATIC METHOD Retrieve or reset the singleton instance of the OPhys manifest
+         %
+         % Usage: manifest = instance()
+         %        instance(clear_manifest)
+         %
+         % `manifest` will be a singleton manifest object.
+         %
+         % If `clear_manifest` = `true` is provided, then the single
+         % instance will be cleared and reset.
+         
+         arguments
+            clear_manifest = false
+         end
+         
          persistent ophysmanifest
          
+         % - Construct the manifest if single instance is not present
          if isempty(ophysmanifest)
             ophysmanifest = bot.internal.ophysmanifest();
          end
          
+         % - Return the instance
+         manifest = ophysmanifest;
+         
+         % - Clear the manifest if requested
          if clear_manifest
             ophysmanifest = [];
+            clear manifest;
          end
-         
-         manifest = ophysmanifest;
       end
    end
    

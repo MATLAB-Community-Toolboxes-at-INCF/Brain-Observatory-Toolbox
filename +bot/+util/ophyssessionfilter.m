@@ -68,7 +68,7 @@ classdef ophyssessionfilter < handle
    
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
-      ophys_manifest = bot.internal.ophysmanifest();
+      ophys_manifest = bot.internal.ophysmanifest.instance();
    end
    
    %% Constructor

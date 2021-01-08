@@ -11,7 +11,7 @@ classdef test < matlab.unittest.TestCase
       function testOphysTables(testCase)
          %% Test retrieving all OPhys manifest tables
          bom = bot.manifest('ophys');
-         bom = bot.internal.ophysmanifest;
+         bom = bot.internal.ophysmanifest.instance();
          bom.tOPhysSessions;                   % Table of all OPhys experimental sessions
          bom.tOPhysContainers;                 % Table of all OPhys experimental containers
       end
@@ -19,7 +19,7 @@ classdef test < matlab.unittest.TestCase
       function testEphysTables(testCase)
          %% Test retrieving EPhys manifest tables
          bom = bot.manifest('ephys');
-         bom = bot.internal.ephysmanifest;
+         bom = bot.internal.ephysmanifest.instance();
          bom.ephys_sessions;                 % Table of all EPhys experimental sessions
          bom.tEPhysChannels;                 % Table of all EPhys channels
          bom.tEPhysProbes;                   % Table of all EPhys probes
@@ -56,7 +56,7 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysSessionFilterMethods(testCase)
          %% Test using the OPhys session filter filtering methods
-         bom = bot.internal.ophysmanifest;
+         bom = bot.internal.ophysmanifest.instance();
          bosf = bot.util.ophyssessionfilter;
          
          % CRE lines
@@ -194,7 +194,7 @@ classdef test < matlab.unittest.TestCase
       function testEPhysManifest(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.internal.ephysmanifest;
+         bom = bot.internal.ephysmanifest.instance();
          bom = bot.manifest('ephys');
       end
       
