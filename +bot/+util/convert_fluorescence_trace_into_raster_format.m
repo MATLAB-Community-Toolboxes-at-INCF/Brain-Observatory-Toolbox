@@ -49,13 +49,13 @@ session = bot.session(session_id);
 % - Extract fluorescence traces from this experiment session
 switch fluorescence_trace_type
    case 'raw'
-      [~, fluorescence_trace] = session.get_fluorescence_traces();
+      [~, fluorescence_trace] = session.fluorescence_traces;
       
    case 'demixed'
       fluorescence_trace = session.demixed_traces;
       
    case 'neuropil_corrected'
-      [~, fluorescence_trace] = session.get_corrected_fluorescence_traces();
+      [~, fluorescence_trace] = session.corrected_fluorescence_traces;
       
    case 'DfOverF'
       [~, fluorescence_trace] = session.get_dff_traces();

@@ -142,7 +142,7 @@ classdef test < matlab.unittest.TestCase
          s.fluorescence_timestamps;
          s.fluorescence_traces;
          s.demixed_traces;
-         s.get_corrected_fluorescence_traces();
+         s.corrected_fluorescence_traces;
          s.get_dff_traces();
          s.get_max_projection();
          s.get_motion_correction();
