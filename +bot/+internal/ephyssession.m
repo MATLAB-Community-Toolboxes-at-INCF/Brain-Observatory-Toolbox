@@ -117,9 +117,9 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          % - Assign associated table rows
-         session.probes = manifest.tEPhysProbes(manifest.tEPhysProbes.id == session_id, :);
-         session.channels = manifest.tEPhysChannels(manifest.tEPhysChannels.id == session_id, :);
-         session.units = manifest.tEPhysUnits(manifest.tEPhysUnits.id == session_id, :);
+         session.probes = manifest.ephys_probes(manifest.ephys_probes.id == session_id, :);
+         session.channels = manifest.ephys_channels(manifest.ephys_channels.id == session_id, :);
+         session.units = manifest.ephys_units(manifest.ephys_units.id == session_id, :);
       end
    end
    

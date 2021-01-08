@@ -21,7 +21,7 @@ classdef ephysunit < bot.internal.ephysitem
          end
          
          % - Assign metadata
-         unit = unit.check_and_assign_metadata(unit_id, oManifest.tEPhysUnits, 'unit');
+         unit = unit.check_and_assign_metadata(unit_id, oManifest.ephys_units, 'unit');
          
          % - Get a handle to the corresponding experimental session
          unit.session = oManifest.session(unit.metadata.ephys_session_id);

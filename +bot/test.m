@@ -21,9 +21,9 @@ classdef test < matlab.unittest.TestCase
          bom = bot.manifest('ephys');
          bom = bot.internal.ephysmanifest.instance();
          bom.ephys_sessions;                 % Table of all EPhys experimental sessions
-         bom.tEPhysChannels;                 % Table of all EPhys channels
-         bom.tEPhysProbes;                   % Table of all EPhys probes
-         bom.tEPhysUnits;                    % Table of all EPhys units
+         bom.ephys_channels;                 % Table of all EPhys channels
+         bom.ephys_probes;                   % Table of all EPhys probes
+         bom.ephys_units;                    % Table of all EPhys units
       end
       
       function testGetOPhysSessionFilter(testCase)
@@ -208,43 +208,43 @@ classdef test < matlab.unittest.TestCase
          s = bot.session(bom.ephys_sessions(1, :));
       end
 
-      function testEPhysProbes(testCase)
+      function test_ephys_probes(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
          bom = bot.manifest('ephys');
          
          % - Get a probe, by ID and by table
-         p = bom.probe(bom.tEPhysProbes{1, 'id'});
-         p = bom.probe(bom.tEPhysProbes(1, :));
-         p = bom.probe(bom.tEPhysProbes{[1, 2], 'id'});
+         p = bom.probe(bom.ephys_probes{1, 'id'});
+         p = bom.probe(bom.ephys_probes(1, :));
+         p = bom.probe(bom.ephys_probes{[1, 2], 'id'});
          
-         p = bot.probe(bom.tEPhysProbes{1, 'id'});
-         p = bot.probe(bom.tEPhysProbes{[1, 2], 'id'});
+         p = bot.probe(bom.ephys_probes{1, 'id'});
+         p = bot.probe(bom.ephys_probes{[1, 2], 'id'});
       end
 
-      function testEPhysChannels(testCase)
+      function test_ephys_channels(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
          bom = bot.manifest('ephys');
 
          % - Get channels, by ID and by table
-         c = bom.channel(bom.tEPhysChannels{1, 'id'});
-         c = bom.channel(bom.tEPhysChannels(1, :));
-         c = bom.channel(bom.tEPhysChannels{[1, 2], 'id'});
+         c = bom.channel(bom.ephys_channels{1, 'id'});
+         c = bom.channel(bom.ephys_channels(1, :));
+         c = bom.channel(bom.ephys_channels{[1, 2], 'id'});
          
-         c = bot.channel(bom.tEPhysChannels(1, :));
-         c = bot.channel(bom.tEPhysChannels{[1, 2], 'id'});
+         c = bot.channel(bom.ephys_channels(1, :));
+         c = bot.channel(bom.ephys_channels{[1, 2], 'id'});
       end
 
-      function testEPhysUnits(testCase)
+      function test_ephys_units(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
          bom = bot.manifest('ephys');
          
          % - Get units, by ID and by table
-         u = bom.unit(bom.tEPhysUnits{1, 'id'});
-         u = bom.unit(bom.tEPhysUnits(1, :));
-         u = bom.unit(bom.tEPhysUnits{[1, 2], 'id'});
+         u = bom.unit(bom.ephys_units{1, 'id'});
+         u = bom.unit(bom.ephys_units(1, :));
+         u = bom.unit(bom.ephys_units{[1, 2], 'id'});
 
          u = bot.unit(915956282);
          u = bot.unit([915956282 915956304]);
@@ -256,7 +256,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.manifest('ephys');
          
          % - Get a probe, by ID and by table
-         p = bom.probe(bom.tEPhysProbes{1, 'id'});
+         p = bom.probe(bom.ephys_probes{1, 'id'});
          
          % - Access LFP data
          p.get_lfp();
