@@ -4,7 +4,7 @@
 
 classdef ephysmanifest < handle
    properties (Access = private, Transient = true)
-      oCache = bot.internal.cache;        % BOT Cache object
+      cache = bot.internal.cache;        % BOT Cache object
       api_access;                         % Function handles for low-level API access
    end
    
@@ -71,118 +71,96 @@ classdef ephysmanifest < handle
    
    %% Getter methods
    methods
-      function ephys_sessions = get.ephys_sessions(oManifest)
+      function ephys_sessions = get.ephys_sessions(manifest)
          % - Try to get cached table
-         ephys_sessions = oManifest.api_access.ephys_sessions;
+         ephys_sessions = manifest.api_access.ephys_sessions;
          
          % - If table is not already in-memory
          if isempty(ephys_sessions)
             % - Try to retrieve table from on-disk cache
             strKey = 'allen_brain_observatory_ephys_sessions_manifest';
-            if oManifest.oCache.IsObjectInCache(strKey)
-               ephys_sessions = oManifest.oCache.RetrieveObject(strKey);
+            if manifest.cache.IsObjectInCache(strKey)
+               ephys_sessions = manifest.cache.RetrieveObject(strKey);
             else
                % - Construct table from API
-               ephys_sessions = oManifest.fetch_ephys_sessions_table();
+               ephys_sessions = manifest.fetch_ephys_sessions_table();
                
                % - Insert object in disk cache
-               oManifest.oCache.InsertObject(strKey, ephys_sessions);
+               manifest.cache.InsertObject(strKey, ephys_sessions);
             end
             
             % - Store table in memory cache
-            oManifest.api_access.ephys_sessions = ephys_sessions;
+            manifest.api_access.ephys_sessions = ephys_sessions;
          end
       end
       
-      function ephys_channels = get.ephys_channels(oManifest)
+      function ephys_channels = get.ephys_channels(manifest)
          % - Try to get cached table
-         ephys_channels = oManifest.api_access.ephys_channels;
+         ephys_channels = manifest.api_access.ephys_channels;
          
          % - If table is not already in-memory
          if isempty(ephys_channels)
             % - Try to retrieve table from on-disk cache
-            strKey = 'allen_brain_observatory_ephys_channels_manifest';
-            if oManifest.oCache.IsObjectInCache(strKey)
-               ephys_channels = oManifest.oCache.RetrieveObject(strKey);
+            nwb_key = 'allen_brain_observatory_ephys_channels_manifest';
+            if manifest.cache.IsObjectInCache(nwb_key)
+               ephys_channels = manifest.cache.RetrieveObject(nwb_key);
             else
                % - Construct table from API
-               ephys_channels = oManifest.get_ephys_channels_table();
+               ephys_channels = manifest.get_ephys_channels_table();
                
                % - Insert object in disk cache
-               oManifest.oCache.InsertObject(strKey, ephys_channels);
+               manifest.cache.InsertObject(nwb_key, ephys_channels);
             end
             
             % - Store table in memory cache
-            oManifest.api_access.ephys_channels = ephys_channels;
+            manifest.api_access.ephys_channels = ephys_channels;
          end
       end
       
-      function ephys_probes = get.ephys_probes(oManifest)
+      function ephys_probes = get.ephys_probes(manifest)
          % - Try to get cached table
-         ephys_probes = oManifest.api_access.ephys_probes;
+         ephys_probes = manifest.api_access.ephys_probes;
          
          % - If table is not already in-memory
          if isempty(ephys_probes)
             % - Try to retrieve table from on-disk cache
-            strKey = 'allen_brain_observatory_ephys_probes_manifest';
-            if oManifest.oCache.IsObjectInCache(strKey)
-               ephys_probes = oManifest.oCache.RetrieveObject(strKey);
+            nwb_key = 'allen_brain_observatory_ephys_probes_manifest';
+            if manifest.cache.IsObjectInCache(nwb_key)
+               ephys_probes = manifest.cache.RetrieveObject(nwb_key);
             else
                % - Construct table from API
-               ephys_probes = oManifest.get_ephys_probes_table();
+               ephys_probes = manifest.get_ephys_probes_table();
                
                % - Insert object in disk cache
-               oManifest.oCache.InsertObject(strKey, ephys_probes);
+               manifest.cache.InsertObject(nwb_key, ephys_probes);
             end
             
             % - Store table in memory cache
-            oManifest.api_access.ephys_probes = ephys_probes;
+            manifest.api_access.ephys_probes = ephys_probes;
          end
       end
       
-      function ephys_units = get.ephys_units(oManifest)
+      function ephys_units = get.ephys_units(manifest)
          % - Try to get cached table
-         ephys_units = oManifest.api_access.ephys_units;
+         ephys_units = manifest.api_access.ephys_units;
          
          % - If table is not already in-memory
          if isempty(ephys_units)
             % - Try to retrieve table from on-disk cache
-            strKey = 'allen_brain_observatory_ephys_units_manifest';
-            if oManifest.oCache.IsObjectInCache(strKey)
-               ephys_units = oManifest.oCache.RetrieveObject(strKey);
+            nwb_key = 'allen_brain_observatory_ephys_units_manifest';
+            if manifest.cache.IsObjectInCache(nwb_key)
+               ephys_units = manifest.cache.RetrieveObject(nwb_key);
             else
                % - Construct table from API
-               ephys_units = oManifest.get_ephys_units_table();
+               ephys_units = manifest.get_ephys_units_table();
                
                % - Insert object in disk cache
-               oManifest.oCache.InsertObject(strKey, ephys_units);
+               manifest.cache.InsertObject(nwb_key, ephys_units);
             end
             
             % - Store table in memory cache
-            oManifest.api_access.ephys_units = ephys_units;
+            manifest.api_access.ephys_units = ephys_units;
          end
-      end
-   end
-   
-   methods
-      function sessions = session(oManifest, vnSessionIDs)
-         % - Create session objects
-         sessions = bot.internal.ephyssession(vnSessionIDs, oManifest);
-      end
-      
-      function probes = probe(oManifest, vnProbeIDs)
-         % - Create probe objects
-         probes = bot.internal.ephysprobe(vnProbeIDs, oManifest);
-      end
-      
-      function channels = channel(oManifest, vnChannelIDs)
-         % - Create channel objects
-         channels = bot.internal.ephyschannel(vnChannelIDs, oManifest);
-      end
-      
-      function units = unit(oManifest, vnUnitIDs)
-         % - Create unit objects
-         units = bot.internal.ephysunit(vnUnitIDs, oManifest);
       end
    end
    
@@ -284,7 +262,7 @@ classdef ephysmanifest < handle
          % - Fetch the ephys sessions manifest
          % - Download EPhys session manifest
          disp('Fetching EPhys sessions manifest...');
-         ephys_session_manifest = oManifest.oCache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
+         ephys_session_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
          
          % - Label as EPhys sessions
          ephys_session_manifest = addvars(ephys_session_manifest, ...
@@ -327,7 +305,7 @@ classdef ephysmanifest < handle
          % - Fetch the ephys units manifest
          % - Download EPhys units
          disp('Fetching EPhys units manifest...');
-         ephys_unit_manifest = oManifest.oCache.CachedAPICall('criteria=model::EcephysUnit', '');
+         ephys_unit_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysUnit', '');
          
          % - Rename variables
          ephys_unit_manifest = rename_variables(ephys_unit_manifest, ...
@@ -389,7 +367,7 @@ classdef ephysmanifest < handle
       function [ephys_probes_manifest] = get_ephys_probes(oManifest)
          % - Fetch the ephys probes manifest
          disp('Fetching EPhys probes manifest...');
-         ephys_probes_manifest = oManifest.oCache.CachedAPICall('criteria=model::EcephysProbe', '');
+         ephys_probes_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysProbe', '');
          
          % - Rename variables
          ephys_probes_manifest = rename_variables(ephys_probes_manifest, ...
@@ -413,7 +391,7 @@ classdef ephysmanifest < handle
       function [ephys_channels_manifest] = get_ephys_channels(oManifest)
          % - Fetch the ephys units manifest
          disp('Fetching EPhys channels manifest...');
-         ephys_channels_manifest = oManifest.oCache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
+         ephys_channels_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
          
          % - Convert columns to reasonable formats
          id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.id, 'UniformOutput', false)));

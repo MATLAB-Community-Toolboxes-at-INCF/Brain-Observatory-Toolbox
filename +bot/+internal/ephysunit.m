@@ -24,9 +24,9 @@ classdef ephysunit < bot.internal.ephysitem
          unit = unit.check_and_assign_metadata(unit_id, oManifest.ephys_units, 'unit');
          
          % - Get a handle to the corresponding experimental session
-         unit.session = oManifest.session(unit.metadata.ephys_session_id);
-         unit.channel = oManifest.channel(unit.metadata.ephys_channel_id);
-         unit.probe = oManifest.probe(unit.metadata.ephys_probe_id);
+         unit.session = bot.session(unit.metadata.ephys_session_id);
+         unit.channel = bot.channel(unit.metadata.ephys_channel_id);
+         unit.probe = bot.probe(unit.metadata.ephys_probe_id);
       end
    end
 end

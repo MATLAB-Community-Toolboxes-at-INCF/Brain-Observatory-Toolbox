@@ -34,7 +34,7 @@ classdef ephysprobe < bot.internal.ephysitem
          probe.units = oManifest.ephys_units(oManifest.ephys_units.ephys_probe_id == probe_id, :);
          
          % - Get a handle to the corresponding experimental session
-         probe.session = oManifest.session(probe.metadata.ephys_session_id);
+         probe.session = bot.session(probe.metadata.ephys_session_id);
          
          % - Identify NWB file link
          probe.well_known_file = probe.get_lfp_file_link();
