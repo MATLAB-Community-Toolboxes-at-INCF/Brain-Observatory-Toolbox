@@ -148,9 +148,9 @@ classdef test < matlab.unittest.TestCase
          s.motion_correction;
          s.neuropil_r;
          s.neuropil_traces;
-         s.get_roi_mask();
-         s.get_roi_mask_array();
-         s.get_running_speed();
+         s.roi_mask;
+         s.roi_mask_array;
+         s.running_speed;
          s.pupil_location;
          s.pupil_size;
       end
@@ -164,7 +164,7 @@ classdef test < matlab.unittest.TestCase
          vnFrameIDs = 1:numel(s.fluorescence_timestamps);
          
          % - Obtain per-frame stimulus table
-         s.get_stimulus(vnFrameIDs);
+         s.fetch_stimulus(vnFrameIDs);
          
          % - Obtain stimulus summary table
          s.stimulus_epoch_table;
@@ -178,7 +178,8 @@ classdef test < matlab.unittest.TestCase
          end
          
          % - Get a natural movie stimulus template
-         s.get_stimulus_template('natural_movie_one');
+         s.fetch_stimulus_template('natural_movie_one');
+         s.fetch_stimulus_table('natural_movie_one');
          
          % - Get a spontantaneous activity stimulus table
          s.spontaneous_activity_stimulus_table;
@@ -187,7 +188,7 @@ classdef test < matlab.unittest.TestCase
          s = bot.internal.ophyssession(566752133);
          
          % - Get the sparse noise stimulus template
-         s.get_stimulus_template('locally_sparse_noise_4deg');
+         s.fetch_stimulus_template('locally_sparse_noise_4deg');
          s.fetch_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
       end      
       

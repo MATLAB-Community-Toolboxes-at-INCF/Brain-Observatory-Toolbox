@@ -34,13 +34,13 @@
 % >> [vtTimestamps, mfTraces] = bos.fetch_neuropil_traces();
 %
 % Get ROIs:
-% >> sROIStructure = bos.get_roi_mask();
-% >> tbROIMask = bos.get_roi_mask_array();
+% >> sROIStructure = bos.roi_mask;
+% >> tbROIMask = bos.fetch_roi_mask_array();
 %
 % Obtain behavioural data:
 % >> [vtTimestamps, vfPupilLocation] = bos.fetch_pupil_location();
 % >> [vtTimestamps, vfPupilAreas] = bos.fetch_pupil_size();
-% >> [vtTimestamps, vfRunningSpeed] = get_running_speed();
+% >> [vtTimestamps, vfRunningSpeed] = fetch_running_speed();
 %
 % Obtain stimulus information:
 % >> bos.stimulus_epoch_table
@@ -51,7 +51,7 @@
 %     'natural_scenes'       16095           30542
 %        ...
 %
-% >> bos.get_stimulus(vnFrameNumbers)
+% >> bos.fetch_stimulus(vnFrameNumbers)
 % ans =
 %     frame    start_frame    end_frame    repeat        stimulus         ...
 %     _____    ___________    _________    ______    _________________    ...
@@ -91,6 +91,9 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       motion_correction;            % Table containing x/y motion correction information applied in this experimental session
       pupil_location;               % Tx2 matrix, where each row contains the tracked location of the mouse pupil. Spherical coordinates [`altitude` `azimuth`] are returned in degrees for each row. (0,0) is the center of the monitor
       pupil_size;                   % Tx1 vector, each element containing the instantaneous estimated pupil area in pixels
+      roi_mask;                     % Structure as returned from `bwconncomp`, defining a set of ROIs.[XxYxC] boolean tensor. Each C slice corresponds to a single imaged ROI, and indicates which pixels in the stack contain that ROI
+      roi_mask_array;               % [XxYxC] boolean tensor. Each C slice corresponds to a single imaged ROI, and indicates which pixels in the stack contain that ROI
+      running_speed;                % Tx1 vector containing instantaneous running speeds for each fluorescence fram
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
@@ -101,7 +104,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          "neuropil_traces", "corrected_fluorescence_traces", ...
          "dff_traces", "stimulus_epoch_table", "max_projection", ...
          "roi_ids", "stimulus_list", "motion_correction", ...
-         "pupil_location", "pupil_size", ...
+         "pupil_location", "pupil_size", "roi_mask", "running_speed", ...
          ];
    end
    
@@ -749,7 +752,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             return;
             
          elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
-            stimulus_table = get_repeated_indexed_time_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
+            stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
             return;
             
          elseif isequal(stimulus_name, 'spontaneous')
@@ -830,10 +833,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          roi_ids = cellfun(@str2num, h5read(nwb_file, nwb_key));
       end
       
-      function [timestamps, running_speed] = get_running_speed(bos)
-         % get_running_speed - METHOD Return running speed in cm/s
+      function running_speed = get.running_speed(bos)
+         running_speed = bos.fetch_running_speed();
+      end
+      
+      function [timestamps, running_speed] = fetch_running_speed(bos)
+         % fetch_running_speed - METHOD Return running speed in cm/s
          %
-         % Usage: [timestamps, running_speed] = get_running_speed(bos)
+         % Usage: [timestamps, running_speed] = fetch_running_speed(bos)
          %
          % `timestamps` will be a Tx1 vector containing times in seconds,
          % corresponding to fluorescence timestamps. `running_speed` will be a
@@ -995,10 +1002,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function roi_masks = get_roi_mask_array(bos, cell_specimen_ids)
-         % get_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
+      function roi_masks = get.roi_mask_array(bos)
+         roi_masks = bos.fetch_roi_mask_array();
+      end
+      
+      function roi_masks = fetch_roi_mask_array(bos, cell_specimen_ids)
+         % fetch_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
          %
-         % Usage: roi_masks = get_roi_mask_array(bos <, cell_specimen_ids>)
+         % Usage: roi_masks = fetch_roi_mask_array(bos <, cell_specimen_ids>)
          %
          % `roi_masks` will be a [XxYxC] boolean tensor. Each C slice
          % corresponds to a single imaged ROI, and indicates which pixels in the
@@ -1039,10 +1050,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function roi_masks = get_roi_mask(bos, cell_specimen_ids)
-         % get_roi_mask - METHOD Return connected components structure defining requested ROIs
+      function roi_masks = get.roi_mask(bos)
+         roi_masks = bos.fetch_roi_mask();
+      end
+      
+      function roi_masks = fetch_roi_mask(bos, cell_specimen_ids)
+         % fetch_roi_mask - METHOD Return connected components structure defining requested ROIs
          %
-         % Usage: roi_masks = get_roi_mask(bos <, cell_specimen_ids>)
+         % Usage: roi_masks = fetch_roi_mask(bos <, cell_specimen_ids>)
          %
          % `roi_masks` will be a structure as returned from `bwconncomp`, defining a
          % set of ROIs. This can be passed to `labelmatrix`, etc. The optional
@@ -1050,7 +1065,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          % data should be returned. By default, a mask is returned for all ROIs.
          
          % - By default, return masks for all cells
-         if ~exist('vnCellSpecimenIDs', 'var')
+         if ~exist('cell_specimen_ids', 'var')
             cell_specimen_ids = bos.cell_specimen_ids;
          end
          
@@ -1088,10 +1103,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          roi_masks.ImageSize = size(this_mask);
       end
       
-      function stimulus_template = get_stimulus_template(bos, stimulus_name)
-         % get_stimulus_template - METHOD Return the stimulus template for the provided stimulus
+      function stimulus_template = fetch_stimulus_template(bos, stimulus_name)
+         % fetch_stimulus_template - METHOD Return the stimulus template for the provided stimulus
          %
-         % Usage: stimulus_template = get_stimulus_template(bos, stimulus_name)
+         % Usage: stimulus_template = fetch_stimulus_template(bos, stimulus_name)
          %
          % `stimulus_name` is a string array, matching one of the stimuli used
          % in this experimental session. `stimulus_template` will be an [XxYxF]
@@ -1160,7 +1175,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
          
          % - Get a stimulus template
-         stimulus_template = bos.get_stimulus_template(stimulus_name);
+         stimulus_template = bos.fetch_stimulus_template(stimulus_name);
          stim_template_size = size(stimulus_template);
          
          % - Build a mapping from template to display coordinates
@@ -1186,10 +1201,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function [stimulus_info, is_valid_frame, stimulus_frame] = get_stimulus(bos, frame_indices)
-         % get_stimulus - METHOD Return stimulus information for selected frame indices
+      function [stimulus_info, is_valid_frame, stimulus_frame] = fetch_stimulus(bos, frame_indices)
+         % fetch_stimulus - METHOD Return stimulus information for selected frame indices
          %
-         % Usage: [stimulus_info, is_valid_frame, stimulus_frame] = get_stimulus(bos, frame_indices)
+         % Usage: [stimulus_info, is_valid_frame, stimulus_frame] = fetch_stimulus(bos, frame_indices)
          %
          % `frame_indices` is a vector of fluorescence frame indices
          % (1-based). This method finds the stimuli that correspond to
@@ -1202,7 +1217,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          % Each row in `stimulus_info` indicates the full stimulus
          % information associated with the corresponding valid frame in
          % `frame_indices`. For stimuli with a corresponding stimulus
-         % template (see method get_stimulus_template()), the column
+         % template (see method fetch_stimulus_template()), the column
          % 'frame' contains an index indicating which stimulus frame was
          % presented at that point in time.
          %
@@ -1287,7 +1302,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
                
                % - Extract the corresponding stimulus template
                try
-                  stimulus_template = bos.get_stimulus_template(stimulus_name);
+                  stimulus_template = bos.fetch_stimulus_template(stimulus_name);
                   stimulus_frame = stimulus_template(:, :, stimulus_info.frame);
                   
                catch
@@ -1363,8 +1378,8 @@ catch cause
 end
 end
 
-function stimulus_table = get_repeated_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
-% get_repeated_indexed_time_series_stimulus_table - FUNCTION Return a stimulus table for a repeated stimulus
+function stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
+% fetch_repeated_indexed_time_series_stimulus_table - FUNCTION Return a stimulus table for a repeated stimulus
 
 % - Get the full stimulus table
 stimulus_table = fetch_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
