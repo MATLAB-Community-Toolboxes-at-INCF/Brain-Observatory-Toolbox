@@ -131,15 +131,15 @@ classdef test < matlab.unittest.TestCase
          s = bot.internal.ophyssession(496934409);
 
          % - Test summary methods
-         vnCellIDs = s.get_cell_specimen_ids();
-         s.get_cell_specimen_indices(vnCellIDs);
-         s.fetch_nwb_metadata();
+         vnCellIDs = s.cell_specimen_ids;
+         s.lookup_cell_specimen_indices(vnCellIDs);
+         s.nwb_metadata;
          s.get_session_type();
          s.get_roi_ids();
          s.list_stimuli();
          
          % - Test data access methods
-         s.get_fluorescence_timestamps();
+         s.fluorescence_timestamps();
          s.get_fluorescence_traces();
          s.get_demixed_traces();
          s.get_corrected_fluorescence_traces();
@@ -161,7 +161,7 @@ classdef test < matlab.unittest.TestCase
          s = bot.internal.ophyssession(528402271);
 
          % - Get a vector of fluorescence frame IDs
-         vnFrameIDs = 1:numel(s.get_fluorescence_timestamps());
+         vnFrameIDs = 1:numel(s.fluorescence_timestamps);
          
          % - Obtain per-frame stimulus table
          s.get_stimulus(vnFrameIDs);

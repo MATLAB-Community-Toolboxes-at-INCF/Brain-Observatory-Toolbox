@@ -10,7 +10,7 @@
 % >> bos = bot.internal.opyssession(id);
 %
 % Get session metadata:
-% >> bos.fetch_nwb_metadata()
+% >> bos.nwb_metadata
 % ans =
 %                         age: '73 days'
 %                         sex: 'female'
@@ -21,7 +21,7 @@
 %        ...
 %
 % Find cells analysed in this session:
-% >> vnAllCellIDs = bos.get_cell_specimen_ids();
+% >> vnAllCellIDs = bos.cell_specimen_ids;
 %
 % Maximum intensity projection:
 % >> imagesc(bos.get_max_projection());
@@ -63,11 +63,48 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession < bot.internal.session_base
+classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
    
+   %% - Default visible properties
    properties (SetAccess = private)
-      metadata
-      id
+      metadata;                     % Session metadata extracted from manifest table
+      id;                           % Session ID
+   end
+   
+   %% - Lazy loading properties
+   properties (SetAccess = private)
+      nwb_metadata;                 % Metadata extracted from NWB data file
+      fluorescence_timestamps;      % Vector of fluorescence timestamps corresponding to imaging frames
+      cell_specimen_ids;            % Vector of cell specimen IDs recorded in this session
+   end
+   
+   properties (Hidden = true, SetAccess = immutable, GetAccess = private)
+      default_property_list = ["metadata", "id"];
+      lazy_property_list = ["nwb_metadata", "fluorescence_timestamps", "cell_specimen_ids"];
+   end
+   
+   methods (Access = protected)
+      function groups = getPropertyGroups(obj)
+         if ~isscalar(obj)
+            groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+         else
+            % - Default properties
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list, 'Metadata');
+            
+            if obj.is_nwb_cached()
+               description = '[cached]';
+            else
+               description = '[not cached]';
+            end
+            
+            propList = struct();
+            for prop = obj.lazy_property_list
+               propList.(prop) = description;
+            end
+            
+            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+         end
+      end
    end
    
    %% - Private properties
@@ -125,7 +162,7 @@ classdef ophyssession < bot.internal.session_base
          
          % - Assign session information
          bsObj.metadata = table2struct(bsObj.find_manifest_row(id));
-         bsObj.id = id;
+         bsObj.id = bsObj.metadata.id;
 
          % - Ensure that we were given an OPhys session
          if bsObj.metadata.type ~= "OPhys"
@@ -154,11 +191,11 @@ classdef ophyssession < bot.internal.session_base
    end
 
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
-   methods (Hidden = false)
-      function metadata = fetch_nwb_metadata(bos)
-         % fetch_nwb_metadata - METHOD Read metadata from the NWB file
+   methods
+      function metadata = get.nwb_metadata(bos)
+         % get.nwb_metadata - GETTER Read metadata from the NWB file
          %
-         % Usage: metadata = fetch_nwb_metadata(bos)
+         % Usage: metadata = bos.nwb_metadata
          
          % - Ensure the data has been cached
          EnsureCached(bos);
@@ -226,10 +263,10 @@ classdef ophyssession < bot.internal.session_base
          end
       end
       
-      function timestamps = get_fluorescence_timestamps(bos)
-         % get_fluorescence_timestamps - METHOD Return timestamps for the fluorescence traces, in seconds
+      function timestamps = get.fluorescence_timestamps(bos)
+         % get.fluorescence_timestamps - GETTER Return timestamps for the fluorescence traces, in seconds
          %
-         % Usage: timestamps = get_fluorescence_timestamps(bos)
+         % Usage: timestamps = bos.fluorescence_timestamps
          %
          % `timestamps` will be a vector of time points corresponding to
          % fluorescence samples, in seconds.
@@ -246,10 +283,10 @@ classdef ophyssession < bot.internal.session_base
          timestamps = seconds(timestamps);
       end
       
-      function cell_specimen_ids = get_cell_specimen_ids(bos)
-         % get_cell_specimen_ids - METHOD Return all cell specimen IDs in this session
+      function cell_specimen_ids = get.cell_specimen_ids(bos)
+         % get.cell_specimen_ids - GETTER Return all cell specimen IDs in this session
          %
-         % Usage: cell_specimen_ids = get_cell_specimen_ids(bos)
+         % Usage: cell_specimen_ids = bos.cell_specimen_ids
          %
          % `cell_specimen_ids` will be a vector of IDs corresponding to the ROIs
          % analysed in this session.
@@ -263,10 +300,10 @@ classdef ophyssession < bot.internal.session_base
             'ImageSegmentation', 'cell_specimen_ids'));
       end
       
-      function cell_specimen_indices = get_cell_specimen_indices(bos, cell_specimen_ids)
-         % get_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
+      function cell_specimen_indices = lookup_cell_specimen_indices(bos, cell_specimen_ids)
+         % lookup_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
          %
-         % Usage: cell_specimen_indices = get_cell_specimen_indices(bos, cell_specimen_ids)
+         % Usage: cell_specimen_indices = lookup_cell_specimen_indices(bos, cell_specimen_ids)
          %
          % `cell_specimen_ids` is an Nx1 vector of valid cell specimen IDs.
          % `cell_specimen_indices` will be an Nx1 vector with each element
@@ -277,7 +314,7 @@ classdef ophyssession < bot.internal.session_base
          EnsureCached(bos);
          
          % - Read all cell specimen IDs
-         all_cell_specimen_ids = bos.get_cell_specimen_ids();
+         all_cell_specimen_ids = bos.cell_specimen_ids;
          
          % - Find provided IDs in list
          [vbFound, cell_specimen_indices] = ismember(cell_specimen_ids, all_cell_specimen_ids);
@@ -307,13 +344,13 @@ classdef ophyssession < bot.internal.session_base
          EnsureCached(bos);
          
          % - Get the fluorescence timestamps
-         timestamps = bos.get_fluorescence_timestamps();
+         timestamps = bos.fluorescence_timestamps;
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
          else
-            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Read requested fluorescence traces
@@ -345,13 +382,13 @@ classdef ophyssession < bot.internal.session_base
          EnsureCached(bos);
          
          % - Get the fluorescence timestamps
-         timestamps = bos.get_fluorescence_timestamps();
+         timestamps = bos.fluorescence_timestamps;
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
          else
-            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Read requested fluorescence traces
@@ -379,14 +416,13 @@ classdef ophyssession < bot.internal.session_base
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
          else
-            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Check pipeline version and read neuropil correction R
-         nwb_metadata = bos.fetch_nwb_metadata();
-         if str2double(nwb_metadata.pipeline_version) >= 2.0
+         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
             neuropil_r = h5read(bos.local_nwb_file_location, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
@@ -420,18 +456,17 @@ classdef ophyssession < bot.internal.session_base
          EnsureCached(bos);
          
          % - Get the fluorescence timestamps
-         timestamps = bos.get_fluorescence_timestamps();
+         timestamps = bos.fluorescence_timestamps;
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
          else
-            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Check pipeline version and read neuropil correction R
-         nwb_metadata = bos.fetch_nwb_metadata();
-         if str2double(nwb_metadata.pipeline_version) >= 2.0
+         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
             traces = h5read(bos.local_nwb_file_location, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
@@ -470,8 +505,7 @@ classdef ophyssession < bot.internal.session_base
          end
          
          % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
-         nwb_metadata = bos.fetch_nwb_metadata();
-         if str2double(nwb_metadata.pipeline_version) >= 2.0
+         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
             [timestamps, traces] = bos.get_demixed_traces(cell_specimen_ids);
          else
             [timestamps, traces] = bos.get_fluorescence_traces(cell_specimen_ids);
@@ -506,9 +540,9 @@ classdef ophyssession < bot.internal.session_base
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.get_cell_specimen_ids());
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
          else
-            cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          end
          
          % - Read timestamps and response traces
@@ -771,7 +805,7 @@ classdef ophyssession < bot.internal.session_base
          timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
          
          % - Align with imaging timestamps
-         imaging_timestamps = bos.get_fluorescence_timestamps();
+         imaging_timestamps = bos.fluorescence_timestamps;
          [running_speed, timestamps] = align_running_speed(running_speed, timestamps, imaging_timestamps);
       end
       
@@ -920,7 +954,7 @@ classdef ophyssession < bot.internal.session_base
          
          % - By default, return masks for all cells
          if ~exist('cell_specimen_ids', 'var')
-            cell_specimen_ids = bos.get_cell_specimen_ids;
+            cell_specimen_ids = bos.cell_specimen_ids;
          end
          
          % - Ensure session data is cached, locate NWB file
@@ -934,7 +968,7 @@ classdef ophyssession < bot.internal.session_base
          roi_list = deblank(h5read(nwb_file, h5path(nwb_key, 'roi_list')));
          
          % - Select only requested cell specimen IDs
-         cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+         cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          
          % - Loop over ROIs, extract masks
          roi_masks = [];
@@ -963,7 +997,7 @@ classdef ophyssession < bot.internal.session_base
          
          % - By default, return masks for all cells
          if ~exist('vnCellSpecimenIDs', 'var')
-            cell_specimen_ids = bos.get_cell_specimen_ids;
+            cell_specimen_ids = bos.cell_specimen_ids;
          end
          
          % - Ensure session data is cached, locate NWB file
@@ -977,7 +1011,7 @@ classdef ophyssession < bot.internal.session_base
          roi_list = deblank(h5read(nwb_file, h5path(nwb_key, 'roi_list')));
          
          % - Select only requested cell specimen IDs
-         cell_specimen_indices = bos.get_cell_specimen_indices(cell_specimen_ids);
+         cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          
          % - Initialise a CC structure
          roi_masks = struct('Connectivity', 8, ...

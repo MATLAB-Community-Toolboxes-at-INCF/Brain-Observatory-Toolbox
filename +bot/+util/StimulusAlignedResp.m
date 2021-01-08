@@ -13,8 +13,8 @@ function mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp, fhMetric, vnFluo
 % is a table as returned by the
 % `bot.internal.ophyssession.get_stimulus_table()` method, with stimulus
 % presentation periods defined by columns 'start_frame' and 'end_frame'.
-% These indices refer to fluorescence frame indices, as returned by the
-% `bot.internal.ophyssession.get_fluorescence_timestamps()` method.
+% These indices refer to fluorescence frame indices, as returned in the
+% `bot.internal.ophyssession.fluorescence_timestamps` property.
 %
 % The response frames corresponding to a single stimulus presentation are
 % collated, and processed with the function `fhMetric`. By default
