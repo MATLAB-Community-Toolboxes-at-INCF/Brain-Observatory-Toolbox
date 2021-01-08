@@ -140,7 +140,7 @@ classdef test < matlab.unittest.TestCase
          
          % - Test data access methods
          s.fluorescence_timestamps;
-         s.get_fluorescence_traces();
+         s.fluorescence_traces;
          s.demixed_traces;
          s.get_corrected_fluorescence_traces();
          s.get_dff_traces();
