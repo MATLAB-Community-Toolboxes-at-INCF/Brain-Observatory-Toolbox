@@ -80,11 +80,11 @@ classdef session_base < handle
          end
          
          % - Find these sessions in the sessions manifests
-         matching_ophys_session = sess.ophys_manifest.tOPhysSessions.id == id;
+         matching_ophys_session = sess.ophys_manifest.ophys_sessions.id == id;
          
          % - Extract the appropriate table row from the manifest
          if any(matching_ophys_session)
-            manifest_row = sess.ophys_manifest.tOPhysSessions(matching_ophys_session, :);
+            manifest_row = sess.ophys_manifest.ophys_sessions(matching_ophys_session, :);
          else
             matching_ephys_session = sess.ephys_manifest.ephys_sessions.id == id;
             manifest_row = sess.ephys_manifest.ephys_sessions(matching_ephys_session, :);
@@ -130,10 +130,10 @@ classdef session_base < handle
          % - Loop over session IDs
          for session_index = numel(ids):-1:1
             % - Find this session in the sessions tables
-            matching_ophys_session = sess.ophys_manifest.tOPhysSessions.id == ids(session_index);
+            matching_ophys_session = sess.ophys_manifest.ophys_sessions.id == ids(session_index);
             
             if any(matching_ophys_session)
-               session_row = sess.ophys_manifest.tOPhysSessions(matching_ophys_session, :);
+               session_row = sess.ophys_manifest.ophys_sessions(matching_ophys_session, :);
             else
                matching_ephys_session = sess.ephys_manifest.ephys_sessions.id == ids(session_index);
                session_row = sess.ephys_manifest.ephys_sessions(matching_ephys_session, :);

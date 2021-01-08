@@ -8,7 +8,7 @@
 % >> bom = bot.internal.ophysmanifest
 %
 % Get information about all OPhys experimental sessions:
-% >> bom.tOphysSessions
+% >> bom.ophys_sessions
 % ans =
 %      date_of_acquisition      experiment_container_id    fail_eye_tracking  ...
 %     ______________________    _______________________    _________________  ...
@@ -20,7 +20,7 @@
 % >> bom.UpdateManifests()
 %
 % Access data from an experimental session:
-% >> nSessionID = bom.tOphysSessions(1, 'id');
+% >> nSessionID = bom.ophys_sessions(1, 'id');
 % >> bos = bot.session(nSessionID)
 % bos =
 %   ophyssession with properties:
@@ -43,8 +43,8 @@ classdef ophysmanifest < handle
    end
    
    properties (SetAccess = private, Dependent = true)
-      tOPhysSessions;                   % Table of all OPhys experimental sessions
-      tOPhysContainers;                 % Table of all OPhys experimental containers
+      ophys_sessions;                   % Table of all OPhys experimental sessions
+      ophys_containers;                 % Table of all OPhys experimental containers
    end
    
    %% Constructor
@@ -91,14 +91,14 @@ classdef ophysmanifest < handle
    
    %% Getters for manifest tables
    methods
-      function tOPhysSessions = get.tOPhysSessions(oManifest)
+      function ophys_sessions = get.ophys_sessions(oManifest)
          ophys_manifests = oManifest.api_access.get_cached_ophys_manifests();
-         tOPhysSessions = ophys_manifests.ophys_session_manifest;
+         ophys_sessions = ophys_manifests.ophys_session_manifest;
       end
       
-      function tOPhysContainers = get.tOPhysContainers(oManifest)
+      function ophys_containers = get.ophys_containers(oManifest)
          ophys_manifests = oManifest.api_access.get_cached_ophys_manifests();
-         tOPhysContainers = ophys_manifests.ophys_container_manifest;
+         ophys_containers = ophys_manifests.ophys_container_manifest;
       end
    end
    

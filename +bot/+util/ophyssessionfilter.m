@@ -89,25 +89,25 @@ classdef ophyssessionfilter < handle
    methods
       function clear_filters(bosf)
          % clear_filters - METHOD Clear all session table filters
-         failed_container_id = bosf.ophys_manifest.tOPhysContainers((bosf.ophys_manifest.tOPhysContainers.failed == 1), :).id;
-         bosf.valid_session_table = bosf.ophys_manifest.tOPhysSessions(~ismember(bosf.ophys_manifest.tOPhysSessions.experiment_container_id, failed_container_id), :);
+         failed_container_id = bosf.ophys_manifest.ophys_containers((bosf.ophys_manifest.ophys_containers.failed == 1), :).id;
+         bosf.valid_session_table = bosf.ophys_manifest.ophys_sessions(~ismember(bosf.ophys_manifest.ophys_sessions.experiment_container_id, failed_container_id), :);
          bosf.filtered_session_table = bosf.valid_session_table;
       end
       
       function result = get_total_num_of_containers(bosf,varargin)
-         % get_total_num_of_containers - METHOD Return the total number of experiment containers from tOPhysSessions
+         % get_total_num_of_containers - METHOD Return the total number of experiment containers from ophys_sessions
          result = size(bosf.valid_session_table, 1) / 3;
       end
       
       
       function result = get_all_imaging_depths(bosf)
-         % get_all_imaging_depths - METHOD Return all the cortical depths from tOPhysSessions
+         % get_all_imaging_depths - METHOD Return all the cortical depths from ophys_sessions
          result = unique(bosf.valid_session_table.imaging_depth);
       end
       
       
       function result = get_all_targeted_structures(bosf)
-         % get_all_targeted_structures - METHOD Return all the brain areas from tOPhysSessions
+         % get_all_targeted_structures - METHOD Return all the brain areas from ophys_sessions
          
          targeted_structure_table = struct2table(bosf.valid_session_table.targeted_structure);
          result = categories(categorical(targeted_structure_table.acronym));
@@ -115,13 +115,13 @@ classdef ophyssessionfilter < handle
       
       
       function result = get_all_session_types (bosf)
-         % get_all_session_types - METHOD Return all the session types from tOPhysSessions
+         % get_all_session_types - METHOD Return all the session types from ophys_sessions
          result = categories(categorical(bosf.valid_session_table.stimulus_name));
       end
       
       
       function result = get_all_stimuli(bosf)
-         % get_all_stimuli - METHOD Return all stimulus types from tOPhysSessions
+         % get_all_stimuli - METHOD Return all stimulus types from ophys_sessions
          
          session_by_stimuli = bosf.get_session_by_stimuli();
          result = [];
@@ -132,19 +132,19 @@ classdef ophyssessionfilter < handle
       end
       
       function result = get_all_cre_lines (bosf)
-         % get_all_cre_lines - METHOD Return all cre lines from tOPhysSessions
+         % get_all_cre_lines - METHOD Return all cre lines from ophys_sessions
          result = categories(categorical(bosf.valid_session_table.cre_line));
       end
       
       
       function get_summary_of_containers_along_imaging_depths(bosf)
          % get_summary_of_containers_along_imaging_depths - METHOD Return the number of experiment containers recorded at each cortical depth
-         summary(categorical(cellstr(num2str((bosf.ophys_manifest.tOPhysContainers.imaging_depth)))))
+         summary(categorical(cellstr(num2str((bosf.ophys_manifest.ophys_containers.imaging_depth)))))
       end
       
       function get_summary_of_containers_along_targeted_structures (bosf)
          % get_summary_of_containers_along_targeted_structures - METHOD Return the number of experiment containers recorded in each brain region
-         container_targeted_structure_table = struct2table(bosf.ophys_manifest.tOPhysContainers.targeted_structure);
+         container_targeted_structure_table = struct2table(bosf.ophys_manifest.ophys_containers.targeted_structure);
          summary(categorical(cellstr(container_targeted_structure_table.acronym)))
       end
       

@@ -12,8 +12,8 @@ classdef test < matlab.unittest.TestCase
          %% Test retrieving all OPhys manifest tables
          bom = bot.manifest('ophys');
          bom = bot.internal.ophysmanifest.instance();
-         bom.tOPhysSessions;                   % Table of all OPhys experimental sessions
-         bom.tOPhysContainers;                 % Table of all OPhys experimental containers
+         bom.ophys_sessions;                   % Table of all OPhys experimental sessions
+         bom.ophys_containers;                 % Table of all OPhys experimental containers
       end
       
       function testEphysTables(testCase)
@@ -74,14 +74,14 @@ classdef test < matlab.unittest.TestCase
          bosf.filter_session_by_eye_tracking(true);
          
          % Container ID
-         tContainers = bom.tOPhysContainers;
+         containers = bom.ophys_containers;
          bosf.clear_filters();
-         bosf.filter_sessions_by_container_id(tContainers{1, 'id'});
+         bosf.filter_sessions_by_container_id(containers{1, 'id'});
          
          % Session ID
-         tSessions = bom.tOPhysSessions;
+         sessions_ = bom.ophys_sessions;
          bosf.clear_filters();
-         bosf.filter_sessions_by_session_id(tSessions{1, 'id'});
+         bosf.filter_sessions_by_session_id(sessions_{1, 'id'});
          
          % Session type
          session_types = bosf.get_all_session_types();
