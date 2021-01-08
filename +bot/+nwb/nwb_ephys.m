@@ -67,17 +67,17 @@ classdef nwb_ephys < handle
          % uncorrupted NWB file.
          %
          % Of course, this does not ensure that the file as a whole is correct.
-         self.get_ecephys_session_id();
+         self.fetch_ecephys_session_id();
       end
       
-      function time = get_session_start_time(self)
+      function time = fetch_session_start_time(self)
          % - Read the session start time from the NWB file
          t = h5read(self.strFile, '/session_start_time');
          time = datetime(t,'TimeZone','UTC','Format','yyyy-MM-dd''T''HH:mm:ssXXXXX');
       end
       
-      function stimulus_presentations = get_stimulus_presentations(self)
-         % get_stimulus_presentations - Return the stimulus table from the NWB file
+      function stimulus_presentations = fetch_stimulus_presentations(self)
+         % fetch_stimulus_presentations - Return the stimulus table from the NWB file
          
          % - Identify where in the NWB file the data is located
          strEpochsKey = '/intervals/epochs';
@@ -116,7 +116,7 @@ classdef nwb_ephys < handle
          end
       end 
       
-      function probes = get_probes(self)
+      function probes = fetch_probes(self)
          % - Retrieve the electrode groups (probes) from the NWB file
          sElectrodes = h5info(self.strFile, '/general/extracellular_ephys');
          cstrElectrodePaths = {sElectrodes.Groups.Name}';
@@ -140,7 +140,7 @@ classdef nwb_ephys < handle
          end
       end
       
-      function channels = get_channels(self)
+      function channels = fetch_channels(self)
          % - Retrieve the electrodes from the NWB file
          channels = bot.nwb.table_from_datasets(self.strFile, '/general/extracellular_ephys/electrodes', 'group');
          
@@ -165,26 +165,26 @@ classdef nwb_ephys < handle
          end
       end
       
-      function mean_waveforms = get_mean_waveforms(self)
-         units_table = self.get_full_units_table();
+      function mean_waveforms = fetch_mean_waveforms(self)
+         units_table = self.fetch_full_units_table();
          mean_waveforms = units_table(:, {'id', 'waveform_mean'});
          mean_waveforms.Properties.VariableNames(1) = "unit_id";
       end
       
-      function spike_times = get_spike_times(self)
-         units_table = self.get_full_units_table();
+      function spike_times = fetch_spike_times(self)
+         units_table = self.fetch_full_units_table();
          spike_times = units_table(:, {'id', 'spike_times'});
          spike_times.Properties.VariableNames(1) = "unit_id";
       end
       
-      function spike_amplitudes = get_spike_amplitudes(self)
-         units_table = self.get_full_units_table();
+      function spike_amplitudes = fetch_spike_amplitudes(self)
+         units_table = self.fetch_full_units_table();
          spike_amplitudes = units_table(:, {'id', 'spike_amplitudes'});
          spike_amplitudes.Properties.VariableNames(1) = "unit_id";
       end
       
-      function units = get_units(self)
-         units = self.get_full_units_table();
+      function units = fetch_units(self)
+         units = self.fetch_full_units_table();
          
          % - Remove variables
          to_drop = {'spike_times', 'spike_amplitudes', 'waveform_mean'};
@@ -197,7 +197,7 @@ classdef nwb_ephys < handle
          end
       end
       
-      function running_speed = get_running_speed(self, include_rotation)
+      function running_speed = fetch_running_speed(self, include_rotation)
          arguments
             self;
             include_rotation logical = false;
@@ -220,7 +220,7 @@ classdef nwb_ephys < handle
          end
       end
       
-      function raw_running_data = get_raw_running_data(self)
+      function raw_running_data = fetch_raw_running_data(self)
          % - Read from the cached NWB file, return as a table
          rotation_series = bot.nwb.table_from_datasets(self.strFile, '/acquisition/raw_running_wheel_rotation');
          signal_voltage_series = bot.nwb.table_from_datasets(self.strFile, '/acquisition/running_wheel_signal_voltage');
@@ -231,7 +231,7 @@ classdef nwb_ephys < handle
             'VariableNames', {'frame_time', 'net_rotation', 'signal_voltage', 'supply_voltage'});
       end
       
-      function rig_metadata = get_rig_metadata(self)
+      function rig_metadata = fetch_rig_metadata(self)
          if ~bot.nwb.has_path(self.strFile, '/processing/eye_tracking')
             error('BOT:DataNotPresent', 'This session has no rig geometry data.');
          end
@@ -240,7 +240,7 @@ classdef nwb_ephys < handle
          rig_metadata.rig_equipment = h5read(self.strFile, '/processing/eye_tracking/equipment/equipment');         
       end
       
-      function eye_tracking_data = get_pupil_data(self, suppress_pupil_data)
+      function eye_tracking_data = fetch_pupil_data(self, suppress_pupil_data)
          arguments
             self;
             suppress_pupil_data logical = true;
@@ -306,19 +306,19 @@ classdef nwb_ephys < handle
          end
       end
       
-      function id = get_ecephys_session_id(self)
+      function id = fetch_ecephys_session_id(self)
          % - Read the identifier from the NWB file
          id = h5read(self.strFile, '/identifier');
          id = uint32(str2double(id));
       end
       
-      function tos = get_optogenetic_stimulation(self)
+      function tos = fetch_optogenetic_stimulation(self)
          % - Read table from NWB file
          tos = bot.nwb.table_from_datasets(self.strFile, '/processing/optotagging/optogenetic_stimuluation', ...
             {'tags', 'tags_index', 'timeseries', 'timeseries_index'});
       end
       
-      function units = get_full_units_table(self)
+      function units = fetch_full_units_table(self)
          % - Read base units table
          units = bot.nwb.table_from_datasets(self.strFile, '/units', ...
             {'spike_amplitudes', 'spike_amplitudes_index', ...
@@ -335,7 +335,7 @@ classdef nwb_ephys < handle
          
          % - Filter units
          if self.filter_by_validity || self.filter_out_of_brain_units
-            channels = self.get_channels();
+            channels = self.fetch_channels();
             
             if self.filter_out_of_brain_units
                channels = channels(~isnan(channels.ephys_structure_id), :);
@@ -365,18 +365,18 @@ classdef nwb_ephys < handle
          metadata = bot.nwb.struct_from_attributes(self.strFile, '/general/metadata');
       end
       
-      function invalid_times = get_invalid_times(self)
+      function invalid_times = fetch_invalid_times(self)
          invalid_times = bot.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
          invalid_times.tags = bot.nwb.deindex_table_from_datasets(self.strFile, ...
             '/intervals/invalid_times/tags', '/intervals/invalid_times/tags_index');
       end
       
-      function im = get_image(self, name, module, image_api)
+      function im = fetch_image(self, name, module, image_api)
          error('BOT:NotImplemented', 'This method is not implemented');
          %         if image_api is None:
          %             image_api = ImageApi
          %
-         %         nwb_img = self.nwbfile.modules[module].get_data_interface('images')[name]
+         %         nwb_img = self.nwbfile.modules[module].fetch_data_interface('images')[name]
          %         data = nwb_img.data
          %         resolution = nwb_img.resolution  # px/cm
          %         spacing = [resolution * 10, resolution * 10]

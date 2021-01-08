@@ -183,12 +183,12 @@ end
    methods
       
       function inter_presentation_intervals = get.inter_presentation_intervals(self)
-         inter_presentation_intervals = self.get_cached('inter_presentation_intervals', @self.build_inter_presentation_intervals);
+         inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.build_inter_presentation_intervals);
       end
       
       function mean_waveforms = get.mean_waveforms(self)
          n = self.nwb_file;
-         mean_waveforms = self.get_cached('mean_waveforms', @n.get_mean_waveforms);
+         mean_waveforms = self.fetch_cached('mean_waveforms', @n.get_mean_waveforms);
       end
       
       function stimulus_conditions = get.stimulus_conditions(self)
@@ -219,27 +219,27 @@ end
       
       function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
          n = self.nwb_file;
-         optogenetic_stimulation_epochs = self.get_cached('optogenetic_stimulation_epochs', @n.get_optogenetic_stimulation);
+         optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.get_optogenetic_stimulation);
       end
       
       function session_start_time = get.session_start_time(self)
          n = self.nwb_file;
-         session_start_time = self.get_cached('session_start_time', @n.get_session_start_time);
+         session_start_time = self.fetch_cached('session_start_time', @n.get_session_start_time);
       end
       
       function spike_amplitudes = get.spike_amplitudes(self)
          n = self.nwb_file;
-         spike_amplitudes = self.get_cached('spike_amplitudes', @n.get_spike_amplitudes);
+         spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.get_spike_amplitudes);
       end
       
       function invalid_times = get.invalid_times(self)
          n = self.nwb_file;
-         invalid_times = self.get_cached('invalid_times', @n.get_invalid_times);
+         invalid_times = self.fetch_cached('invalid_times', @n.get_invalid_times);
       end
       
       function running_speed = get.running_speed(self)
          n = self.nwb_file;
-         running_speed = self.get_cached('running_speed', @n.get_running_speed);
+         running_speed = self.fetch_cached('running_speed', @n.get_running_speed);
       end
    end
    
@@ -286,13 +286,13 @@ end
    methods
       function metadata = get.nwb_metadata(self)
          n = self.nwb_file;
-         metadata = self.get_cached('metadata', @n.fetch_nwb_metadata);
+         metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
       end
       
       function rig_metadata = get.rig_metadata(self)
          n = self.nwb_file;
          try
-            rig_metadata = self.get_cached('rig_metadata', @n.get_rig_metadata);
+            rig_metadata = self.fetch_cached('rig_metadata', @n.get_rig_metadata);
          catch
             rig_metadata = [];
          end

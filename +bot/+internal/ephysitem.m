@@ -34,10 +34,10 @@ classdef ephysitem < handle
    end   
    
    methods (Access = protected)
-      function data = get_cached(self, property, fun_access)
-         % get_cached - METHOD Access a cached property
+      function data = fetch_cached(self, property, fun_access)
+         % fetch_cached - METHOD Access a cached property
          %
-         % Usage: data = get_cached(self, property, fun_access)
+         % Usage: data = fetch_cached(self, property, fun_access)
          %
          % `property` is a string containing a property name. `fun_access`
          % is a function handle that returns the property data, if not
