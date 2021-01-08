@@ -25,47 +25,47 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 
 
 % - Permitted arguments
-cstrTraceTypes = {'raw', 'demixed', 'neuropil_corrected', 'DfOverF'};
-cstrStimTypes = {'static_gratings', 'drifting_gratings', 'locally_sparse_noise_4deg', ...
+trace_types = {'raw', 'demixed', 'neuropil_corrected', 'DfOverF'};
+stim_types = {'static_gratings', 'drifting_gratings', 'locally_sparse_noise_4deg', ...
    'locally_sparse_noise_8deg', 'natural_scenes', 'natural_movie_one', ...
    'natural_movie_two', 'natural_movie_three'};
 
 % -- Check arguments
 
-if ~ismember(fluorescence_trace_type, cstrTraceTypes)
+if ~ismember(fluorescence_trace_type, trace_types)
    error('BOT:Argument', '''fluorescence_trace_type'' must be one of {%s}.', ...
-      sprintf('''%s'', ', cstrTraceTypes{:}));
+      sprintf('''%s'', ', trace_types{:}));
 end
 
-if ~ismember(stimulus, cstrStimTypes)
+if ~ismember(stimulus, stim_types)
    error('BOT:Argument', '''stimulus'' must be one of {%s}.', ...
-      sprintf('''%s'', ', cstrStimTypes{:}));
+      sprintf('''%s'', ', stim_types{:}));
 end
 
 
 % - Create a session object
-bos = bot.session(session_id);
+session = bot.session(session_id);
 
 % - Extract fluorescence traces from this experiment session
 switch fluorescence_trace_type
    case 'raw'
-      [~, fluorescence_trace] = bos.get_fluorescence_traces();
+      [~, fluorescence_trace] = session.get_fluorescence_traces();
       
    case 'demixed'
-      [~, fluorescence_trace] = bos.get_demixed_traces();
+      [~, fluorescence_trace] = session.get_demixed_traces();
       
    case 'neuropil_corrected'
-      [~, fluorescence_trace] = bos.get_corrected_fluorescence_traces();
+      [~, fluorescence_trace] = session.get_corrected_fluorescence_traces();
       
    case 'DfOverF'
-      [~, fluorescence_trace] = bos.get_dff_traces();
+      [~, fluorescence_trace] = session.get_dff_traces();
       
    otherwise
       error('BOT:Argument', 'Unknown fluorescence trace type.');
 end
 
 % - Get list of cell_ids
-new_cell_specimen_ids = bos.get_cell_specimen_ids();
+new_cell_specimen_ids = session.get_cell_specimen_ids();
 
 % - create a head directory that stores all raster formats
 if ~exist(raster_dir_name, 'dir')
@@ -100,7 +100,7 @@ if size(fluorescence_trace, 2) ~=...
    parameters_for_cur_stimulus = fetch_stimulus_based_parameters(stimulus);
    
    % - Generate raster_labels, which applys to all cells in the same session
-   raster_labels = generate_raster_labels(bos, stimulus); %#ok<NASGU>
+   raster_labels = generate_raster_labels(session, stimulus); %#ok<NASGU>
    
    % - Loop over cells to create raster files
    for iCell = 1:size(fluorescence_trace, 2)
@@ -108,9 +108,9 @@ if size(fluorescence_trace, 2) ~=...
       cur_raster_file_name = [num2str(cur_new_cell_id), '.mat'];
       
       % - raster_data is a matrix of k dimensions of trials by n dimensions of time
-      raster_data = generate_raster_data(iCell, fluorescence_trace, parameters_for_cur_stimulus, bos, stimulus); %#ok<NASGU>
+      raster_data = generate_raster_data(iCell, fluorescence_trace, parameters_for_cur_stimulus, session, stimulus); %#ok<NASGU>
       
-      raster_site_info = generate_raster_site_info(bos, stimulus, parameters_for_cur_stimulus, cur_new_cell_id); %#ok<NASGU>
+      raster_site_info = generate_raster_site_info(session, stimulus, parameters_for_cur_stimulus, cur_new_cell_id); %#ok<NASGU>
    
       % - Write out the raster format
       save(fullfile(current_raster_dir_name_full, cur_raster_file_name), 'raster_data', 'raster_labels', 'raster_site_info', '-v7.3');
