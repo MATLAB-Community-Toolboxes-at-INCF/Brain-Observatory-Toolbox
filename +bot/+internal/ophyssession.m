@@ -31,7 +31,7 @@
 % >> [vtTimestamps, mfTraces] = bos.get_dff_traces();
 % >> [vtTimestamps, mfTraces] = bos.fetch_demixed_traces();
 % >> [vtTimestamps, mfTraces] = bos.get_corrected_fluorescence_traces();
-% >> [vtTimestamps, mfTraces] = bos.get_neuropil_traces();
+% >> [vtTimestamps, mfTraces] = bos.fetch_neuropil_traces();
 %
 % Get ROIs:
 % >> sROIStructure = bos.get_roi_mask();
@@ -80,13 +80,15 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       demixed_traces;               % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the demixed fluorescence data for a single cell specimen.
       fluorescence_traces;          % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the fluorescence data for a single cell specimen.
       neuropil_r;                   % vector of neuropil correction factors for each analysed cell
+      neuropil_traces;              % TxN matrix of neuropil fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the neuropil response for a single cell specimen.
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
       default_property_list = ["metadata", "id"];
       lazy_property_list = ["nwb_metadata", "fluorescence_timestamps", ...
          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
-         "demixed_traces", "fluorescence_traces", ...
+         "demixed_traces", "fluorescence_traces", "neuropil_r", ...
+         "neuropil_traces", ...
          ];
    end
    
@@ -455,10 +457,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          neuropil_r = neuropil_r(cell_specimen_indices);
       end
       
-      function [timestamps, traces] = get_neuropil_traces(bos, cell_specimen_ids)
-         % get_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
+      function traces = get.neuropil_traces(bos)
+         traces = bos.fetch_neuropil_traces();
+      end
+      
+      function [timestamps, traces] = fetch_neuropil_traces(bos, cell_specimen_ids)
+         % fetch_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
          %
-         % Usage: [timestamps, traces] = get_neuropil_traces(bos <, cell_specimen_ids>)
+         % Usage: [timestamps, traces] = fetch_neuropil_traces(bos <, cell_specimen_ids>)
          %
          % `timestamps` will be a Tx1 vector of timepoints in seconds, each
          % point defining a sample time for the fluorescence samples. `traces`
@@ -532,7 +538,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          
          % - Read neuropil correction data
          neuropil_r = bos.fetch_neuropil_r(cell_specimen_ids);
-         [~, neuropil_traces] = bos.get_neuropil_traces(cell_specimen_ids);
+         [~, neuropil_traces] = bos.fetch_neuropil_traces(cell_specimen_ids);
          
          % - Correct fluorescence traces using neuropil demixing model
          traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
