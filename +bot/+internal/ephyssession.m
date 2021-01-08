@@ -1,12 +1,28 @@
 %% CLASS bot.internal.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
-classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
+classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & matlab.mixin.CustomDisplay
    %% Properties
    properties (SetAccess = private)
       units;                          % A Table of all units in this session
       probes;                         % A Table of all probes in this session
       channels;                       % A Table of all channels in this session
-      
+
+      specimen_name;                % Metadata: name of the animal used in this session
+      age_in_days;                  % Metadata: age of the animal used in this session, in days
+      sex;                          % Metadata: sex of the animal used in this session
+      full_genotype;                % Metadata: genotype of the animal used in this session
+      session_type;                 % Metadata: string describing the type of session (group of stimuli used)      
+
+      num_units;                    % Number of units (putative neurons) recorded in this session
+      num_probes;                   % Number of probes recorded in this session
+      num_channels;                 % Number of channels recorded in this session      
+end
+   
+   %% - Lazy loading properties
+   properties (SetAccess = private)
+      rig_geometry_data;               % Metadata about the geometry of the rig used in this session
+      rig_equipment_name;              % Metadata: name of the rig used in this session
+
       inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
       running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
       mean_waveforms;                  % Maps integer unit ids to xarray.DataArrays containing mean spike waveforms for that unit
@@ -17,25 +33,52 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
       spike_amplitudes;                %
       invalid_times;                   %
       
-      num_units;                    % Number of units (putative neurons) recorded in this session
-      num_probes;                   % Number of probes recorded in this session
-      num_channels;                 % Number of channels recorded in this session
-      
       num_stimulus_presentations;   % Number of stimulus presentations in this session
       stimulus_names;               % Names of stimuli presented in this session
       structure_acronyms;           % EPhys structures recorded across all channels in this session
       structurewise_unit_counts;    % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
       
-      rig_geometry_data;            % Metadata about the geometry of the rig used in this session
-      rig_equipment_name;           % Metadata: name of the rig used in this session
-      specimen_name;                % Metadata: name of the animal used in this session
-      age_in_days;                  % Metadata: age of the animal used in this session, in days
-      sex;                          % Metadata: sex of the animal used in this session
-      full_genotype;                % Metadata: genotype of the animal used in this session
-      session_type;                 % Metadata: string describing the type of session (group of stimuli used)
-      
       stimulus_templates;           % Stimulus template table
    end
+   
+   properties (Hidden = true, SetAccess = immutable, GetAccess = private)
+      default_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
+         "sex", "full_genotype", "session_type", ...
+         "num_units", "num_probes", "num_channels", ...
+         ];
+      lazy_property_list = ["rig_geometry_data", ...
+         "rig_equipment_name", "inter_presentation_intervals", ...
+         "running_speed", "mean_waveforms", "stimulus_presentations", ...
+         "stimulus_conditions", "optogenetic_stimulation_epochs", ...
+         "session_start_time", "spike_amplitudes", "invalid_times", ...
+         "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
+         "structurewise_unit_counts", "stimulus_templates", ...
+         ];
+   end
+   
+   methods (Access = protected)
+      function groups = getPropertyGroups(obj)
+         if ~isscalar(obj)
+            groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+         else
+            % - Default properties
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list, 'Metadata');
+            
+            if obj.is_nwb_cached()
+               description = '[cached]';
+            else
+               description = '[not cached]';
+            end
+            
+            propList = struct();
+            for prop = obj.lazy_property_list
+               propList.(prop) = description;
+            end
+            
+            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+         end
+      end
+   end   
    
    %% Private properties
    properties (Hidden = true, Access = public, Transient = true)
@@ -117,9 +160,9 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          % - Assign associated table rows
-         session.probes = manifest.ephys_probes(manifest.ephys_probes.id == session_id, :);
-         session.channels = manifest.ephys_channels(manifest.ephys_channels.id == session_id, :);
-         session.units = manifest.ephys_units(manifest.ephys_units.id == session_id, :);
+         session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
+         session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
+         session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
       end
    end
    
@@ -329,7 +372,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
    
    %% Public methods
    methods
-      function inter_presentation_intervals = get_inter_presentation_intervals_for_stimulus(self, stimulus_names)
+      function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
          % ''' Get a subset of this session's inter-presentation intervals, filtered by stimulus name.
          %
          % Parameters
@@ -753,7 +796,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          drop_nulls logical = true;
       end
    
-      presentation_ids = self.get_stimulus_table(stimulus_name).stimulus_presentation_id;
+      presentation_ids = self.fetch_stimulus_table(stimulus_name).stimulus_presentation_id;
       param_values = self.get_stimulus_parameter_values(presentation_ids, drop_nulls);   
    end
    
