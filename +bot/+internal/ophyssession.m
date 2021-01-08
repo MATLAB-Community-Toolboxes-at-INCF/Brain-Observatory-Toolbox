@@ -38,8 +38,8 @@
 % >> tbROIMask = bos.get_roi_mask_array();
 %
 % Obtain behavioural data:
-% >> [vtTimestamps, vfPupilLocation] = bos.get_pupil_location();
-% >> [vtTimestamps, vfPupilAreas] = bos.get_pupil_size();
+% >> [vtTimestamps, vfPupilLocation] = bos.fetch_pupil_location();
+% >> [vtTimestamps, vfPupilAreas] = bos.fetch_pupil_size();
 % >> [vtTimestamps, vfRunningSpeed] = get_running_speed();
 %
 % Obtain stimulus information:
@@ -89,6 +89,8 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       roi_ids;                      % Vector of all ROI IDs analysed in this experiment session
       stimulus_list;                % Cell array of strings, indicating which individual stimulus sets were presented in this session
       motion_correction;            % Table containing x/y motion correction information applied in this experimental session
+      pupil_location;               % Tx2 matrix, where each row contains the tracked location of the mouse pupil. Spherical coordinates [`altitude` `azimuth`] are returned in degrees for each row. (0,0) is the center of the monitor
+      pupil_size;                   % Tx1 vector, each element containing the instantaneous estimated pupil area in pixels
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
@@ -99,6 +101,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          "neuropil_traces", "corrected_fluorescence_traces", ...
          "dff_traces", "stimulus_epoch_table", "max_projection", ...
          "roi_ids", "stimulus_list", "motion_correction", ...
+         "pupil_location", "pupil_size", ...
          ];
    end
    
@@ -891,10 +894,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          motion_correction.timestamp = motion_time;
       end
       
-      function [timestamps, pupil_location] = get_pupil_location(bos, as_spherical_coords)
-         % get_pupil_location - METHOD Return the pupil location trace for this experimental session
+      function pupil_location = get.pupil_location(bos)
+         [~, pupil_location] = bos.fetch_pupil_location();
+      end
+      
+      function [timestamps, pupil_location] = fetch_pupil_location(bos, as_spherical_coords)
+         % fetch_pupil_location - METHOD Return the pupil location trace for this experimental session
          %
-         % Usage: [timestamps, pupil_location] = get_pupil_location(bos, <as_spherical_coords>)
+         % Usage: [timestamps, pupil_location] = fetch_pupil_location(bos, <as_spherical_coords>)
          %
          % `timestamps` will be a Tx1 vector of times in seconds,
          % corresponding to fluorescence timestamps. `pupil_location` will be a
@@ -946,10 +953,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function [timestamps, pupil_areas] = get_pupil_size(bos)
-         % get_pupil_size - METHOD Return the pupil area trace for this experimental session
+      function pupil_areas = get.pupil_size(bos)
+         [~, pupil_areas] = bos.fetch_pupil_size();
+      end
+      
+      function [timestamps, pupil_areas] = fetch_pupil_size(bos)
+         % fetch_pupil_size - METHOD Return the pupil area trace for this experimental session
          %
-         % Usage: [timestamps, pupil_areas] = get_pupil_size(bos)
+         % Usage: [timestamps, pupil_areas] = fetch_pupil_size(bos)
          %
          % `timestamps` will be a Tx1 vector of times in seconds,
          % corresponding to fluorescence timestamps. `pupil_areas` will be a

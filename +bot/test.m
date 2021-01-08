@@ -151,8 +151,8 @@ classdef test < matlab.unittest.TestCase
          s.get_roi_mask();
          s.get_roi_mask_array();
          s.get_running_speed();
-         s.get_pupil_location();
-         s.get_pupil_size();
+         s.pupil_location;
+         s.pupil_size;
       end
       
       function testStimulusExtraction(testCase)
