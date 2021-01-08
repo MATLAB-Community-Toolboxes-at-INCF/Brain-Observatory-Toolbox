@@ -24,11 +24,11 @@
 % >> vnAllCellIDs = bos.cell_specimen_ids;
 %
 % Maximum intensity projection:
-% >> imagesc(bos.get_max_projection());
+% >> imagesc(bos.max_projection);
 %
 % Obtain fluorescence traces:
 % >> [vtTimestamps, mfTraces] = bos.fetch_fluorescence_traces();
-% >> [vtTimestamps, mfTraces] = bos.get_dff_traces();
+% >> [vtTimestamps, mfTraces] = bos.fetch_dff_traces();
 % >> [vtTimestamps, mfTraces] = bos.fetch_demixed_traces();
 % >> [vtTimestamps, mfTraces] = bos.fetch_corrected_fluorescence_traces();
 % >> [vtTimestamps, mfTraces] = bos.fetch_neuropil_traces();
@@ -43,7 +43,7 @@
 % >> [vtTimestamps, vfRunningSpeed] = get_running_speed();
 %
 % Obtain stimulus information:
-% >> bos.get_stimulus_epoch_table()
+% >> bos.stimulus_epoch_table
 % ans =
 %          stimulus          start_frame    end_frame
 %     ___________________    ___________    _________
@@ -69,6 +69,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
    properties (SetAccess = private)
       metadata;                     % Session metadata extracted from manifest table
       id;                           % Session ID
+      session_type;                 % Type of experimental session (i.e. set of stimuli)
    end
    
    %% - Lazy loading properties
@@ -82,15 +83,21 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       neuropil_r;                   % vector of neuropil correction factors for each analysed cell
       neuropil_traces;              % TxN matrix of neuropil fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the neuropil response for a single cell specimen.
       corrected_fluorescence_traces;% TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the corrected fluorescence data for a single cell specimen.
+      dff_traces;                   % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the delta F/F0 fluorescence data for a single cell specimen.
+      stimulus_epoch_table;         % table containing information about all stimulus epochs in this experiment session
+      max_projection;               % Image contianing the maximum-intensity projection of the fluorescence stack obtained in this session
+      roi_ids;                      % Vector of all ROI IDs analysed in this experiment session
+      stimulus_list;                % Cell array of strings, indicating which individual stimulus sets were presented in this session
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-      default_property_list = ["metadata", "id"];
+      default_property_list = ["metadata", "id", "session_type"];
       lazy_property_list = ["nwb_metadata", "fluorescence_timestamps", ...
          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
          "demixed_traces", "fluorescence_traces", "neuropil_r", ...
          "neuropil_traces", "corrected_fluorescence_traces", ...
-         
+         "dff_traces", "stimulus_epoch_table", "max_projection", ...
+         "roi_ids", "stimulus_list", ...
          ];
    end
    
@@ -460,7 +467,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       end
       
       function traces = get.neuropil_traces(bos)
-         traces = bos.fetch_neuropil_traces();
+         [~, traces] = bos.fetch_neuropil_traces();
       end
       
       function [timestamps, traces] = fetch_neuropil_traces(bos, cell_specimen_ids)
@@ -508,7 +515,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       end
       
       function traces = get.corrected_fluorescence_traces(bos)
-         traces = bos.fetch_corrected_fluorescence_traces();
+         [~, traces] = bos.fetch_corrected_fluorescence_traces();
       end
       
       function [timestamps, traces] = fetch_corrected_fluorescence_traces(bos, cell_specimen_ids)
@@ -550,10 +557,14 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
       end
       
-      function [timestamps, dff_traces] = get_dff_traces(bos, cell_specimen_ids)
-         % get_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
+      function dff_traces = get.dff_traces(bos)
+         [~, dff_traces] = bos.fetch_dff_traces();
+      end
+      
+      function [timestamps, dff_traces] = fetch_dff_traces(bos, cell_specimen_ids)
+         % fetch_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
          %
-         % Usage: [timestamps, dff_traces] = get_dff_traces(bos <, cell_specimen_ids>)
+         % Usage: [timestamps, dff_traces] = fetch_dff_traces(bos <, cell_specimen_ids>)
          %
          % `timestamps` will be a Tx1 vector of timepoints in seconds, each
          % point defining a sample time for the fluorescence samples. `dff_traces`
@@ -630,10 +641,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function stimuli = list_stimuli(bos)
-         % list_stimuli - METHOD Return the list of stimuli used in this experimental session
+      function stimuli = get.stimulus_list(bos)
+         % get.stimulus_list - GETTER Return the list of stimuli used in this experimental session
          %
-         % Usage: stimuli = list_stimuli(bos)
+         % Usage: stimuli = bos.stimulus_list
          %
          % `stimuli` will be a cell array of strings, indicating which
          % individual stimulus sets were presented in this session.
@@ -651,17 +662,17 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          stimuli = cellfun(@(s)strrep(s, '_stimulus', ''), stimuli, 'UniformOutput', false);
       end
       
-      function strSessionType = get_session_type(bos)
-         % get_session_type - METHOD Return the name for the stimulus set used in this session
+      function session_type = get.session_type(bos)
+         % get.session_type - GETTER Return the name for the stimulus set used in this session
          %
-         % Usage: strSessionType = get_session_type(bos)
-         strSessionType = bos.metadata.stimulus_name;
+         % Usage: strSessionType = bos.session_type
+         session_type = bos.metadata.stimulus_name;
       end
       
-      function stimulus_epochs = get_stimulus_epoch_table(bos)
-         % get_stimulus_epoch_table - METHOD Return the stimulus epoch table for this experimental session
+      function stimulus_epochs = get.stimulus_epoch_table(bos)
+         % get.stimulus_epoch_table - GETTER Return the stimulus epoch table for this experimental session
          %
-         % Usage: stimulus_epochs = get_stimulus_epoch_table(bos)
+         % Usage: stimulus_epochs = bos.stimulus_epoch_table
          %
          % `stimulus_epochs` will be a table containing information about all
          % stimulus epochs in this session.
@@ -679,13 +690,13 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             'three_session_C2', 7);
          
          % - Get list of stimuli for this session
-         stimuli = bos.list_stimuli();
+         stimuli = bos.stimulus_list();
          
          % - Loop over stimuli to get stimulus tables
          stimulus_epochs = table();
          for stim_index = numel(stimuli):-1:1
             % - Get the stimulus table for this stimulus
-            this_stimulus = bos.get_stimulus_table(stimuli{stim_index});
+            this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
             
             % - Set "frame" column for spontaneous stimulus
             if isequal(stimuli{stim_index}, 'spontaneous')
@@ -693,7 +704,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             end
             
             % - Get epochs for this stimulus
-            these_epochs = get_epoch_mask_list(this_stimulus, thresholds.(bos.get_session_type()));
+            these_epochs = get_epoch_mask_list(this_stimulus, thresholds.(bos.session_type));
             these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
             these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
             
@@ -708,18 +719,18 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
       end
       
-      function stimulus_table = get_stimulus_table(bos, stimulus_name)
-         % get_stimulus_table - METHOD Return the stimulus table for the provided stimulus
+      function stimulus_table = fetch_stimulus_table(bos, stimulus_name)
+         % fetch_stimulus_table - METHOD Return the stimulus table for the provided stimulus
          %
-         % Usage: stimulus_table = get_stimulus_table(bos, stimulus_name)
+         % Usage: stimulus_table = fetch_stimulus_table(bos, stimulus_name)
          %
          % `stimulus_name` is a string indicating for which stimulus data
          % should be returned. `stimulus_name` must be one of the stimuli
-         % returned by bos.list_stimuli().
+         % returned by bos.stimulus_list().
          %
          % `stimulus_table` will be a table containing information about the
          % chosen stimulus. The individual stimulus frames can be accessed with
-         % method bos.get_stimulus_template().
+         % method bos.fetch_stimulus_template().
          
          % - Ensure the NWB file is cached
          bos.EnsureCached();
@@ -746,12 +757,12 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             % - Loop over stimuli, collect stimulus tables
             stimuli = {};
             variable_names = {};
-            for strStimulus = bos.list_stimuli()
+            for strStimulus = bos.stimulus_list()
                % - Get stimulus as a string
                strStimulus = strStimulus{1}; %#ok<FXSET>
                
                % - Get stimulus table for this stimulus, annotate with stimulus name
-               stimuli{end+1} = bos.get_stimulus_table(strStimulus); %#ok<AGROW>
+               stimuli{end+1} = bos.fetch_stimulus_table(strStimulus); %#ok<AGROW>
                stimuli{end}.stimulus = repmat({strStimulus}, size(stimuli{end}, 1), 1);
                
                % - Collect all variable names
@@ -777,10 +788,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function max_projection = get_max_projection(bos)
-         % get_max_projection - METHOD Return the maximum-intensity projection image for this experimental session
+      function max_projection = get.max_projection(bos)
+         % get.max_projection - GETTER Return the maximum-intensity projection image for this experimental session
          %
-         % Usage: max_projection = get_max_projection(bos)
+         % Usage: max_projection = bos.max_projection
          %
          % `max_projection` will be an image contianing the
          % maximum-intensity projection of the fluorescence stack obtained
@@ -797,10 +808,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          max_projection = h5read(nwb_file, nwb_key);
       end
       
-      function roi_ids = get_roi_ids(bos)
-         % get_roi_ids - METHOD Return the list of ROI IDs for this experimental session
+      function roi_ids = get.roi_ids(bos)
+         % get.roi_ids - GETTER Return the list of ROI IDs for this experimental session
          %
-         % Usage: roi_ids = get_roi_ids(bos)
+         % Usage: roi_ids = bos.roi_ids
          %
          % `roi_ids` will be a vector containing all ROI IDs analysed in
          % this session.
@@ -1074,7 +1085,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          % in this experimental session. `stimulus_template` will be an [XxYxF]
          % tensor, each F-slice corresponds to a single stimulus frame as
          % referenced in the stimulus tables ('frame', see method
-         % get_stimulus_table()).
+         % fetch_stimulus_table()).
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
@@ -1196,8 +1207,8 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          % - Obtain and cache the master stimulus table for this session
          %   Also handles to accelerated search functions
          if isempty(bos.smCachedStimulusTable)
-            epoch_stimulus_table = bos.get_stimulus_epoch_table();
-            master_stimulus_table = bos.get_stimulus_table('master');
+            epoch_stimulus_table = bos.stimulus_epoch_table;
+            master_stimulus_table = bos.fetch_stimulus_table('master');
             bos.smCachedStimulusTable(1) = epoch_stimulus_table;
             bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
             bos.smCachedStimulusTable(3) = master_stimulus_table;

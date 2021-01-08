@@ -134,17 +134,17 @@ classdef test < matlab.unittest.TestCase
          vnCellIDs = s.cell_specimen_ids;
          s.lookup_cell_specimen_indices(vnCellIDs);
          s.nwb_metadata;
-         s.get_session_type();
-         s.get_roi_ids();
-         s.list_stimuli();
+         s.session_type;
+         s.roi_ids;
+         s.stimulus_list;
          
          % - Test data access methods
          s.fluorescence_timestamps;
          s.fluorescence_traces;
          s.demixed_traces;
          s.corrected_fluorescence_traces;
-         s.get_dff_traces();
-         s.get_max_projection();
+         s.dff_traces;
+         s.max_projection;
          s.get_motion_correction();
          s.neuropil_r;
          s.neuropil_traces;
@@ -167,14 +167,14 @@ classdef test < matlab.unittest.TestCase
          s.get_stimulus(vnFrameIDs);
          
          % - Obtain stimulus summary table
-         s.get_stimulus_epoch_table();
+         s.stimulus_epoch_table;
          
          % - Get list of stimuli
-         cStimuli = s.list_stimuli();
+         cStimuli = s.stimulus_list;
          
          % - Get a stimulus table for each stimulus
          for cThisStim = cStimuli
-            s.get_stimulus_table(cThisStim{1});
+            s.fetch_stimulus_table(cThisStim{1});
          end
          
          % - Get a natural movie stimulus template
