@@ -194,14 +194,14 @@ classdef ephysmanifest < handle
    methods (Access = private)
       %% Low-level getter methods for EPhys data
       
-      function ephys_sessions = fetch_ephys_sessions_table(oManifest)
+      function ephys_sessions = fetch_ephys_sessions_table(manifest)
          % METHOD - Return the table of all EPhys experimental sessions
                   
          % - Get table of EPhys sessions
-         ephys_sessions = oManifest.api_access.memoized.get_ephys_sessions();
-         annotated_ephys_units = oManifest.api_access.memoized.get_annotated_ephys_units();
-         annotated_ephys_channels = oManifest.api_access.memoized.get_annotated_ephys_channels();
-         annotated_ephys_probes = oManifest.api_access.memoized.get_annotated_ephys_probes();
+         ephys_sessions = manifest.api_access.memoized.get_ephys_sessions();
+         annotated_ephys_units = manifest.api_access.memoized.get_annotated_ephys_units();
+         annotated_ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
+         annotated_ephys_probes = manifest.api_access.memoized.get_annotated_ephys_probes();
          
          % - Count numbers of units, channels and probes
          ephys_sessions = count_owned(ephys_sessions, annotated_ephys_units, ...
@@ -219,18 +219,18 @@ classdef ephysmanifest < handle
          ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
       end
       
-      function ephys_units = get_ephys_units_table(oManifest)
+      function ephys_units = get_ephys_units_table(manifest)
          % METHOD - Return the table of all EPhys recorded units
-         ephys_units = oManifest.get_annotated_ephys_units();
+         ephys_units = manifest.get_annotated_ephys_units();
       end
       
-      function ephys_probes = get_ephys_probes_table(oManifest)
+      function ephys_probes = get_ephys_probes_table(manifest)
          % METHOD - Return the table of all EPhys recorded probes
          
          % - Get the annotated probes
-         ephys_probes = oManifest.api_access.memoized.get_annotated_ephys_probes();
-         annotated_ephys_units = oManifest.api_access.memoized.get_annotated_ephys_units();
-         annotated_ephys_channels = oManifest.api_access.memoized.get_annotated_ephys_channels();
+         ephys_probes = manifest.api_access.memoized.get_annotated_ephys_probes();
+         annotated_ephys_units = manifest.api_access.memoized.get_annotated_ephys_units();
+         annotated_ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
          
          % - Count units and channels
          ephys_probes = count_owned(ephys_probes, annotated_ephys_units, ...
@@ -243,12 +243,12 @@ classdef ephysmanifest < handle
             'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
       end
       
-      function ephys_channels = get_ephys_channels_table(oManifest)
+      function ephys_channels = get_ephys_channels_table(manifest)
          % METHOD - Return the table of all EPhys recorded channels
          
          % - Get annotated channels
-         ephys_channels = oManifest.api_access.memoized.get_annotated_ephys_channels();
-         annotated_ephys_units = oManifest.api_access.memoized.get_annotated_ephys_units();
+         ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
+         annotated_ephys_units = manifest.api_access.memoized.get_annotated_ephys_units();
          
          % - Count owned units
          ephys_channels = count_owned(ephys_channels, annotated_ephys_units, ...
@@ -258,11 +258,11 @@ classdef ephysmanifest < handle
          ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
       end
       
-      function [ephys_session_manifest] = get_ephys_sessions(oManifest)
+      function [ephys_session_manifest] = get_ephys_sessions(manifest)
          % - Fetch the ephys sessions manifest
          % - Download EPhys session manifest
          disp('Fetching EPhys sessions manifest...');
-         ephys_session_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
+         ephys_session_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
          
          % - Label as EPhys sessions
          ephys_session_manifest = addvars(ephys_session_manifest, ...
@@ -301,11 +301,11 @@ classdef ephysmanifest < handle
          ephys_session_manifest.genotype = string(ephys_session_manifest.genotype);
       end
       
-      function [ephys_unit_manifest] = get_ephys_units(oManifest)
+      function [ephys_unit_manifest] = get_ephys_units(manifest)
          % - Fetch the ephys units manifest
          % - Download EPhys units
          disp('Fetching EPhys units manifest...');
-         ephys_unit_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysUnit', '');
+         ephys_unit_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysUnit', '');
          
          % - Rename variables
          ephys_unit_manifest = rename_variables(ephys_unit_manifest, ...
@@ -364,10 +364,10 @@ classdef ephysmanifest < handle
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
-      function [ephys_probes_manifest] = get_ephys_probes(oManifest)
+      function [ephys_probes_manifest] = get_ephys_probes(manifest)
          % - Fetch the ephys probes manifest
          disp('Fetching EPhys probes manifest...');
-         ephys_probes_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysProbe', '');
+         ephys_probes_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysProbe', '');
          
          % - Rename variables
          ephys_probes_manifest = rename_variables(ephys_probes_manifest, ...
@@ -388,10 +388,10 @@ classdef ephysmanifest < handle
          ephys_probes_manifest.id = uint32(ephys_probes_manifest.id);
       end
       
-      function [ephys_channels_manifest] = get_ephys_channels(oManifest)
+      function [ephys_channels_manifest] = get_ephys_channels(manifest)
          % - Fetch the ephys units manifest
          disp('Fetching EPhys channels manifest...');
-         ephys_channels_manifest = oManifest.cache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
+         ephys_channels_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
          
          % - Convert columns to reasonable formats
          id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.id, 'UniformOutput', false)));
@@ -414,12 +414,12 @@ classdef ephysmanifest < handle
             left_right_ccf_coordinate, ephys_structure_id, ephys_structure_acronym);
       end
       
-      function annotated_ephys_units = get_annotated_ephys_units(oManifest)
+      function annotated_ephys_units = get_annotated_ephys_units(manifest)
          % METHOD - Return table of annotated EPhys units
          
          % - Annotate units
-         annotated_ephys_units = oManifest.api_access.memoized.get_ephys_units();
-         annotated_ephys_channels = oManifest.api_access.memoized.get_annotated_ephys_channels();
+         annotated_ephys_units = manifest.api_access.memoized.get_ephys_units();
+         annotated_ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
          
          annotated_ephys_units = join(annotated_ephys_units, annotated_ephys_channels, ...
             'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
@@ -433,18 +433,18 @@ classdef ephysmanifest < handle
             'local_index', 'peak_channel');
       end
       
-      function annotated_ephys_probes = get_annotated_ephys_probes(oManifest)
+      function annotated_ephys_probes = get_annotated_ephys_probes(manifest)
          % METHOD - Return the annotate table of EPhys probes
          % - Annotate probes and return
-         annotated_ephys_probes = oManifest.api_access.memoized.get_ephys_probes();
-         tSessions = oManifest.api_access.memoized.get_ephys_sessions();
-         annotated_ephys_probes = join(annotated_ephys_probes, tSessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
+         annotated_ephys_probes = manifest.api_access.memoized.get_ephys_probes();
+         sessions = manifest.api_access.memoized.get_ephys_sessions();
+         annotated_ephys_probes = join(annotated_ephys_probes, sessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       
-      function annotated_ephys_channels = get_annotated_ephys_channels(oManifest)
+      function annotated_ephys_channels = get_annotated_ephys_channels(manifest)
          % - METHOD - Return the annotated table of EPhys channels
-         annotated_ephys_channels = oManifest.api_access.memoized.get_ephys_channels();
-         annotated_ephys_probes = oManifest.api_access.memoized.get_annotated_ephys_probes();
+         annotated_ephys_channels = manifest.api_access.memoized.get_ephys_channels();
+         annotated_ephys_probes = manifest.api_access.memoized.get_annotated_ephys_probes();
          annotated_ephys_channels = join(annotated_ephys_channels, annotated_ephys_probes, ...
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end
@@ -453,10 +453,10 @@ end
 
 %% Helper functions
 
-function tRename = rename_variables(tRename, varargin)
+function table_to_rename = rename_variables(table_to_rename, varargin)
 % rename_variables - FUNCTION Rename variables in a table
 %
-% Usage: tRename = rename_variables(tRename, 'var_source_A', 'var_dest_A', 'var_source_B', 'var_dest_B', ...)
+% Usage: table_to_rename = rename_variables(table_to_rename, 'var_source_A', 'var_dest_A', 'var_source_B', 'var_dest_B', ...)
 %
 % Source variables will be renamed (if found) to destination variable
 % names.
@@ -464,117 +464,117 @@ function tRename = rename_variables(tRename, varargin)
 % - Loop over pairs of source/dest names
 for nVar = 1:2:numel(varargin)
    % - Find variables matching the source name
-   vbVarIndex = tRename.Properties.VariableNames == string(varargin{nVar});
+   vbVarIndex = table_to_rename.Properties.VariableNames == string(varargin{nVar});
    
    if any(vbVarIndex)
       % - Rename this variable to the destination name
-      tRename.Properties.VariableNames(vbVarIndex) = string(varargin{nVar + 1});
+      table_to_rename.Properties.VariableNames(vbVarIndex) = string(varargin{nVar + 1});
    end
 end
 end
 
-function tReturn = get_grouped_uniques(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strScanVar, strSourceNewVar)
+function return_table = get_grouped_uniques(source_table, scan_table, source_grouping_var, scan_grouping_var, scan_var, source_new_var)
 % get_grouped_uniques - FUNCTION Find unique values in a table, grouped by a particular key
 %
-% tReturn = get_grouped_uniques(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strScanVar, strSourceNewVar)
+% return_table = get_grouped_uniques(source_table, scan_table, strGroupingVarSource, scan_grouping_var, scan_var, source_new_var)
 %
-% `tSource` and `tScan` are both tables, which can be joined by matching
-% variables `tSource.(strGroupingVarSource)` with
-% `tScan.(strGroupingVarScan)`.
+% `source_table` and `scan_table` are both tables, which can be joined by matching
+% variables `source_table.(strGroupingVarSource)` with
+% `scan_table.(strGroupingVarScan)`.
 %
-% This function finds all `tScan` rows that match `tSource` rows
-% (essentially a join on strGroupingVarSource ==> strGroupingVarScan),
-% then collects all unique values of `tScan.(strScanVar)` in those rows.
+% This function finds all `scan_table` rows that match `source_table` rows
+% (essentially a join on source_grouping_var ==> scan_grouping_var),
+% then collects all unique values of `scan_table.(scan_var)` in those rows.
 % The collection of unique values is then copied to the new variable
-% `tSource.(strSourcewVar)` for all those matching source rows in
-% `tSource`.
+% `source_table.(source_new_var)` for all those matching source rows in
+% `source_table`.
 
-% - Get list of keys in `tScan`.(`strGroupingVarScan`)
-voAllKeysScan = tScan.(strGroupingVarScan);
+% - Get list of keys in `scan_table`.(`scan_grouping_var`)
+all_keys_scan = scan_table.(scan_grouping_var);
 
-% - Get list of keys in `tSource`.(`strGroupingVarSource`)
-voAllKeysSource = tSource.(strGroupingVarSource);
+% - Get list of keys in `source_table`.(`source_grouping_var`)
+all_keys_source = source_table.(source_grouping_var);
 
-% - Make a new cell array for `tSource` to contain unique values
-cGroups = cell(size(tSource, 1), 1);
+% - Make a new cell array for `source_table` to contain unique values
+groups = cell(size(source_table, 1), 1);
 
 % - Loop over unique scan keys
-for nSourceRow = 1:numel(voAllKeysSource)
+for source_row_index = 1:numel(all_keys_source)
    % - Get the key for this row
-   oKey = voAllKeysSource(nSourceRow);
+   this_key = all_keys_source(source_row_index);
    
    % - Find rows in scan matching this group (can be cells; `==` doesn't work)
-   if iscell(voAllKeysScan)
-      vbScanGroupRows = arrayfun(@(o)isequal(o, oKey), voAllKeysScan);
+   if iscell(all_keys_scan)
+      vbScanGroupRows = arrayfun(@(o)isequal(o, this_key), all_keys_scan);
    else
-      vbScanGroupRows = voAllKeysScan == oKey;
+      vbScanGroupRows = all_keys_scan == this_key;
    end
    
-   % - Extract all values in `tScan`.(`strScanVar`) for the matching rows
-   voAllValues = reshape(tScan{vbScanGroupRows, strScanVar}, [], 1);
+   % - Extract all values in `scan_table`.(`scan_var`) for the matching rows
+   all_values = reshape(scan_table{vbScanGroupRows, scan_var}, [], 1);
    
    % - Find unique values for this group
-   if iscell(voAllValues)
+   if iscell(all_values)
       % - Handle "empty" values
-      vbEmptyValues = cellfun(@isempty, voAllValues);
-      if any(vbEmptyValues)
-         voUniqueValues = [unique(voAllValues(~vbEmptyValues)); {[]}];
+      is_empty_value = cellfun(@isempty, all_values);
+      if any(is_empty_value)
+         unique_values = [unique(all_values(~is_empty_value)); {[]}];
       else
-         voUniqueValues = unique(voAllValues);
+         unique_values = unique(all_values);
       end
    else
-      voUniqueValues = unique(voAllValues);
+      unique_values = unique(all_values);
    end
    
-   % - Assign these unique values to row in `tSource`
-   cGroups(nSourceRow) = {voUniqueValues};
+   % - Assign these unique values to row in `source_Table`
+   groups(source_row_index) = {unique_values};
 end
 
-% - Add the groups to `tSource`
-tReturn = addvars(tSource, cGroups, 'NewVariableNames', strSourceNewVar);
+% - Add the groups to `source_table`
+return_table = addvars(source_table, groups, 'NewVariableNames', source_new_var);
 end
 
 
-function tReturn = count_owned(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strSourceNewVar)
-% count_owned - FUNCTION Count the number of rows in `tScan` owned by a particular variable value
+function return_table = count_owned(source_table, scan_table, grouping_var_source, grouping_var_scan, new_var_source)
+% count_owned - FUNCTION Count the number of rows in `scan_table` owned by a particular variable value
 %
-% Usage: tReturn = count_owned(tSource, tScan, strGroupingVarSource, strGroupingVarScan, strSourceNewVar)
+% Usage: return_table = count_owned(source_table, scan_table, grouping_var_source, grouping_var_scan, new_var_source)
 %
-% This function finds the number of rows in `tScan` that are
-% conceptually owned by values of an index variable in `tSource`, by
-% performing a join between `tSource.(strGroupingVarSource)` and
-% `tScan.(strGroupingVarScan)`.
+% This function finds the number of rows in `scan_table` that are
+% conceptually owned by values of an index variable in `source_table`, by
+% performing a join between `source_table.(grouping_var_source)` and
+% `scan_table.(grouping_var_scan)`.
 %
-% The count of rows in `tScan` is then added to the new variable in
-% `tSource.(strSourceNewVar)`.
+% The count of rows in `scan_table` is then added to the new variable in
+% `source_table.(new_var_source)`.
 
-% - Get list of keys in `tScan`.(`strGroupingVarScan`)
-voAllKeysScan = tScan.(strGroupingVarScan);
+% - Get list of keys in `scan_table`.(`grouping_var_scan`)
+all_keys_scan = scan_table.(grouping_var_scan);
 
-% - Get list of keys in `tSource`.(`strGroupingVarSource`)
-voAllKeysSource = tSource.(strGroupingVarSource);
+% - Get list of keys in `source_table`.(`grouping_var_source`)
+all_keys_source = source_table.(grouping_var_source);
 
-% - Make a new variable for `tSource` to contain counts
-vnCounts = nan(size(tSource, 1), 1);
+% - Make a new variable for `source_table` to contain counts
+counts = nan(size(source_table, 1), 1);
 
 % - Loop over unique source keys
-for nSourceRow = 1:numel(voAllKeysSource)
+for source_row_index = 1:numel(all_keys_source)
    % - Get the key for this row
-   oKey = voAllKeysSource(nSourceRow);
+   this_key = all_keys_source(source_row_index);
    
    % - Find rows in scan matching this group (can be cells; `==` doesn't work)
-   if iscell(voAllKeysScan)
-      vbScanGroupRows = arrayfun(@(o)isequal(o, oKey), voAllKeysScan);
+   if iscell(all_keys_scan)
+      scan_group_rows = arrayfun(@(o)isequal(o, this_key), all_keys_scan);
    else
-      vbScanGroupRows = voAllKeysScan == oKey;
+      scan_group_rows = all_keys_scan == this_key;
    end
    
-   % - Assign these counts to matching group rows in `tSource`
-   vnCounts(nSourceRow) = nnz(vbScanGroupRows);
+   % - Assign these counts to matching group rows in `source_table`
+   counts(source_row_index) = nnz(scan_group_rows);
 end
 
 % - Add the counts to the table
-tReturn = addvars(tSource, vnCounts, 'NewVariableNames', strSourceNewVar);
+return_table = addvars(source_table, counts, 'NewVariableNames', new_var_source);
 end
 
 
