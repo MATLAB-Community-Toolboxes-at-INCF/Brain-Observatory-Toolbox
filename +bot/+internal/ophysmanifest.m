@@ -38,7 +38,7 @@
 
 classdef ophysmanifest < handle
    properties (Access = private, Transient = true)
-      oCache = bot.internal.cache;        % BOT Cache object
+      cache = bot.internal.cache;        % BOT Cache object
       api_access;                         % Function handles for low-level API access
    end
    
@@ -104,17 +104,17 @@ classdef ophysmanifest < handle
    
    %% Manifest update method
    methods
-      function UpdateManifests(oManifest)
+      function UpdateManifests(manifest)
          % - Invalidate API manifests in cache
-         oManifest.oCache.ccCache.RemoveURLsMatchingSubstring('criteria=model::ExperimentContainer');
-         oManifest.oCache.ccCache.RemoveURLsMatchingSubstring('criteria=model::OphysExperiment');
+         manifest.cache.ccCache.RemoveURLsMatchingSubstring('criteria=model::ExperimentContainer');
+         manifest.cache.ccCache.RemoveURLsMatchingSubstring('criteria=model::OphysExperiment');
          
          % - Remove cached manifest tables
-         oManifest.oCache.RemoveObject('allen_brain_observatory_ophys_manifests')
+         manifest.cache.RemoveObject('allen_brain_observatory_ophys_manifests')
          
          % - Clear all caches for memoized access functions
-         for strField = fieldnames(oManifest.api_access)'
-            oManifest.api_access.(strField{1}).clearCache();
+         for strField = fieldnames(manifest.api_access)'
+            manifest.api_access.(strField{1}).clearCache();
          end
          
          % - Reset singleton instance
@@ -124,10 +124,10 @@ classdef ophysmanifest < handle
    
    methods (Access = private)
       %% Low-level getter method for OPhys manifests
-      function [ophys_manifests] = get_ophys_manifests_info_from_api(oManifest)
+      function [ophys_manifests] = get_ophys_manifests_info_from_api(manifest)
          % get_ophys_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory dataset via the Allen Brain Atlas API
          %
-         % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(oCache)
+         % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(return_table)
          %
          % Download `container_manifest`, `session_manifest`,
          % `cell_id_mapping` as MATLAB tables. Returns the tables as fields
@@ -140,7 +140,7 @@ classdef ophysmanifest < handle
          cell_id_mapping_url = 'http://api.brain-map.org/api/v2/well_known_file_download/590985414';
          
          %% - Fetch OPhys container manifest
-         ophys_container_manifest = oManifest.oCache.CachedAPICall('criteria=model::ExperimentContainer', 'rma::include,ophys_experiments,isi_experiment,specimen(donor(conditions,age,transgenic_lines)),targeted_structure');
+         ophys_container_manifest = manifest.cache.CachedAPICall('criteria=model::ExperimentContainer', 'rma::include,ophys_experiments,isi_experiment,specimen(donor(conditions,age,transgenic_lines)),targeted_structure');
          
          % - Convert varibales to useful types
          ophys_container_manifest.id = uint32(ophys_container_manifest.id);
@@ -151,7 +151,7 @@ classdef ophysmanifest < handle
          ophys_manifests.ophys_container_manifest = ophys_container_manifest;
          
          %% - Fetch OPhys session manifest
-         ophys_session_manifest = oManifest.oCache.CachedAPICall('criteria=model::OphysExperiment', 'rma::include,experiment_container,well_known_files(well_known_file_type),targeted_structure,specimen(donor(age,transgenic_lines))');
+         ophys_session_manifest = manifest.cache.CachedAPICall('criteria=model::OphysExperiment', 'rma::include,experiment_container,well_known_files(well_known_file_type),targeted_structure,specimen(donor(age,transgenic_lines))');
          
          % - Label as ophys sessions
          ophys_session_manifest = addvars(ophys_session_manifest, ...
@@ -164,10 +164,10 @@ classdef ophysmanifest < handle
          % `cre_line` is important, makes life easier if it's explicit
          
          % - Extract from OPhys sessions manifest
-         tAllSessions = ophys_session_manifest;
-         cre_line = cell(size(tAllSessions, 1), 1);
-         for i = 1:size(tAllSessions, 1)
-            donor_info = tAllSessions(i, :).specimen.donor;
+         all_sessions = ophys_session_manifest;
+         cre_line = cell(size(all_sessions, 1), 1);
+         for i = 1:size(all_sessions, 1)
+            donor_info = all_sessions(i, :).specimen.donor;
             transgenic_lines_info = struct2table(donor_info.transgenic_lines);
             cre_line(i,1) = transgenic_lines_info.name(not(cellfun('isempty', strfind(transgenic_lines_info.transgenic_line_type_name, 'driver')))...
                & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
@@ -192,18 +192,21 @@ classdef ophysmanifest < handle
          %% - Fetch cell ID mapping
          
          options = weboptions('ContentType', 'table', 'TimeOut', 60);
-         ophys_manifests.cell_id_mapping = oManifest.oCache.ccCache.webread(cell_id_mapping_url, [], options);
+         ophys_manifests.cell_id_mapping = manifest.cache.ccCache.webread(cell_id_mapping_url, [], options);
       end
       
-      function [ophys_manifests] = get_cached_ophys_manifests(oManifest)
-         strKey = 'allen_brain_observatory_ophys_manifests';
+      function ophys_manifests = get_cached_ophys_manifests(manifest)
+         % get_cached_ophys_manifests - METHOD Fetch (possibly cached) OPhys manifest
+         %
+         % Usage: ophys_manifests = get_cached_ophys_manifests(manifest)
+         nwb_key = 'allen_brain_observatory_ophys_manifests';
          
-         if oManifest.oCache.IsObjectInCache(strKey)
-            ophys_manifests = oManifest.oCache.RetrieveObject(strKey);
+         if manifest.cache.IsObjectInCache(nwb_key)
+            ophys_manifests = manifest.cache.RetrieveObject(nwb_key);
             
          else
-            ophys_manifests = get_ophys_manifests_info_from_api(oManifest);
-            oManifest.oCache.InsertObject(strKey, ophys_manifests);
+            ophys_manifests = get_ophys_manifests_info_from_api(manifest);
+            manifest.cache.InsertObject(nwb_key, ophys_manifests);
          end
       end
    end
