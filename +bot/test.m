@@ -145,7 +145,7 @@ classdef test < matlab.unittest.TestCase
          s.corrected_fluorescence_traces;
          s.dff_traces;
          s.max_projection;
-         s.get_motion_correction();
+         s.motion_correction;
          s.neuropil_r;
          s.neuropil_traces;
          s.get_roi_mask();
@@ -188,7 +188,7 @@ classdef test < matlab.unittest.TestCase
          
          % - Get the sparse noise stimulus template
          s.get_stimulus_template('locally_sparse_noise_4deg');
-         s.get_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
+         s.fetch_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
       end      
       
       function testEPhysManifest(testCase)

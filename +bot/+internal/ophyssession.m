@@ -88,6 +88,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
       max_projection;               % Image contianing the maximum-intensity projection of the fluorescence stack obtained in this session
       roi_ids;                      % Vector of all ROI IDs analysed in this experiment session
       stimulus_list;                % Cell array of strings, indicating which individual stimulus sets were presented in this session
+      motion_correction;            % Table containing x/y motion correction information applied in this experimental session
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
@@ -97,7 +98,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          "demixed_traces", "fluorescence_traces", "neuropil_r", ...
          "neuropil_traces", "corrected_fluorescence_traces", ...
          "dff_traces", "stimulus_epoch_table", "max_projection", ...
-         "roi_ids", "stimulus_list", ...
+         "roi_ids", "stimulus_list", "motion_correction", ...
          ];
    end
    
@@ -677,12 +678,12 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          % `stimulus_epochs` will be a table containing information about all
          % stimulus epochs in this session.
          
-         % - Hard-coded thresholds from Allen SDK for get_epoch_mask_list. These
+         % - Hard-coded thresholds from Allen SDK for fetch_epoch_mask_list. These
          % set a maximum limit on the delta aqusistion frames to count as
          % different trials (rows in the stim table).  This helps account for
          % dropped frames, so that they dont cause the cutting of an entire
          % experiment into too many stimulus epochs. If these thresholds are too
-         % low, the assert statment in get_epoch_mask_list will halt execution.
+         % low, the assert statment in fetch_epoch_mask_list will halt execution.
          % In that case, make a bug report!.
          thresholds = struct('three_session_A', 32+7,...
             'three_session_B', 15, ...
@@ -704,7 +705,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             end
             
             % - Get epochs for this stimulus
-            these_epochs = get_epoch_mask_list(this_stimulus, thresholds.(bos.session_type));
+            these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(bos.session_type));
             these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
             these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
             
@@ -737,11 +738,11 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          
          % - Return a stimulus table for one of the stimulus types
          if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
-            stimulus_table = get_abstract_feature_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
+            stimulus_table = fetch_abstract_feature_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
             return;
             
          elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
-            stimulus_table = get_indexed_time_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
+            stimulus_table = fetch_indexed_time_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
             return;
             
          elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
@@ -851,10 +852,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          [running_speed, timestamps] = align_running_speed(running_speed, timestamps, imaging_timestamps);
       end
       
-      function motion_correction = get_motion_correction(bos)
-         % get_motion_correction - METHOD Return the motion correction information for this experimental session
+      function motion_correction = get.motion_correction(bos)
+         % get.motion_correction - GETTER Return the motion correction information for this experimental session
          %
-         % Usage: motion_correction = get_motion_correction(bos)
+         % Usage: motion_correction = bos.motion_correction
          %
          % `motion_correction` will be a table containing x/y motion correction
          % information applied in this experimental session.
@@ -1107,10 +1108,10 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          end
       end
       
-      function [stimulus_template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, stimulus_name, mask_off_screen)
-         % get_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
+      function [stimulus_template, off_screen_mask] = fetch_locally_sparse_noise_stimulus_template(bos, stimulus_name, mask_off_screen)
+         % fetch_locally_sparse_noise_stimulus_template - METHOD Return the locally sparse noise stimulus template used for this sessions
          %
-         % Usage: [stimulus_template, off_screen_mask] = get_locally_sparse_noise_stimulus_template(bos, stimulus_name <, mask_off_screen>)
+         % Usage: [stimulus_template, off_screen_mask] = fetch_locally_sparse_noise_stimulus_template(bos, stimulus_name <, mask_off_screen>)
          %
          % `stimulus_name` must be one of {'locally_sparse_noise',
          % 'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg'}, and
@@ -1290,8 +1291,8 @@ end
 
 %% - Private utility functions
 
-function stimulus_table = get_abstract_feature_series_stimulus_table(nwb_file, stimulus_name)
-% get_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
+function stimulus_table = fetch_abstract_feature_series_stimulus_table(nwb_file, stimulus_name)
+% fetch_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
 
 % - Build a key for this stimulus
 nwb_key = h5path('stimulus', 'presentation', stimulus_name);
@@ -1318,8 +1319,8 @@ catch cause
 end
 end
 
-function stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
-% get_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
+function stimulus_table = fetch_indexed_time_series_stimulus_table(nwb_file, stimulus_name)
+% fetch_indexed_time_series_stimulus_table - FUNCTION Return a stimlus table for an indexed time series stimulus
 
 % - Build a key for this stimulus
 nwb_key = h5path('stimulus', 'presentation', stimulus_name);
@@ -1355,7 +1356,7 @@ function stimulus_table = get_repeated_indexed_time_series_stimulus_table(nwb_fi
 % get_repeated_indexed_time_series_stimulus_table - FUNCTION Return a stimulus table for a repeated stimulus
 
 % - Get the full stimulus table
-stimulus_table = get_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
+stimulus_table = fetch_indexed_time_series_stimulus_table(nwb_file, stimulus_name);
 
 % - Locate repeats within stimulus order
 unique_stimuli = unique(stimulus_table.frame);
@@ -1377,10 +1378,10 @@ stimulus_table.repeat = all_repeat_indices;
 warning(w);
 end
 
-function epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
-% get_epoch_mask_list - FUNCTION Cut a stimulus table into multiple epochs
+function epoch_mask_list = fetch_epoch_mask_list(st, threshold, max_cuts)
+% fetch_epoch_mask_list - FUNCTION Cut a stimulus table into multiple epochs
 %
-% Usage: epoch_mask_list = get_epoch_mask_list(st, threshold, max_cuts)
+% Usage: epoch_mask_list = fetch_epoch_mask_list(st, threshold, max_cuts)
 
 % - Check that a threshold was supplied
 assert(~isempty(threshold), 'BOT:StimulusError', ...
