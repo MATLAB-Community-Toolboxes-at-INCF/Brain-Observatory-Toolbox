@@ -108,7 +108,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base
          end
          
          % - Assign metadata
-         session = session.check_and_assign_metadata(session_id, manifest.tEPhysSessions, 'session');
+         session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
          session_id = session.id;
          
          % - Ensure that we were given an EPhys session

@@ -88,8 +88,8 @@ classdef session_base < handle
          if any(matching_ophys_session)
             manifest_row = sess.ophys_manifest.tOPhysSessions(matching_ophys_session, :);
          else
-            matching_ephys_session = sess.ephys_manifest.tEPhysSessions.id == id;
-            manifest_row = sess.ephys_manifest.tEPhysSessions(matching_ephys_session, :);
+            matching_ephys_session = sess.ephys_manifest.ephys_sessions.id == id;
+            manifest_row = sess.ephys_manifest.ephys_sessions(matching_ephys_session, :);
          end
          
          % - Check to see if the session exists
@@ -137,8 +137,8 @@ classdef session_base < handle
             if any(matching_ophys_session)
                session_row = sess.ophys_manifest.tOPhysSessions(matching_ophys_session, :);
             else
-               matching_ephys_session = sess.ephys_manifest.tEPhysSessions.id == ids(session_index);
-               session_row = sess.ephys_manifest.tEPhysSessions(matching_ephys_session, :);
+               matching_ephys_session = sess.ephys_manifest.ephys_sessions.id == ids(session_index);
+               session_row = sess.ephys_manifest.ephys_sessions(matching_ephys_session, :);
             end
             
             % - Check to see if the session exists

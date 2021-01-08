@@ -48,10 +48,26 @@ classdef ophysmanifest < handle
    end
    
    %% Constructor
-   methods
+   methods (Access = private)
       function oManifest = ophysmanifest()
          % Memoize manifest getter
          oManifest.api_access.get_cached_ophys_manifests = memoize(@oManifest.get_cached_ophys_manifests);
+      end
+   end
+   
+   methods (Static = true)
+      function manifest = instance(clear_manifest)
+         persistent ophysmanifest
+         
+         if isempty(ophysmanifest)
+            ophysmanifest = bot.internal.ophysmanifest();
+         end
+         
+         if clear_manifest
+            ophysmanifest = [];
+         end
+         
+         manifest = ophysmanifest;
       end
    end
    
@@ -82,6 +98,9 @@ classdef ophysmanifest < handle
          for strField = fieldnames(oManifest.api_access)'
             oManifest.api_access.(strField{1}).clearCache();
          end
+         
+         % - Reset singleton instance
+         bot.internal.ophysmanifest.instance(true);
       end
    end
    

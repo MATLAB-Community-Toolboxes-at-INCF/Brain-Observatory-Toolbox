@@ -20,7 +20,7 @@ classdef test < matlab.unittest.TestCase
          %% Test retrieving EPhys manifest tables
          bom = bot.manifest('ephys');
          bom = bot.internal.ephysmanifest;
-         bom.tEPhysSessions;                 % Table of all EPhys experimental sessions
+         bom.ephys_sessions;                 % Table of all EPhys experimental sessions
          bom.tEPhysChannels;                 % Table of all EPhys channels
          bom.tEPhysProbes;                   % Table of all EPhys probes
          bom.tEPhysUnits;                    % Table of all EPhys units
@@ -198,14 +198,14 @@ classdef test < matlab.unittest.TestCase
          bom = bot.manifest('ephys');
       end
       
-      function testEPhysSessions(testCase)
+      function tesephys_sessions(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
          bom = bot.manifest('ephys');
          
          % - Get a session
-         s = bot.session(bom.tEPhysSessions{1, 'id'});
-         s = bot.session(bom.tEPhysSessions(1, :));
+         s = bot.session(bom.ephys_sessions{1, 'id'});
+         s = bot.session(bom.ephys_sessions(1, :));
       end
 
       function testEPhysProbes(testCase)

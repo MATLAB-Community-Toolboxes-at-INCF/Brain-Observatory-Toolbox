@@ -8,12 +8,13 @@
 % `bot.internal.ephysmanifest`).
 
 function new_manifest = manifest(manifest_type)
+
 switch(lower(manifest_type))
    case 'ophys'
-      new_manifest = bot.internal.ophysmanifest();
+      new_manifest = bot.internal.ophysmanifest.instance();
       
    case 'ephys'
-      new_manifest = bot.internal.ephysmanifest();
+      new_manifest = bot.internal.ephysmanifest.instance();
       
    otherwise
       error('`manifest_type` must be one of {''ophys'', ''ephys''}');
