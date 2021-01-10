@@ -188,7 +188,7 @@ end
       
       function mean_waveforms = get.mean_waveforms(self)
          n = self.nwb_file;
-         mean_waveforms = self.fetch_cached('mean_waveforms', @n.get_mean_waveforms);
+         mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
       end
       
       function stimulus_conditions = get.stimulus_conditions(self)
@@ -203,7 +203,7 @@ end
          end
          
          if ~self.in_cache('spike_times')
-            self.property_cache.spike_times = self.build_spike_times(self.nwb_file.get_spike_times());
+            self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
          end
          
          spike_times = self.property_cache.spike_times;
@@ -219,27 +219,27 @@ end
       
       function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
          n = self.nwb_file;
-         optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.get_optogenetic_stimulation);
+         optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.fetch_optogenetic_stimulation);
       end
       
       function session_start_time = get.session_start_time(self)
          n = self.nwb_file;
-         session_start_time = self.fetch_cached('session_start_time', @n.get_session_start_time);
+         session_start_time = self.fetch_cached('session_start_time', @n.fetch_session_start_time);
       end
       
       function spike_amplitudes = get.spike_amplitudes(self)
          n = self.nwb_file;
-         spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.get_spike_amplitudes);
+         spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.fetch_spike_amplitudes);
       end
       
       function invalid_times = get.invalid_times(self)
          n = self.nwb_file;
-         invalid_times = self.fetch_cached('invalid_times', @n.get_invalid_times);
+         invalid_times = self.fetch_cached('invalid_times', @n.fetch_invalid_times);
       end
       
       function running_speed = get.running_speed(self)
          n = self.nwb_file;
-         running_speed = self.fetch_cached('running_speed', @n.get_running_speed);
+         running_speed = self.fetch_cached('running_speed', @n.fetch_running_speed);
       end
    end
    
@@ -292,7 +292,7 @@ end
       function rig_metadata = get.rig_metadata(self)
          n = self.nwb_file;
          try
-            rig_metadata = self.fetch_cached('rig_metadata', @n.get_rig_metadata);
+            rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
          catch
             rig_metadata = [];
          end
@@ -498,7 +498,7 @@ end
          %        *_screen_coorindates_spherical_y_deg
          
          n = self.nwb_file;
-         pupil_data = n.get_pupil_data(suppress_pupil_data);
+         pupil_data = n.fetch_pupil_data(suppress_pupil_data);
       end
       
       function [tiled_data, time_base] = presentationwise_spike_counts(self, ...
@@ -1036,7 +1036,7 @@ methods (Access = public)
    function cache_stimulus_presentations(self)
       if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
          % - Read stimulus presentations from NWB file
-         stimulus_presentations_raw = self.nwb_file.get_stimulus_presentations();
+         stimulus_presentations_raw = self.nwb_file.fetch_stimulus_presentations();
          
          % - Build stimulus presentations tables
          [stimulus_presentations_raw, stimulus_conditions_raw] = self.build_stimulus_presentations(stimulus_presentations_raw);
@@ -1066,7 +1066,7 @@ methods (Access = public)
    function units_table = get_units_table_from_nwb(self)
       % - Build the units table from the session NWB file
       % - Allen SDK ecephys_session.units
-      units_table = self.build_units_table(self.nwb_file.get_units());
+      units_table = self.build_units_table(self.nwb_file.fetch_units());
    end
    
    function units_table = build_units_table(self, units_table)
