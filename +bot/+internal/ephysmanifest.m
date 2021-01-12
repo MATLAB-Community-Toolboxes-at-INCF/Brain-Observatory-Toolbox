@@ -212,7 +212,7 @@ classdef ephysmanifest < handle
             "id", "ephys_session_id", "probe_count");
          
          % - Get structure acronyms
-         ephys_sessions = get_grouped_uniques(ephys_sessions, annotated_ephys_channels, ...
+         ephys_sessions = fetch_grouped_uniques(ephys_sessions, annotated_ephys_channels, ...
             'id', 'ephys_session_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
          
          % - Rename variables
@@ -239,7 +239,7 @@ classdef ephysmanifest < handle
             'id', 'ephys_probe_id', 'channel_count');
          
          % - Get structure acronyms
-         ephys_probes = get_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
+         ephys_probes = fetch_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
             'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
       end
       
@@ -473,10 +473,10 @@ for nVar = 1:2:numel(varargin)
 end
 end
 
-function return_table = get_grouped_uniques(source_table, scan_table, source_grouping_var, scan_grouping_var, scan_var, source_new_var)
-% get_grouped_uniques - FUNCTION Find unique values in a table, grouped by a particular key
+function return_table = fetch_grouped_uniques(source_table, scan_table, source_grouping_var, scan_grouping_var, scan_var, source_new_var)
+% fetch_grouped_uniques - FUNCTION Find unique values in a table, grouped by a particular key
 %
-% return_table = get_grouped_uniques(source_table, scan_table, strGroupingVarSource, scan_grouping_var, scan_var, source_new_var)
+% return_table = fetch_grouped_uniques(source_table, scan_table, strGroupingVarSource, scan_grouping_var, scan_var, source_new_var)
 %
 % `source_table` and `scan_table` are both tables, which can be joined by matching
 % variables `source_table.(strGroupingVarSource)` with
