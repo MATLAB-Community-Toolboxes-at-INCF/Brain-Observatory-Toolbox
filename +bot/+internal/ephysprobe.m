@@ -37,10 +37,10 @@ classdef ephysprobe < bot.internal.ephysitem
          probe.session = bot.session(probe.metadata.ephys_session_id);
          
          % - Identify NWB file link
-         probe.well_known_file = probe.get_lfp_file_link();
+         probe.well_known_file = probe.fetch_lfp_file_link();
       end
       
-      function well_known_file = get_lfp_file_link(probe)
+      function well_known_file = fetch_lfp_file_link(probe)
          probe_id = probe.metadata.id;
          strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
          
@@ -48,23 +48,23 @@ classdef ephysprobe < bot.internal.ephysitem
          well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
       end
       
-      function [lfp, timestamps] = get_lfp(self)
+      function [lfp, timestamps] = fetch_lfp(self)
          if ~self.in_cache('lfp')
             nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
-            [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.get_lfp();
+            [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.fetch_lfp();
          end
          
          lfp = self.property_cache.lfp;
          timestamps = self.property_cache.lfp_timestamps;
       end
       
-      function [csd, timestamps, horizontal_position, vertical_position] = get_current_source_density(self)
+      function [csd, timestamps, horizontal_position, vertical_position] = fetch_current_source_density(self)
          if ~self.in_cache('csd')
             nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
             [self.property_cache.csd, ...
                self.property_cache.csd_timestamps, ...
                self.property_cache.horizontal_position, ...
-               self.property_cache.vertical_position] = nwb_probe.get_current_source_density();
+               self.property_cache.vertical_position] = nwb_probe.fetch_current_source_density();
          end
          
          csd = self.property_cache.csd;

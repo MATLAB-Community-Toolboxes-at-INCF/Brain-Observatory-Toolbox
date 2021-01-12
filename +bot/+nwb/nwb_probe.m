@@ -1,4 +1,4 @@
-%% nwb_probe -
+%% nwb_probe - NWB interface for probe data files
 
 classdef nwb_probe < handle
    properties
@@ -14,7 +14,7 @@ classdef nwb_probe < handle
          self.probe_id = uint64(str2num(h5read(self.strFile, '/identifier'))); %#ok<ST2NM>
       end
       
-      function [lfp, timestamps] = get_lfp(self)
+      function [lfp, timestamps] = fetch_lfp(self)
          % - Read lfp data
          lfp = h5read(self.strFile, ...
             sprintf('/acquisition/probe_%d_lfp/probe_%d_lfp_data/data', self.probe_id, self.probe_id))';
@@ -29,7 +29,7 @@ classdef nwb_probe < handle
       end
       
    
-      function [csd, timestamps, virtual_electrode_x_positions, virtual_electrode_y_positions] = get_current_source_density(self)
+      function [csd, timestamps, virtual_electrode_x_positions, virtual_electrode_y_positions] = fetch_current_source_density(self)
          % - Read CSD data
          csd = h5read(self.strFile, ...
             '/processing/current_source_density/ecephys_csd/current_source_density/data');

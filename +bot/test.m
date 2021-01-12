@@ -251,10 +251,10 @@ classdef test < matlab.unittest.TestCase
          p = bot.probe(bom.ephys_probes{1, 'id'});
          
          % - Access LFP data
-         p.get_lfp();
+         p.fetch_lfp();
          
          % - Access CSD data
-         p.get_current_source_density();
+         p.fetch_current_source_density();
       end
       
       function test_lazy_attributes(testCase)

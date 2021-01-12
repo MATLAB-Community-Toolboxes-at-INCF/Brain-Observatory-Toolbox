@@ -1077,8 +1077,8 @@ methods (Hidden)
    function units_table = build_units_table(self, units_table)
       error('BOT:NotImplemented', 'This method is not implemented');
       
-%       channels = self.get_channels_from_nwb;
-%       probes = self.get_probes_from_nwb;
+%       channels = self.fetch_channels_from_nwb;
+%       probes = self.fetch_probes_from_nwb;
 %       
 %       unmerged_units = units_table;
       %          units_table = merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel']);
