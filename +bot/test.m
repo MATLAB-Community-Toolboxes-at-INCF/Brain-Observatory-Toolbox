@@ -258,7 +258,7 @@ classdef test < matlab.unittest.TestCase
       end
       
       function test_lazy_attributes(testCase)
-         %% Test mean waveforms
+         %% Test reading lazy attributes
          bom = bot.manifest('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
          
@@ -280,7 +280,20 @@ classdef test < matlab.unittest.TestCase
          s.structurewise_unit_counts;
       
          s.stimulus_templates;
+      end
+      
+      function test_ephys_session_methods(testCase)
+         %% Test session data access methods
+         bom = bot.manifest('ephys');
+         s = bot.session(bom.ephys_sessions{1, 'id'});
 
+         s.fetch_stimulus_table();
+         s.fetch_parameter_values_for_stimulus("flashes");
+         s.fetch_stimulus_parameter_values();
+         
+         uid = s.units{1, 'id'};
+         s.presentationwise_spike_counts([0 1], 1, uid);
+         s.presentationwise_spike_times(0, uid);
       end
    end
 end
