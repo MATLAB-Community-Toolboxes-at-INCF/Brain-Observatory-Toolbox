@@ -25,13 +25,13 @@ end
 
       inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
       running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
-      mean_waveforms;                  % Maps integer unit ids to xarray.DataArrays containing mean spike waveforms for that unit
+      mean_waveforms;                  % Table mapping unit ids to matrices containing mean spike waveforms for that unit
       stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
-      stimulus_conditions;             % Each row is a unique permutation (within this session) of stimulus parameters presented during this experiment. Columns are as stimulus presentations, sans start_time, end_time, stimulus_block, and duration
-      optogenetic_stimulation_epochs;  %
-      session_start_time;              %
-      spike_amplitudes;                %
-      invalid_times;                   %
+      stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
+      optogenetic_stimulation_epochs;  % 
+      session_start_time;              % Timestamp of start of session
+      spike_amplitudes;                % Table of extracted spike amplitudes for all units
+      invalid_times;                   % Table indicating invalid recording times
       
       num_stimulus_presentations;   % Number of stimulus presentations in this session
       stimulus_names;               % Names of stimuli presented in this session
@@ -219,7 +219,11 @@ end
       
       function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
          n = self.nwb_file;
-         optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.fetch_optogenetic_stimulation);
+         try
+            optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.fetch_optogenetic_stimulation);
+         catch
+            warning('BOT:DataNotPresent', 'Optogenetic stimulation data is not present for this session');
+         end
       end
       
       function session_start_time = get.session_start_time(self)
@@ -330,7 +334,7 @@ end
       end
       
       function session_type = get.session_type(self)
-         session_type = self.metadata.stimulus_name;
+         session_type = self.metadata.session_type;
       end
       
       function stimulus_table = get.stimulus_templates(self)
@@ -910,7 +914,7 @@ end
 
 %% Private methods
 methods (Access = public)
-   function get_natural_movie_template(self, number)
+   function fetch_natural_movie_template(self, number)
       error('BOT:NotImplemented', 'This method is not implemented');
 
       well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :);
@@ -931,7 +935,7 @@ methods (Access = public)
       %         return self.rma_engine.stream(download_link)
    end
    
-   function get_natural_scene_template(self, number)
+   function fetch_natural_scene_template(self, number)
       error('BOT:NotImplemented', 'This method is not implemented');
       
       %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
@@ -942,7 +946,7 @@ methods (Access = public)
       %         return self.rma_engine.stream(download_link)
    end
    
-   function valid_time_points = get_valid_time_points(self, time_points, invalid_time_intevals)
+   function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals)
       error('BOT:NotImplemented', 'This method is not implemented');
       
       
@@ -1058,9 +1062,10 @@ methods (Access = public)
       stimulus_presentations_filled = fillmissing(stimulus_presentations, 'constant', inf, 'DataVariables', @isnumeric);
       
       % - Identify unique stimulus conditions
-      params_only = removevars(stimulus_presentations_filled, ["start_time", "stop_time", "duration", "stimulus_block", "stimulus_presentation_id"]);
-      [stimulus_conditions, ~, stimulus_condition_id] = unique(params_only, 'rows', 'stable');
+      params_only = removevars_ifpresent(stimulus_presentations_filled, ["start_time", "stop_time", "duration", "stimulus_block", "stimulus_presentation_id", "stimulus_block_id", "id", "stimulus_condition_id"]);
+      [stimulus_conditions, stimulus_condition_id_unique, stimulus_condition_id] = unique(params_only, 'rows', 'stable');
       stimulus_presentations.stimulus_condition_id = stimulus_condition_id - 1;
+      stimulus_conditions.stimulus_condition_id = stimulus_condition_id_unique - 1;
    end
    
    function units_table = get_units_table_from_nwb(self)
@@ -1382,4 +1387,10 @@ function is_overlap = overlap(a, b)
 is_overlap = max(a(1), b(1)) <= min(a(2), b(2));
 end
 
-
+function source_table = removevars_ifpresent(source_table, variables)
+   vbHasVariable = ismember(variables, source_table.Properties.VariableNames);
+   
+   if any(vbHasVariable)
+      source_table = removevars(source_table, variables(vbHasVariable));
+   end
+end

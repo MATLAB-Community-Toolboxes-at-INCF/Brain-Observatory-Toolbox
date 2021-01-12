@@ -256,5 +256,31 @@ classdef test < matlab.unittest.TestCase
          % - Access CSD data
          p.get_current_source_density();
       end
+      
+      function test_lazy_attributes(testCase)
+         %% Test mean waveforms
+         bom = bot.manifest('ephys');
+         s = bot.session(bom.ephys_sessions{1, 'id'});
+         
+         s.mean_waveforms;
+         s.optogenetic_stimulation_epochs;
+         s.inter_presentation_intervals;
+         s.running_speed;
+         s.mean_waveforms;
+         s.stimulus_presentations;
+         s.stimulus_conditions;
+         s.optogenetic_stimulation_epochs;
+         s.session_start_time;
+         s.spike_amplitudes;
+         s.invalid_times;
+      
+         s.num_stimulus_presentations;
+         s.stimulus_names;
+         s.structure_acronyms;
+         s.structurewise_unit_counts;
+      
+         s.stimulus_templates;
+
+      end
    end
 end

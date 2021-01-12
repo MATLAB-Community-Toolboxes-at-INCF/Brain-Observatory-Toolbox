@@ -45,6 +45,10 @@ for nTable = numel(cTables):-1:1
    vbIsStructVarDest(vnVarsThisTable) = vbIsStructVarDest(vnVarsThisTable) | cvbIsStructVarSource{nTable};
 end
 
+% - Ensure index variables are `logical`
+vbIsCellVarDest = logical(vbIsCellVarDest);
+vbIsStructVarDest = logical(vbIsStructVarDest);
+
 % - Loop over tables and add variables one by one
 for nTable = numel(cTables):-1:1
    % - Find missing variables in this table

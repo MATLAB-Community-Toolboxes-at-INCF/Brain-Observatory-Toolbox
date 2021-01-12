@@ -1,7 +1,7 @@
 classdef ephysitem < handle
    properties (SetAccess = protected)
-      metadata;
-      id;
+      metadata;         % Struct containing metadata about this item
+      id;               % ID of this item
    end
    
    properties (Hidden = true)

@@ -76,16 +76,49 @@ classdef nwb_ephys < handle
          time = datetime(t,'TimeZone','UTC','Format','yyyy-MM-dd''T''HH:mm:ssXXXXX');
       end
       
+      function all_epochs_table = build_epochs_table(self)
+         % build_epochs_table — Build and return the high-level epochs table from the NWB file
+         
+         % - Get a list of all epochs in the NWB file
+         strRoot = '/intervals';
+         sEpochs = h5info(self.strFile, strRoot);
+         all_epoch_names = string({sEpochs.Groups.Name});
+         
+         % - Read each epoch as a table
+         cstrIgnoreKeys = {'tags', 'timeseries', 'tags_index', 'timeseries_index'};
+         cell_epoch_tables = {};
+         cell_stimulus_conditions = {};
+         for epoch_name = all_epoch_names
+            cell_epoch_tables{end+1} = bot.nwb.table_from_datasets(self.strFile, ...
+               epoch_name, cstrIgnoreKeys);
+            
+            % - Identify unique stimulus conditions
+            params_only = removevars_ifpresent(cell_epoch_tables{end}, ["start_time", "stop_time", "duration", "stimulus_block", "stimulus_presentation_id", "id"]);
+            [cell_stimulus_conditions{end+1}, ~, stimulus_condition_id] = unique(params_only, 'rows', 'stable');
+            cell_epoch_tables{end}.stimulus_block_condition_id = stimulus_condition_id-1;
+         end
+         
+         % - Remove the "invalid times" table, if present
+         invalid_times_table = ismember(all_epoch_names, '/intervals/invalid_times');
+         invalid_times = cell_epoch_tables(invalid_times_table);
+         cell_epoch_tables = cell_epoch_tables(~invalid_times_table);
+         all_epoch_names = all_epoch_names(~invalid_times_table);
+         
+         % - Merge the tables
+         all_epochs_table = sortrows(bot.internal.merge_tables(cell_epoch_tables{:}), 'start_time');
+         
+         % - Rename columns
+         all_epochs_table = rename_variables(all_epochs_table, 'id', 'stimulus_block_id');
+         
+         % - Add an id column
+         all_epochs_table.id = [0:size(all_epochs_table, 1)-1]';
+      end
+      
       function stimulus_presentations = fetch_stimulus_presentations(self)
          % fetch_stimulus_presentations - Return the stimulus table from the NWB file
          
-         % - Identify where in the NWB file the data is located
-         strEpochsKey = '/intervals/epochs';
-         cstrIgnoreKeys = {'tags', 'timeseries', 'tags_index', 'timeseries_index'};
-         
-         % - Read from the cached NWB file, return as a table
-         stimulus_presentations = bot.nwb.table_from_datasets(self.strFile, ...
-            strEpochsKey, cstrIgnoreKeys);
+         % - Read epochs from the cached NWB file
+         stimulus_presentations = self.build_epochs_table();
          
          % - Rename 'id' columns
          stimulus_presentations = rename_variables(stimulus_presentations, ...
@@ -125,7 +158,7 @@ classdef nwb_ephys < handle
          cstrElectrodePaths = cstrElectrodePaths(~contains(cstrElectrodePaths, 'electrodes'));
          
          % - Get the IDs from the paths
-         vnIDs = cellfun(@(c)sscanf(c, '/general/extracellular_ephys/%d'), cstrElectrodePaths);
+         vnIDs = cellfun(@(c)sscanf(c, '/general/extracellular_ephys/%s'), cstrElectrodePaths);
          
          % - Read the attributes for each probe
          for nIndex = numel(cstrElectrodePaths):-1:1
@@ -147,11 +180,13 @@ classdef nwb_ephys < handle
          % - Rename columns
          channels = rename_variables(channels, ...
             "manual_structure_id", "ephys_structure_id", ...
-            "manual_structure_acronym", "ephys_structure_acronym");
-         
+            "manual_structure_acronym", "ephys_structure_acronym", ...
+            "location", "ephys_structure_acronym");
+
          % - Convert columns to reasonable formats
-         channels = convertvars(channels, 'ephys_structure_id', 'double');
-         channels.valid_data = cellfun(@str2num, lower(channels.valid_data));
+         if ismember('ephys_structure_id', channels.Properties.VariableNames)
+            channels = convertvars(channels, 'ephys_structure_id', 'double');
+         end
          
          if ~isempty(self.external_channel_columns)
             error('BOT:NotImplemented', 'This method is not implemented');
@@ -159,6 +194,9 @@ classdef nwb_ephys < handle
          %             external_channel_columns = self.external_channel_columns()
          %             channels = clobbering_merge(channels, external_channel_columns, left_index=true, right_index=true)
          end
+         
+         % - Filter channels by valid data, if requested
+         channels.valid_data = cellfun(@str2num, lower(channels.valid_data));
          
          if self.filter_by_validity
             channels = channels(channels.valid_data, :);
@@ -205,13 +243,15 @@ classdef nwb_ephys < handle
          
          % - Identify where in the NWB file the data is located
          strEpochsKey = '/processing/running/running_speed';
+         strEpochsKey2 = '/processing/running/running_speed_end_times';
          
          % - Read from the cached NWB file, return as a table
-         running_speed_raw = bot.nwb.table_from_datasets(self.strFile, strEpochsKey);
+         running_speed_raw = bot.nwb.table_from_datasets(self.strFile, strEpochsKey);         
+         running_speed_end = bot.nwb.table_from_datasets(self.strFile, strEpochsKey2);
          
          % - Construct return table
-         start_time = running_speed_raw.timestamps(:, 1);
-         end_time = running_speed_raw.timestamps(:, 2);
+         start_time = running_speed_raw.timestamps;
+         end_time = running_speed_end.timestamps;
          velocity = running_speed_raw.data;
          running_speed = table(start_time, end_time, velocity);
          
@@ -338,7 +378,12 @@ classdef nwb_ephys < handle
             channels = self.fetch_channels();
             
             if self.filter_out_of_brain_units
-               channels = channels(~isnan(channels.ephys_structure_id), :);
+               if ismember(channels.Properties.VariableNames, 'ephys_structure_id')
+                  channels = channels(~isnan(channels.ephys_structure_id), :);
+               elseif ismember(channels.Properties.VariableNames, 'ephys_structure_acronym')
+                  channels = channels(~cellfun(@isempty, channels.ephys_structure_acronym), :);
+               end
+               
             end
             
             vbSelectUnits = ismember(units.peak_channel_id, channels.id);
@@ -429,4 +474,12 @@ function row = remove_invalid_spikes(row, times_key, amps_key)
    % - Reassign valid spikes
    row.(times_key) = {spike_times(order)};
    row.(amps_key) = {amps(order)};
+end
+
+function source_table = removevars_ifpresent(source_table, variables)
+   vbHasVariable = ismember(variables, source_table.Properties.VariableNames);
+   
+   if any(vbHasVariable)
+      source_table = removevars(source_table, variables(vbHasVariable));
+   end
 end
