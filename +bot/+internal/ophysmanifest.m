@@ -124,10 +124,10 @@ classdef ophysmanifest < handle
    
    methods (Access = private)
       %% Low-level getter method for OPhys manifests
-      function [ophys_manifests] = get_ophys_manifests_info_from_api(manifest)
-         % get_ophys_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory dataset via the Allen Brain Atlas API
+      function [ophys_manifests] = fetch_ophys_manifests_info_from_api(manifest)
+         % fetch_ophys_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory dataset via the Allen Brain Atlas API
          %
-         % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(return_table)
+         % Usage: [ophys_manifests] = fetch_ophys_manifests_info_from_api(return_table)
          %
          % Download `container_manifest`, `session_manifest`,
          % `cell_id_mapping` as MATLAB tables. Returns the tables as fields
@@ -205,7 +205,7 @@ classdef ophysmanifest < handle
             ophys_manifests = manifest.cache.RetrieveObject(nwb_key);
             
          else
-            ophys_manifests = get_ophys_manifests_info_from_api(manifest);
+            ophys_manifests = fetch_ophys_manifests_info_from_api(manifest);
             manifest.cache.InsertObject(nwb_key, ophys_manifests);
          end
       end

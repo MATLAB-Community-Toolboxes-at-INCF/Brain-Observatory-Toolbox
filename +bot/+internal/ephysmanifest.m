@@ -24,14 +24,14 @@ classdef ephysmanifest < handle
          manifest.api_access.ephys_probes = [];
          manifest.api_access.ephys_units = [];
          
-         manifest.api_access.memoized.get_ephys_sessions = memoize(@manifest.get_ephys_sessions);
-         manifest.api_access.memoized.get_ephys_channels = memoize(@manifest.get_ephys_channels);
-         manifest.api_access.memoized.get_ephys_probes = memoize(@manifest.get_ephys_probes);
-         manifest.api_access.memoized.get_ephys_units = memoize(@manifest.get_ephys_units);
-         manifest.api_access.memoized.get_annotated_ephys_units = memoize(@manifest.get_annotated_ephys_units);
-         manifest.api_access.memoized.get_annotated_ephys_channels = memoize(@manifest.get_annotated_ephys_channels);
-         manifest.api_access.memoized.get_annotated_ephys_units = memoize(@manifest.get_annotated_ephys_units);
-         manifest.api_access.memoized.get_annotated_ephys_probes = memoize(@manifest.get_annotated_ephys_probes);         
+         manifest.api_access.memoized.fetch_ephys_sessions = memoize(@manifest.fetch_ephys_sessions);
+         manifest.api_access.memoized.fetch_ephys_channels = memoize(@manifest.fetch_ephys_channels);
+         manifest.api_access.memoized.fetch_ephys_probes = memoize(@manifest.fetch_ephys_probes);
+         manifest.api_access.memoized.fetch_ephys_units = memoize(@manifest.fetch_ephys_units);
+         manifest.api_access.memoized.fetch_annotated_ephys_units = memoize(@manifest.fetch_annotated_ephys_units);
+         manifest.api_access.memoized.fetch_annotated_ephys_channels = memoize(@manifest.fetch_annotated_ephys_channels);
+         manifest.api_access.memoized.fetch_annotated_ephys_units = memoize(@manifest.fetch_annotated_ephys_units);
+         manifest.api_access.memoized.fetch_annotated_ephys_probes = memoize(@manifest.fetch_annotated_ephys_probes);         
       end
    end
    
@@ -106,7 +106,7 @@ classdef ephysmanifest < handle
                ephys_channels = manifest.cache.RetrieveObject(nwb_key);
             else
                % - Construct table from API
-               ephys_channels = manifest.get_ephys_channels_table();
+               ephys_channels = manifest.fetch_ephys_channels_table();
                
                % - Insert object in disk cache
                manifest.cache.InsertObject(nwb_key, ephys_channels);
@@ -129,7 +129,7 @@ classdef ephysmanifest < handle
                ephys_probes = manifest.cache.RetrieveObject(nwb_key);
             else
                % - Construct table from API
-               ephys_probes = manifest.get_ephys_probes_table();
+               ephys_probes = manifest.fetch_ephys_probes_table();
                
                % - Insert object in disk cache
                manifest.cache.InsertObject(nwb_key, ephys_probes);
@@ -152,7 +152,7 @@ classdef ephysmanifest < handle
                ephys_units = manifest.cache.RetrieveObject(nwb_key);
             else
                % - Construct table from API
-               ephys_units = manifest.get_ephys_units_table();
+               ephys_units = manifest.fetch_ephys_units_table();
                
                % - Insert object in disk cache
                manifest.cache.InsertObject(nwb_key, ephys_units);
@@ -198,10 +198,10 @@ classdef ephysmanifest < handle
          % METHOD - Return the table of all EPhys experimental sessions
                   
          % - Get table of EPhys sessions
-         ephys_sessions = manifest.api_access.memoized.get_ephys_sessions();
-         annotated_ephys_units = manifest.api_access.memoized.get_annotated_ephys_units();
-         annotated_ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
-         annotated_ephys_probes = manifest.api_access.memoized.get_annotated_ephys_probes();
+         ephys_sessions = manifest.api_access.memoized.fetch_ephys_sessions();
+         annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
+         annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
+         annotated_ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
          
          % - Count numbers of units, channels and probes
          ephys_sessions = count_owned(ephys_sessions, annotated_ephys_units, ...
@@ -219,18 +219,18 @@ classdef ephysmanifest < handle
          ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
       end
       
-      function ephys_units = get_ephys_units_table(manifest)
+      function ephys_units = fetch_ephys_units_table(manifest)
          % METHOD - Return the table of all EPhys recorded units
-         ephys_units = manifest.get_annotated_ephys_units();
+         ephys_units = manifest.fetch_annotated_ephys_units();
       end
       
-      function ephys_probes = get_ephys_probes_table(manifest)
+      function ephys_probes = fetch_ephys_probes_table(manifest)
          % METHOD - Return the table of all EPhys recorded probes
          
          % - Get the annotated probes
-         ephys_probes = manifest.api_access.memoized.get_annotated_ephys_probes();
-         annotated_ephys_units = manifest.api_access.memoized.get_annotated_ephys_units();
-         annotated_ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
+         ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
+         annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
+         annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
          
          % - Count units and channels
          ephys_probes = count_owned(ephys_probes, annotated_ephys_units, ...
@@ -243,12 +243,12 @@ classdef ephysmanifest < handle
             'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
       end
       
-      function ephys_channels = get_ephys_channels_table(manifest)
+      function ephys_channels = fetch_ephys_channels_table(manifest)
          % METHOD - Return the table of all EPhys recorded channels
          
          % - Get annotated channels
-         ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
-         annotated_ephys_units = manifest.api_access.memoized.get_annotated_ephys_units();
+         ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
+         annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
          
          % - Count owned units
          ephys_channels = count_owned(ephys_channels, annotated_ephys_units, ...
@@ -258,7 +258,7 @@ classdef ephysmanifest < handle
          ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
       end
       
-      function [ephys_session_manifest] = get_ephys_sessions(manifest)
+      function [ephys_session_manifest] = fetch_ephys_sessions(manifest)
          % - Fetch the ephys sessions manifest
          % - Download EPhys session manifest
          disp('Fetching EPhys sessions manifest...');
@@ -301,7 +301,7 @@ classdef ephysmanifest < handle
          ephys_session_manifest.genotype = string(ephys_session_manifest.genotype);
       end
       
-      function [ephys_unit_manifest] = get_ephys_units(manifest)
+      function [ephys_unit_manifest] = fetch_ephys_units(manifest)
          % - Fetch the ephys units manifest
          % - Download EPhys units
          disp('Fetching EPhys units manifest...');
@@ -364,7 +364,7 @@ classdef ephysmanifest < handle
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
       end
       
-      function [ephys_probes_manifest] = get_ephys_probes(manifest)
+      function [ephys_probes_manifest] = fetch_ephys_probes(manifest)
          % - Fetch the ephys probes manifest
          disp('Fetching EPhys probes manifest...');
          ephys_probes_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysProbe', '');
@@ -388,7 +388,7 @@ classdef ephysmanifest < handle
          ephys_probes_manifest.id = uint32(ephys_probes_manifest.id);
       end
       
-      function [ephys_channels_manifest] = get_ephys_channels(manifest)
+      function [ephys_channels_manifest] = fetch_ephys_channels(manifest)
          % - Fetch the ephys units manifest
          disp('Fetching EPhys channels manifest...');
          ephys_channels_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
@@ -414,12 +414,12 @@ classdef ephysmanifest < handle
             left_right_ccf_coordinate, ephys_structure_id, ephys_structure_acronym);
       end
       
-      function annotated_ephys_units = get_annotated_ephys_units(manifest)
+      function annotated_ephys_units = fetch_annotated_ephys_units(manifest)
          % METHOD - Return table of annotated EPhys units
          
          % - Annotate units
-         annotated_ephys_units = manifest.api_access.memoized.get_ephys_units();
-         annotated_ephys_channels = manifest.api_access.memoized.get_annotated_ephys_channels();
+         annotated_ephys_units = manifest.api_access.memoized.fetch_ephys_units();
+         annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
          
          annotated_ephys_units = join(annotated_ephys_units, annotated_ephys_channels, ...
             'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
@@ -433,18 +433,18 @@ classdef ephysmanifest < handle
             'local_index', 'peak_channel');
       end
       
-      function annotated_ephys_probes = get_annotated_ephys_probes(manifest)
+      function annotated_ephys_probes = fetch_annotated_ephys_probes(manifest)
          % METHOD - Return the annotate table of EPhys probes
          % - Annotate probes and return
-         annotated_ephys_probes = manifest.api_access.memoized.get_ephys_probes();
-         sessions = manifest.api_access.memoized.get_ephys_sessions();
+         annotated_ephys_probes = manifest.api_access.memoized.fetch_ephys_probes();
+         sessions = manifest.api_access.memoized.fetch_ephys_sessions();
          annotated_ephys_probes = join(annotated_ephys_probes, sessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
       end
       
-      function annotated_ephys_channels = get_annotated_ephys_channels(manifest)
+      function annotated_ephys_channels = fetch_annotated_ephys_channels(manifest)
          % - METHOD - Return the annotated table of EPhys channels
-         annotated_ephys_channels = manifest.api_access.memoized.get_ephys_channels();
-         annotated_ephys_probes = manifest.api_access.memoized.get_annotated_ephys_probes();
+         annotated_ephys_channels = manifest.api_access.memoized.fetch_ephys_channels();
+         annotated_ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
          annotated_ephys_channels = join(annotated_ephys_channels, annotated_ephys_probes, ...
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
       end
