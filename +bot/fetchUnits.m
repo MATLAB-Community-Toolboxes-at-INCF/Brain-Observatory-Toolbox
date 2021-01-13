@@ -5,5 +5,5 @@
 % `units` will be the manifest table of EPhys units.
 
 function units = fetchUnits(~)
-   units = bot.manifest('ephys').ephys_units;
+   units = bot.internal.manifest('ephys').ephys_units;
 end

@@ -9,7 +9,7 @@
 function new_probe = probe(probe_id)
 
 % - Get a bot ephys manifest
-ephys_manifest = bot.manifest('ephys');
+ephys_manifest = bot.internal.manifest('ephys');
 
 % - Return the probe object
 new_probe = bot.internal.ephysprobe(probe_id, ephys_manifest);

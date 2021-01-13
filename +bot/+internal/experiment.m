@@ -9,7 +9,7 @@ classdef experiment < handle
    end
    
    properties (Hidden = true, GetAccess = private, SetAccess = private)
-      manifest = bot.manifest('ophys');
+      manifest = bot.internal.manifest('ophys');
    end
    
    methods
@@ -63,7 +63,7 @@ classdef experiment < handle
          end
          
          % - Find these sessions in the experiment manifest
-         manifest = bot.manifest('ophys');
+         manifest = bot.internal.manifest('ophys');
          matching_ophys_container = manifest.ophys_containers.id == id;
          
          % - Extract the appropriate table row from the manifest
