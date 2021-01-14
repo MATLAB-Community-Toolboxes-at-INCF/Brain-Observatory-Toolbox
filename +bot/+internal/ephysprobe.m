@@ -5,12 +5,6 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
       units;         % Table of units recorded from this probe
    end
    
-   % Lazy loading properties
-   properties (SetAccess = private)
-      lfp;                       % Table of local field potential data recorded from this probe
-      csd;                       % Table of current source density data recorded from this probe
-   end
-   
    % Hidden properties
    properties (Hidden)
       well_known_file;           % Metadata about probe NWB files
@@ -23,7 +17,7 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
       
       contained_objects_property_list = ["session", "channels", "units"];
       
-      lazy_property_list = ["lfp", "csd"];
+      lazy_property_list = [];
    end
    
    methods (Access = protected)
@@ -82,14 +76,6 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
          probe.well_known_file = probe.fetch_lfp_file_link();
       end
       
-      function lfp = get.lfp(self)
-         lfp = self.fetch_lfp();
-      end
-      
-      function csd = get.csd(self)
-         csd = self.fetch_csd();
-      end
-      
       function local_nwb_file_location = get.local_nwb_file_location(self)
          % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this probe
          %
@@ -132,8 +118,17 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
          boc = bot.internal.cache;
          well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
       end
-      
+   end
+   
+   methods
       function [lfp, timestamps] = fetch_lfp(self)
+         % fetch_lfp - METHOD Return local field potential data for this probe
+         %
+         % Usage: [lfp, timestamps] = probe.fetch_lfp()
+         %
+         % `lfp` will be a TxN matrix containing LFP data recorded from
+         % this probe. `timestamps` will be a Tx1 vector of timestamps,
+         % corresponding to each row in `lfp`.
          if ~self.in_cache('lfp')
             nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
             [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.fetch_lfp();
@@ -144,6 +139,17 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
       end
       
       function [csd, timestamps, horizontal_position, vertical_position] = fetch_current_source_density(self)
+         % fetch_current_source_density - METHOD Return current source density data recorded from this probe
+         %
+         % Usage: [csd, timestamps, horizontal_position, vertical_position] = ...
+         %           probe.fetch_current_source_density()
+         %
+         % `csd` will be a TxN matrix containing CSD data recorded from
+         % this probe. `timestamps` will be a Tx1 vector of timestamps,
+         % corresponding to each row in `csd`. `horizontal_position` and
+         % `vertical_position` will be Nx1 vectors containing the
+         % horizontal and vertical positions corresponding to each column
+         % of `csd`.
          if ~self.in_cache('csd')
             nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
             [self.property_cache.csd, ...
@@ -152,7 +158,7 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
                self.property_cache.vertical_position] = nwb_probe.fetch_current_source_density();
          end
          
-         csd = self.property_cache.csd;
+         csd = self.property_cache.csd';
          timestamps = self.property_cache.csd_timestamps;
          horizontal_position = self.property_cache.horizontal_position;
          vertical_position = self.property_cache.vertical_position;
