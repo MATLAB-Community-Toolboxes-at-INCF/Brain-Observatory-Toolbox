@@ -1,13 +1,55 @@
-classdef ephysprobe < bot.internal.ephysitem
+classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
    properties (SetAccess = private)
-      channels;
-      units;
-      session;
-      well_known_file;
-      nwb_url;
-      local_nwb_file_location
+      session;       % `bot.session` object containing this probe
+      channels;      % Table of channels recorded from this probe
+      units;         % Table of units recorded from this probe
    end
    
+   % Lazy loading properties
+   properties (SetAccess = private)
+      lfp;                       % Table of local field potential data recorded from this probe
+      csd;                       % Table of current source density data recorded from this probe
+   end
+   
+   % Hidden properties
+   properties (Hidden)
+      well_known_file;           % Metadata about probe NWB files
+      nwb_url;                   % URL for probe NWB file
+      local_nwb_file_location;   % Local cache location of probe NWB file
+   end
+   
+   properties (Hidden = true, SetAccess = immutable, GetAccess = private)
+      metadata_property_list = ["metadata", "id"];
+      
+      contained_objects_property_list = ["session", "channels", "units"];
+      
+      lazy_property_list = ["lfp", "csd"];
+   end
+   
+   methods (Access = protected)
+      function groups = getPropertyGroups(obj)
+         if ~isscalar(obj)
+            groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+         else
+            % - Default properties
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list, 'Metadata');
+            groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Contained experimental data');
+            
+            if obj.is_nwb_cached()
+               description = '[cached]';
+            else
+               description = '[not cached]';
+            end
+            
+            propList = struct();
+            for prop = obj.lazy_property_list
+               propList.(prop) = description;
+            end
+            
+            groups(3) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+         end
+      end
+   end
    methods
       function probe = ephysprobe(probe_id, oManifest)
          % - Handle "no arguments" usage
@@ -40,6 +82,49 @@ classdef ephysprobe < bot.internal.ephysitem
          probe.well_known_file = probe.fetch_lfp_file_link();
       end
       
+      function lfp = get.lfp(self)
+         lfp = self.fetch_lfp();
+      end
+      
+      function csd = get.csd(self)
+         csd = self.fetch_csd();
+      end
+      
+      function local_nwb_file_location = get.local_nwb_file_location(self)
+         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this probe
+         %
+         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
+         if ~self.is_nwb_cached()
+            local_nwb_file_location = [];
+         else
+            % - Get the local file location for the session NWB URL
+            boc = bot.internal.cache;
+            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
+         end
+      end
+      
+      function nwb_url = get.nwb_url(self)
+         boc = bot.internal.cache;
+         nwb_url = [boc.strABOBaseUrl self.well_known_file.download_link];
+      end
+      
+      function bIsCached = is_nwb_cached(self)
+         boc = bot.internal.cache;
+         bIsCached = boc.IsURLInCache(self.nwb_url);
+      end
+      
+      function strNWBFile = EnsureCached(self)
+         if ~self.is_nwb_cached
+            boc = bot.internal.cache;
+            strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
+         else
+            strNWBFile = self.local_nwb_file_location;
+         end
+      end
+   end
+   
+   
+   methods (Hidden)
       function well_known_file = fetch_lfp_file_link(probe)
          probe_id = probe.metadata.id;
          strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
@@ -71,38 +156,6 @@ classdef ephysprobe < bot.internal.ephysitem
          timestamps = self.property_cache.csd_timestamps;
          horizontal_position = self.property_cache.horizontal_position;
          vertical_position = self.property_cache.vertical_position;
-      end
-      
-      function local_nwb_file_location = get.local_nwb_file_location(self)
-         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
-         %
-         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
-         if ~self.is_nwb_cached()
-            local_nwb_file_location = [];
-         else
-            % - Get the local file location for the session NWB URL
-            boc = bot.internal.cache;
-            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
-         end
-      end
-      
-      function nwb_url = get.nwb_url(self)
-         boc = bot.internal.cache;
-         nwb_url = [boc.strABOBaseUrl self.well_known_file.download_link];
-      end
-      
-      function bIsCached = is_nwb_cached(self)
-         boc = bot.internal.cache;
-         bIsCached = boc.IsURLInCache(self.nwb_url);
-      end
-      
-      function strNWBFile = EnsureCached(self)
-         if ~self.is_nwb_cached
-            boc = bot.internal.cache;
-            strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
-         else
-            strNWBFile = self.local_nwb_file_location;
-         end
       end
    end
 end

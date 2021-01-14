@@ -294,7 +294,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    methods
       function metadata = get.nwb_metadata(self)
          n = self.nwb_file;
-         metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+         try
+            metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+         catch
+            metadata = [];
+         end
       end
       
       function rig_metadata = get.rig_metadata(self)
