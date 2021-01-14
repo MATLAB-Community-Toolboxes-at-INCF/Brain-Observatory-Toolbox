@@ -361,7 +361,7 @@ classdef ephysmanifest < handle
          
          % - Convert variables to useful types
          ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
-         ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
+         ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);         
       end
       
       function [ephys_probes_manifest] = fetch_ephys_probes(manifest)
@@ -431,6 +431,13 @@ classdef ephysmanifest < handle
             'sampling_rate', 'probe_sampling_rate', ...
             'lfp_sampling_rate', 'probe_lfp_sampling_rate', ...
             'local_index', 'peak_channel');
+         
+         % - Convert acronyms (cell arrays) to strings, since invalid units
+         % have been filtered away
+         annotated_ephys_units.ephys_structure_acronym = arrayfun(@(e)string(e{1}), annotated_ephys_units.ephys_structure_acronym);
+         
+         % - Convert to categorical
+         annotated_ephys_units.ephys_structure_acronym = categorical(annotated_ephys_units.ephys_structure_acronym);
       end
       
       function annotated_ephys_probes = fetch_annotated_ephys_probes(manifest)

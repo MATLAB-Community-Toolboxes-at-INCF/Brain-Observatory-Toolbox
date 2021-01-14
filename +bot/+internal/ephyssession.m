@@ -44,10 +44,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-      default_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
+      metadata_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
          "sex", "full_genotype", "session_type", ...
          "num_units", "num_probes", "num_channels", ...
          ];
+      contained_objects_property_list = ["probes", "channels", "units"];
       lazy_property_list = ["rig_geometry_data", ...
          "rig_equipment_name", "inter_presentation_intervals", ...
          "running_speed", "mean_waveforms", "stimulus_presentations", ...
@@ -65,7 +66,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
             groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
          else
             % - Default properties
-            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list, 'Metadata');
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list, 'Metadata');
+            groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Contained experimental data');
             
             if obj.is_nwb_cached()
                description = '[cached]';
@@ -78,7 +80,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
                propList.(prop) = description;
             end
             
-            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+            groups(3) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
          end
       end
    end   
@@ -280,8 +282,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       
       function structurewise_unit_counts = get.structurewise_unit_counts(self)
          all_acronyms = self.units.ephys_structure_acronym;
-         is_string = cellfun(@ischar, self.units.ephys_structure_acronym);
-         [ephys_structure_acronym, ~, structurewise_unit_ids] = unique(all_acronyms(is_string));
+         [ephys_structure_acronym, ~, structurewise_unit_ids] = unique(all_acronyms);
          count = accumarray(structurewise_unit_ids, 1);
          
          structurewise_unit_counts = table(ephys_structure_acronym, count);
