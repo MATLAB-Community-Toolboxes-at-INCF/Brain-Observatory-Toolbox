@@ -34,7 +34,7 @@ classdef cache < handle
          % - Check if a cache directory has been provided
          if ~exist('strCacheDir', 'var') || isempty(strCacheDir)
             % - Get the default cache directory
-            strBOTDir = fileparts(which('bot.manifest'));
+            strBOTDir = fileparts(which('bot.fetchSessions'));
             oCache.strCacheDir = [strBOTDir filesep 'Cache'];
          else
             oCache.strCacheDir = strCacheDir;

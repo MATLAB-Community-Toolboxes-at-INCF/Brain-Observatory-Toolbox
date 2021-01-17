@@ -4,8 +4,8 @@
 % sessions from the Allen Brain Observatory dataset [1, 2].
 %
 % Construction:
-% >> bom = bot.manifest('ophys')
-% >> bom = bot.internal.ophysmanifest
+% >> bom = bot.internal.manifest('ophys')
+% >> bom = bot.internal.ophysmanifest.instance()
 %
 % Get information about all OPhys experimental sessions:
 % >> bom.ophys_sessions

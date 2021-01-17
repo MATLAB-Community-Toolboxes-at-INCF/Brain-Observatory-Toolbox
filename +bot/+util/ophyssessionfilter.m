@@ -1,6 +1,6 @@
 %% CLASS bot.util.ophyssessionfilter - Utility operations for filtering OPhys experimental sessions
 %
-% This class is deprecated. Use `bot.manifest` to obtain manifests for
+% This class is deprecated. Use `bot.fetch...()` to obtain manifests for
 % OPhys and EPhys data, and filter the tables directly.
 %
 % This class implements a mechanism for searching the optical physiology
@@ -76,7 +76,7 @@ classdef ophyssessionfilter < handle
       
       function bosf = ophyssessionfilter()
          % - Display warning of deprecated class
-         warning('The `bot.util.ophyssessionfilter` class is deprecated. Use `bot.manifest` to obtain data manifests, and filter the tables directly.');
+         warning('The `bot.util.ophyssessionfilter` class is deprecated. Use `bot.fetch...()` to obtain data manifests, and filter the tables directly.');
          
          % - Get the unfiltered session table, clear all filters
          clear_filters(bosf);
