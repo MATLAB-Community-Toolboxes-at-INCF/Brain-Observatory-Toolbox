@@ -16,7 +16,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       num_units;                    % Number of units (putative neurons) recorded in this session
       num_probes;                   % Number of probes recorded in this session
       num_channels;                 % Number of channels recorded in this session      
-end
+   end
    
    %% - Lazy loading properties
    properties (SetAccess = private)
@@ -25,18 +25,20 @@ end
 
       inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
       running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
-      mean_waveforms;                  % Maps integer unit ids to xarray.DataArrays containing mean spike waveforms for that unit
+      mean_waveforms;                  % Table mapping unit ids to matrices containing mean spike waveforms for that unit
       stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
-      stimulus_conditions;             % Each row is a unique permutation (within this session) of stimulus parameters presented during this experiment. Columns are as stimulus presentations, sans start_time, end_time, stimulus_block, and duration
-      optogenetic_stimulation_epochs;  %
-      session_start_time;              %
-      spike_amplitudes;                %
-      invalid_times;                   %
+      stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
+      optogenetic_stimulation_epochs;  % Table of optogenetic stimulation epochs for this experimental session (if present)
+      session_start_time;              % Timestamp of start of session
+      spike_amplitudes;                % Table of extracted spike amplitudes for all units
+      invalid_times;                   % Table indicating invalid recording times
       
       num_stimulus_presentations;   % Number of stimulus presentations in this session
       stimulus_names;               % Names of stimuli presented in this session
       structure_acronyms;           % EPhys structures recorded across all channels in this session
       structurewise_unit_counts;    % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
+      
+      stimulus_epochs;              % Table of stimulus presentation epochs
       
       stimulus_templates;           % Stimulus template table
    end
@@ -53,6 +55,7 @@ end
          "session_start_time", "spike_amplitudes", "invalid_times", ...
          "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
          "structurewise_unit_counts", "stimulus_templates", ...
+         "stimulus_epochs", ...
          ];
    end
    
@@ -183,12 +186,12 @@ end
    methods
       
       function inter_presentation_intervals = get.inter_presentation_intervals(self)
-         inter_presentation_intervals = self.get_cached('inter_presentation_intervals', @self.build_inter_presentation_intervals);
+         inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.build_inter_presentation_intervals);
       end
       
       function mean_waveforms = get.mean_waveforms(self)
          n = self.nwb_file;
-         mean_waveforms = self.get_cached('mean_waveforms', @n.get_mean_waveforms);
+         mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
       end
       
       function stimulus_conditions = get.stimulus_conditions(self)
@@ -203,7 +206,7 @@ end
          end
          
          if ~self.in_cache('spike_times')
-            self.property_cache.spike_times = self.build_spike_times(self.nwb_file.get_spike_times());
+            self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
          end
          
          spike_times = self.property_cache.spike_times;
@@ -219,27 +222,31 @@ end
       
       function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
          n = self.nwb_file;
-         optogenetic_stimulation_epochs = self.get_cached('optogenetic_stimulation_epochs', @n.get_optogenetic_stimulation);
+         try
+            optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.fetch_optogenetic_stimulation);
+         catch
+            warning('BOT:DataNotPresent', 'Optogenetic stimulation data is not present for this session');
+         end
       end
       
       function session_start_time = get.session_start_time(self)
          n = self.nwb_file;
-         session_start_time = self.get_cached('session_start_time', @n.get_session_start_time);
+         session_start_time = self.fetch_cached('session_start_time', @n.fetch_session_start_time);
       end
       
       function spike_amplitudes = get.spike_amplitudes(self)
          n = self.nwb_file;
-         spike_amplitudes = self.get_cached('spike_amplitudes', @n.get_spike_amplitudes);
+         spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.fetch_spike_amplitudes);
       end
       
       function invalid_times = get.invalid_times(self)
          n = self.nwb_file;
-         invalid_times = self.get_cached('invalid_times', @n.get_invalid_times);
+         invalid_times = self.fetch_cached('invalid_times', @n.fetch_invalid_times);
       end
       
       function running_speed = get.running_speed(self)
          n = self.nwb_file;
-         running_speed = self.get_cached('running_speed', @n.get_running_speed);
+         running_speed = self.fetch_cached('running_speed', @n.fetch_running_speed);
       end
    end
    
@@ -286,13 +293,13 @@ end
    methods
       function metadata = get.nwb_metadata(self)
          n = self.nwb_file;
-         metadata = self.get_cached('metadata', @n.fetch_nwb_metadata);
+         metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
       end
       
       function rig_metadata = get.rig_metadata(self)
          n = self.nwb_file;
          try
-            rig_metadata = self.get_cached('rig_metadata', @n.get_rig_metadata);
+            rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
          catch
             rig_metadata = [];
          end
@@ -330,7 +337,7 @@ end
       end
       
       function session_type = get.session_type(self)
-         session_type = self.metadata.stimulus_name;
+         session_type = self.metadata.session_type;
       end
       
       function stimulus_table = get.stimulus_templates(self)
@@ -372,79 +379,26 @@ end
    
    %% Public methods
    methods
-      function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
-         % ''' Get a subset of this session's inter-presentation intervals, filtered by stimulus name.
-         %
-         % Parameters
-         % ----------
-         % stimulus_names : array-like of str
-         %    The names of stimuli to include in the output.
-         %
-         % Returns
-         % -------
-         % pd.DataFrame :
-         %    inter-presentation intervals, filtered to the requested stimulus names.
-         
-         self.cache_stimulus_presentations();
-         
-         select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
-         filtered_presentations = self.property_cache.stimulus_presentations_raw(select_stimuli, :);
-         filtered_ids = filtered_presentations.stimulus_presentation_id;
-         
-         
-         select_intervals = ismember(self.inter_presentation_intervals.from_presentation_id, filtered_ids) & ...
-            ismember(self.inter_presentation_intervals.to_presentation_id, filtered_ids);
-         
-         inter_presentation_intervals = self.inter_presentation_intervals(select_intervals, :);
+      function epochs = get.stimulus_epochs(self)
+         epochs = self.fetch_stimulus_epochs();
       end
       
-      function presentations = get_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
-         arguments
-            self;
-            stimulus_names = self.stimulus_names;
-            include_detailed_parameters logical = false;
-            include_unused_parameters logical = false;
-         end
-         % '''Get a subset of stimulus presentations by name, with irrelevant parameters filtered off
+      function epochs = fetch_stimulus_epochs(self, duration_thresholds)
+         % fetch_stimulus_epochs - METHOD Reports continuous periods of time during which a single kind of stimulus was presented
          %
-         % Parameters
-         % ----------
-         % stimulus_names : array-like of str
-         %    The names of stimuli to include in the output.
+         % Usage: epochs = sess.fetch_stimulus_epochs(<duration_thresholds>)
          %
-         % Returns
-         % -------
-         % pd.DataFrame :
-         %    Rows are filtered presentations, columns are the relevant subset of stimulus parameters
-         
-         self.cache_stimulus_presentations();
-         
-         select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
-         presentations = self.property_cache.stimulus_presentations_raw(select_stimuli, :);
-         
-         if ~include_detailed_parameters
-            presentations = self.remove_detailed_stimulus_parameters(presentations);
-         end
-         
-         if ~include_unused_parameters
-            presentations = remove_unused_stimulus_presentation_columns(presentations);
-         end
-      end
-      
-      function epochs = get_stimulus_epochs(self, duration_thresholds)
+         % `duration_thresholds` is an optional structure, linking stimulus
+         % names to times in seconds. If present in the structure, any
+         % stimulus with the matching name, for which an epoch of that
+         % stimulus shorter than the threshold duration given in the
+         % structure, will be removed from the returned stimulus epochs.
+         % `epochs` will be a table of stimulus epochs for the stimuli in
+         % this session.
          arguments
             self;
             duration_thresholds = struct('spontaneous_activity', 90);
          end
-         % """ Reports continuous periods of time during which a single kind of stimulus was presented
-         %
-         % Parameters
-         % ---------
-         % duration_thresholds : dict, optional
-         %    keys are stimulus names, values are floating point durations in seconds. All epochs with
-         %        - a given stimulus name
-         %        - a duration shorter than the associated threshold
-         %    will be removed from the results
          
          presentations = self.stimulus_presentations;
          diff_indices = nan_intervals(presentations.stimulus_block);
@@ -466,45 +420,30 @@ end
          epochs = epochs(:, ["start_time", "stop_time", "duration", "stimulus_name", "stimulus_block"]);
       end
       
-      function pupil_data = get_pupil_data(self, suppress_pupil_data)
+      function pupil_data = fetch_pupil_data(self, suppress_pupil_data)
+         % fetch_pupil_data - METHOD Return the pupil-tracking data for this session, if present
+         %
+         % Usage: pupil_data = sess.fetch_pupil_data(<suppress_pupil_data>)
+         %
+         % `pupil_data` will be a table containing pupil location data for
+         % the current session.
+         %
+         % `suppress_pupil_data` is an optional flag (default: `true`),
+         % indicating that detailed gaze mapping adat should be excluded
+         % from the returned table.
          arguments
             self;
             suppress_pupil_data logical = true;
          end
-         % """Return a dataframe with eye tracking data
-         %
-         % Parameters
-         % ----------
-         % suppress_pupil_data : bool, optional
-         %    Whether or not to suppress eye gaze mapping data in output
-         %    dataframe, by default True.
-         %
-         % Returns
-         % -------
-         % pd.DataFrame
-         %    Contains columns for eye, pupil and cr ellipse fits:
-         %        *_center_x
-         %        *_center_y
-         %        *_height
-         %        *_width
-         %        *_phi
-         %    May also contain raw/filtered columns for gaze mapping if
-         %    suppress_pupil_data is set to False:
-         %        *_eye_area
-         %        *_pupil_area
-         %        *_screen_coordinates_x_cm
-         %        *_screen_coordinates_y_cm
-         %        *_screen_coordinates_spherical_x_deg
-         %        *_screen_coorindates_spherical_y_deg
          
          n = self.nwb_file;
-         pupil_data = n.get_pupil_data(suppress_pupil_data);
+         pupil_data = n.fetch_pupil_data(suppress_pupil_data);
       end
       
       function [tiled_data, time_base] = presentationwise_spike_counts(self, ...
             bin_edges, stimulus_presentation_ids, unit_ids, binarize, ...
             large_bin_size_threshold, time_domain_callback)
-         % ''' Build an array of spike counts surrounding stimulus onset per unit and stimulus frame.
+         % presentationwise_spike_counts - METHODS Build an array of spike counts surrounding stimulus onset per unit and stimulus frame
          %
          % Parameters
          % ---------
@@ -527,9 +466,7 @@ end
          %
          % Returns
          % -------
-         % xarray.DataArray :
-         %    Data array whose dimensions are stimulus presentation, unit,
-         %    and time bin and whose values are spike counts.
+         % Table whose dimensions are stimulus presentation, unit, and time bin and whose values are spike counts.
       arguments
          self;
          bin_edges;
@@ -537,7 +474,7 @@ end
          unit_ids;
          binarize logical = false;
          large_bin_size_threshold = 0.001;
-         time_domain_callback = @(x)x;
+         time_domain_callback function_handle = str2func('@(x)x');
       end
       
       % - Filter stimulus_presentations table
@@ -584,7 +521,7 @@ end
    end
    
    function spikes_with_onset = presentationwise_spike_times(self, stimulus_presentation_ids, unit_ids)
-   %   ''' Produce a table associating spike times with units and stimulus presentations
+   %   presentationwise_spike_times - METHOD Produce a table associating spike times with units and stimulus presentations
    %
    %   Parameters
    %   ----------
@@ -777,7 +714,7 @@ end
       end
    end
    
-   function param_values = get_parameter_values_for_stimulus(self, stimulus_name, drop_nulls)
+   function param_values = fetch_parameter_values_for_stimulus(self, stimulus_name, drop_nulls)
    % """ For each stimulus parameter, report the unique values taken on by that
    % parameter while a named stimulus was presented.
    %
@@ -797,22 +734,11 @@ end
       end
    
       presentation_ids = self.fetch_stimulus_table(stimulus_name).stimulus_presentation_id;
-      param_values = self.get_stimulus_parameter_values(presentation_ids, drop_nulls);   
+      param_values = self.fetch_stimulus_parameter_values(presentation_ids, drop_nulls);   
    end
    
-   function parameters = get_stimulus_parameter_values(self, stimulus_presentation_ids, drop_nulls)
-   % ''' For each stimulus parameter, report the unique values taken on by that
-   % parameter throughout the course of the  session.
-   %
-   % Parameters
-   % ----------
-   % stimulus_presentation_ids : array-like, optional
-   %    If provided, only parameter values from these stimulus presentations will be considered.
-   %
-   % Returns
-   % -------
-   % dict :
-   %    maps parameters (column names) to their unique values.
+   function parameters = fetch_stimulus_parameter_values(self, stimulus_presentation_ids, drop_nulls)
+   % fetch_stimulus_parameter_values - METHOD For each stimulus parameter, report the unique values taken on by that parameter throughout the course of the  session
       arguments
          self;
          stimulus_presentation_ids {mustBeNumeric} = [];
@@ -909,11 +835,71 @@ methods
 end
 
 %% Private methods
-methods (Access = public)
-   function get_natural_movie_template(self, number)
+methods (Hidden)
+
+      function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
+         % ''' Get a subset of this session's inter-presentation intervals, filtered by stimulus name.
+         %
+         % Parameters
+         % ----------
+         % stimulus_names : array-like of str
+         %    The names of stimuli to include in the output.
+         %
+         % Returns
+         % -------
+         % pd.DataFrame :
+         %    inter-presentation intervals, filtered to the requested stimulus names.
+         
+         self.cache_stimulus_presentations();
+         
+         select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
+         filtered_presentations = self.property_cache.stimulus_presentations_raw(select_stimuli, :);
+         filtered_ids = filtered_presentations.stimulus_presentation_id;
+         
+         
+         select_intervals = ismember(self.inter_presentation_intervals.from_presentation_id, filtered_ids) & ...
+            ismember(self.inter_presentation_intervals.to_presentation_id, filtered_ids);
+         
+         inter_presentation_intervals = self.inter_presentation_intervals(select_intervals, :);
+      end
+      
+      function presentations = fetch_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
+         arguments
+            self;
+            stimulus_names = self.stimulus_names;
+            include_detailed_parameters logical = false;
+            include_unused_parameters logical = false;
+         end
+         % '''Get a subset of stimulus presentations by name, with irrelevant parameters filtered off
+         %
+         % Parameters
+         % ----------
+         % stimulus_names : array-like of str
+         %    The names of stimuli to include in the output.
+         %
+         % Returns
+         % -------
+         % pd.DataFrame :
+         %    Rows are filtered presentations, columns are the relevant subset of stimulus parameters
+         
+         self.cache_stimulus_presentations();
+         
+         select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
+         presentations = self.property_cache.stimulus_presentations_raw(select_stimuli, :);
+         
+         if ~include_detailed_parameters
+            presentations = self.remove_detailed_stimulus_parameters(presentations);
+         end
+         
+         if ~include_unused_parameters
+            presentations = remove_unused_stimulus_presentation_columns(presentations);
+         end
+      end
+      
+   function fetch_natural_movie_template(self, number) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
 
-      well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :);
+      well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :); %#ok<UNRCH>
       
       if size(well_known_files, 1) ~= 1
          error('BOT:NotFound', ...
@@ -931,7 +917,7 @@ methods (Access = public)
       %         return self.rma_engine.stream(download_link)
    end
    
-   function get_natural_scene_template(self, number)
+   function fetch_natural_scene_template(self, number) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
       
       %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
@@ -942,7 +928,7 @@ methods (Access = public)
       %         return self.rma_engine.stream(download_link)
    end
    
-   function valid_time_points = get_valid_time_points(self, time_points, invalid_time_intevals)
+   function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
       
       
@@ -963,6 +949,11 @@ methods (Access = public)
    end
    
    function invalid_times = filter_invalid_times_by_tags(self, tags)
+      arguments
+         self;
+         tags string;
+      end
+   
       % """
       % Parameters
       % ----------
@@ -984,6 +975,10 @@ methods (Access = public)
    end
    
    function stimulus_presentations = mask_invalid_stimulus_presentations(self, stimulus_presentations)
+      arguments
+         self;
+         stimulus_presentations table;
+      end
       % """Mask invalid stimulus presentations
       %
       % Find stimulus presentations overlapping with invalid times
@@ -1036,7 +1031,7 @@ methods (Access = public)
    function cache_stimulus_presentations(self)
       if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
          % - Read stimulus presentations from NWB file
-         stimulus_presentations_raw = self.nwb_file.get_stimulus_presentations();
+         stimulus_presentations_raw = self.nwb_file.fetch_stimulus_presentations();
          
          % - Build stimulus presentations tables
          [stimulus_presentations_raw, stimulus_conditions_raw] = self.build_stimulus_presentations(stimulus_presentations_raw);
@@ -1058,24 +1053,25 @@ methods (Access = public)
       stimulus_presentations_filled = fillmissing(stimulus_presentations, 'constant', inf, 'DataVariables', @isnumeric);
       
       % - Identify unique stimulus conditions
-      params_only = removevars(stimulus_presentations_filled, ["start_time", "stop_time", "duration", "stimulus_block", "stimulus_presentation_id"]);
-      [stimulus_conditions, ~, stimulus_condition_id] = unique(params_only, 'rows', 'stable');
+      params_only = removevars_ifpresent(stimulus_presentations_filled, ["start_time", "stop_time", "duration", "stimulus_block", "stimulus_presentation_id", "stimulus_block_id", "id", "stimulus_condition_id"]);
+      [stimulus_conditions, stimulus_condition_id_unique, stimulus_condition_id] = unique(params_only, 'rows', 'stable');
       stimulus_presentations.stimulus_condition_id = stimulus_condition_id - 1;
+      stimulus_conditions.stimulus_condition_id = stimulus_condition_id_unique - 1;
    end
    
-   function units_table = get_units_table_from_nwb(self)
+   function units_table = fetch_units_table_from_nwb(self)
       % - Build the units table from the session NWB file
       % - Allen SDK ecephys_session.units
-      units_table = self.build_units_table(self.nwb_file.get_units());
+      units_table = self.build_units_table(self.nwb_file.fetch_units());
    end
    
-   function units_table = build_units_table(self, units_table)
+   function units_table = build_units_table(self, units_table) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
       
-      channels = self.get_channels_from_nwb;
-      probes = self.get_probes_from_nwb;
-      
-      unmerged_units = units_table;
+%       channels = self.fetch_channels_from_nwb;
+%       probes = self.fetch_probes_from_nwb;
+%       
+%       unmerged_units = units_table;
       %          units_table = merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel']);
       
       
@@ -1110,14 +1106,14 @@ methods (Access = public)
       %         return table.sort_values(by=['probe_description', 'probe_vertical_position', 'probe_horizontal_position'])
    end
    
-   function output_waveforms = build_nwb1_waveforms(self, mean_waveforms)
+   function output_waveforms = build_nwb1_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
       %         # _build_mean_waveforms() assumes every unit has the same number of waveforms and that a unit-waveform exists
       %         # for all channels. This is not true for NWB 1 files where each unit has ONE waveform on ONE channel
       
       error('BOT:NotImplemented', 'This method is not implemented');
    end
    
-   function output_waveforms = build_mean_waveforms(self, mean_waveforms)
+   function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
    end
    
@@ -1170,7 +1166,7 @@ end
 
 %% Static class methods
 methods(Static)
-   function from_nwb_path(cls, path, nwb_version, api_kwargs)
+   function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
    end
 end
@@ -1277,7 +1273,7 @@ function domain = build_time_window_domain(bin_edges, offsets, callback)
 arguments
    bin_edges;
    offsets;
-   callback = @(x)x;
+   callback function_handle = str2func('@(x)x');
 end
 
 [domain, offsets] = ndgrid(bin_edges(:), offsets(:));
@@ -1382,4 +1378,10 @@ function is_overlap = overlap(a, b)
 is_overlap = max(a(1), b(1)) <= min(a(2), b(2));
 end
 
-
+function source_table = removevars_ifpresent(source_table, variables)
+   vbHasVariable = ismember(variables, source_table.Properties.VariableNames);
+   
+   if any(vbHasVariable)
+      source_table = removevars(source_table, variables(vbHasVariable));
+   end
+end

@@ -1,11 +1,11 @@
-% TS_GetMexFunctionHandles - FUNCTION Compile and return mex function handles
+% fetch_mex_handles - FUNCTION Compile and return mex function handles
 
-function [fhBSSL_double, fhBSSL_int32] = get_mex_handles
+function [fhBSSL_double, fhBSSL_int32] = fetch_mex_handles
    % - Does the compiled MEX function exist?
    if (exist(which('bot.internal.BinarySearchSortedList_double_mex')) ~= 3) %#ok<EXIST>
       try %#ok<TRYNC>
          % - Move to the MappedTensor private directory
-         strBOTInternalDir = fileparts(which('bot.internal.get_mex_handles'));
+         strBOTInternalDir = fileparts(which('bot.internal.fetch_mex_handles'));
          strCWD = cd(strBOTInternalDir);
          
          % - Try to compile the MEX functions

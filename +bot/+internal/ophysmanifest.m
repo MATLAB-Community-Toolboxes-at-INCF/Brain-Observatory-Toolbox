@@ -51,7 +51,7 @@ classdef ophysmanifest < handle
    methods (Access = private)
       function oManifest = ophysmanifest()
          % Memoize manifest getter
-         oManifest.api_access.get_cached_ophys_manifests = memoize(@oManifest.get_cached_ophys_manifests);
+         oManifest.api_access.fetch_cached_ophys_manifests = memoize(@oManifest.fetch_cached_ophys_manifests);
       end
    end
    
@@ -92,12 +92,12 @@ classdef ophysmanifest < handle
    %% Getters for manifest tables
    methods
       function ophys_sessions = get.ophys_sessions(oManifest)
-         ophys_manifests = oManifest.api_access.get_cached_ophys_manifests();
+         ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
          ophys_sessions = ophys_manifests.ophys_session_manifest;
       end
       
       function ophys_containers = get.ophys_containers(oManifest)
-         ophys_manifests = oManifest.api_access.get_cached_ophys_manifests();
+         ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
          ophys_containers = ophys_manifests.ophys_container_manifest;
       end
    end
@@ -124,10 +124,10 @@ classdef ophysmanifest < handle
    
    methods (Access = private)
       %% Low-level getter method for OPhys manifests
-      function [ophys_manifests] = get_ophys_manifests_info_from_api(manifest)
-         % get_ophys_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory dataset via the Allen Brain Atlas API
+      function [ophys_manifests] = fetch_ophys_manifests_info_from_api(manifest)
+         % fetch_ophys_manifests_info_from_api - PRIVATE METHOD Download manifests of content from Allen Brain Observatory dataset via the Allen Brain Atlas API
          %
-         % Usage: [ophys_manifests] = get_ophys_manifests_info_from_api(return_table)
+         % Usage: [ophys_manifests] = fetch_ophys_manifests_info_from_api(return_table)
          %
          % Download `container_manifest`, `session_manifest`,
          % `cell_id_mapping` as MATLAB tables. Returns the tables as fields
@@ -195,17 +195,17 @@ classdef ophysmanifest < handle
          ophys_manifests.cell_id_mapping = manifest.cache.ccCache.webread(cell_id_mapping_url, [], options);
       end
       
-      function ophys_manifests = get_cached_ophys_manifests(manifest)
-         % get_cached_ophys_manifests - METHOD Fetch (possibly cached) OPhys manifest
+      function ophys_manifests = fetch_cached_ophys_manifests(manifest)
+         % fetch_cached_ophys_manifests - METHOD Fetch (possibly cached) OPhys manifest
          %
-         % Usage: ophys_manifests = get_cached_ophys_manifests(manifest)
+         % Usage: ophys_manifests = fetch_cached_ophys_manifests(manifest)
          nwb_key = 'allen_brain_observatory_ophys_manifests';
          
          if manifest.cache.IsObjectInCache(nwb_key)
             ophys_manifests = manifest.cache.RetrieveObject(nwb_key);
             
          else
-            ophys_manifests = get_ophys_manifests_info_from_api(manifest);
+            ophys_manifests = fetch_ophys_manifests_info_from_api(manifest);
             manifest.cache.InsertObject(nwb_key, ophys_manifests);
          end
       end

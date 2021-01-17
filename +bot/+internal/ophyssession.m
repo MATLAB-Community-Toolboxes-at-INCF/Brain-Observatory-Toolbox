@@ -1240,7 +1240,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
             bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
             bos.smCachedStimulusTable(3) = master_stimulus_table;
             bos.smCachedStimulusTable(4) = int32(master_stimulus_table{:, {'start_frame', 'end_frame'}});
-            [bos.smCachedStimulusTable(5), bos.smCachedStimulusTable(6)] = bot.internal.get_mex_handles();
+            [bos.smCachedStimulusTable(5), bos.smCachedStimulusTable(6)] = bot.internal.fetch_mex_handles();
          end
          
          % - Get the matrix of start and end frames

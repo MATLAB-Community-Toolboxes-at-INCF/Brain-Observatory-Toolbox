@@ -8,9 +8,9 @@ raster/
 
 +bot/Cache
 
-*/*mex*
+*/*.mex*
 
-*mex*
+*.mex*
 
 Cindy/
 

@@ -251,10 +251,54 @@ classdef test < matlab.unittest.TestCase
          p = bot.probe(bom.ephys_probes{1, 'id'});
          
          % - Access LFP data
-         p.get_lfp();
+         p.fetch_lfp();
          
          % - Access CSD data
-         p.get_current_source_density();
+         p.fetch_current_source_density();
+      end
+      
+      function test_lazy_attributes(testCase)
+         %% Test reading lazy attributes
+         bom = bot.manifest('ephys');
+         s = bot.session(bom.ephys_sessions{1, 'id'});
+         
+         s.mean_waveforms;
+         s.optogenetic_stimulation_epochs;
+         s.inter_presentation_intervals;
+         s.running_speed;
+         s.mean_waveforms;
+         s.stimulus_presentations;
+         s.stimulus_conditions;
+         s.session_start_time;
+         s.spike_amplitudes;
+         s.invalid_times;
+      
+         s.num_stimulus_presentations;
+         s.stimulus_names;
+         s.structure_acronyms;
+         s.structurewise_unit_counts;
+      
+         s.stimulus_templates;
+         
+         try
+            s.optogenetic_stimulation_epochs;
+         catch
+            warning('No optogenetic stimulation data was present for this session.');
+         end
+      end
+      
+      function test_ephys_session_methods(testCase)
+         %% Test session data access methods
+         bom = bot.manifest('ephys');
+         s = bot.session(bom.ephys_sessions{1, 'id'});
+
+         s.fetch_stimulus_table();
+         s.fetch_parameter_values_for_stimulus("flashes");
+         s.fetch_stimulus_parameter_values();
+         
+         uid = s.units{1, 'id'};
+         s.presentationwise_spike_counts([0 1], 1, uid);
+         s.presentationwise_spike_times(0, uid);
       end
    end
 end
