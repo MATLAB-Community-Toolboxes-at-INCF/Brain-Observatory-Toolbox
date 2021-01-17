@@ -269,7 +269,6 @@ classdef test < matlab.unittest.TestCase
          s.mean_waveforms;
          s.stimulus_presentations;
          s.stimulus_conditions;
-         s.optogenetic_stimulation_epochs;
          s.session_start_time;
          s.spike_amplitudes;
          s.invalid_times;
@@ -280,6 +279,12 @@ classdef test < matlab.unittest.TestCase
          s.structurewise_unit_counts;
       
          s.stimulus_templates;
+         
+         try
+            s.optogenetic_stimulation_epochs;
+         catch
+            warning('No optogenetic stimulation data was present for this session.');
+         end
       end
       
       function test_ephys_session_methods(testCase)
