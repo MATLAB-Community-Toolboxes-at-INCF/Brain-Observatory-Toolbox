@@ -28,7 +28,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       mean_waveforms;                  % Table mapping unit ids to matrices containing mean spike waveforms for that unit
       stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
       stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
-      optogenetic_stimulation_epochs;  % 
+      optogenetic_stimulation_epochs;  % Table of optogenetic stimulation epochs for this experimental session (if present)
       session_start_time;              % Timestamp of start of session
       spike_amplitudes;                % Table of extracted spike amplitudes for all units
       invalid_times;                   % Table indicating invalid recording times
@@ -384,20 +384,26 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    
    %% Public methods
    methods
-      function epochs = get.stimulus_epochs(self, duration_thresholds)
+      function epochs = get.stimulus_epochs(self)
+         epochs = self.fetch_stimulus_epochs();
+      end
+      
+      function epochs = fetch_stimulus_epochs(self, duration_thresholds)
+         % fetch_stimulus_epochs - METHOD Reports continuous periods of time during which a single kind of stimulus was presented
+         %
+         % Usage: epochs = sess.fetch_stimulus_epochs(<duration_thresholds>)
+         %
+         % `duration_thresholds` is an optional structure, linking stimulus
+         % names to times in seconds. If present in the structure, any
+         % stimulus with the matching name, for which an epoch of that
+         % stimulus shorter than the threshold duration given in the
+         % structure, will be removed from the returned stimulus epochs.
+         % `epochs` will be a table of stimulus epochs for the stimuli in
+         % this session.
          arguments
             self;
             duration_thresholds = struct('spontaneous_activity', 90);
          end
-         % """ Reports continuous periods of time during which a single kind of stimulus was presented
-         %
-         % Parameters
-         % ---------
-         % duration_thresholds : dict, optional
-         %    keys are stimulus names, values are floating point durations in seconds. All epochs with
-         %        - a given stimulus name
-         %        - a duration shorter than the associated threshold
-         %    will be removed from the results
          
          presentations = self.stimulus_presentations;
          diff_indices = nan_intervals(presentations.stimulus_block);
@@ -420,35 +426,20 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       end
       
       function pupil_data = fetch_pupil_data(self, suppress_pupil_data)
+         % fetch_pupil_data - METHOD Return the pupil-tracking data for this session, if present
+         %
+         % Usage: pupil_data = sess.fetch_pupil_data(<suppress_pupil_data>)
+         %
+         % `pupil_data` will be a table containing pupil location data for
+         % the current session.
+         %
+         % `suppress_pupil_data` is an optional flag (default: `true`),
+         % indicating that detailed gaze mapping adat should be excluded
+         % from the returned table.
          arguments
             self;
             suppress_pupil_data logical = true;
          end
-         % """Return a dataframe with eye tracking data
-         %
-         % Parameters
-         % ----------
-         % suppress_pupil_data : bool, optional
-         %    Whether or not to suppress eye gaze mapping data in output
-         %    dataframe, by default True.
-         %
-         % Returns
-         % -------
-         % pd.DataFrame
-         %    Contains columns for eye, pupil and cr ellipse fits:
-         %        *_center_x
-         %        *_center_y
-         %        *_height
-         %        *_width
-         %        *_phi
-         %    May also contain raw/filtered columns for gaze mapping if
-         %    suppress_pupil_data is set to False:
-         %        *_eye_area
-         %        *_pupil_area
-         %        *_screen_coordinates_x_cm
-         %        *_screen_coordinates_y_cm
-         %        *_screen_coordinates_spherical_x_deg
-         %        *_screen_coorindates_spherical_y_deg
          
          n = self.nwb_file;
          pupil_data = n.fetch_pupil_data(suppress_pupil_data);
@@ -488,7 +479,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
          unit_ids;
          binarize logical = false;
          large_bin_size_threshold = 0.001;
-         time_domain_callback = @(x)x;
+         time_domain_callback function_handle = str2func('@(x)x');
       end
       
       % - Filter stimulus_presentations table
@@ -914,10 +905,10 @@ methods (Hidden)
          end
       end
       
-   function fetch_natural_movie_template(self, number)
+   function fetch_natural_movie_template(self, number) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
 
-      well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :);
+      well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :); %#ok<UNRCH>
       
       if size(well_known_files, 1) ~= 1
          error('BOT:NotFound', ...
@@ -935,7 +926,7 @@ methods (Hidden)
       %         return self.rma_engine.stream(download_link)
    end
    
-   function fetch_natural_scene_template(self, number)
+   function fetch_natural_scene_template(self, number) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
       
       %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
@@ -946,7 +937,7 @@ methods (Hidden)
       %         return self.rma_engine.stream(download_link)
    end
    
-   function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals)
+   function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
       
       
@@ -1083,7 +1074,7 @@ methods (Hidden)
       units_table = self.build_units_table(self.nwb_file.fetch_units());
    end
    
-   function units_table = build_units_table(self, units_table)
+   function units_table = build_units_table(self, units_table) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
       
 %       channels = self.fetch_channels_from_nwb;
@@ -1124,14 +1115,14 @@ methods (Hidden)
       %         return table.sort_values(by=['probe_description', 'probe_vertical_position', 'probe_horizontal_position'])
    end
    
-   function output_waveforms = build_nwb1_waveforms(self, mean_waveforms)
+   function output_waveforms = build_nwb1_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
       %         # _build_mean_waveforms() assumes every unit has the same number of waveforms and that a unit-waveform exists
       %         # for all channels. This is not true for NWB 1 files where each unit has ONE waveform on ONE channel
       
       error('BOT:NotImplemented', 'This method is not implemented');
    end
    
-   function output_waveforms = build_mean_waveforms(self, mean_waveforms)
+   function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
    end
    
@@ -1184,7 +1175,7 @@ end
 
 %% Static class methods
 methods(Static)
-   function from_nwb_path(cls, path, nwb_version, api_kwargs)
+   function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
       error('BOT:NotImplemented', 'This method is not implemented');
    end
 end
@@ -1292,7 +1283,7 @@ function domain = build_time_window_domain(bin_edges, offsets, callback)
 arguments
    bin_edges;
    offsets;
-   callback = @(x)x;
+   callback function_handle = str2func('@(x)x');
 end
 
 [domain, offsets] = ndgrid(bin_edges(:), offsets(:));
