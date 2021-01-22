@@ -300,5 +300,23 @@ classdef test < matlab.unittest.TestCase
          s.presentationwise_spike_counts([0 1], 1, uid);
          s.presentationwise_spike_times(0, uid);
       end
+      
+      function test_factory_functions(testCase)
+         %% - Test manifest fetch factory functions
+         exps = bot.fetchExperiments();
+         sess_ephys = bot.fetchSessions('ephys');
+         sess_ophys = bot.fetchSessions('ophys');
+         units = bot.fetchUnits();
+         probes = bot.fetchProbes();
+         channels = bot.fetchChannels();
+         
+         % - Test "get object" factory functions
+         bot.session(sess_ephys{1, 'id'});
+         bot.session(sess_ophys{1, 'id'});
+         bot.experiment(exps{1, 'id'});
+         bot.unit(units{1, 'id'});
+         bot.probe(probes{1, 'id'});
+         bot.channel(channels{1, 'id'});
+      end
    end
 end
