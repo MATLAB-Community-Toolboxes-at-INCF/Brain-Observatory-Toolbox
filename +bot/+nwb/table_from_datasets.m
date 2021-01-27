@@ -49,7 +49,7 @@ cData = {};
 for nDSIndex = numel(cstrVariables):-1:1
    strDSName = cstrVariables{nDSIndex};
    
-   cData{nDSIndex} = h5read(strFile, fullfile(strNWBKey, strDSName));
+   cData{nDSIndex} = h5read(strFile, string(strNWBKey) + "/" + string(strDSName)); % HDF5 paths are always forward slashes
    
    if size(cData{nDSIndex}, 2) > 1
       cData{nDSIndex} = cData{nDSIndex}';
