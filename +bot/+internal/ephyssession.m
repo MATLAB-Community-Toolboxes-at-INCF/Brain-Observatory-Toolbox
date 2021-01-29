@@ -1262,7 +1262,8 @@ end
 
    function insert_idx = find_left(v)
 %       insert_idx = find(sorted_array > v, 1, 'first');
-      [~, insert_idx] = builtin('_ismemberhelper', true, sorted_array > v);
+      insert_idx = builtin('ismembc2', false, sorted_array > v) + 1;
+%       [~, insert_idx] = builtin('_ismemberhelper', true, sorted_array > v);
       if isempty(insert_idx)
          insert_idx = numel(sorted_array) + 1;
       end
