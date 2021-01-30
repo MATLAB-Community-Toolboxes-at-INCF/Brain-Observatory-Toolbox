@@ -44,10 +44,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-      default_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
+      metadata_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
          "sex", "full_genotype", "session_type", ...
          "num_units", "num_probes", "num_channels", ...
          ];
+      contained_objects_property_list = ["probes", "channels", "units"];
       lazy_property_list = ["rig_geometry_data", ...
          "rig_equipment_name", "inter_presentation_intervals", ...
          "running_speed", "mean_waveforms", "stimulus_presentations", ...
@@ -65,7 +66,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
             groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
          else
             % - Default properties
-            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list, 'Metadata');
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list, 'Metadata');
+            groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Contained experimental data');
             
             if obj.is_nwb_cached()
                description = '[cached]';
@@ -78,7 +80,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
                propList.(prop) = description;
             end
             
-            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+            groups(3) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
          end
       end
    end   
@@ -280,8 +282,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       
       function structurewise_unit_counts = get.structurewise_unit_counts(self)
          all_acronyms = self.units.ephys_structure_acronym;
-         is_string = cellfun(@ischar, self.units.ephys_structure_acronym);
-         [ephys_structure_acronym, ~, structurewise_unit_ids] = unique(all_acronyms(is_string));
+         [ephys_structure_acronym, ~, structurewise_unit_ids] = unique(all_acronyms);
          count = accumarray(structurewise_unit_ids, 1);
          
          structurewise_unit_counts = table(ephys_structure_acronym, count);
@@ -293,7 +294,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    methods
       function metadata = get.nwb_metadata(self)
          n = self.nwb_file;
-         metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+         try
+            metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+         catch
+            metadata = [];
+         end
       end
       
       function rig_metadata = get.rig_metadata(self)
@@ -506,11 +511,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       ends = domain(end, :);
       starts = domain(1, :);
       time_diffs = starts(2:end) - ends(1:end-1);
-      overlapping = find(time_diffs < 0);
+      overlapping = find(time_diffs < 0, 1);
       
       if ~isempty(overlapping)
-         warning('BOT:OverlappingIntervals', ['You''ve specified some overlapping time intervals between neighboring rows: \n%s\n', ...
-            'with a maximum overlap of %.2f seconds.'], sprintf('[%d %d]\n', [overlapping; overlapping+1]), abs(min(time_diffs)));
+         warning('BOT:OverlappingIntervals', ['You''ve specified some overlapping time intervals between neighboring rows. \n%s\n', ...
+            'with a maximum overlap of %.2f seconds.']);%, sprintf('[%d %d]\n', [overlapping; overlapping+1]), abs(min(time_diffs)));
       end
       
       % - Build a histogram of spikes
@@ -521,7 +526,9 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    end
    
    function spikes_with_onset = presentationwise_spike_times(self, stimulus_presentation_ids, unit_ids)
-   %   presentationwise_spike_times - METHOD Produce a table associating spike times with units and stimulus presentations
+   % presentationwise_spike_times - METHOD Produce a table associating spike times with units and stimulus presentations
+   %
+   % Usage: spikes_with_onset = sess.presentationwise_spike_times(self, stimulus_presentation_ids, unit_ids)
    %
    %   Parameters
    %   ----------
@@ -559,6 +566,8 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       if ~isempty(unit_ids)
          select_units = ismember(self.units.id, unit_ids);
          units_selected = self.units(select_units, :);
+      else
+         units_selected = self.units;
       end
 
       presentation_times = zeros(size(stimulus_presentations, 1) * 2, 1); %#ok<PROPLC>
@@ -1252,7 +1261,9 @@ end
    end
 
    function insert_idx = find_left(v)
-      insert_idx = find(sorted_array > v, 1, 'first');
+%       insert_idx = find(sorted_array > v, 1, 'first');
+      insert_idx = builtin('ismembc2', false, sorted_array > v) + 1;
+%       [~, insert_idx] = builtin('_ismemberhelper', true, sorted_array > v);
       if isempty(insert_idx)
          insert_idx = numel(sorted_array) + 1;
       end

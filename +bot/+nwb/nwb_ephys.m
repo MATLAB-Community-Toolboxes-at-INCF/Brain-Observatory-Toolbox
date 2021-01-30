@@ -272,12 +272,12 @@ classdef nwb_ephys < handle
       end
       
       function rig_metadata = fetch_rig_metadata(self)
-         if ~bot.nwb.has_path(self.strFile, '/processing/eye_tracking')
+         if ~bot.nwb.has_path(self.strFile, '/processing/eye_tracking_rig_metadata')
             error('BOT:DataNotPresent', 'This session has no rig geometry data.');
          end
          
-         rig_metadata.rig_geometry_data = bot.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/rig_geometry_data');
-         rig_metadata.rig_equipment = h5read(self.strFile, '/processing/eye_tracking/equipment/equipment');         
+         rig_metadata.rig_geometry_data = bot.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking_rig_metadata/rig_geometry_data');
+         rig_metadata.rig_equipment = h5readatt(self.strFile, '/processing/eye_tracking_rig_metadata/eye_tracking_rig_metadata', 'equipment');
       end
       
       function eye_tracking_data = fetch_pupil_data(self, suppress_pupil_data)
@@ -407,6 +407,10 @@ classdef nwb_ephys < handle
       end
       
       function metadata = fetch_nwb_metadata(self)
+         if ~bot.nwb.has_path(self.strFile, '/general/metadata')
+            error('BOT:DataNotPresent', 'This NWB file has no metadata.');
+         end
+         
          metadata = bot.nwb.struct_from_attributes(self.strFile, '/general/metadata');
       end
       
