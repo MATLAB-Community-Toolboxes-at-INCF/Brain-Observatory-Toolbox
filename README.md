@@ -1,12 +1,25 @@
 # Brain-Observatory-Toolbox
-A MATLAB toolbox for interacting with the Allen Brain Observatory datasets \[1\]. Currently the Visual Coding – 2P dataset \[2\] consisting of neural recordings based on two-photon calcium imaging, and the Visual Coding – Neuropixels dataset consisting of neural recordings based on large-scale electrophysiological recordings are supported.
+A MATLAB toolbox for accessing and working with the Allen Brain Observatory \[1\] neural recording datasets
 
-The Brain Observatory Toolbox (BOT) enables users to conveniently work with the experimental neural datasets available from the Allen Brain Observatory. The BOT helps you search and filter the datasets; download and manage the data; and provides useful methods to assist in analysing neural responses and behavioural data.
+The Allen Brain Observatory resource  comprises extensive public datasets of neural activity in the mouse visual cortex during visual stimulus presentation. These datasets are based on cellular-scale experimental neural recordings conducted at the Allen Institute for Brain Science: 
+* the Visual Coding – 2P dataset \[2\], based on two-photon calcium imaging
+* the Visual Coding – Neuropixels dataset \[3\], based on large-scale electrophysiological probes
+
+The Brain Observatory Toolbox (BOT) provides a uniform interface allowing users to conveniently access and work with these two experimental neural datasets.
+
+The BOT interface provides:
+* Retrieval of public Visual Coding dataset directories describing contents and metadata
+* Tabular data operations to inspect and select dataset items
+* Object interfaces to inspect individual dataset items and retrieve underlying experimental data
+* Useful methods to assist in analysing neural responses and behavioural data 
+* Caching of retrieved directories and data, for best possible initial and repeat performance
 
 ## Installation
 
-1. Clone the Brain Observatory Toolbox repository using `git`, or download a release as a `.zip` file.
-2. Add the base directory to the MATLAB path. Note it is not needed to add the subdirectory `+bot` to the MATLAB path.
+1. Download the latest release as a `.zip` file.
+1. Unzip using preferred system tool. 
+1. Add the base directory of unzipped contents to the MATLAB path.  
+<sup>Note it is unnecessary to add subdirectories to the MATLAB path; all contents of the `+bot` package are made available by adding the base directory</sup>
 
 #### Optional requirements
 
