@@ -33,6 +33,8 @@ The toolbox classes are contained within the `bot` namespace. Once the toolbox i
 
 `bot.fetchSessions()` — Retrieve a table of available EPhys or OPhys experimental sessions.
 
+`bot.fetchExperiments()` — Retrieve a table of available OPhys experiments.
+
 `bot.fetchProbes()` — Retrieve a table of individual probes used in the EPhys experiments.
 
 `bot.fetchUnits()` — Retrieve a table of individual units (putative neurons) recorded in the EPhys experiments.
@@ -40,6 +42,8 @@ The toolbox classes are contained within the `bot` namespace. Once the toolbox i
 Analogous factory functions are used to obtain individual experiments or units, which can be manipulated to obtain experimental data:
 
 `bot.session(session_id)` — Retrieve a single experimental session.
+
+`bot.experiment(experiment_id)` — Retrieve a single experiment.
 
 `bot.probe(probe_id)` — Retrieve a single experimental probe.
 
@@ -50,7 +54,7 @@ The toolbox manages downloading and caching of experimental data, in a "lazy acc
 ### Example usage
 See the [Ophys Quick Start Example](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Ff8904f7a-8904-2deb-4404-99caae194d40%2Ffiles%2FOphysQuickStart.mlx&embed=web) for an illustration of how these toolbox classes enable retrieving, filtering, and acccessing the Visual Coding – 2P dataset [2] from the Allen Brain Observatory. See also the Ophys demo for a more detailed dive into analysis of the 2P dataset.
 
-See the Ephys Demo for examples of how to access, filter and analyse the electrophysiology data from the Visual Coding – Neuropixels dataset [3].
+See the Ephys Quick Start Example and the Ephys Demo for examples of how to access, filter and analyse the electrophysiology data from the Visual Coding – Neuropixels dataset [3].
 
 ----
 #### References
