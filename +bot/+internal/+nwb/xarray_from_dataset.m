@@ -12,7 +12,7 @@ function tTable = xarray_from_dataset(strFile, strNWBKey, strDataKey, strRowKey,
 %
 
 if nargin < 5
-   help bot.nwb.xarray_from_dataset;
+   help bot.internal.nwb.xarray_from_dataset;
    error('BOT:Usage', 'Incorrect usage.');
 end
 

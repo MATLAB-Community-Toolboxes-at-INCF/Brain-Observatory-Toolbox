@@ -1,6 +1,6 @@
-%% CLASS bot.internal.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
+%% CLASS bot.internal.items.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
-classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & matlab.mixin.CustomDisplay
+classdef ephyssession < bot.internal.items.ephysitem & bot.internal.items.session_base & matlab.mixin.CustomDisplay
    %% Properties
    properties (SetAccess = private)
       units;                          % A Table of all units in this session
@@ -91,7 +91,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       nwb_metadata;
       rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
 
-      nwb_file bot.nwb.nwb_ephys = bot.nwb.nwb_ephys();                % NWB file acess object
+      nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
       
       NON_STIMULUS_PARAMETERS = [
          "start_time", ...
@@ -128,11 +128,11 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
    %% Constructor
    methods
       function session = ephyssession(session_id, manifest)
-         % bot.internal.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+         % bot.internal.items.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.internal.ephyssession(id, manifest)
-         %        vbsObj = bot.internal.ephyssession(ids, manifest)
-         %        bsObj = bot.internal.ephyssession(session_table_row, manifest)
+         % Usage: bsObj = bot.internal.items.ephyssession(id, manifest)
+         %        vbsObj = bot.internal.items.ephyssession(ids, manifest)
+         %        bsObj = bot.internal.items.ephyssession(session_table_row, manifest)
          %
          % `manifest` is the EPhys manifest object. `id` is the session ID
          % of an EPhys experimental session. Optionally, a vector `ids` of
@@ -150,7 +150,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
          % - Handle a vector of session IDs
          if ~istable(session_id) && numel(session_id) > 1
             for index = numel(session_id):-1:1
-               session(session_id) = bot.internal.ephyssession(session_id(index), manifest);
+               session(session_id) = bot.internal.items.ephyssession(session_id(index), manifest);
             end
             return;
          end
@@ -161,7 +161,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
          
          % - Ensure that we were given an EPhys session
          if session.metadata.type ~= "EPhys"
-            error('BOT:Usage', '`bot.internal.ephyssession` objects may only refer to EPhys experimental sessions.');
+            error('BOT:Usage', '`bot.internal.items.ephyssession` objects may only refer to EPhys experimental sessions.');
          end
          
          % - Assign associated table rows
@@ -176,7 +176,7 @@ classdef ephyssession < bot.internal.ephysitem & bot.internal.session_base & mat
       function nwb = get.nwb_file(self)
          % - Retrieve and cache the NWB file
          if ~self.in_cache('nwb_file')
-            self.property_cache.nwb_file = bot.nwb.nwb_ephys(self.EnsureCached());
+            self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.EnsureCached());
          end
          
          % - Return an NWB file access object

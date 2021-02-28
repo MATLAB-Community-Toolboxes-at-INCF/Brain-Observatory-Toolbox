@@ -1,4 +1,4 @@
-classdef ephyschannel < bot.internal.ephysitem
+classdef ephyschannel < bot.internal.items.ephysitem
    properties (SetAccess = private)
       units;
       session;
@@ -15,7 +15,7 @@ classdef ephyschannel < bot.internal.ephysitem
          % - Handle a vector of channel IDs
          if ~istable(channel_id) && (numel(channel_id) > 1)
             for nIndex = numel(channel_id):-1:1
-               channel(nIndex) = bot.internal.ephyschannel(channel_id(nIndex), oManifest);
+               channel(nIndex) = bot.internal.items.ephyschannel(channel_id(nIndex), oManifest);
             end
             return;
          end

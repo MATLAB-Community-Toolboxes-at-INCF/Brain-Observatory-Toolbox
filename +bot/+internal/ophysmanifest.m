@@ -28,7 +28,7 @@
 %                sSessionInfo: [1x1 struct]
 %     local_nwb_file_location: []
 %
-% (See documentation for the `bot.internal.ophyssession` class for more information)
+% (See documentation for the `bot.internal.items.ophyssession` class for more information)
 %
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 % [2] Copyright 2015 Allen Brain Atlas API. Allen Brain Observatory. Available from: brain-map.org/api/index.html

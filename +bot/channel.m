@@ -13,4 +13,4 @@ function new_channel = channel(channel_id)
 ephys_manifest = bot.internal.manifest('ephys');
 
 % - Return the channel object
-new_channel = bot.internal.ephyschannel(channel_id, ephys_manifest);
+new_channel = bot.internal.items.ephyschannel(channel_id, ephys_manifest);

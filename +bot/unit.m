@@ -13,4 +13,4 @@ function new_unit = unit(unit_id)
 ephys_manifest = bot.internal.manifest('ephys');
 
 % - Return the unit object
-new_unit = bot.internal.ephysunit(unit_id, ephys_manifest);
+new_unit = bot.internal.items.ephysunit(unit_id, ephys_manifest);

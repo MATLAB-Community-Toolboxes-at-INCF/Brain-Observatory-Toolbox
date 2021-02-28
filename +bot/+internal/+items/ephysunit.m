@@ -1,4 +1,4 @@
-classdef ephysunit < bot.internal.ephysitem
+classdef ephysunit < bot.internal.items.ephysitem
    properties (SetAccess = private)
       session;
       channel;
@@ -15,7 +15,7 @@ classdef ephysunit < bot.internal.ephysitem
          % - Handle a vector of unit IDs
          if ~istable(unit_id) && (numel(unit_id) > 1)
             for nIndex = numel(unit_id):-1:1
-               unit(nIndex) = bot.internal.ephysunit(unit_id(nIndex), oManifest);
+               unit(nIndex) = bot.internal.items.ephysunit(unit_id(nIndex), oManifest);
             end
             return;
          end

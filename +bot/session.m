@@ -12,15 +12,15 @@
 % Alternatively, a table row from a session manifest can be provided, and
 % the corresponding session object will be returned.
 %
-% This function returns lightweight `bot.internal.ophyssession` and
-% `bot.internal.ephyssession` objects, containing only metadata about an
+% This function returns lightweight `bot.internal.items.ophyssession` and
+% `bot.internal.items.ephyssession` objects, containing only metadata about an
 % experimental session. No data will be downloaded unless the object is
 % inspected.
 
 function new_sess = session(session_id)
 
 if nargin == 0
-   new_sess = bot.internal.session_base;
+   new_sess = bot.internal.items.session_base;
    return;
 end
 
@@ -40,11 +40,11 @@ if numel(session_id) > 1
 end
 
 % - Get the table rows for this session
-manifest_table_row = bot.internal.session_base.find_manifest_row(session_id);
+manifest_table_row = bot.internal.items.session_base.find_manifest_row(session_id);
 
 % - Build a session object from this single ID and return
 if manifest_table_row.type == "OPhys"
-   new_sess = bot.internal.ophyssession(manifest_table_row);
+   new_sess = bot.internal.items.ophyssession(manifest_table_row);
 else
-   new_sess = bot.internal.ephyssession(manifest_table_row);
+   new_sess = bot.internal.items.ephyssession(manifest_table_row);
 end

@@ -1,4 +1,4 @@
-%% bot.internal.session_base — CLASS Base class for experimental sessionss
+%% bot.internal.items.session_base — CLASS Base class for experimental sessionss
 
 classdef session_base < handle
    properties (Access = protected)
@@ -56,7 +56,7 @@ classdef session_base < handle
    end   
    methods (Static)
       function manifest_row = find_manifest_row(id)
-         sess = bot.internal.session_base;
+         sess = bot.internal.items.session_base;
          
          % - Were we provided a table?
          if istable(id)

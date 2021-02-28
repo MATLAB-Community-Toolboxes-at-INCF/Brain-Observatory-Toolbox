@@ -110,25 +110,25 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
          
-         % - Create some bot.internal.ophyssession objects
-         bot.internal.ophyssession(vIDs(1));
+         % - Create some bot.internal.items.ophyssession objects
+         bot.internal.items.ophyssession(vIDs(1));
          bot.session(vIDs(1:2));
-         bot.internal.ophyssession(bosf.valid_session_table(1, :));
+         bot.internal.items.ophyssession(bosf.valid_session_table(1, :));
       end
       
       function testCacheSessionObject(testCase)
          %% Test obtaining an OPhys session object data from the cache
-         % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(704298735);
+         % - Create a bot.internal.items.ophyssession object
+         s = bot.internal.items.ophyssession(704298735);
          
          % - Ensure the data is in the cache
          s.EnsureCached();
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.internal.ophyssession class for OPhys data
-         % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(496934409);
+         %% Test data access methods of the bot.internal.items.ophyssession class for OPhys data
+         % - Create a bot.internal.items.ophyssession object
+         s = bot.internal.items.ophyssession(496934409);
 
          % - Test summary methods
          vnCellIDs = s.cell_specimen_ids;
@@ -157,8 +157,8 @@ classdef test < matlab.unittest.TestCase
       
       function testStimulusExtraction(testCase)
          %% Test OPhys session stimulus extraction methods
-         % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(528402271);
+         % - Create a bot.internal.items.ophyssession object
+         s = bot.internal.items.ophyssession(528402271);
 
          % - Get a vector of fluorescence frame IDs
          vnFrameIDs = 1:numel(s.fluorescence_timestamps);
@@ -185,7 +185,7 @@ classdef test < matlab.unittest.TestCase
          s.spontaneous_activity_stimulus_table;
          
          % - Get an OPhys session with sparse noise
-         s = bot.internal.ophyssession(566752133);
+         s = bot.internal.items.ophyssession(566752133);
          
          % - Get the sparse noise stimulus template
          s.fetch_stimulus_template('locally_sparse_noise_4deg');

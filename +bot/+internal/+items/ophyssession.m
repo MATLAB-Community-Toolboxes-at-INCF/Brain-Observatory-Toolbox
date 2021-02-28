@@ -1,4 +1,4 @@
-%% bot.internal.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
+%% bot.internal.items.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
 %
 % This is the main interface to access data from an Allen Brain Observatory
 % experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
@@ -63,7 +63,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
+classdef ophyssession < bot.internal.items.session_base & matlab.mixin.CustomDisplay
    
    %% - Default visible properties
    properties (SetAccess = private)
@@ -167,11 +167,11 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
    %% - Constructor
    methods
       function bsObj = ophyssession(id)
-         % bot.internal.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+         % bot.internal.items.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.internal.ophyssession(id)
-         %        vbsObj = bot.internal.ophyssession(vids)
-         %        bsObj = bot.internal.ophyssession(tSessionRow)
+         % Usage: bsObj = bot.internal.items.ophyssession(id)
+         %        vbsObj = bot.internal.items.ophyssession(vids)
+         %        bsObj = bot.internal.items.ophyssession(tSessionRow)
          
          if nargin == 0
             return;
@@ -180,7 +180,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
          % - Handle a vector of session IDs
          if ~istable(id) && numel(id) > 1
             for nIndex = numel(id):-1:1
-               bsObj(id) = bot.internal.ophyssession(id(nIndex));
+               bsObj(id) = bot.internal.items.ophyssession(id(nIndex));
             end
             return;
          end
@@ -191,7 +191,7 @@ classdef ophyssession < bot.internal.session_base & matlab.mixin.CustomDisplay
 
          % - Ensure that we were given an OPhys session
          if bsObj.metadata.type ~= "OPhys"
-            error('BOT:Usage', '`bot.internal.ophyssession` objects may only refer to OPhys experimental sessions.');
+            error('BOT:Usage', '`bot.internal.items.ophyssession` objects may only refer to OPhys experimental sessions.');
          end
       end
    end

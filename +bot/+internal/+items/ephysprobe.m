@@ -1,4 +1,4 @@
-classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
+classdef ephysprobe < bot.internal.items.ephysitem & matlab.mixin.CustomDisplay
    properties (SetAccess = private)
       session;       % `bot.session` object containing this probe
       channels;      % Table of channels recorded from this probe
@@ -54,7 +54,7 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
          % - Handle a vector of probe IDs
          if ~istable(probe_id) && (numel(probe_id) > 1)
             for nIndex = numel(probe_id):-1:1
-               probe(nIndex) = bot.internal.ephysprobe(probe_id(nIndex), oManifest);
+               probe(nIndex) = bot.internal.items.ephysprobe(probe_id(nIndex), oManifest);
             end
             return;
          end
@@ -130,7 +130,7 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
          % this probe. `timestamps` will be a Tx1 vector of timestamps,
          % corresponding to each row in `lfp`.
          if ~self.in_cache('lfp')
-            nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
+            nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
             [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.fetch_lfp();
          end
          
@@ -151,7 +151,7 @@ classdef ephysprobe < bot.internal.ephysitem & matlab.mixin.CustomDisplay
          % horizontal and vertical positions corresponding to each column
          % of `csd`.
          if ~self.in_cache('csd')
-            nwb_probe = bot.nwb.nwb_probe(self.EnsureCached());
+            nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
             [self.property_cache.csd, ...
                self.property_cache.csd_timestamps, ...
                self.property_cache.horizontal_position, ...
