@@ -26,8 +26,8 @@ classdef ephysprobe < bot.internal.items.ephysitem & matlab.mixin.CustomDisplay
             groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
          else
             % - Default properties
-            groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list, 'Metadata');
-            groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Contained experimental data');
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list);
+            groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Linked dataset items');
             
             if obj.is_nwb_cached()
                description = '[cached]';
@@ -40,7 +40,7 @@ classdef ephysprobe < bot.internal.items.ephysitem & matlab.mixin.CustomDisplay
                propList.(prop) = description;
             end
             
-            groups(3) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+            groups(3) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
          end
       end
    end

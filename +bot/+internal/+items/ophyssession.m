@@ -114,7 +114,7 @@ classdef ophyssession < bot.internal.items.session_base & matlab.mixin.CustomDis
             groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
          else
             % - Default properties
-            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list, 'Metadata');
+            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list);
             
             if obj.is_nwb_cached()
                description = '[cached]';
@@ -127,7 +127,7 @@ classdef ophyssession < bot.internal.items.session_base & matlab.mixin.CustomDis
                propList.(prop) = description;
             end
             
-            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'Lazy loading');
+            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
          end
       end
    end
