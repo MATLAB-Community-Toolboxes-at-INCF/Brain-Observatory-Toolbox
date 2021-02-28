@@ -260,7 +260,7 @@ classdef ophyssessionfilter < handle
          % Usage: vbsSessions = get_filtered_sessions(bosf)
          
          % - Get the current table of filtered sessions, construct objects
-         vbsSessions = bot.util.ophyssession(bosf.filtered_session_table.id);
+         vbsSessions = bot.session(bosf.filtered_session_table.id);
       end
       
       %% -- Getter methods for dependent filtered sessions properties
