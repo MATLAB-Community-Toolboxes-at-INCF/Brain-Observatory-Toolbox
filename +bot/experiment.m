@@ -9,4 +9,4 @@
 function new_experiment = experiment(experiment_id)
 
 % - Return the experiment object
-new_experiment = bot.internal.items.experiment(experiment_id);
+new_experiment = bot.items.experiment(experiment_id);

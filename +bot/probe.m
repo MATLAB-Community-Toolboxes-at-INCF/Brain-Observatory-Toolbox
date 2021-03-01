@@ -12,4 +12,4 @@ function new_probe = probe(probe_id)
 ephys_manifest = bot.internal.manifest('ephys');
 
 % - Return the probe object
-new_probe = bot.internal.items.ephysprobe(probe_id, ephys_manifest);
+new_probe = bot.items.ephysprobe(probe_id, ephys_manifest);
