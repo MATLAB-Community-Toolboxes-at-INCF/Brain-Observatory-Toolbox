@@ -19,7 +19,7 @@ classdef session_base < handle
       end
    end
    
-   %% Public methods
+   %% PUBLIC METHODS
    
    methods
       function is_cached = is_nwb_cached(bos)
@@ -46,8 +46,8 @@ classdef session_base < handle
    end   
    
    
-   %% Hidden methods
-   methods
+   %% HIDDEN METHODS
+   methods (Hidden)
       function strCacheFile = EnsureCached(bos)
          % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
          %
@@ -168,6 +168,13 @@ classdef session_base < handle
          end
       end
    end    
+   
+   % semi-abstract methods --> meant to be overridden
+   methods (Hidden)
+       function nwb_url = nwb_url(~)  
+           nwb_url = '';
+       end
+   end
 
    
    methods (Static, Hidden)

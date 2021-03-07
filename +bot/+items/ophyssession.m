@@ -196,24 +196,6 @@ classdef ophyssession < bot.items.session_base & matlab.mixin.CustomDisplay
       end
    end
    
-   methods      
-   function nwb_url = nwb_url(bos)
-         % nwb_url - METHOD Get the cloud URL for the NWB data file corresponding to this session
-         %
-         % Usage: nwb_url = nwb_url(bos)
-         
-         % - Get well known files
-         well_known_files = bos.metadata.well_known_files;
-         
-         % - Find (first) NWB file
-         file_types = [well_known_files.well_known_file_type];
-         type_names = {file_types.name};
-         nwb_file_index = find(cellfun(@(c)strcmp(c, 'NWBOphys'), type_names), 1, 'first');
-         
-         % - Build URL
-         nwb_url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
-      end
-   end
 
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
    methods
@@ -1313,9 +1295,32 @@ classdef ophyssession < bot.items.session_base & matlab.mixin.CustomDisplay
          end
       end
    end
+   
+   %% HIDDEN METHODS
+   
+   % semi-abstract method implementations
+   methods (Hidden)
+       function nwb_url = nwb_url(bos)
+           % nwb_url - METHOD Get the cloud URL for the NWB data file corresponding to this session
+           %
+           % Usage: nwb_url = nwb_url(bos)
+           
+           % - Get well known files
+           well_known_files = bos.metadata.well_known_files;
+           
+           % - Find (first) NWB file
+           file_types = [well_known_files.well_known_file_type];
+           type_names = {file_types.name};
+           nwb_file_index = find(cellfun(@(c)strcmp(c, 'NWBOphys'), type_names), 1, 'first');
+           
+           % - Build URL
+           nwb_url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
+       end
+   end
+   
 end
 
-%% - Private utility functions
+%% - Local utility functions
 
 function stimulus_table = fetch_abstract_feature_series_stimulus_table(nwb_file, stimulus_name)
 % fetch_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
