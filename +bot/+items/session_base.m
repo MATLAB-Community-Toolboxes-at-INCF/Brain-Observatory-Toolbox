@@ -1,23 +1,46 @@
 %% bot.items.session_base — CLASS Base class for experimental sessionss
 
-classdef session_base < handle
+classdef session_base < handle & bot.items.internal.NWBItem
+ 
 
-  
-   %% PUBLIC INTERFACE  
+   %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)  
+    
+   properties (Dependent)
+       nwbURL;
+       nwbIsCached; 
+   end
+   
+   % Property Access Methods
    methods
-      function is_cached = is_nwb_cached(bos)
-         % is_nwb_cached - METHOD Check if the NWB file corresponding to this session is already cached
-         %
-         % Usage: is_cached = is_nwb_cached(bos)
-         is_cached =  bos.bot_cache.IsURLInCache(bos.nwb_url());
-      end
-   end  
-
+       function tf = get.nwbIsCached(bos)
+           tf = bos.bot_cache.IsURLInCache(bos.nwbURL);
+       end
    
-   %% SEMI-PUBLIC INTERFACE
-   % This is a "semi-abstract" class (concrete, but intended to be subclassed)
+       function url = get.nwbURL(bos)
+          %Get the cloud URL for the NWB data file corresponding to this session
+           
+           % - Get well known files
+           well_known_files = bos.metadata.well_known_files;
+           
+           % - Find (first) NWB file
+           file_types = [well_known_files.well_known_file_type];
+           type_names = {file_types.name};
+           nwb_file_index = find(cellfun(@(c)strcmp(c, bos.NWB_WELL_KNOWN_FILE_PREFIX.char()), type_names), 1, 'first');
+           
+           % - Build URL
+           url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
+       end
+   end
    
-   % semi-abstract constructor --> not meant to be called
+   
+   %% SUBCLASS INTERFACE
+   
+   properties (Abstract, Constant)
+       NWB_WELL_KNOWN_FILE_PREFIX (1,1) string
+   end
+       
+   
+   % requisite zero-arg constructor
    methods
       function sess = session_base(~)
          % bot.session_base - CLASS Base class for experimental sessions
@@ -27,17 +50,10 @@ classdef session_base < handle
             return;
          end
       end
-   end
-   
-   % semi-abstract methods --> meant to be overridden
-   methods (Hidden)
-       function nwb_url = nwb_url(~)  
-           nwb_url = '';
-       end
-   end
+   end  
 
    
-   %% HIDDEN INTERFACE
+   %% HIDDEN INTERFACE - Properties
    
    properties (Access = protected)
       bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
@@ -46,7 +62,9 @@ classdef session_base < handle
       local_nwb_file_location;
    end
    
+   %% HIDDEN INTERFACE - Methods
    
+ 
    methods (Hidden)
       function strCacheFile = EnsureCached(bos)
          % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
@@ -171,50 +189,50 @@ classdef session_base < handle
    
 
    
-   methods (Static, Hidden)
-      function manifest_row = find_manifest_row(id)
-         sess = bot.items.session_base;
-         
-         % - Were we provided a table?
-         if istable(id)
-            session_row = id;
-            
-            % - Check for an 'id' column
-            if ~ismember(session_row.Properties.VariableNames, 'id')
-               error('BOT:InvalidSessionTable', ...
-                  'The provided table does not describe an experimental session.');
-            end
-            
-            % - Extract the session IDs
-            id = session_row.id;
-         end
-         
-         % - Check for a numeric argument
-         if ~isnumeric(id)
-            help bot.session;
-            error('BOT:Usage', ...
-               'The session ID must be numeric.');
-         end
-         
-         % - Find these sessions in the sessions manifests
-         matching_ophys_session = sess.ophys_manifest.ophys_sessions.id == id;
-         
-         % - Extract the appropriate table row from the manifest
-         if any(matching_ophys_session)
-            manifest_row = sess.ophys_manifest.ophys_sessions(matching_ophys_session, :);
-         else
-            matching_ephys_session = sess.ephys_manifest.ephys_sessions.id == id;
-            manifest_row = sess.ephys_manifest.ephys_sessions(matching_ephys_session, :);
-         end
-         
-         % - Check to see if the session exists
-         if ~exist('manifest_row', 'var')
-            error('BOT:InvalidSessionID', ...
-               'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
-               id);
-         end
-      end
-   end   
+%   methods (Static, Hidden)
+%       function manifest_row = find_manifest_row(id)
+%          sess = bot.items.session_base;
+%          
+%          % - Were we provided a table?
+%          if istable(id)
+%             session_row = id;
+%             
+%             % - Check for an 'id' column
+%             if ~ismember(session_row.Properties.VariableNames, 'id')
+%                error('BOT:InvalidSessionTable', ...
+%                   'The provided table does not describe an experimental session.');
+%             end
+%             
+%             % - Extract the session IDs
+%             id = session_row.id;
+%          end
+%          
+%          % - Check for a numeric argument
+%          if ~isnumeric(id)
+%             help bot.session;
+%             error('BOT:Usage', ...
+%                'The session ID must be numeric.');
+%          end
+%          
+%          % - Find these sessions in the sessions manifests
+%          matching_ophys_session = sess.ophys_manifest.ophys_sessions.id == id;
+%          
+%          % - Extract the appropriate table row from the manifest
+%          if any(matching_ophys_session)
+%             manifest_row = sess.ophys_manifest.ophys_sessions(matching_ophys_session, :);
+%          else
+%             matching_ephys_session = sess.ephys_manifest.ephys_sessions.id == id;
+%             manifest_row = sess.ephys_manifest.ephys_sessions(matching_ephys_session, :);
+%          end
+%          
+%          % - Check to see if the session exists
+%          if ~exist('manifest_row', 'var')
+%             error('BOT:InvalidSessionID', ...
+%                'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
+%                id);
+%          end
+%       end
+%   end   
    
    % property access methods
    methods 
@@ -226,7 +244,7 @@ classdef session_base < handle
             local_nwb_file_location = [];
          else
             % - Get the local file location for the session NWB URL
-            local_nwb_file_location = bos.bot_cache.ccCache.CachedFileForURL(bos.nwb_url());
+            local_nwb_file_location = bos.bot_cache.ccCache.CachedFileForURL(bos.nwbURL);
          end
       end
    end   

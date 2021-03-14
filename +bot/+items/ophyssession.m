@@ -63,12 +63,13 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession < bot.items.session_base & matlab.mixin.CustomDisplay
+classdef ophyssession < bot.items.session_base 
    
+   %% USER INTERFACE 
    %% - Default visible properties
    properties (SetAccess = private)
-      metadata;                     % Session metadata extracted from manifest table
-      id;                           % Session ID
+      %metadata;                     % Session metadata extracted from manifest table
+      %id;                           % Session ID
       session_type;                 % Type of experimental session (i.e. set of stimuli)
    end
    
@@ -96,9 +97,21 @@ classdef ophyssession < bot.items.session_base & matlab.mixin.CustomDisplay
       running_speed;                % Tx1 vector containing instantaneous running speeds for each fluorescence fram
    end
    
-   properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-      default_property_list = ["metadata", "id", "session_type"];
-      lazy_property_list = ["nwb_metadata", "fluorescence_timestamps", ...
+   
+   %% SUPERCLASS IMPLEMENTATION (bot.items.session_base)
+   properties (Constant)
+       NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
+   end
+   
+   %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+     properties (SetAccess = immutable, GetAccess = protected)
+        CORE_PROPERTIES_EXTENDED = "session_type";
+        LINKED_ITEM_PROPERTIES = [];
+     end
+     
+    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
+    properties (SetAccess = immutable, GetAccess = protected)
+        NWB_FILE_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
          "demixed_traces", "fluorescence_traces", "neuropil_r", ...
          "neuropil_traces", "corrected_fluorescence_traces", ...
@@ -106,33 +119,9 @@ classdef ophyssession < bot.items.session_base & matlab.mixin.CustomDisplay
          "roi_ids", "stimulus_list", "motion_correction", ...
          "pupil_location", "pupil_size", "roi_mask", "running_speed", ...
          ];
-   end
+    end    
    
-   methods (Access = protected)
-      function groups = getPropertyGroups(obj)
-         if ~isscalar(obj)
-            groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
-         else
-            % - Default properties
-            groups(1) = matlab.mixin.util.PropertyGroup(obj.default_property_list);
-            
-            if obj.is_nwb_cached()
-               description = '[cached]';
-            else
-               description = '[not cached]';
-            end
-            
-            propList = struct();
-            for prop = obj.lazy_property_list
-               propList.(prop) = description;
-            end
-            
-            groups(2) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
-         end
-      end
-   end
-   
-   %% - Private properties
+   %% HIDDEN INTERFACE - roperties
    properties (Hidden = true, SetAccess = private, Transient = true)
       strSupportedPipelineVersion = '2.0';               % Pipeline version supported by this class
       strPipelineDataset = 'brain_observatory_pipeline'; % Key in NWB file containing the analysed data
@@ -1294,29 +1283,7 @@ classdef ophyssession < bot.items.session_base & matlab.mixin.CustomDisplay
             end
          end
       end
-   end
-   
-   %% HIDDEN METHODS
-   
-   % semi-abstract method implementations
-   methods (Hidden)
-       function nwb_url = nwb_url(bos)
-           % nwb_url - METHOD Get the cloud URL for the NWB data file corresponding to this session
-           %
-           % Usage: nwb_url = nwb_url(bos)
-           
-           % - Get well known files
-           well_known_files = bos.metadata.well_known_files;
-           
-           % - Find (first) NWB file
-           file_types = [well_known_files.well_known_file_type];
-           type_names = {file_types.name};
-           nwb_file_index = find(cellfun(@(c)strcmp(c, 'NWBOphys'), type_names), 1, 'first');
-           
-           % - Build URL
-           nwb_url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
-       end
-   end
+   end    
    
 end
 

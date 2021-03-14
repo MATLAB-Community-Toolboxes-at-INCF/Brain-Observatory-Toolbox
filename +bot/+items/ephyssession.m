@@ -1,6 +1,6 @@
 %% CLASS bot.items.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
-classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mixin.CustomDisplay
+classdef ephyssession < bot.items.session_base 
   
     
     %% USER INTERFACE - Properties
@@ -661,36 +661,24 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
         end
     end         
     
-    %% SUPERCLASS IMPLEMENTATION (bot.items.session_base)         
-    % implementation for a semi-abstract class pattern 
-        
-    methods (Hidden)
-        function nwb_url = nwb_url(bos)
-            % nwb_url - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
-            %
-            % Usage: nwb_url = nwb_url(bos)
-            
-            % - Get well known files
-            vs_well_known_files = bos.metadata.well_known_files;
-            
-            % - Find (first) NWB file
-            vsTypes = [vs_well_known_files.well_known_file_type];
-            cstrTypeNames = {vsTypes.name};
-            nwb_file_index = find(cellfun(@(c)strcmp(c, 'EcephysNwb'), cstrTypeNames), 1, 'first');
-            
-            % - Build URL
-            nwb_url = [bos.bot_cache.strABOBaseUrl vs_well_known_files(nwb_file_index).download_link];
-        end
-    end
     
-    %% SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
-     properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-        metadata_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
+    %% SUPERCLASS IMPLEMENTATION (bot.items.session_base)
+   properties (Constant)
+       NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
+   end
+   
+    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+     properties (Hidden = true, SetAccess = immutable, GetAccess = protected)
+        CORE_PROPERTIES_EXTENDED = ["specimen_name", "age_in_days", ...
             "sex", "full_genotype", "session_type", ...
             "num_units", "num_probes", "num_channels", ...
             ];
-        contained_objects_property_list = ["probes", "channels", "units"];
-        lazy_property_list = ["rig_geometry_data", ...
+        LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
+     end
+     
+    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
+    properties (SetAccess = immutable, GetAccess = protected)
+        NWB_FILE_PROPERTIES = ["rig_geometry_data", ...
             "rig_equipment_name", "inter_presentation_intervals", ...
             "running_speed", "mean_waveforms", "stimulus_presentations", ...
             "stimulus_conditions", "optogenetic_stimulation_epochs", ...
@@ -699,32 +687,7 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             "structurewise_unit_counts", "stimulus_templates", ...
             "stimulus_epochs", ...
             ];
-    end
-    
-    methods (Access = protected)
-        function groups = getPropertyGroups(obj)
-            if ~isscalar(obj)
-                groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
-            else
-                % - Default properties
-                groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list);
-                groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Linked dataset items');
-                
-                if obj.is_nwb_cached()
-                    description = '[cached]';
-                else
-                    description = '[not cached]';
-                end
-                
-                propList = struct();
-                for prop = obj.lazy_property_list
-                    propList.(prop) = description;
-                end
-                
-                groups(3) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
-            end
-        end
-    end
+    end    
     
     %% HIDDEN INTERFACE - TBD public in future
     
@@ -887,6 +850,7 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
                 return;
             end
             
+            % Load associated singleton
             if ~exist('manifest', 'var') || isempty(manifest)
                 manifest = bot.internal.ephysmanifest.instance();
             end
