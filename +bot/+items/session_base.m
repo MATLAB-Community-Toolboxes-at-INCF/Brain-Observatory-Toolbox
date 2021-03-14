@@ -1,13 +1,23 @@
 %% bot.items.session_base — CLASS Base class for experimental sessionss
 
 classdef session_base < handle
-   properties (Access = protected)
-      bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
-      ophys_manifest = bot.internal.ophysmanifest.instance();              % Private handle to the OPhys data manifest
-      ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
-      local_nwb_file_location;
-   end
+
+  
+   %% PUBLIC INTERFACE  
+   methods
+      function is_cached = is_nwb_cached(bos)
+         % is_nwb_cached - METHOD Check if the NWB file corresponding to this session is already cached
+         %
+         % Usage: is_cached = is_nwb_cached(bos)
+         is_cached =  bos.bot_cache.IsURLInCache(bos.nwb_url());
+      end
+   end  
+
    
+   %% SEMI-PUBLIC INTERFACE
+   % This is a "semi-abstract" class (concrete, but intended to be subclassed)
+   
+   % semi-abstract constructor --> not meant to be called
    methods
       function sess = session_base(~)
          % bot.session_base - CLASS Base class for experimental sessions
@@ -19,34 +29,24 @@ classdef session_base < handle
       end
    end
    
-   %% PUBLIC METHODS
+   % semi-abstract methods --> meant to be overridden
+   methods (Hidden)
+       function nwb_url = nwb_url(~)  
+           nwb_url = '';
+       end
+   end
+
    
-   methods
-      function is_cached = is_nwb_cached(bos)
-         % is_nwb_cached - METHOD Check if the NWB file corresponding to this session is already cached
-         %
-         % Usage: is_cached = is_nwb_cached(bos)
-         is_cached =  bos.bot_cache.IsURLInCache(bos.nwb_url());
-      end
+   %% HIDDEN INTERFACE
+   
+   properties (Access = protected)
+      bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
+      ophys_manifest = bot.internal.ophysmanifest.instance();              % Private handle to the OPhys data manifest
+      ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
+      local_nwb_file_location;
    end
    
-   % property access methods
-   methods 
-      function local_nwb_file_location = get.local_nwb_file_location(bos)
-         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
-         %
-         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
-         if ~bos.is_nwb_cached()
-            local_nwb_file_location = [];
-         else
-            % - Get the local file location for the session NWB URL
-            local_nwb_file_location = bos.bot_cache.ccCache.CachedFileForURL(bos.nwb_url());
-         end
-      end
-   end   
    
-   
-   %% HIDDEN METHODS
    methods (Hidden)
       function strCacheFile = EnsureCached(bos)
          % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
@@ -169,12 +169,6 @@ classdef session_base < handle
       end
    end    
    
-   % semi-abstract methods --> meant to be overridden
-   methods (Hidden)
-       function nwb_url = nwb_url(~)  
-           nwb_url = '';
-       end
-   end
 
    
    methods (Static, Hidden)
@@ -218,6 +212,21 @@ classdef session_base < handle
             error('BOT:InvalidSessionID', ...
                'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
                id);
+         end
+      end
+   end   
+   
+   % property access methods
+   methods 
+      function local_nwb_file_location = get.local_nwb_file_location(bos)
+         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
+         %
+         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
+         if ~bos.is_nwb_cached()
+            local_nwb_file_location = [];
+         else
+            % - Get the local file location for the session NWB URL
+            local_nwb_file_location = bos.bot_cache.ccCache.CachedFileForURL(bos.nwb_url());
          end
       end
    end   
