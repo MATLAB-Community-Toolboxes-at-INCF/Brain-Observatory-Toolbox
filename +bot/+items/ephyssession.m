@@ -1191,13 +1191,14 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             presentations = removevars(presentations, self.DETAILED_STIMULUS_PARAMETERS(matching_vars));
         end
     end       
-    
-    %% HIDDEN INTERFACE - Static Methods
-    methods(Static, Hidden)
-        function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-        end
-    end    
+  
+% MARK FOR DELETION - potential use case indeterminate    
+%     %% HIDDEN INTERFACE - Static Methods
+%     methods(Static, Hidden)
+%         function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
+%             error('BOT:NotImplemented', 'This method is not implemented');
+%         end
+%     end    
 
 end
     
