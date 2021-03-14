@@ -155,7 +155,7 @@ classdef ophyssession < bot.items.session_base
    
    %% - Constructor
    methods
-      function bsObj = ophyssession(id)
+      function bsObj = ophyssession(session_id)
          % bot.items.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
          % Usage: bsObj = bot.items.ophyssession(id)
@@ -166,22 +166,25 @@ classdef ophyssession < bot.items.session_base
             return;
          end
          
+         % Load associated singleton             
+         manifest = bot.internal.ophysmanifest.instance();
+            
          % - Handle a vector of session IDs
-         if ~istable(id) && numel(id) > 1
-            for nIndex = numel(id):-1:1
-               bsObj(id) = bot.items.ophyssession(id(nIndex));
+         if ~istable(session_id) && numel(session_id) > 1
+            for nIndex = numel(session_id):-1:1
+               bsObj(session_id) = bot.items.ophyssession(session_id(nIndex));
             end
             return;
          end
          
-         % - Assign session information
-         bsObj.metadata = table2struct(bsObj.find_manifest_row(id));
-         bsObj.id = bsObj.metadata.id;
+         % - Assign metadata
+         session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
 
-         % - Ensure that we were given an OPhys session
-         if bsObj.metadata.type ~= "OPhys"
-            error('BOT:Usage', '`bot.items.ophyssession` objects may only refer to OPhys experimental sessions.');
-         end
+         % - Ensure that we were given an EPhys session
+         if session.metadata.type ~= "OPhys"
+             error('BOT:Usage', '`bot.items.OPhys` objects may only refer to OPhys experimental sessions.');
+         end         
+
       end
    end
    
