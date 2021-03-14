@@ -17,60 +17,61 @@
 % experimental session. No data will be downloaded unless the object is
 % inspected.
 
-function new_sess = session(sessionIdentifier)
-
-assert(~isempty(sessionIdentifier) && (istable(sessionIdentifier) || isnumeric(sessionIdentifier)), "Must specify session object(s) to create as either a table or numeric array");
-
+function new_sess = session(sessionsSpec)
 
 % - Is we were given a table, extract the IDs
-session_type = categorical();
-if istable(sessionIdentifier)
-    if ~ismember(sessionIdentifier.Properties.VariableNames, 'id')
+sessionType = categorical();
+if istable(sessionsSpec)
+    if ~ismember(sessionsSpec.Properties.VariableNames, 'id')
         error('BOT:InvalidSessionTable', ...
             'The provided table does not describe an experimental session.');
     end    
     
-   session_id = sessionIdentifier.id;
-   session_type = sessionIdentifier{1,"type"};
+   sessionIDs = sessionsSpec.id;
+   sessionType = sessionsSpec{1,"type"};
+elseif isnumeric(sessionsSpec) && isvector(sessionsSpec)
+    sessionIDs = sessionsSpec;
+else
+    error("Must specify session object(s) to create as either a table or numeric vector");
 end
 
 % - Were we given an array of session IDs?
-if numel(session_id) > 1
+if numel(sessionIDs) > 1
    % - Loop over session IDs and build session objects
-   for nIndex = numel(session_id):-1:1
-      nThisSessionID = session_id(nIndex);
+   for nIndex = numel(sessionIDs):-1:1
+      nThisSessionID = sessionIDs(nIndex);
       new_sess(nIndex) = bot.session(nThisSessionID);
    end
    return;
 end
 
 % Access manifest singleton tables & extract matching rows
-if isequal(session_type,"OPhys")
+if isequal(sessionType,"OPhys")
     ophys_manifest = bot.internal.manifest('ophys');
-    rowIdxs = ophys_manifest.ophys_sessions.id == session_id;
-elseif isequal(session_type,"Ephys")
+    rowIdxs = ophys_manifest.ophys_sessions.id == sessionIDs;
+elseif isequal(sessionType,"Ephys")
     ephys_manifest = bot.internal.manifest('ephys');
-    rowIdxs = ephys_manifest.ephys_sessions.id == session_id;
+    rowIdxs = ephys_manifest.ephys_sessions.id == sessionIDs;
 else
     ophys_manifest = bot.internal.manifest('ophys');
     ephys_manifest = bot.internal.manifest('ephys');
     
-    rowIdxs = ophys_manifest.ophys_sessions.id == session_id;
+    rowIdxs = ophys_manifest.ophys_sessions.id == sessionIDs;
     if isempty(rowIdxs)
-        session_type = categorical("Ophys");
+        sessionType = categorical("Ophys");
     else
-        session_type = categorical("Ephys");
-        rowIdxs = ephys_manifest.ephys_sessions.id == session_id;
+        sessionType = categorical("Ephys");
+        rowIdxs = ephys_manifest.ephys_sessions.id == sessionIDs;
     end    
 end  
 
 if isempty(rowIdxs)
   error('BOT:InvalidSessionID', ...
                'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
-               session_id);
+               sessionIDs);
 end
 
-switch session_type
+switch sessionType
     case "OPhys"
         manifest_rows = ophys_manifest.ophys_sessions(rowIdxs,:);
         new_sess = bot.items.ophyssession(manifest_rows);

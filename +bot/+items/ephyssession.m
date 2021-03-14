@@ -936,6 +936,16 @@ classdef ephyssession < bot.items.session_base
             spike_times = self.property_cache.spike_times;
         end
         
+        function nwb = get.nwb_file(self)
+            % - Retrieve and cache the NWB file
+            if ~self.in_cache('nwb_file')
+                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.EnsureCached());
+            end
+            
+            % - Return an NWB file access object
+            nwb = self.property_cache.nwb_file;
+        end
+        
         function metadata = get.nwb_metadata(self)
             n = self.nwb_file;
             try

@@ -240,7 +240,7 @@ classdef session_base < handle & bot.items.internal.NWBItem
          % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
          % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
-         if ~bos.is_nwb_cached()
+         if ~bos.nwbIsCached()
             local_nwb_file_location = [];
          else
             % - Get the local file location for the session NWB URL
