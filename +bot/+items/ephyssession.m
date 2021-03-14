@@ -1,7 +1,11 @@
 %% CLASS bot.items.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
 classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mixin.CustomDisplay
-    %% Properties
+  
+    
+    %% USER INTERFACE - Properties
+    
+    % directly stored properties
     properties (SetAccess = private)
         units;                          % A Table of all units in this session
         probes;                         % A Table of all probes in this session
@@ -18,7 +22,7 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
         num_channels;                 % Number of channels recorded in this session
     end
     
-    %% - Lazy loading properties
+    % properties linked to NWB file
     properties (SetAccess = private)
         rig_geometry_data;               % Metadata about the geometry of the rig used in this session
         rig_equipment_name;              % Metadata: name of the rig used in this session
@@ -42,149 +46,9 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
         
         stimulus_templates;           % Stimulus template table
     end
+     
     
-    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-        metadata_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
-            "sex", "full_genotype", "session_type", ...
-            "num_units", "num_probes", "num_channels", ...
-            ];
-        contained_objects_property_list = ["probes", "channels", "units"];
-        lazy_property_list = ["rig_geometry_data", ...
-            "rig_equipment_name", "inter_presentation_intervals", ...
-            "running_speed", "mean_waveforms", "stimulus_presentations", ...
-            "stimulus_conditions", "optogenetic_stimulation_epochs", ...
-            "session_start_time", "spike_amplitudes", "invalid_times", ...
-            "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
-            "structurewise_unit_counts", "stimulus_templates", ...
-            "stimulus_epochs", ...
-            ];
-    end
-    
-    methods (Access = protected)
-        function groups = getPropertyGroups(obj)
-            if ~isscalar(obj)
-                groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
-            else
-                % - Default properties
-                groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list);
-                groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Linked dataset items');
-                
-                if obj.is_nwb_cached()
-                    description = '[cached]';
-                else
-                    description = '[not cached]';
-                end
-                
-                propList = struct();
-                for prop = obj.lazy_property_list
-                    propList.(prop) = description;
-                end
-                
-                groups(3) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
-            end
-        end
-    end
-    
-    %% Private properties
-    properties (Hidden = true, Access = public, Transient = true)
-        spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
-        nwb_metadata;
-        rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
-        
-        nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
-        
-        NON_STIMULUS_PARAMETERS = [
-            "start_time", ...
-            "stop_time", ...
-            "duration", ...
-            "stimulus_block", ...
-            "stimulus_condition_id"]
-        
-        DETAILED_STIMULUS_PARAMETERS = [
-            "colorSpace", ...
-            "flipHoriz", ...
-            "flipVert", ...
-            "depth", ...
-            "interpolate", ...
-            "mask", ...
-            "opacity", ...
-            "rgbPedestal", ...
-            "tex", ...
-            "texRes", ...
-            "units", ...
-            "rgb", ...
-            "signalDots", ...
-            "noiseDots", ...
-            "fieldSize", ...
-            "fieldShape", ...
-            "fieldPos", ...
-            "nDots", ...
-            "dotSize", ...
-            "dotLife", ...
-            "color_triplet"]
-    end
-    
-    
-    %% Constructor
-    methods
-        function session = ephyssession(session_id, manifest)
-            % bot.items.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
-            %
-            % Usage: bsObj = bot.items.ephyssession(id, manifest)
-            %        vbsObj = bot.items.ephyssession(ids, manifest)
-            %        bsObj = bot.items.ephyssession(session_table_row, manifest)
-            %
-            % `manifest` is the EPhys manifest object. `id` is the session ID
-            % of an EPhys experimental session. Optionally, a vector `ids` of
-            % multiple session IDs may be provided to return a vector of
-            % session objects. A table row of the EPhys sessions manifest
-            % table may also be provided as `session_table_row`.
-            if nargin == 0
-                return;
-            end
-            
-            if ~exist('manifest', 'var') || isempty(manifest)
-                manifest = bot.internal.ephysmanifest.instance();
-            end
-            
-            % - Handle a vector of session IDs
-            if ~istable(session_id) && numel(session_id) > 1
-                for index = numel(session_id):-1:1
-                    session(session_id) = bot.items.ephyssession(session_id(index), manifest);
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
-            session_id = session.id;
-            
-            % - Ensure that we were given an EPhys session
-            if session.metadata.type ~= "EPhys"
-                error('BOT:Usage', '`bot.items.ephyssession` objects may only refer to EPhys experimental sessions.');
-            end
-            
-            % - Assign associated table rows
-            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
-            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
-            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
-        end
-    end
-    
-    %%
-    methods
-        function nwb = get.nwb_file(self)
-            % - Retrieve and cache the NWB file
-            if ~self.in_cache('nwb_file')
-                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.EnsureCached());
-            end
-            
-            % - Return an NWB file access object
-            nwb = self.property_cache.nwb_file;
-        end
-    end
-    
-    %% Getters for public properties requiring cached data access
+    % Property Access Methods
     methods
         
         function inter_presentation_intervals = get.inter_presentation_intervals(self)
@@ -201,18 +65,6 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             stimulus_conditions = self.property_cache.stimulus_conditions_raw;
         end
         
-        function spike_times = get.spike_times(self)
-            if ~self.in_cache('checked_spike_times')
-                self.warn_invalid_spike_intervals();
-                self.property_cache.checked_spike_times = true;
-            end
-            
-            if ~self.in_cache('spike_times')
-                self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
-            end
-            
-            spike_times = self.property_cache.spike_times;
-        end
         
         function stimulus_presentations = get.stimulus_presentations(self)
             % - Generate and cache stimulus presentations table
@@ -252,7 +104,7 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
         end
     end
     
-    %% Derived public properties
+    % Property access methods  (second-order derived values)
     methods
         function num_units = get.num_units(self)
             num_units = size(self.units, 1);
@@ -290,25 +142,9 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
         end
     end
     
-    %% Metadata public property getters
-    methods
-        function metadata = get.nwb_metadata(self)
-            n = self.nwb_file;
-            try
-                metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
-            catch
-                metadata = [];
-            end
-        end
-        
-        function rig_metadata = get.rig_metadata(self)
-            n = self.nwb_file;
-            try
-                rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
-            catch
-                rig_metadata = [];
-            end
-        end
+    % Property access methods (first-order NWB-bound values)
+    methods         
+ 
         function rig_geometry_data = get.rig_geometry_data(self)
             try
                 rig_geometry_data = self.rig_metadata.rig_geometry_data;
@@ -380,13 +216,15 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             stimulus_table.movie_number = movie_number;
         end
         
-    end
-    
-    %% Public methods
-    methods
         function epochs = get.stimulus_epochs(self)
             epochs = self.fetch_stimulus_epochs();
         end
+        
+    end
+    
+    %% USER INTERFACE - Methods
+    
+    methods 
         
         function epochs = fetch_stimulus_epochs(self, duration_thresholds)
             % fetch_stimulus_epochs - METHOD Reports continuous periods of time during which a single kind of stimulus was presented
@@ -821,13 +659,11 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             intervals = nan_intervals(channels_selected.(structure_id_key));
             labels = channels_selected.(structure_label_key)(intervals);
         end
-    end
+    end         
     
-    
-    
-    %% HIDDEN METHODS
-    
-    % semi-abstract method implemetnations
+    %% SUPERCLASS IMPLEMENTATION (bot.items.session_base)         
+    % implementation for a semi-abstract class pattern 
+        
     methods (Hidden)
         function nwb_url = nwb_url(bos)
             % nwb_url - METHOD Get the cloud URL for the NWB dtaa file corresponding to this session
@@ -847,8 +683,54 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
         end
     end
     
+    %% SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
+     properties (Hidden = true, SetAccess = immutable, GetAccess = private)
+        metadata_property_list = ["metadata", "id", "specimen_name", "age_in_days", ...
+            "sex", "full_genotype", "session_type", ...
+            "num_units", "num_probes", "num_channels", ...
+            ];
+        contained_objects_property_list = ["probes", "channels", "units"];
+        lazy_property_list = ["rig_geometry_data", ...
+            "rig_equipment_name", "inter_presentation_intervals", ...
+            "running_speed", "mean_waveforms", "stimulus_presentations", ...
+            "stimulus_conditions", "optogenetic_stimulation_epochs", ...
+            "session_start_time", "spike_amplitudes", "invalid_times", ...
+            "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
+            "structurewise_unit_counts", "stimulus_templates", ...
+            "stimulus_epochs", ...
+            ];
+    end
+    
+    methods (Access = protected)
+        function groups = getPropertyGroups(obj)
+            if ~isscalar(obj)
+                groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+            else
+                % - Default properties
+                groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list);
+                groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Linked dataset items');
+                
+                if obj.is_nwb_cached()
+                    description = '[cached]';
+                else
+                    description = '[not cached]';
+                end
+                
+                propList = struct();
+                for prop = obj.lazy_property_list
+                    propList.(prop) = description;
+                end
+                
+                groups(3) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
+            end
+        end
+    end
+    
+    %% HIDDEN INTERFACE - TBD public in future
+    
+    % possibly intended to be public
     methods (Hidden)
-        
+            
         function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
             % ''' Get a subset of this session's inter-presentation intervals, filtered by stimulus name.
             %
@@ -874,6 +756,244 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             
             inter_presentation_intervals = self.inter_presentation_intervals(select_intervals, :);
         end
+        
+    end
+    
+    % currently not fully implemented
+    methods (Hidden)
+        
+        function fetch_natural_movie_template(self, number) %#ok<INUSD>
+            error('BOT:NotImplemented', 'This method is not implemented');
+            
+            well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :); %#ok<UNRCH>
+            
+            if size(well_known_files, 1) ~= 1
+                error('BOT:NotFound', ...
+                    'Expected exactly one natural movie template with number %d, found %d.', number, size(well_known_files, 1));
+            end
+            
+            download_url = self.bot_cache.strABOBaseUrl + well_known_files.download_link;
+            local_filename = self.bot_cache.CacheFile(download_url, well_known_files.path);
+            
+            %         well_known_files = self.stimulus_templates[self.stimulus_templates["movie_number"] == number]
+            %         if well_known_files.shape[0] != 1:
+            %             raise ValueError(f"expected exactly one natural movie template with number {number}, found {well_known_files}")
+            %
+            %         download_link = well_known_files.iloc[0]["download_link"]
+            %         return self.rma_engine.stream(download_link)
+        end
+    
+        function fetch_natural_scene_template(self, number) %#ok<INUSD>
+            error('BOT:NotImplemented', 'This method is not implemented');
+            
+            %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
+            %         if well_known_files.shape[0] != 1:
+            %             raise ValueError(f"expected exactly one natural scene template with number {number}, found {well_known_files}")
+            %
+            %         download_link = well_known_files.iloc[0]["download_link"]
+            %         return self.rma_engine.stream(download_link)
+        end
+        
+        
+        function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
+            error('BOT:NotImplemented', 'This method is not implemented');
+            
+            
+            %         all_time_points = xr.DataArray(
+            %             name="time_points",
+            %             data=[True] * len(time_points),
+            %             dims=['time'],
+            %             coords=[time_points]
+            %         )
+            %
+            %         valid_time_points = all_time_points
+            %         for ix, invalid_time_interval in invalid_time_intevals.iterrows():
+            %             invalid_time_points = (time_points >= invalid_time_interval['start_time']) & (time_points <= invalid_time_interval['stop_time'])
+            %             valid_time_points = np.logical_and(valid_time_points, np.logical_not(invalid_time_points))
+            %
+            %         return valid_time_points
+            
+        end
+        
+        function units_table = build_units_table(self, units_table) %#ok<INUSD>
+            error('BOT:NotImplemented', 'This method is not implemented');
+            
+            %       channels = self.fetch_channels_from_nwb;
+            %       probes = self.fetch_probes_from_nwb;
+            %
+            %       unmerged_units = units_table;
+            %          units_table = merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel']);
+            
+            
+            %     def _build_units_table(self, units_table):
+            %         channels = self.channels.copy()
+            %         probes = self.probes.copy()
+            %
+            %         self._unmerged_units = units_table.copy()
+            %         table = pd.merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel'])
+            %         table = pd.merge(table, probes, left_on='probe_id', right_index=True, suffixes=['_unit', '_probe'])
+            %
+            %         table.index.name = 'unit_id'
+            %         table = table.rename(columns={
+            %             'description': 'probe_description',
+            %             'local_index_channel': 'channel_local_index',
+            %             'PT_ratio': 'waveform_PT_ratio',
+            %             'amplitude': 'waveform_amplitude',
+            %             'duration': 'waveform_duration',
+            %             'halfwidth': 'waveform_halfwidth',
+            %             'recovery_slope': 'waveform_recovery_slope',
+            %             'repolarization_slope': 'waveform_repolarization_slope',
+            %             'spread': 'waveform_spread',
+            %             'velocity_above': 'waveform_velocity_above',
+            %             'velocity_below': 'waveform_velocity_below',
+            %             'sampling_rate': 'probe_sampling_rate',
+            %             'lfp_sampling_rate': 'probe_lfp_sampling_rate',
+            %             'has_lfp_data': 'probe_has_lfp_data',
+            %             'l_ratio': 'L_ratio',
+            %             'pref_images_multi_ns': 'pref_image_multi_ns',
+            %         })
+            %
+            %         return table.sort_values(by=['probe_description', 'probe_vertical_position', 'probe_horizontal_position'])
+        end
+        
+        function output_waveforms = build_nwb1_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
+            %         # _build_mean_waveforms() assumes every unit has the same number of waveforms and that a unit-waveform exists
+            %         # for all channels. This is not true for NWB 1 files where each unit has ONE waveform on ONE channel
+            
+            error('BOT:NotImplemented', 'This method is not implemented');
+        end
+        
+        function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
+            error('BOT:NotImplemented', 'This method is not implemented');
+        end
+    end           
+    
+    %% HIDDEN INTERFACE - Construction
+    
+    methods
+        function session = ephyssession(session_id, manifest)
+            % bot.items.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+            %
+            % Usage: bsObj = bot.items.ephyssession(id, manifest)
+            %        vbsObj = bot.items.ephyssession(ids, manifest)
+            %        bsObj = bot.items.ephyssession(session_table_row, manifest)
+            %
+            % `manifest` is the EPhys manifest object. `id` is the session ID
+            % of an EPhys experimental session. Optionally, a vector `ids` of
+            % multiple session IDs may be provided to return a vector of
+            % session objects. A table row of the EPhys sessions manifest
+            % table may also be provided as `session_table_row`.
+            if nargin == 0
+                return;
+            end
+            
+            if ~exist('manifest', 'var') || isempty(manifest)
+                manifest = bot.internal.ephysmanifest.instance();
+            end
+            
+            % - Handle a vector of session IDs
+            if ~istable(session_id) && numel(session_id) > 1
+                for index = numel(session_id):-1:1
+                    session(session_id) = bot.items.ephyssession(session_id(index), manifest);
+                end
+                return;
+            end
+            
+            % - Assign metadata
+            session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
+            session_id = session.id;
+            
+            % - Ensure that we were given an EPhys session
+            if session.metadata.type ~= "EPhys"
+                error('BOT:Usage', '`bot.items.ephyssession` objects may only refer to EPhys experimental sessions.');
+            end
+            
+            % - Assign associated table rows
+            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
+            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
+            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
+        end
+    end    
+   
+    
+    %%  HIDDEN INTERFACE - Properties
+    
+    properties (Hidden = true, Access = public, Transient = true)
+        spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
+        nwb_metadata;
+        rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
+        
+        nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
+        
+        NON_STIMULUS_PARAMETERS = [
+            "start_time", ...
+            "stop_time", ...
+            "duration", ...
+            "stimulus_block", ...
+            "stimulus_condition_id"]
+        
+        DETAILED_STIMULUS_PARAMETERS = [
+            "colorSpace", ...
+            "flipHoriz", ...
+            "flipVert", ...
+            "depth", ...
+            "interpolate", ...
+            "mask", ...
+            "opacity", ...
+            "rgbPedestal", ...
+            "tex", ...
+            "texRes", ...
+            "units", ...
+            "rgb", ...
+            "signalDots", ...
+            "noiseDots", ...
+            "fieldSize", ...
+            "fieldShape", ...
+            "fieldPos", ...
+            "nDots", ...
+            "dotSize", ...
+            "dotLife", ...
+            "color_triplet"]
+    end
+    
+    % Property access methods
+    methods 
+        
+        function spike_times = get.spike_times(self)
+            if ~self.in_cache('checked_spike_times')
+                self.warn_invalid_spike_intervals();
+                self.property_cache.checked_spike_times = true;
+            end
+            
+            if ~self.in_cache('spike_times')
+                self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
+            end
+            
+            spike_times = self.property_cache.spike_times;
+        end
+        
+        function metadata = get.nwb_metadata(self)
+            n = self.nwb_file;
+            try
+                metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+            catch
+                metadata = [];
+            end
+        end
+        
+        function rig_metadata = get.rig_metadata(self)
+            n = self.nwb_file;
+            try
+                rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
+            catch
+                rig_metadata = [];
+            end
+        end
+        
+    end
+           
+    %%  HIDDEN INTERFACE - Methods
+    methods (Hidden)                
         
         function presentations = fetch_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
             arguments
@@ -906,59 +1026,7 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             if ~include_unused_parameters
                 presentations = remove_unused_stimulus_presentation_columns(presentations);
             end
-        end
-        
-        function fetch_natural_movie_template(self, number) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :); %#ok<UNRCH>
-            
-            if size(well_known_files, 1) ~= 1
-                error('BOT:NotFound', ...
-                    'Expected exactly one natural movie template with number %d, found %d.', number, size(well_known_files, 1));
-            end
-            
-            download_url = self.bot_cache.strABOBaseUrl + well_known_files.download_link;
-            local_filename = self.bot_cache.CacheFile(download_url, well_known_files.path);
-            
-            %         well_known_files = self.stimulus_templates[self.stimulus_templates["movie_number"] == number]
-            %         if well_known_files.shape[0] != 1:
-            %             raise ValueError(f"expected exactly one natural movie template with number {number}, found {well_known_files}")
-            %
-            %         download_link = well_known_files.iloc[0]["download_link"]
-            %         return self.rma_engine.stream(download_link)
-        end
-        
-        function fetch_natural_scene_template(self, number) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
-            %         if well_known_files.shape[0] != 1:
-            %             raise ValueError(f"expected exactly one natural scene template with number {number}, found {well_known_files}")
-            %
-            %         download_link = well_known_files.iloc[0]["download_link"]
-            %         return self.rma_engine.stream(download_link)
-        end
-        
-        function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            
-            %         all_time_points = xr.DataArray(
-            %             name="time_points",
-            %             data=[True] * len(time_points),
-            %             dims=['time'],
-            %             coords=[time_points]
-            %         )
-            %
-            %         valid_time_points = all_time_points
-            %         for ix, invalid_time_interval in invalid_time_intevals.iterrows():
-            %             invalid_time_points = (time_points >= invalid_time_interval['start_time']) & (time_points <= invalid_time_interval['stop_time'])
-            %             valid_time_points = np.logical_and(valid_time_points, np.logical_not(invalid_time_points))
-            %
-            %         return valid_time_points
-            
-        end
+        end                                     
         
         function invalid_times = filter_invalid_times_by_tags(self, tags)
             arguments
@@ -1075,59 +1143,7 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             % - Build the units table from the session NWB file
             % - Allen SDK ecephys_session.units
             units_table = self.build_units_table(self.nwb_file.fetch_units());
-        end
-        
-        function units_table = build_units_table(self, units_table) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            %       channels = self.fetch_channels_from_nwb;
-            %       probes = self.fetch_probes_from_nwb;
-            %
-            %       unmerged_units = units_table;
-            %          units_table = merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel']);
-            
-            
-            %     def _build_units_table(self, units_table):
-            %         channels = self.channels.copy()
-            %         probes = self.probes.copy()
-            %
-            %         self._unmerged_units = units_table.copy()
-            %         table = pd.merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel'])
-            %         table = pd.merge(table, probes, left_on='probe_id', right_index=True, suffixes=['_unit', '_probe'])
-            %
-            %         table.index.name = 'unit_id'
-            %         table = table.rename(columns={
-            %             'description': 'probe_description',
-            %             'local_index_channel': 'channel_local_index',
-            %             'PT_ratio': 'waveform_PT_ratio',
-            %             'amplitude': 'waveform_amplitude',
-            %             'duration': 'waveform_duration',
-            %             'halfwidth': 'waveform_halfwidth',
-            %             'recovery_slope': 'waveform_recovery_slope',
-            %             'repolarization_slope': 'waveform_repolarization_slope',
-            %             'spread': 'waveform_spread',
-            %             'velocity_above': 'waveform_velocity_above',
-            %             'velocity_below': 'waveform_velocity_below',
-            %             'sampling_rate': 'probe_sampling_rate',
-            %             'lfp_sampling_rate': 'probe_lfp_sampling_rate',
-            %             'has_lfp_data': 'probe_has_lfp_data',
-            %             'l_ratio': 'L_ratio',
-            %             'pref_images_multi_ns': 'pref_image_multi_ns',
-            %         })
-            %
-            %         return table.sort_values(by=['probe_description', 'probe_vertical_position', 'probe_horizontal_position'])
-        end
-        
-        function output_waveforms = build_nwb1_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
-            %         # _build_mean_waveforms() assumes every unit has the same number of waveforms and that a unit-waveform exists
-            %         # for all channels. This is not true for NWB 1 files where each unit has ONE waveform on ONE channel
-            
-            error('BOT:NotImplemented', 'This method is not implemented');
-        end
-        
-        function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-        end
+        end               
         
         function intervals = build_inter_presentation_intervals(self)
             self.cache_stimulus_presentations();
@@ -1174,17 +1190,18 @@ classdef ephyssession < bot.items.ephysitem & bot.items.session_base & matlab.mi
             matching_vars = ismember(self.DETAILED_STIMULUS_PARAMETERS, presentations.Properties.VariableNames);
             presentations = removevars(presentations, self.DETAILED_STIMULUS_PARAMETERS(matching_vars));
         end
-    end
+    end       
     
-    % Static class methods
+    %% HIDDEN INTERFACE - Static Methods
     methods(Static, Hidden)
         function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
             error('BOT:NotImplemented', 'This method is not implemented');
         end
-    end
-end
+    end    
 
-%% Helper functions
+end
+    
+%% LOCAL FUNCTIONS
 
 function tiled_data = build_spike_histogram(time_domain, spike_times, unit_ids, binarize, dtype)
 arguments
