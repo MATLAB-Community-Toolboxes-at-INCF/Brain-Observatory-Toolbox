@@ -1,22 +1,36 @@
 classdef NWBItem < bot.items.internal.Item
     
     %% SUBCLASS INTERFACE
-    
-    properties (Abstract, SetAccess = immutable, GetAccess = protected)
-        NWB_FILE_PROPERTIES (1,:) string 
-    end
-
+        
+    % Public Properties 
     properties (Abstract, Dependent, SetAccess=protected)
         nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached
         nwbURL (1,1) string 
-    end       
-   
+    end
+    
+    % Developer Properties    
+    properties (Abstract, SetAccess = immutable, GetAccess = protected)
+        NWB_FILE_PROPERTIES (1,:) string 
+    end
+    
+    properties (Abstract, Dependent, Access=protected)
+        local_nwb_file_location;
+    end
+    
+    % Developer Methods    
+    methods (Abstract, Hidden)
+        EnsureCached(obj);             
+    end
+
+    
 %    properties (Hidden, Access=protected)
 %        well_known_file;           % Metadata about probe NWB files
 %       nwb_url;                   % URL for probe NWB file
 %       local_nwb_file_location;
 %    end                       
     
+
+
    %% SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
     
     methods (Access = protected)

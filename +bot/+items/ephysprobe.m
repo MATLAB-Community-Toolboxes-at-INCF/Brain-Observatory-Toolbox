@@ -15,16 +15,13 @@ classdef ephysprobe < bot.items.internal.NWBItem
    
    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
    
-   properties (SetAccess = immutable, GetAccess = protected)
-       NWB_FILE_PROPERTIES = [];
-   end
-    
+   % User Properties
    properties (Dependent, SetAccess = protected)
        nwbURL;
        nwbIsCached; 
-   end
+   end   
    
-   % Property Access Methods
+   % User Property Access Methods
    methods
 %        function tf = get.nwbIsCached(bos)
 %            tf = bos.bot_cache.IsURLInCache(bos.nwbURL);
@@ -57,6 +54,40 @@ classdef ephysprobe < bot.items.internal.NWBItem
        
    end
    
+   % Developer Properties
+   properties (SetAccess = immutable, GetAccess = protected)
+       NWB_FILE_PROPERTIES = [];
+   end
+   
+   properties (Dependent, Access=protected)
+        local_nwb_file_location;
+   end
+    
+   % Developer Property Access Methods
+   methods
+       function local_nwb_file_location = get.local_nwb_file_location(self)
+         if ~self.nwbIsCached()
+            local_nwb_file_location = [];
+         else
+            % - Get the local file location for the session NWB URL
+            boc = bot.internal.cache;
+            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
+         end
+       end
+   end
+   
+   % Developer Methods
+   methods (Hidden)
+       function strNWBFile = EnsureCached(self)
+           if ~self.nwbIsCached
+               boc = bot.internal.cache;
+               strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
+           else
+               strNWBFile = self.local_nwb_file_location;
+           end
+       end
+   end
+   
    
    %% HIDDEN INTERFACE
    
@@ -64,7 +95,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
    properties (Hidden)
       well_known_file;           % Metadata about probe NWB files
       nwb_url;                   % URL for probe NWB file
-      local_nwb_file_location;   % Local cache location of probe NWB file
+      %local_nwb_file_location;   % Local cache location of probe NWB file
    end
    
    properties (Hidden = true, SetAccess = immutable, GetAccess = private)
@@ -129,30 +160,8 @@ classdef ephysprobe < bot.items.internal.NWBItem
          
          % - Identify NWB file link
          probe.well_known_file = probe.fetch_lfp_file_link();
-      end
-      
-      function local_nwb_file_location = get.local_nwb_file_location(self)
-         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this probe
-         %
-         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
-         if ~self.nwbIsCached()
-            local_nwb_file_location = [];
-         else
-            % - Get the local file location for the session NWB URL
-            boc = bot.internal.cache;
-            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
-         end
-      end      
+      end               
 
-      
-      function strNWBFile = EnsureCached(self)
-         if ~self.nwbIsCached
-            boc = bot.internal.cache;
-            strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
-         else
-            strNWBFile = self.local_nwb_file_location;
-         end
-      end
    end
    
    
