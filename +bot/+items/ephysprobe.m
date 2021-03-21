@@ -83,7 +83,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
                boc = bot.internal.cache;
                strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
            else
-               strNWBFile = self.local_nwb_file_location;
+               strNWBFile = self.nwbLocalFile;
            end
        end
    end

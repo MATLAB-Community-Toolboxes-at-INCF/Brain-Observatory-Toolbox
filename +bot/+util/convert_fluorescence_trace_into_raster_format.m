@@ -134,7 +134,7 @@ function raster_data = generate_raster_data(i, fluorescenece_trace, parameters_f
 
 % - Ensure data is cached locally
 bos.EnsureCached();
-nwb_name = bos.local_nwb_file_location;
+nwb_name = bos.nwbLocalFile;
 
 if isequal(bos.sSessionInfo.stimulus_name, 'three_session_C') && isequal(stimulus, 'locally_sparse_noise_4deg')
    
