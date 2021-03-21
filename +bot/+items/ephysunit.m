@@ -1,4 +1,4 @@
-classdef ephysunit < bot.items.internal.Item
+classdef ephysunit < bot.items.abstract.Item
     
     %% UESR INTERFACE
     properties (SetAccess = private)
@@ -8,7 +8,7 @@ classdef ephysunit < bot.items.internal.Item
     end
         
     
-    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
 
     properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = [];

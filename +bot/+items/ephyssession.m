@@ -626,7 +626,7 @@ classdef ephyssession < bot.items.session_base
        NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
    end
    
-    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
      properties (Hidden = true, Access = protected)
         CORE_PROPERTIES_EXTENDED = ["specimen_name", "age_in_days", ...
             "sex", "full_genotype", "session_type", ...
@@ -635,7 +635,7 @@ classdef ephyssession < bot.items.session_base
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
      end
      
-    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
+    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES = ["rig_geometry_data", ...
             "rig_equipment_name", "inter_presentation_intervals", ...

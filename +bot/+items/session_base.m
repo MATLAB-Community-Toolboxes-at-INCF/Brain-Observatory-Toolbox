@@ -1,9 +1,9 @@
 %% bot.items.session_base — CLASS Base class for experimental sessionss
 
-classdef session_base < handle & bot.items.internal.NWBItem
+classdef session_base < handle & bot.items.abstract.NWBItem
  
 
-   %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)  
+   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)  
     
    % Public Properties
    properties (Dependent, SetAccess = protected)

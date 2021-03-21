@@ -1,4 +1,4 @@
-classdef ephysprobe < bot.items.internal.NWBItem
+classdef ephysprobe < bot.items.abstract.NWBItem
     
    %% PUBLIC INTERFACE
    properties (SetAccess = private)
@@ -7,13 +7,13 @@ classdef ephysprobe < bot.items.internal.NWBItem
       units;         % Table of units recorded from this probe
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
    properties (Access = protected)
        CORE_PROPERTIES_EXTENDED = [];
        LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
+   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)
    
    % User Properties
    properties (Dependent, SetAccess = protected)

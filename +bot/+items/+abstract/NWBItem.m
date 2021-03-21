@@ -1,4 +1,4 @@
-classdef NWBItem < bot.items.internal.Item
+classdef NWBItem < bot.items.abstract.Item
     
        
     
@@ -42,13 +42,13 @@ classdef NWBItem < bot.items.internal.Item
    
     %% DEVELOPER INTERFACE                 
     
-    %% SUPERCLASS OVERRIDES (bot.items.internal.Item)
+    %% SUPERCLASS OVERRIDES (bot.items.abstract.Item)
     
     % Constructor extension
     methods 
         function obj = NWBItem()
            
-            obj@bot.items.internal.Item;
+            obj@bot.items.abstract.Item;
             
             % Add NWB information to the core property list for this item
             obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];                                     
@@ -63,7 +63,7 @@ classdef NWBItem < bot.items.internal.Item
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
             else
-                groups = getPropertyGroups@bot.items.internal.Item(obj);
+                groups = getPropertyGroups@bot.items.abstract.Item(obj);
                 
                 % NWB-bound properties
                 if obj.nwbIsCached

@@ -1,4 +1,4 @@
-classdef ephyschannel < bot.items.internal.Item
+classdef ephyschannel < bot.items.abstract.Item
    
     %% USER INTERFACE 
     properties (SetAccess = private)
@@ -7,7 +7,7 @@ classdef ephyschannel < bot.items.internal.Item
       probe;
     end
    
-    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
 
     properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = [];

@@ -103,13 +103,13 @@ classdef ophyssession < bot.items.session_base
        NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
+   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
      properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = "session_type";
         LINKED_ITEM_PROPERTIES = [];
      end
      
-    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
+    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
