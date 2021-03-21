@@ -17,7 +17,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
    %% SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
    
    properties (Constant, GetAccess = protected)
-       CORE_PROPERTIES = ["metadata" "id"];                     
+       CORE_PROPERTIES = ["info" "id"];                     
    end    
    
    methods (Access = protected)
