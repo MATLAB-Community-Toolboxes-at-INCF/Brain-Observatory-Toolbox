@@ -10,16 +10,6 @@ classdef ephyssession < bot.items.session_base
         units;                          % A Table of all units in this session
         probes;                         % A Table of all probes in this session
         channels;                       % A Table of all channels in this session
-        
-        specimen_name;                % Metadata: name of the animal used in this session
-        age_in_days;                  % Metadata: age of the animal used in this session, in days
-        sex;                          % Metadata: sex of the animal used in this session
-        full_genotype;                % Metadata: genotype of the animal used in this session
-        session_type;                 % Metadata: string describing the type of session (group of stimuli used)
-        
-        num_units;                    % Number of units (putative neurons) recorded in this session
-        num_probes;                   % Number of probes recorded in this session
-        num_channels;                 % Number of channels recorded in this session
     end
     
     % properties linked to NWB file
@@ -106,17 +96,6 @@ classdef ephyssession < bot.items.session_base
     
     % Property access methods  (second-order derived values)
     methods
-        function num_units = get.num_units(self)
-            num_units = size(self.units, 1);
-        end
-        
-        function num_probes = get.num_probes(self)
-            num_probes = size(self.probes, 1);
-        end
-        
-        function num_channels = get.num_channels(self)
-            num_channels = size(self.channels, 1);
-        end
         
         function num_stimulus_presentations = get.num_stimulus_presentations(self)
             num_stimulus_presentations = size(self.stimulus_presentations, 1);
@@ -159,27 +138,7 @@ classdef ephyssession < bot.items.session_base
             catch
                 rig_equipment_name = [];
             end
-        end
-        
-        function specimen_name = get.specimen_name(self)
-            specimen_name = self.metadata.specimen_name;
-        end
-        
-        function age_in_days = get.age_in_days(self)
-            age_in_days = self.metadata.age_in_days;
-        end
-        
-        function sex = get.sex(self)
-            sex = self.metadata.sex;
-        end
-        
-        function full_genotype = get.full_genotype(self)
-            full_genotype = self.metadata.full_genotype;
-        end
-        
-        function session_type = get.session_type(self)
-            session_type = self.metadata.session_type;
-        end
+        end                
         
         function stimulus_table = get.stimulus_templates(self)
             % - Query list of stimulus templates from Allen Brain API

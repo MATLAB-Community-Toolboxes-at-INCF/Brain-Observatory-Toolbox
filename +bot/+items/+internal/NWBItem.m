@@ -77,7 +77,7 @@ classdef NWBItem < bot.items.internal.Item
                     propList.(prop) = description;
                 end
                 
-                groups(end+1) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
+                groups(end+1) = matlab.mixin.util.PropertyGroup(propList, 'NWB Data');
             end
         end
     end
