@@ -49,7 +49,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
       
       function tf = get.nwbIsCached(self)
          boc = bot.internal.cache;
-         tf = boc.IsURLInCache(self.nwb_url);
+         tf = boc.IsURLInCache(self.nwbURL);
       end
        
    end
@@ -59,7 +59,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
        NWB_FILE_PROPERTIES = [];
    end
    
-   properties (Dependent, Access=protected)
+   properties (Dependent, Hidden)
         local_nwb_file_location;
    end
     
@@ -71,7 +71,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
          else
             % - Get the local file location for the session NWB URL
             boc = bot.internal.cache;
-            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
+            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwbURL);
          end
        end
    end
@@ -94,7 +94,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
    % Hidden properties
    properties (Hidden)
       well_known_file;           % Metadata about probe NWB files
-      nwb_url;                   % URL for probe NWB file
+      %nwb_url;                   % URL for probe NWB file
       %local_nwb_file_location;   % Local cache location of probe NWB file
    end
    

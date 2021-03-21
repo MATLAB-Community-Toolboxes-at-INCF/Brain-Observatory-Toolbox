@@ -34,7 +34,7 @@ classdef session_base < handle & bot.items.internal.NWBItem
    end
    
    % Developer Properties   
-   properties (Dependent, Access=protected)
+   properties (Dependent, Hidden)
        local_nwb_file_location;
    end
    

@@ -13,7 +13,7 @@ classdef NWBItem < bot.items.internal.Item
         NWB_FILE_PROPERTIES (1,:) string 
     end
     
-    properties (Abstract, Dependent, Access=protected)
+    properties (Abstract, Dependent, Hidden)
         local_nwb_file_location;
     end
     
