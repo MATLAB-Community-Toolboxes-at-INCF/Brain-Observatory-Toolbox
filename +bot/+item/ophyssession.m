@@ -179,7 +179,7 @@ classdef ophyssession < bot.item.session_base
          session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
 
          % - Ensure that we were given an EPhys session
-         if session.metadata.type ~= "OPhys"
+         if session.info.type ~= "OPhys"
              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
          end         
 
@@ -645,7 +645,7 @@ classdef ophyssession < bot.item.session_base
          % get.session_type - GETTER Return the name for the stimulus set used in this session
          %
          % Usage: strSessionType = bos.session_type
-         session_type = bos.metadata.stimulus_name;
+         session_type = bos.info.stimulus_name;
       end
       
       function stimulus_epochs = get.stimulus_epoch_table(bos)
@@ -893,7 +893,7 @@ classdef ophyssession < bot.item.session_base
          % or euclidean coordinates.
          
          % - Fail quickly if eye tracking data is known not to exist
-         if bos.metadata.fail_eye_tracking
+         if bos.info.fail_eye_tracking
             error('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
          end
@@ -947,7 +947,7 @@ classdef ophyssession < bot.item.session_base
          % area in pixels.
          
          % - Fail quickly if eye tracking data is known not to exist
-         if bos.metadata.fail_eye_tracking
+         if bos.info.fail_eye_tracking
             error('BOT:NoEyeTracking', ...
                'No eye tracking data is available for this experiment.');
          end

@@ -827,7 +827,7 @@ classdef ephyssession < bot.item.session_base
             session_id = session.id;
             
             % - Ensure that we were given an EPhys session
-            if session.metadata.type ~= "EPhys"
+            if session.info.type ~= "EPhys"
                 error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
             end
             

@@ -31,7 +31,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
 %           %Get the cloud URL for the NWB data file corresponding to this session
 %            
 %            % - Get well known files
-%            well_known_files = bos.metadata.well_known_files;
+%            well_known_files = bos.info.well_known_files;
 %            
 %            % - Find (first) NWB file
 %            file_types = [well_known_files.well_known_file_type];
@@ -114,7 +114,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
          % - Assign metadata
          probe.check_and_assign_metadata(probe_id, oManifest.ephys_probes, 'probe');
          if istable(probe_id)
-            probe_id = probe.metadata.id;
+            probe_id = probe.info.id;
          end
          
          % - Assign associated table rows
@@ -122,7 +122,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
          probe.units = oManifest.ephys_units(oManifest.ephys_units.ephys_probe_id == probe_id, :);
          
          % - Get a handle to the corresponding experimental session
-         probe.session = bot.session(probe.metadata.ephys_session_id);
+         probe.session = bot.session(probe.info.ephys_session_id);
          
          % - Identify NWB file link
          probe.well_known_file = probe.fetch_lfp_file_link();
@@ -133,7 +133,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    
    methods (Hidden)
       function well_known_file = fetch_lfp_file_link(probe)
-         probe_id = probe.metadata.id;
+         probe_id = probe.info.id;
          strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
          
          boc = bot.internal.cache;

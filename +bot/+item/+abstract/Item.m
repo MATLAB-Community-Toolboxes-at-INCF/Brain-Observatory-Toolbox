@@ -2,7 +2,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     
    %% PUBLIC INTERFACE
    properties (SetAccess = protected)
-      metadata;         % Struct containing metadata about this item
+      info;         % Struct containing info about this item
       id;               % ID of this item
    end   
    
@@ -64,8 +64,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
          end
          
          % - Assign the table data to the metadata structure
-         item.metadata = table2struct(table_row);
-         item.id = item.metadata.id;
+         item.info = table2struct(table_row);
+         item.id = item.info.id;
       end
    end   
    

@@ -30,8 +30,8 @@ classdef experiment < handle
          end
          
          % - Assign experiment container information
-         exp.metadata = table2struct(exp.find_manifest_row(id));
-         exp.id = exp.metadata.id;
+         exp.info = table2struct(exp.find_manifest_row(id));
+         exp.id = exp.info.id;
          
          % - Extarct matching sessions
          matching_sessions = exp.manifest.ophys_sessions.experiment_container_id == exp.id;

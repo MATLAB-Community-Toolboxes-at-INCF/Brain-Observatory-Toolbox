@@ -33,13 +33,13 @@ classdef ephyschannel < bot.item.abstract.Item
             % - Assign metadata
             channel = channel.check_and_assign_metadata(channel_id, oManifest.ephys_channels, 'channel');
             if istable(channel_id)
-                channel_id = channel.metadata.id;
+                channel_id = channel.info.id;
             end
             
             % - Assign associated table rows
             channel.units = oManifest.ephys_units(oManifest.ephys_units.ecephys_channel_id == channel_id, :);
-            channel.probe = bot.probe(channel.metadata.ephys_probe_id);
-            channel.session = bot.session(channel.metadata.ephys_session_id);
+            channel.probe = bot.probe(channel.info.ephys_probe_id);
+            channel.session = bot.session(channel.info.ephys_session_id);
         end
     end
 end

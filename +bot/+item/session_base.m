@@ -21,7 +21,7 @@ classdef session_base < handle & bot.item.abstract.NWBItem
           %Get the cloud URL for the NWB data file corresponding to this session
            
            % - Get well known files
-           well_known_files = bos.metadata.well_known_files;
+           well_known_files = bos.info.well_known_files;
            
            % - Find (first) NWB file
            file_types = [well_known_files.well_known_file_type];
