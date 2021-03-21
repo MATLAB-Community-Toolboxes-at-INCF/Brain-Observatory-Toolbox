@@ -1,4 +1,4 @@
-%% bot.items.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
+%% bot.item.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
 %
 % This is the main interface to access data from an Allen Brain Observatory
 % experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
@@ -63,7 +63,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession < bot.items.session_base 
+classdef ophyssession < bot.item.session_base 
    
    %% USER INTERFACE 
    %% - Default visible properties
@@ -98,18 +98,18 @@ classdef ophyssession < bot.items.session_base
    end
    
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.session_base)
+   %% SUPERCLASS IMPLEMENTATION (bot.item.session_base)
    properties (Constant)
        NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
+   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
      properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = "session_type";
         LINKED_ITEM_PROPERTIES = [];
      end
      
-    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)
+    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
@@ -156,11 +156,11 @@ classdef ophyssession < bot.items.session_base
    %% - Constructor
    methods
       function bsObj = ophyssession(session_id)
-         % bot.items.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+         % bot.item.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
          %
-         % Usage: bsObj = bot.items.ophyssession(id)
-         %        vbsObj = bot.items.ophyssession(vids)
-         %        bsObj = bot.items.ophyssession(tSessionRow)
+         % Usage: bsObj = bot.item.ophyssession(id)
+         %        vbsObj = bot.item.ophyssession(vids)
+         %        bsObj = bot.item.ophyssession(tSessionRow)
          
          if nargin == 0
             return;
@@ -172,7 +172,7 @@ classdef ophyssession < bot.items.session_base
          % - Handle a vector of session IDs
          if ~istable(session_id) && numel(session_id) > 1
             for nIndex = numel(session_id):-1:1
-               bsObj(session_id) = bot.items.ophyssession(session_id(nIndex));
+               bsObj(session_id) = bot.item.ophyssession(session_id(nIndex));
             end
             return;
          end
@@ -182,7 +182,7 @@ classdef ophyssession < bot.items.session_base
 
          % - Ensure that we were given an EPhys session
          if session.metadata.type ~= "OPhys"
-             error('BOT:Usage', '`bot.items.OPhys` objects may only refer to OPhys experimental sessions.');
+             error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
          end         
 
       end

@@ -1,4 +1,4 @@
-classdef ephysprobe < bot.items.abstract.NWBItem
+classdef ephysprobe < bot.item.abstract.NWBItem
     
    %% PUBLIC INTERFACE
    properties (SetAccess = private)
@@ -7,13 +7,13 @@ classdef ephysprobe < bot.items.abstract.NWBItem
       units;         % Table of units recorded from this probe
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
+   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
    properties (Access = protected)
        CORE_PROPERTIES_EXTENDED = [];
        LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)
+   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
    
    % User Properties
    properties (Dependent, SetAccess = protected)
@@ -106,7 +106,7 @@ classdef ephysprobe < bot.items.abstract.NWBItem
          % - Handle a vector of probe IDs
          if ~istable(probe_id) && (numel(probe_id) > 1)
             for nIndex = numel(probe_id):-1:1
-               probe(nIndex) = bot.items.ephysprobe(probe_id(nIndex), oManifest);
+               probe(nIndex) = bot.item.ephysprobe(probe_id(nIndex), oManifest);
             end
             return;
          end

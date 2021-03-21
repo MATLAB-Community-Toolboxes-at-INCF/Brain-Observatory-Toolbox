@@ -1,4 +1,4 @@
-classdef ephyschannel < bot.items.abstract.Item
+classdef ephyschannel < bot.item.abstract.Item
    
     %% USER INTERFACE 
     properties (SetAccess = private)
@@ -7,7 +7,7 @@ classdef ephyschannel < bot.items.abstract.Item
       probe;
     end
    
-    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
+    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
 
     properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
@@ -25,7 +25,7 @@ classdef ephyschannel < bot.items.abstract.Item
             % - Handle a vector of channel IDs
             if ~istable(channel_id) && (numel(channel_id) > 1)
                 for nIndex = numel(channel_id):-1:1
-                    channel(nIndex) = bot.items.ephyschannel(channel_id(nIndex), oManifest);
+                    channel(nIndex) = bot.item.ephyschannel(channel_id(nIndex), oManifest);
                 end
                 return;
             end

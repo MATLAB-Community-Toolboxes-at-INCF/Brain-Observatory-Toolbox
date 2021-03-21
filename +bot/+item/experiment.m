@@ -24,7 +24,7 @@ classdef experiment < handle
          % - Handle a vector of session IDs
          if ~istable(id) && numel(id) > 1
             for nIndex = numel(id):-1:1
-               exp(id) = bot.items.experiment(id(nIndex));
+               exp(id) = bot.item.experiment(id(nIndex));
             end
             return;
          end

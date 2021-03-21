@@ -1,9 +1,9 @@
-%% bot.items.session_base — CLASS Base class for experimental sessionss
+%% bot.item.session_base — CLASS Base class for experimental sessionss
 
-classdef session_base < handle & bot.items.abstract.NWBItem
+classdef session_base < handle & bot.item.abstract.NWBItem
  
 
-   %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)  
+   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)  
     
    % Public Properties
    properties (Dependent, SetAccess = protected)
@@ -210,7 +210,7 @@ classdef session_base < handle & bot.items.abstract.NWBItem
    
 %   methods (Static, Hidden)
 %       function manifest_row = find_manifest_row(id)
-%          sess = bot.items.session_base;
+%          sess = bot.item.session_base;
 %          
 %          % - Were we provided a table?
 %          if istable(id)

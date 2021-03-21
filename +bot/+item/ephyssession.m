@@ -1,6 +1,6 @@
-%% CLASS bot.items.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
+%% CLASS bot.item.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
-classdef ephyssession < bot.items.session_base 
+classdef ephyssession < bot.item.session_base 
   
     
     %% USER INTERFACE - Properties
@@ -621,12 +621,12 @@ classdef ephyssession < bot.items.session_base
     end         
     
     
-    %% SUPERCLASS IMPLEMENTATION (bot.items.session_base)
+    %% SUPERCLASS IMPLEMENTATION (bot.item.session_base)
    properties (Constant)
        NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
    end
    
-    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
+    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
      properties (Hidden = true, Access = protected)
         CORE_PROPERTIES_EXTENDED = ["specimen_name", "age_in_days", ...
             "sex", "full_genotype", "session_type", ...
@@ -635,7 +635,7 @@ classdef ephyssession < bot.items.session_base
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
      end
      
-    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.NWBItem)
+    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES = ["rig_geometry_data", ...
             "rig_equipment_name", "inter_presentation_intervals", ...
@@ -794,11 +794,11 @@ classdef ephyssession < bot.items.session_base
     
     methods
         function session = ephyssession(session_id, manifest)
-            % bot.items.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+            % bot.item.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
             %
-            % Usage: bsObj = bot.items.ephyssession(id, manifest)
-            %        vbsObj = bot.items.ephyssession(ids, manifest)
-            %        bsObj = bot.items.ephyssession(session_table_row, manifest)
+            % Usage: bsObj = bot.item.ephyssession(id, manifest)
+            %        vbsObj = bot.item.ephyssession(ids, manifest)
+            %        bsObj = bot.item.ephyssession(session_table_row, manifest)
             %
             % `manifest` is the EPhys manifest object. `id` is the session ID
             % of an EPhys experimental session. Optionally, a vector `ids` of
@@ -817,7 +817,7 @@ classdef ephyssession < bot.items.session_base
             % - Handle a vector of session IDs
             if ~istable(session_id) && numel(session_id) > 1
                 for index = numel(session_id):-1:1
-                    session(session_id) = bot.items.ephyssession(session_id(index), manifest);
+                    session(session_id) = bot.item.ephyssession(session_id(index), manifest);
                 end
                 return;
             end
@@ -828,7 +828,7 @@ classdef ephyssession < bot.items.session_base
             
             % - Ensure that we were given an EPhys session
             if session.metadata.type ~= "EPhys"
-                error('BOT:Usage', '`bot.items.ephyssession` objects may only refer to EPhys experimental sessions.');
+                error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
             end
             
             % - Assign associated table rows

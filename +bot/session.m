@@ -12,8 +12,8 @@
 % Alternatively, a table row from a session manifest can be provided, and
 % the corresponding session object will be returned.
 %
-% This function returns lightweight `bot.items.ophyssession` and
-% `bot.items.ephyssession` objects, containing only metadata about an
+% This function returns lightweight `bot.item.ophyssession` and
+% `bot.item.ephyssession` objects, containing only metadata about an
 % experimental session. No data will be downloaded unless the object is
 % inspected.
 
@@ -74,10 +74,10 @@ end
 switch sessionType
     case "OPhys"
         manifest_rows = ophys_manifest.ophys_sessions(rowIdxs,:);
-        new_sess = bot.items.ophyssession(manifest_rows);
+        new_sess = bot.item.ophyssession(manifest_rows);
     case "Ephys"
         manifest_rows = ephys_manifest.ephys_sessions(rowIdxs,:);
-        new_sess = bot.items.ephyssession(manifest_rows);
+        new_sess = bot.item.ephyssession(manifest_rows);
     otherwise
         assert(false);
 end

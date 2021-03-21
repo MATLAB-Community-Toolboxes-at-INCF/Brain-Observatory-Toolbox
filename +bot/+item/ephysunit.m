@@ -1,4 +1,4 @@
-classdef ephysunit < bot.items.abstract.Item
+classdef ephysunit < bot.item.abstract.Item
     
     %% UESR INTERFACE
     properties (SetAccess = private)
@@ -8,7 +8,7 @@ classdef ephysunit < bot.items.abstract.Item
     end
         
     
-    %% SUPERCLASS IMPLEMENTATION (bot.items.abstract.Item)
+    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
 
     properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
@@ -27,7 +27,7 @@ classdef ephysunit < bot.items.abstract.Item
             % - Handle a vector of unit IDs
             if ~istable(unit_id) && (numel(unit_id) > 1)
                 for nIndex = numel(unit_id):-1:1
-                    unit(nIndex) = bot.items.ephysunit(unit_id(nIndex), oManifest);
+                    unit(nIndex) = bot.item.ephysunit(unit_id(nIndex), oManifest);
                 end
                 return;
             end
