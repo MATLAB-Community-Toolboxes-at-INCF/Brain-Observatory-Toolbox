@@ -142,17 +142,8 @@ classdef ephysprobe < bot.items.internal.NWBItem
             boc = bot.internal.cache;
             local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwb_url);
          end
-      end
-       
-%       function nwb_url = get.nwb_url(self)
-%          boc = bot.internal.cache;
-%          nwb_url = [boc.strABOBaseUrl self.well_known_file.download_link];
-%       end
-%       
-%       function bIsCached = is_nwb_cached(self)
-%          boc = bot.internal.cache;
-%          bIsCached = boc.IsURLInCache(self.nwb_url);
-%       end
+      end      
+
       
       function strNWBFile = EnsureCached(self)
          if ~self.nwbIsCached
