@@ -28,20 +28,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 
                 % Core properties
                 groups(1) = matlab.mixin.util.PropertyGroup([obj.CORE_PROPERTIES obj.CORE_PROPERTIES_EXTENDED]);
-                groups(2) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Dataset Items');
-                
-%                 if obj.is_nwb_cached()
-%                     description = '[cached]';
-%                 else
-%                     description = '[not cached]';
-%                 end
-%                 
-%                 propList = struct();
-%                 for prop = obj.lazy_property_list
-%                     propList.(prop) = description;
-%                 end
-%                 
-%                 groups(3) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
+                groups(2) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Dataset Items');               
             end
         end
        
