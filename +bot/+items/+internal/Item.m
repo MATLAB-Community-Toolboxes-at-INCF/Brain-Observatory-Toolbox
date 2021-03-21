@@ -9,7 +9,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
    %% SUBCLASS INTERFACE
    
    % Properties for matlab.mixin.CustomDisplay superclass implementation 
-   properties (Abstract, SetAccess = immutable, GetAccess = protected)
+   properties (Abstract, Access = protected)
        CORE_PROPERTIES_EXTENDED (1,:) string 
        LINKED_ITEM_PROPERTIES (1,:) string        
    end
@@ -35,10 +35,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
    end
    
    
-   %% DEVELOPER INTERFACE
+   %% DEVELOPER INTERFACE - Properties
    properties (Hidden = true)
       property_cache;
    end
+   
+   %% DEVEOPER INTERFACE - Methods
+   
+        
    
    methods (Access = protected)
       function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)

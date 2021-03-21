@@ -7,8 +7,8 @@ classdef session_base < handle & bot.items.internal.NWBItem
     
    % Public Properties
    properties (Dependent, SetAccess = protected)
-       nwbURL;
-       nwbIsCached; 
+       nwbIsCached;
+       nwbLocalFile;
    end 
    
    % Public Property Access Methods 
@@ -35,20 +35,21 @@ classdef session_base < handle & bot.items.internal.NWBItem
    
    % Developer Properties   
    properties (Dependent, Hidden)
-       local_nwb_file_location;
+       %local_nwb_file_location;
+       nwbURL;
    end
    
    % Developer Property Access Methods
    methods 
-      function local_nwb_file_location = get.local_nwb_file_location(bos)
+      function local_nwb_file_location = get.nwbLocalFile(bos)
          % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
          %
          % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
          if ~bos.nwbIsCached()
-            local_nwb_file_location = [];
+            local_nwb_file_location = "";
          else
             % - Get the local file location for the session NWB URL
-            local_nwb_file_location = bos.bot_cache.ccCache.CachedFileForURL(bos.nwbURL);
+            local_nwb_file_location = string(bos.bot_cache.ccCache.CachedFileForURL(bos.nwbURL));
          end
       end
    end   
@@ -63,7 +64,7 @@ classdef session_base < handle & bot.items.internal.NWBItem
            % This method will force the session data to be downloaded and cached,
            % if it is not already available.
            bos.CacheFilesForSessionIDs(bos.id);
-           strCacheFile = bos.local_nwb_file_location;
+           strCacheFile = bos.nwbLocalFile;
        end
    end         
    

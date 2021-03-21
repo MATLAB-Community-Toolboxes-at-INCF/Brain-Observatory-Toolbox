@@ -8,7 +8,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
    end
    
    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
-   properties (SetAccess = immutable, GetAccess = protected)
+   properties (Access = protected)
        CORE_PROPERTIES_EXTENDED = [];
        LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
    end
@@ -17,8 +17,8 @@ classdef ephysprobe < bot.items.internal.NWBItem
    
    % User Properties
    properties (Dependent, SetAccess = protected)
-       nwbURL;
        nwbIsCached; 
+       nwbLocalFile;
    end   
    
    % User Property Access Methods
@@ -56,22 +56,23 @@ classdef ephysprobe < bot.items.internal.NWBItem
    
    % Developer Properties
    properties (SetAccess = immutable, GetAccess = protected)
-       NWB_FILE_PROPERTIES = [];
+       NWB_DATA_PROPERTIES = [];
    end
    
    properties (Dependent, Hidden)
-        local_nwb_file_location;
+       nwbURL;
+       %local_nwb_file_location;
    end
     
    % Developer Property Access Methods
    methods
-       function local_nwb_file_location = get.local_nwb_file_location(self)
+       function local_nwb_file_location = get.nwbLocalFile(self)
          if ~self.nwbIsCached()
-            local_nwb_file_location = [];
+            local_nwb_file_location = "";
          else
             % - Get the local file location for the session NWB URL
             boc = bot.internal.cache;
-            local_nwb_file_location = boc.ccCache.CachedFileForURL(self.nwbURL);
+            local_nwb_file_location = string(boc.ccCache.CachedFileForURL(self.nwbURL));
          end
        end
    end

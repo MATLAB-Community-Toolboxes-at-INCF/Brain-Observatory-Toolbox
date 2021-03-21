@@ -1,21 +1,30 @@
 classdef NWBItem < bot.items.internal.Item
     
+       
+    
     %% SUBCLASS INTERFACE
         
     % Public Properties 
     properties (Abstract, Dependent, SetAccess=protected)
-        nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached
-        nwbURL (1,1) string 
+        nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached        
+        nwbLocalFile (1,1) string
     end
+
+
     
-    % Developer Properties    
+    % Developer Properties            
     properties (Abstract, SetAccess = immutable, GetAccess = protected)
-        NWB_FILE_PROPERTIES (1,:) string 
+        NWB_DATA_PROPERTIES (1,:) string 
+    end
+
+    properties (Abstract, Dependent, Hidden)
+        nwbURL (1,1) string; % TODO: consider if this can be deprecated
     end
     
-    properties (Abstract, Dependent, Hidden)
-        local_nwb_file_location;
-    end
+    
+%     properties (Abstract, Dependent, Hidden)
+%         local_nwb_file_location;
+%     end
     
     % Developer Methods    
     methods (Abstract, Hidden)
@@ -30,14 +39,30 @@ classdef NWBItem < bot.items.internal.Item
 %    end                       
     
 
-
-   %% SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
+   
+    %% DEVELOPER INTERFACE                 
+    
+    %% SUPERCLASS OVERRIDES (bot.items.internal.Item)
+    
+    % Constructor extension
+    methods 
+        function obj = NWBItem()
+           
+            obj@bot.items.internal.Item;
+            
+            % Add NWB information to the core property list for this item
+            obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];                                     
+        end                
+    end
+    
+    
+    %% SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
     
     methods (Access = protected)
         function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
-            else                                
+            else
                 groups = getPropertyGroups@bot.items.internal.Item(obj);
                 
                 % NWB-bound properties
@@ -48,15 +73,15 @@ classdef NWBItem < bot.items.internal.Item
                 end
                 
                 propList = struct();
-                for prop = obj.NWB_FILE_PROPERTIES
+                for prop = obj.NWB_DATA_PROPERTIES
                     propList.(prop) = description;
                 end
                 
-                groups(end+1) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');                
+                groups(end+1) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
             end
-        end        
+        end
     end
-
+    
     
 end
 

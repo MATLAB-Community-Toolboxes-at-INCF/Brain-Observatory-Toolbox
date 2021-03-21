@@ -104,14 +104,14 @@ classdef ophyssession < bot.items.session_base
    end
    
    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
-     properties (SetAccess = immutable, GetAccess = protected)
+     properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = "session_type";
         LINKED_ITEM_PROPERTIES = [];
      end
      
     %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
-        NWB_FILE_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
+        NWB_DATA_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
          "demixed_traces", "fluorescence_traces", "neuropil_r", ...
          "neuropil_traces", "corrected_fluorescence_traces", ...
@@ -207,7 +207,7 @@ classdef ophyssession < bot.items.session_base
             
             % - Try to read this metadata entry
             try
-               metadata.(fieldname) = h5read(bos.local_nwb_file_location, metadata.(fieldname));
+               metadata.(fieldname) = h5read(bos.nwbLocalFile, metadata.(fieldname));
             catch
                metadata.(fieldname) = [];
             end
@@ -274,7 +274,7 @@ classdef ophyssession < bot.items.session_base
          EnsureCached(bos);
          
          % - Read imaging timestamps from NWB file
-         timestamps = h5read(bos.local_nwb_file_location, ...
+         timestamps = h5read(bos.nwbLocalFile, ...
             h5path('processing', bos.strPipelineDataset, ...
             'Fluorescence', 'imaging_plane_1', 'timestamps'));
          
@@ -294,7 +294,7 @@ classdef ophyssession < bot.items.session_base
          EnsureCached(bos);
          
          % - Read list of specimen IDs
-         cell_specimen_ids = h5read(bos.local_nwb_file_location, ...
+         cell_specimen_ids = h5read(bos.nwbLocalFile, ...
             h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'cell_specimen_ids'));
       end
@@ -357,7 +357,7 @@ classdef ophyssession < bot.items.session_base
          end
          
          % - Read requested fluorescence traces
-         traces = h5read(bos.local_nwb_file_location, ...
+         traces = h5read(bos.nwbLocalFile, ...
             h5path('processing', bos.strPipelineDataset, ...
             'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
          
@@ -399,7 +399,7 @@ classdef ophyssession < bot.items.session_base
          end
          
          % - Read requested fluorescence traces
-         traces = h5read(bos.local_nwb_file_location, ...
+         traces = h5read(bos.nwbLocalFile, ...
             h5path('processing', bos.strPipelineDataset, ...
             'Fluorescence', 'imaging_plane_1', 'data'));
          
@@ -434,11 +434,11 @@ classdef ophyssession < bot.items.session_base
          
          % - Check pipeline version and read neuropil correction R
          if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-            neuropil_r = h5read(bos.local_nwb_file_location, ...
+            neuropil_r = h5read(bos.nwbLocalFile, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
          else
-            neuropil_r = h5read(bos.local_nwb_file_location, ...
+            neuropil_r = h5read(bos.nwbLocalFile, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1', 'r'));
          end
@@ -482,11 +482,11 @@ classdef ophyssession < bot.items.session_base
          
          % - Check pipeline version and read neuropil correction R
          if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-            traces = h5read(bos.local_nwb_file_location, ...
+            traces = h5read(bos.nwbLocalFile, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
          else
-            traces = h5read(bos.local_nwb_file_location, ...
+            traces = h5read(bos.nwbLocalFile, ...
                h5path('processing', bos.strPipelineDataset, ...
                'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
          end
@@ -569,12 +569,12 @@ classdef ophyssession < bot.items.session_base
          end
          
          % - Read timestamps and response traces
-         timestamps = h5read(bos.local_nwb_file_location, ...
+         timestamps = h5read(bos.nwbLocalFile, ...
             h5path('processing', bos.strPipelineDataset, ...
             'DfOverF', 'imaging_plane_1', 'timestamps'));
          timestamps = seconds(timestamps);
          
-         dff_traces = h5read(bos.local_nwb_file_location, ...
+         dff_traces = h5read(bos.nwbLocalFile, ...
             h5path('processing', bos.strPipelineDataset, ...
             'DfOverF', 'imaging_plane_1', 'data'));
          
@@ -597,7 +597,7 @@ classdef ophyssession < bot.items.session_base
          try
             % - Read data from the NWB file
             bos.EnsureCached();
-            nwb_file = bos.local_nwb_file_location;
+            nwb_file = bos.nwbLocalFile;
             events = h5read(nwb_file, h5path(strKey, 'data'))';
             frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'))';
             
@@ -632,7 +632,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Get local NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Get list of stimuli from NWB file
          strKey = h5path('stimulus', 'presentation');
@@ -718,15 +718,15 @@ classdef ophyssession < bot.items.session_base
          
          % - Return a stimulus table for one of the stimulus types
          if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
-            stimulus_table = fetch_abstract_feature_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
+            stimulus_table = fetch_abstract_feature_series_stimulus_table(bos.nwbLocalFile, [stimulus_name '_stimulus']);
             return;
             
          elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
-            stimulus_table = fetch_indexed_time_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
+            stimulus_table = fetch_indexed_time_series_stimulus_table(bos.nwbLocalFile, [stimulus_name '_stimulus']);
             return;
             
          elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
-            stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(bos.local_nwb_file_location, [stimulus_name '_stimulus']);
+            stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(bos.nwbLocalFile, [stimulus_name '_stimulus']);
             return;
             
          elseif isequal(stimulus_name, 'spontaneous')
@@ -780,7 +780,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, and locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Extract the maximum projection from the session
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -799,7 +799,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, and locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Extract list of ROI IDs from NWB file
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -823,7 +823,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Build a base key for the running speed data
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -846,7 +846,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Try to locate the motion correction data
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -902,7 +902,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Default for spherical coordinates
          if ~exist('bAsSpherical', 'var') || isempty(as_spherical_coords)
@@ -956,7 +956,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Extract session data from NWB file
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -998,7 +998,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1');
@@ -1045,7 +1045,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
             'ImageSegmentation', 'imaging_plane_1');
@@ -1090,7 +1090,7 @@ classdef ophyssession < bot.items.session_base
          
          % - Ensure session data is cached, locate NWB file
          bos.EnsureCached();
-         nwb_file = bos.local_nwb_file_location;
+         nwb_file = bos.nwbLocalFile;
          
          % - Extract stimulus template from NWB file
          nwb_key = h5path('stimulus', 'templates', ...

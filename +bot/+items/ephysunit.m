@@ -10,7 +10,7 @@ classdef ephysunit < bot.items.internal.Item
     
     %% SUPERCLASS IMPLEMENTATION (bot.items.internal.Item)
 
-    properties (SetAccess = immutable, GetAccess = protected)
+    properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
         LINKED_ITEM_PROPERTIES = ["session" "channel" "probe"];
     end
