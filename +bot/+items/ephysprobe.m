@@ -96,40 +96,8 @@ classdef ephysprobe < bot.items.internal.NWBItem
       well_known_file;           % Metadata about probe NWB files
       %nwb_url;                   % URL for probe NWB file
       %local_nwb_file_location;   % Local cache location of probe NWB file
-   end
-   
-   properties (Hidden = true, SetAccess = immutable, GetAccess = private)
-      metadata_property_list = ["metadata", "id"];
-      
-      contained_objects_property_list = ["session", "channels", "units"];
-      
-      lazy_property_list = [];
-   end
-   
-   methods (Access = protected)
-      function groups = getPropertyGroups(obj)
-         if ~isscalar(obj)
-            groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
-         else
-            % - Default properties
-            groups(1) = matlab.mixin.util.PropertyGroup(obj.metadata_property_list);
-            groups(2) = matlab.mixin.util.PropertyGroup(obj.contained_objects_property_list, 'Linked dataset items');
-            
-            if obj.nwbIsCached()
-               description = '[cached]';
-            else
-               description = '[not cached]';
-            end
-            
-            propList = struct();
-            for prop = obj.lazy_property_list
-               propList.(prop) = description;
-            end
-            
-            groups(3) = matlab.mixin.util.PropertyGroup(propList, 'NWB data');
-         end
-      end
-   end
+   end  
+
    methods
       function probe = ephysprobe(probe_id, oManifest)
          % - Handle "no arguments" usage
