@@ -28,7 +28,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 
                 % Core properties
                 groups(1) = matlab.mixin.util.PropertyGroup([obj.CORE_PROPERTIES obj.CORE_PROPERTIES_EXTENDED]);
-                groups(2) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Dataset Items');               
+                groups(2) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');               
             end
         end
        
