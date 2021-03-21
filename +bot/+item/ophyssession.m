@@ -68,8 +68,6 @@ classdef ophyssession < bot.item.session_base
    %% USER INTERFACE 
    %% - Default visible properties
    properties (SetAccess = private)
-      %metadata;                     % Session metadata extracted from manifest table
-      %id;                           % Session ID
       session_type;                 % Type of experimental session (i.e. set of stimuli)
    end
    
