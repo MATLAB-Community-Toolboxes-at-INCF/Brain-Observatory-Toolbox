@@ -5,15 +5,15 @@ classdef ephyssession < bot.item.session_base
     
     %% USER INTERFACE - Properties
     
-    % directly stored properties
+    % Linked Items
     properties (SetAccess = private)
         units;                          % A Table of all units in this session
         probes;                         % A Table of all probes in this session
         channels;                       % A Table of all channels in this session
     end
     
-    % properties linked to NWB file
-    properties (SetAccess = private)
+    % NWB Info 
+    properties (Dependent)
         rig_geometry_data;               % Metadata about the geometry of the rig used in this session
         rig_equipment_name;              % Metadata: name of the rig used in this session
         

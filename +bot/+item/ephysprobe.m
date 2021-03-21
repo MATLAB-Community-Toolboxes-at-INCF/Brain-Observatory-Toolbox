@@ -1,11 +1,73 @@
 classdef ephysprobe < bot.item.abstract.NWBItem
     
-   %% PUBLIC INTERFACE
+   %% USER INTERFACE
+   
+   % Linked Items
    properties (SetAccess = private)
       session;       % `bot.session` object containing this probe
       channels;      % Table of channels recorded from this probe
       units;         % Table of units recorded from this probe
    end
+   
+   % NWB Info
+   properties (Dependent)
+       lfpData (1,1) timetable; % Local field potential (lfp) data for this probe
+       csdData (1,1) struct; % Current source density (csd) data for this probe      
+   end
+   
+   % Property Access Methods
+   methods
+       function lfpData = get.lfpData(self)
+           % fetch_lfp - METHOD Return local field potential data for this probe
+           %
+           % Usage: [lfp, timestamps] = probe.fetch_lfp()
+           %
+           % `lfp` will be a TxN matrix containing LFP data recorded from
+           % this probe. `timestamps` will be a Tx1 vector of timestamps,
+           % corresponding to each row in `lfp`.
+           if ~self.in_cache('lfp')
+               nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
+               [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.fetch_lfp();
+           end
+           
+           lfpData = timetable(seconds(self.property_cache.lfp_timestamps),self.property_cache.lfp,'VariableNames',"LocalFieldPotential");           
+       end
+       
+       function csdData = get.csdData(self)
+           % fetch_current_source_density - METHOD Return current source density data recorded from this probe
+           %
+           % Usage: [csd, timestamps, horizontal_position, vertical_position] = ...
+           %           probe.fetch_current_source_density()
+           %
+           % `csd` will be a TxN matrix containing CSD data recorded from
+           % this probe. `timestamps` will be a Tx1 vector of timestamps,
+           % corresponding to each row in `csd`. `horizontal_position` and
+           % `vertical_position` will be Nx1 vectors containing the
+           % horizontal and vertical positions corresponding to each column
+           % of `csd`.
+           if ~self.in_cache('csd')
+               nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
+               [self.property_cache.csd, ...
+                   self.property_cache.csd_timestamps, ...
+                   self.property_cache.horizontal_position, ...
+                   self.property_cache.vertical_position] = nwb_probe.fetch_current_source_density();
+           end
+           
+           csdData = struct;
+           
+           csdData.data = timetable(seconds(self.property_cache.csd_timestamps),self.property_cache.csd','VariableNames',"CurrentSourceDensity");
+           csdData.horizontalPositions = self.property_cache.horizontal_position;
+           csdData.verticalPositions = self.property_cache.vertical_position;
+           
+           %            csd = self.property_cache.csd';
+           %            timestamps = self.property_cache.csd_timestamps;
+           %            horizontal_position = self.property_cache.horizontal_position;
+           %            vertical_position = self.property_cache.vertical_position;
+       end
+   end
+
+
+   
    
    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
    properties (Access = protected)
@@ -56,7 +118,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    
    % Developer Properties
    properties (SetAccess = immutable, GetAccess = protected)
-       NWB_DATA_PROPERTIES = [];
+       NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
    end
    
    properties (Dependent, Hidden)
@@ -93,7 +155,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    
    % Hidden properties
    properties (Hidden)
-      well_known_file;           % Metadata about probe NWB files
+      well_known_file; % Metadata about probe NWB files
    end  
 
    methods
@@ -139,51 +201,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
          boc = bot.internal.cache;
          well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
       end
-   end
-   
-   methods
-      function [lfp, timestamps] = fetch_lfp(self)
-         % fetch_lfp - METHOD Return local field potential data for this probe
-         %
-         % Usage: [lfp, timestamps] = probe.fetch_lfp()
-         %
-         % `lfp` will be a TxN matrix containing LFP data recorded from
-         % this probe. `timestamps` will be a Tx1 vector of timestamps,
-         % corresponding to each row in `lfp`.
-         if ~self.in_cache('lfp')
-            nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
-            [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.fetch_lfp();
-         end
-         
-         lfp = self.property_cache.lfp;
-         timestamps = self.property_cache.lfp_timestamps;
-      end
-      
-      function [csd, timestamps, horizontal_position, vertical_position] = fetch_current_source_density(self)
-         % fetch_current_source_density - METHOD Return current source density data recorded from this probe
-         %
-         % Usage: [csd, timestamps, horizontal_position, vertical_position] = ...
-         %           probe.fetch_current_source_density()
-         %
-         % `csd` will be a TxN matrix containing CSD data recorded from
-         % this probe. `timestamps` will be a Tx1 vector of timestamps,
-         % corresponding to each row in `csd`. `horizontal_position` and
-         % `vertical_position` will be Nx1 vectors containing the
-         % horizontal and vertical positions corresponding to each column
-         % of `csd`.
-         if ~self.in_cache('csd')
-            nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
-            [self.property_cache.csd, ...
-               self.property_cache.csd_timestamps, ...
-               self.property_cache.horizontal_position, ...
-               self.property_cache.vertical_position] = nwb_probe.fetch_current_source_density();
-         end
-         
-         csd = self.property_cache.csd';
-         timestamps = self.property_cache.csd_timestamps;
-         horizontal_position = self.property_cache.horizontal_position;
-         vertical_position = self.property_cache.vertical_position;
-      end
-   end
+   end   
+     
 end
 
