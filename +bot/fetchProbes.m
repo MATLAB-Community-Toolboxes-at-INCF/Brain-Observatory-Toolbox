@@ -5,5 +5,7 @@
 % `probes` will be the manifest table of EPhys probes.
 
 function probes = fetchProbes(~)
-   probes = bot.internal.manifest('ephys').ephys_probes;
+   manifest = bot.internal.manifest('ephys').ephys_probes;
+   probes = bot.internal.refineManifest(manifest);
+
 end

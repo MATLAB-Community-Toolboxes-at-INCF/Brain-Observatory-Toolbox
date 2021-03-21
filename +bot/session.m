@@ -28,7 +28,7 @@ if istable(sessionsSpec)
     end    
     
    sessionIDs = sessionsSpec.id;
-   sessionType = sessionsSpec{1,"type"};
+   sessionType = sessionsSpec.Properties.UserData.type;
 elseif isnumeric(sessionsSpec) && isvector(sessionsSpec)
     sessionIDs = sessionsSpec;
 else
