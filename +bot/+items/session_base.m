@@ -35,16 +35,12 @@ classdef session_base < handle & bot.items.internal.NWBItem
    
    % Developer Properties   
    properties (Dependent, Hidden)
-       %local_nwb_file_location;
        nwbURL;
    end
    
    % Developer Property Access Methods
    methods 
       function local_nwb_file_location = get.nwbLocalFile(bos)
-         % get.local_nwb_file_location - GETTER METHOD Return the local location of the NWB file correspoding to this session
-         %
-         % Usage: local_nwb_file_location = get.local_nwb_file_location(bos)
          if ~bos.nwbIsCached()
             local_nwb_file_location = "";
          else
@@ -93,7 +89,6 @@ classdef session_base < handle & bot.items.internal.NWBItem
       bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
       ophys_manifest = bot.internal.ophysmanifest.instance();              % Private handle to the OPhys data manifest
       ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
-      %local_nwb_file_location;
    end
    
    %% HIDDEN INTERFACE - Methods

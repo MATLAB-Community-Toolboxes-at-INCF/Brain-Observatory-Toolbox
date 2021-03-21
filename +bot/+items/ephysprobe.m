@@ -61,7 +61,6 @@ classdef ephysprobe < bot.items.internal.NWBItem
    
    properties (Dependent, Hidden)
        nwbURL;
-       %local_nwb_file_location;
    end
     
    % Developer Property Access Methods
@@ -95,8 +94,6 @@ classdef ephysprobe < bot.items.internal.NWBItem
    % Hidden properties
    properties (Hidden)
       well_known_file;           % Metadata about probe NWB files
-      %nwb_url;                   % URL for probe NWB file
-      %local_nwb_file_location;   % Local cache location of probe NWB file
    end  
 
    methods
