@@ -19,7 +19,7 @@ classdef ephysprobe < bot.items.internal.NWBItem
        NWB_FILE_PROPERTIES = [];
    end
     
-   properties (Dependent)
+   properties (Dependent, SetAccess = protected)
        nwbURL;
        nwbIsCached; 
    end

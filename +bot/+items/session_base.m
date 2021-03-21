@@ -5,7 +5,7 @@ classdef session_base < handle & bot.items.internal.NWBItem
 
    %% SUPERCLASS IMPLEMENTATION (bot.items.internal.NWBItem)  
     
-   properties (Dependent)
+   properties (Dependent, SetAccess = protected)
        nwbURL;
        nwbIsCached; 
    end

@@ -6,7 +6,7 @@ classdef NWBItem < bot.items.internal.Item
         NWB_FILE_PROPERTIES (1,:) string 
     end
 
-    properties (Abstract, Dependent)
+    properties (Abstract, Dependent, SetAccess=protected)
         nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached
         nwbURL (1,1) string 
     end       
