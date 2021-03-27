@@ -68,20 +68,7 @@ classdef session_base < handle & bot.item.abstract.NWBItem
    
    properties (Abstract, Constant)
        NWB_WELL_KNOWN_FILE_PREFIX (1,1) string
-   end       
-   
-   % requisite zero-arg constructor
-   methods
-      function sess = session_base(~)
-         % bot.session_base - CLASS Base class for experimental sessions
-         
-         % - Handle calling with no arguments
-         if nargin == 0
-            return;
-         end
-      end
-   end  
-
+   end             
    
    %% HIDDEN INTERFACE - Properties
    
@@ -92,7 +79,16 @@ classdef session_base < handle & bot.item.abstract.NWBItem
    end
    
    %% HIDDEN INTERFACE - Methods
-   
+         
+   % constructor
+   methods
+      function sess = session_base(~)        
+         % - Handle calling with no arguments
+         if nargin == 0
+            return;
+         end
+      end
+   end     
  
    methods (Hidden) 
       
