@@ -1,46 +1,31 @@
 classdef NWBItem < bot.item.abstract.Item
     
-       
+          
+    %% USER INTERFACE - Properties
     
-    %% SUBCLASS INTERFACE
-        
-    % Public Properties 
     properties (Abstract, Dependent, SetAccess=protected)
-        nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached        
+        nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached
         nwbLocalFile (1,1) string
-    end
-
-
+    end    
     
-    % Developer Properties            
+    
+    %% DEVELOPER INTERFACE - Properties
+    
     properties (Abstract, SetAccess = immutable, GetAccess = protected)
-        NWB_DATA_PROPERTIES (1,:) string 
+        NWB_DATA_PROPERTIES (1,:) string
     end
-
+    
     properties (Abstract, Dependent, Hidden)
         nwbURL (1,1) string; % TODO: consider if this can be deprecated
-    end
+    end    
     
     
-%     properties (Abstract, Dependent, Hidden)
-%         local_nwb_file_location;
-%     end
-    
-    % Developer Methods    
+    %% DEVELOPER INTERFACE - METHODS
+
     methods (Abstract, Hidden)
-        EnsureCached(obj);             
+        EnsureCached(obj);
     end
 
-    
-%    properties (Hidden, Access=protected)
-%        well_known_file;           % Metadata about probe NWB files
-%       nwb_url;                   % URL for probe NWB file
-%       local_nwb_file_location;
-%    end                       
-    
-
-   
-    %% DEVELOPER INTERFACE                 
     
     %% SUPERCLASS OVERRIDES (bot.item.abstract.Item)
     
