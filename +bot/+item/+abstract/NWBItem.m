@@ -1,13 +1,12 @@
 classdef NWBItem < bot.item.abstract.Item
     
-          
+    
     %% USER INTERFACE - Properties
     
     properties (Abstract, Dependent, SetAccess=protected)
         nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached
         nwbLocalFile (1,1) string
     end    
-    
     
     %% DEVELOPER INTERFACE - Properties
     
@@ -17,27 +16,69 @@ classdef NWBItem < bot.item.abstract.Item
     
     properties (Abstract, Dependent, Hidden)
         nwbURL (1,1) string; % TODO: consider if this can be deprecated
-    end    
+    end
     
     
     %% DEVELOPER INTERFACE - METHODS
-
+    
     methods (Abstract, Hidden)
         EnsureCached(obj);
     end
-
+    
+    %% DEVELOPER PROPERTIES
+    properties (Hidden = true)
+        property_cache;
+    end
+    
+    %% DEVELOPER METHODS
+    methods (Access = protected)
+        function data = fetch_cached(self, property, fun_access)
+            % fetch_cached - METHOD Access a cached property
+            %
+            % Usage: data = fetch_cached(self, property, fun_access)
+            %
+            % `property` is a string containing a property name. `fun_access`
+            % is a function handle that returns the property data, if not
+            % found in the cache. The property data will be returned from the
+            % local property cache, or else inserted after calling
+            % `fun_access`.
+            %
+            % `data` will be the cached property data.
+            
+            % - Check for cached property
+            if ~isfield(self.property_cache, property)
+                % - Use the access function
+                self.property_cache.(property) = fun_access();
+            end
+            
+            % - Return the cached property
+            data = self.property_cache.(property);
+        end
+        
+        function is_in_cache = in_cache(self, property)
+            % in_cache — METHOD Test if a property value has been cached
+            %
+            % Usage: is_in_cache = in_cache(self, property)
+            %
+            % `property` is a string containing a property name. `is_in_cache`
+            % will be `true` iff the property is present in the property
+            % cache.
+            is_in_cache = isfield(self.property_cache, property) && ~isempty(self.property_cache.(property));
+        end
+    end
+    
     
     %% SUPERCLASS OVERRIDES (bot.item.abstract.Item)
     
     % Constructor extension
-    methods 
+    methods
         function obj = NWBItem()
-           
+            
             obj@bot.item.abstract.Item;
             
             % Add NWB information to the core property list for this item
-            obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];                                     
-        end                
+            obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];
+        end
     end
     
     
