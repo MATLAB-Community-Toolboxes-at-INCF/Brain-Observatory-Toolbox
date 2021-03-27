@@ -66,7 +66,7 @@ classdef session_base < handle & bot.item.abstract.NWBItem
    
    %% SUBCLASS INTERFACE
    
-   properties (Abstract, Constant)
+   properties (Abstract, Constant, Hidden)
        NWB_WELL_KNOWN_FILE_PREFIX (1,1) string
    end             
    

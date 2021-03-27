@@ -97,7 +97,7 @@ classdef ophyssession < bot.item.session_base
    
    
    %% SUPERCLASS IMPLEMENTATION (bot.item.session_base)
-   properties (Constant)
+   properties (Constant, Hidden)
        NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
    end
    
