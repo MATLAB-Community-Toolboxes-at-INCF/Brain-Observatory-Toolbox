@@ -6,13 +6,15 @@ classdef NWBItem < bot.item.abstract.Item
     properties (Dependent, SetAccess=protected)
         nwbLocalFile (1,1) string
         nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached        
+        
+        nwbURL (1,1) string; % TODO: consider if this can be deprecated
     end
     
     properties (Abstract, Dependent, SetAccess=protected)
     end    
     
-    %% DEVELOPER INTERFACE - Properties
-    
+    %% DEVELOPER INTERFACE - Properties  
+        
     properties (Abstract, SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES (1,:) string
     end
@@ -20,10 +22,7 @@ classdef NWBItem < bot.item.abstract.Item
     properties (Hidden, SetAccess = protected)
         nwbFileInfo struct; 
     end
-    
-    properties (Abstract, Dependent, Hidden)
-        nwbURL (1,1) string; % TODO: consider if this can be deprecated
-    end
+
     
     %% PROPERTY ACCESS METHODS
     methods
@@ -41,6 +40,11 @@ classdef NWBItem < bot.item.abstract.Item
             boc = bot.internal.cache;
             tf = boc.IsURLInCache(obj.nwbURL);
         end
+        
+        function url = get.nwbURL(self)
+           boc = bot.internal.cache;
+           url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
+       end      
     end
     
     
@@ -105,10 +109,10 @@ classdef NWBItem < bot.item.abstract.Item
     
     % Constructor extension
     methods
-        function obj = NWBItem()
+        function obj = NWBItem(id)            
             
-            obj@bot.item.abstract.Item;
-            
+            obj@bot.item.abstract.Item(id);
+           
             % Add NWB information to the core property list for this item
             obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];
         end

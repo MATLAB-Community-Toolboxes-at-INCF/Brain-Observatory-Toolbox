@@ -8,9 +8,4 @@
 % experiment.
 
 function new_channel = channel(channel_id)
-
-% - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest('ephys');
-
-% - Return the channel object
-new_channel = bot.item.ephyschannel(channel_id, ephys_manifest);
+new_channel = bot.item.ephyschannel(channel_id);

@@ -8,9 +8,4 @@
 % experiment.
 
 function new_unit = unit(unit_id)
-
-% - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest('ephys');
-
-% - Return the unit object
-new_unit = bot.item.ephysunit(unit_id, ephys_manifest);
+new_unit = bot.item.ephysunit(unit_id);

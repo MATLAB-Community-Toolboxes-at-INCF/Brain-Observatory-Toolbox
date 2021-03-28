@@ -8,26 +8,26 @@ classdef session_base < handle & bot.item.abstract.NWBItem
    % Public Property Access Methods 
    methods
    
-       function url = get.nwbURL(bos)
-          %Get the cloud URL for the NWB data file corresponding to this session
-           
-           % - Get well known files
-           well_known_files = bos.info.well_known_files;
-           
-           % - Find (first) NWB file
-           file_types = [well_known_files.well_known_file_type];
-           type_names = {file_types.name};
-           nwb_file_index = find(cellfun(@(c)strcmp(c, bos.NWB_WELL_KNOWN_FILE_PREFIX.char()), type_names), 1, 'first');
-           
-           % - Build URL
-           url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
-       end
+%        function url = get.nwbURL(bos)
+%           %Get the cloud URL for the NWB data file corresponding to this session
+%            
+%            % - Get well known files
+%            well_known_files = bos.info.well_known_files;
+%            
+%            % - Find (first) NWB file
+%            file_types = [well_known_files.well_known_file_type];
+%            type_names = {file_types.name};
+%            nwb_file_index = find(cellfun(@(c)strcmp(c, bos.NWB_WELL_KNOWN_FILE_PREFIX.char()), type_names), 1, 'first');
+%            
+%            % - Build URL
+%            url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
+%        end
    end
    
-   % Developer Properties   
-   properties (Dependent, Hidden)
-       nwbURL;
-   end
+%    % Developer Properties   
+%    properties (Dependent, Hidden)
+%        nwbURL;
+%    end
    
    % Hidden Methods
    methods (Hidden)
@@ -59,11 +59,20 @@ classdef session_base < handle & bot.item.abstract.NWBItem
          
    % constructor
    methods
-      function sess = session_base(~)        
-         % - Handle calling with no arguments
-         if nargin == 0
-            return;
-         end
+      function obj = session_base(id)        
+         
+          obj@bot.item.abstract.NWBItem(id);
+          
+          % Find NWB file info for this session item object (first prefix-matching well_known_file retrieved from API)
+          well_known_files = obj.info.well_known_files;
+          
+          file_types = [well_known_files.well_known_file_type];
+          type_names = {file_types.name};
+          
+          idx = find(cellfun(@(c)strcmp(c, obj.NWB_WELL_KNOWN_FILE_PREFIX.char()), type_names), 1, 'first');
+          
+          obj.nwbFileInfo = well_known_files(idx);
+         
       end
    end     
  

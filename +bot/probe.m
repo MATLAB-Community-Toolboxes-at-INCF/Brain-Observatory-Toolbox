@@ -7,9 +7,4 @@
 % metadata about the experiment probe data.
 
 function new_probe = probe(probe_id)
-
-% - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest('ephys');
-
-% - Return the probe object
-new_probe = bot.item.ephysprobe(probe_id, ephys_manifest);
+new_probe = bot.item.ephysprobe(probe_id);

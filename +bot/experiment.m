@@ -7,6 +7,4 @@
 % containing metadata about the experiment.
 
 function new_experiment = experiment(experiment_id)
-
-% - Return the experiment object
 new_experiment = bot.item.experiment(experiment_id);

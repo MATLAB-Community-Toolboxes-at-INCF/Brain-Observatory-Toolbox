@@ -107,6 +107,11 @@ classdef ophyssession < bot.item.session_base
         LINKED_ITEM_PROPERTIES = [];
      end
      
+     properties (Hidden, Constant)
+        ITEM_MANIFEST = bot.internal.ophysmanifest.instance();
+        ITEM_MANIFEST_TABLE_NAME = "ophys_sessions";
+    end
+     
     %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
@@ -158,31 +163,29 @@ classdef ophyssession < bot.item.session_base
          %
          % Usage: bsObj = bot.item.ophyssession(id)
          %        vbsObj = bot.item.ophyssession(vids)
-         %        bsObj = bot.item.ophyssession(tSessionRow)
-         
-         if nargin == 0
-            return;
-         end
-         
-         % Load associated singleton             
-         manifest = bot.internal.ophysmanifest.instance();
-            
-         % - Handle a vector of session IDs
-         if ~istable(session_id) && numel(session_id) > 1
-            for nIndex = numel(session_id):-1:1
-               bsObj(session_id) = bot.item.ophyssession(session_id(nIndex));
-            end
-            return;
-         end
-         
-         % - Assign metadata
-         session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
+         %        bsObj = bot.item.ophyssession(tSessionRow)       
+ 
+         bsObj@bot.item.session_base(session_id);
+                  
+         %          % Load associated singleton
+         %          manifest = bot.internal.ophysmanifest.instance();
+         %
+         %          % - Handle a vector of session IDs
+         %          if ~istable(session_id) && numel(session_id) > 1
+         %             for nIndex = numel(session_id):-1:1
+         %                bsObj(session_id) = bot.item.ophyssession(session_id(nIndex));
+         %             end
+         %             return;
+         %          end
+         %
+         %          % - Assign metadata
+         %          session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
 
          % - Ensure that we were given an EPhys session
          if session.info.type ~= "OPhys"
              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
-         end         
-
+         end                  
+         
       end
    end
    

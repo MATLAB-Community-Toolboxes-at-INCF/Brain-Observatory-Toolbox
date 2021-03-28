@@ -635,6 +635,11 @@ classdef ephyssession < bot.item.session_base
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
      end
      
+     properties (Hidden, Constant)
+        ITEM_MANIFEST = bot.internal.ephysmanifest.instance();
+        ITEM_MANIFEST_TABLE_NAME = "ephys_sessions";
+    end
+     
     %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = immutable, GetAccess = protected)
         NWB_DATA_PROPERTIES = ["rig_geometry_data", ...
@@ -793,7 +798,7 @@ classdef ephyssession < bot.item.session_base
     %% HIDDEN INTERFACE - Construction
     
     methods
-        function session = ephyssession(session_id, manifest)
+        function session = ephyssession(session_id)
             % bot.item.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
             %
             % Usage: bsObj = bot.item.ephyssession(id, manifest)
@@ -805,26 +810,24 @@ classdef ephyssession < bot.item.session_base
             % multiple session IDs may be provided to return a vector of
             % session objects. A table row of the EPhys sessions manifest
             % table may also be provided as `session_table_row`.
-            if nargin == 0
-                return;
-            end
+     
             
-            % Load associated singleton
-            if ~exist('manifest', 'var') || isempty(manifest)
-                manifest = bot.internal.ephysmanifest.instance();
-            end
+            session@bot.item.session_base(session_id);
             
-            % - Handle a vector of session IDs
-            if ~istable(session_id) && numel(session_id) > 1
-                for index = numel(session_id):-1:1
-                    session(session_id) = bot.item.ephyssession(session_id(index), manifest);
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
-            session_id = session.id;
+            %             % Load associated singleton
+            %             manifest = bot.internal.ephysmanifest.instance();
+            %
+            %             % - Handle a vector of session IDs
+            %             if ~istable(session_id) && numel(session_id) > 1
+            %                 for index = numel(session_id):-1:1
+            %                     session(session_id) = bot.item.ephyssession(session_id(index), manifest);
+            %                 end
+            %                 return;
+            %             end
+            %
+            %             % - Assign metadata
+            %             session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
+            %             session_id = session.id;
             
             % - Ensure that we were given an EPhys session
             if session.info.type ~= "EPhys"
@@ -832,9 +835,10 @@ classdef ephyssession < bot.item.session_base
             end
             
             % - Assign associated table rows
-            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
-            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
-            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
+            manifest = session.ITEM_MANIFEST;
+            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session.id, :);
+            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session.id, :);
+            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session.id, :);
         end
     end    
    

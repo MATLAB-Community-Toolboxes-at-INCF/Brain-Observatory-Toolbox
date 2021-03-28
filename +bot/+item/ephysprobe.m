@@ -24,15 +24,20 @@ classdef ephysprobe < bot.item.abstract.NWBItem
        LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
    end
    
+   properties (Hidden, Constant)
+       ITEM_MANIFEST = bot.internal.ephysmanifest.instance();
+       ITEM_MANIFEST_TABLE_NAME = "ephys_probes";
+   end
+   
    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)      
       
    properties (SetAccess = immutable, GetAccess = protected)
        NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
    end  
     
-   properties (Dependent, Hidden)
-       nwbURL;
-   end  
+%    properties (Dependent, Hidden)
+%        nwbURL;
+%    end  
 
     
    %% PROPERTY ACCESS METHODS
@@ -89,13 +94,13 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    end
    
    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-   methods
-       function url = get.nwbURL(self)
-           boc = bot.internal.cache;
-           url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
-       end      
-  
-   end
+%    methods
+%        function url = get.nwbURL(self)
+%            boc = bot.internal.cache;
+%            url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
+%        end      
+%   
+%    end
    
    % PROPERTY ACCESS HELPERS
    methods
@@ -137,37 +142,38 @@ classdef ephysprobe < bot.item.abstract.NWBItem
 
    % CONSTRUCTOR
    methods
-      function probe = ephysprobe(probe_id, oManifest)
-         % - Handle "no arguments" usage
-         if nargin == 0
-            return;
-         end
-         
-         % - Handle a vector of probe IDs
-         if ~istable(probe_id) && (numel(probe_id) > 1)
-            for nIndex = numel(probe_id):-1:1
-               probe(nIndex) = bot.item.ephysprobe(probe_id(nIndex), oManifest);
-            end
-            return;
-         end
-         
-         % - Assign metadata
-         probe.check_and_assign_metadata(probe_id, oManifest.ephys_probes, 'probe');
-         if istable(probe_id)
-            probe_id = probe.info.id;
-         end
-         
-         % - Assign associated table rows
-         probe.channels = oManifest.ephys_channels(oManifest.ephys_channels.ephys_probe_id == probe_id, :);
-         probe.units = oManifest.ephys_units(oManifest.ephys_units.ephys_probe_id == probe_id, :);
-         
-         % - Get a handle to the corresponding experimental session
-         probe.session = bot.session(probe.info.ephys_session_id);
-         
-         % - Identify NWB file link
-         probe.nwbFileInfo = znstGetLFPFileInfo(probe);
-         
-         return;
+      function obj = ephysprobe(id)
+          %          % - Handle "no arguments" usage
+          %          if nargin == 0
+          %             return;
+          %          end
+          %
+          %          % - Handle a vector of probe IDs
+          %          if ~istable(probe_id) && (numel(probe_id) > 1)
+          %             for nIndex = numel(probe_id):-1:1
+          %                probe(nIndex) = bot.item.ephysprobe(probe_id(nIndex), oManifest);
+          %             end
+          %             return;
+          %          end
+          %
+          %          % - Assign metadata
+          %          probe.check_and_assign_metadata(probe_id, oManifest.ephys_probes, 'probe');
+          %
+          
+          obj@bot.item.abstract.NWBItem(id);           
+          
+          % - Assign associated table rows
+          manifest = obj.ITEM_MANIFEST;
+          obj.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_probe_id == obj.id, :);
+          obj.units = manifest.ephys_units(manifest.ephys_units.ephys_probe_id == obj.id, :);
+          
+          % - Get a handle to the corresponding experimental session
+          obj.session = bot.session(obj.info.ephys_session_id);
+          
+          % - Identify NWB file link
+          obj.nwbFileInfo = znstGetLFPFileInfo(obj);
+          
+          return;
          
           function info = znstGetLFPFileInfo(probe)
               probe_id = probe.info.id;
