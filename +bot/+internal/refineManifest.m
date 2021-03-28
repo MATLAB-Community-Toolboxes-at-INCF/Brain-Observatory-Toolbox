@@ -7,6 +7,7 @@ varNames = string(manifest.Properties.VariableNames);
 
 manifest.Properties.UserData = struct();
 
+%% Remove columns whose values are "redundant" (the same for all rows); store these as table properties instead
 redundantVarNames = string([]);
 
 for col = 1:length(varNames)    
@@ -22,6 +23,30 @@ for col = 1:length(varNames)
 end    
 
 manifest = removevars(manifest, redundantVarNames);
+
+%% Reorder columns
+
+varNames = setdiff(varNames,redundantVarNames,"stable");
+
+% Identify variables containing string patterns identifying the kind of item info 
+containsIDVars = varNames(varNames.contains("id") & ~varNames.matches("id"));
+countVars = varNames(varNames.contains("count"));
+dateVars = varNames(varNames.contains("date"));
+typeVars = varNames(varNames.contains("type"));
+
+% Identify variables with compound data
+firstRowVals = table2cell(manifest(1,:));
+compoundVarIdxs = cellfun(@(x)isstruct(x) || iscell(x),firstRowVals);
+compoundVars = varNames(compoundVarIdxs);
+
+% Create new column order
+reorderedVars = ["id" containsIDVars countVars dateVars typeVars compoundVars]; 
+newVarOrder = ["id" containsIDVars typeVars setdiff(varNames,reorderedVars,"stable") dateVars countVars compoundVars];
+
+
+% Do reorder in one step
+manifest = manifest(:,newVarOrder);
+
     
 end
 
