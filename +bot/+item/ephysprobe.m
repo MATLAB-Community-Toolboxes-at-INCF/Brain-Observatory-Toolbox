@@ -151,13 +151,14 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    end
    
    
-   %% HIDDEN INTERFACE
-   
-   % Hidden properties
+   %% DEVELOPER INTERFACE - Properties  
    properties (Hidden)
       well_known_file; % Metadata about probe NWB files
    end  
 
+   %% DEVELOPER INTERFACE - Methods
+
+   % constructor
    methods
       function probe = ephysprobe(probe_id, oManifest)
          % - Handle "no arguments" usage
@@ -187,21 +188,23 @@ classdef ephysprobe < bot.item.abstract.NWBItem
          probe.session = bot.session(probe.info.ephys_session_id);
          
          % - Identify NWB file link
-         probe.well_known_file = probe.fetch_lfp_file_link();
-      end               
-
-   end
-   
-   
-   methods (Hidden)
-      function well_known_file = fetch_lfp_file_link(probe)
-         probe_id = probe.info.id;
-         strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
+         probe.well_known_file = znstGetLFPFileLink(probe);
          
-         boc = bot.internal.cache;
-         well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
+         return;
+         
+          function well_known_file = znstGetLFPFileLink(probe)
+              probe_id = probe.info.id;
+              strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
+              
+              boc = bot.internal.cache;
+              well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
+          end
       end
-   end   
+
+   end          
      
 end
 
+
+
+%% 
