@@ -3,9 +3,12 @@ classdef NWBItem < bot.item.abstract.Item
     
     %% USER INTERFACE - Properties
     
-    properties (Abstract, Dependent, SetAccess=protected)
-        nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached
+    properties (Dependent, SetAccess=protected)
         nwbLocalFile (1,1) string
+        nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached        
+    end
+    
+    properties (Abstract, Dependent, SetAccess=protected)
     end    
     
     %% DEVELOPER INTERFACE - Properties
@@ -14,15 +17,45 @@ classdef NWBItem < bot.item.abstract.Item
         NWB_DATA_PROPERTIES (1,:) string
     end
     
+    properties (Hidden, SetAccess = protected)
+        nwbFileInfo struct; 
+    end
+    
     properties (Abstract, Dependent, Hidden)
         nwbURL (1,1) string; % TODO: consider if this can be deprecated
+    end
+    
+    %% PROPERTY ACCESS METHODS
+    methods
+        function loc = get.nwbLocalFile(self)
+            if ~self.nwbIsCached()
+                loc = "";
+            else
+                % - Get the local file location for the session NWB URL
+                boc = bot.internal.cache;
+                loc = string(boc.ccCache.CachedFileForURL(self.nwbURL));
+            end
+        end      
+        
+        function tf = get.nwbIsCached(obj)
+            boc = bot.internal.cache;
+            tf = boc.IsURLInCache(obj.nwbURL);
+        end
     end
     
     
     %% DEVELOPER INTERFACE - METHODS
     
-    methods (Abstract, Hidden)
-        EnsureCached(obj);
+    methods (Hidden)
+        function loc = ensureNWBCached(obj)
+            boc = bot.internal.cache;
+            if ~obj.nwbIsCached
+                loc = boc.CacheFile([boc.strABOBaseUrl, obj.nwbFileInfo.download_link], obj.nwbFileInfo.path);            
+            else        
+                loc = string(boc.ccCache.CachedFileForURL(obj.nwbURL));
+            end
+        end
+            
     end
     
     %% DEVELOPER PROPERTIES

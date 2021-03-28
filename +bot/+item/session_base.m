@@ -3,19 +3,10 @@
 classdef session_base < handle & bot.item.abstract.NWBItem
  
 
-   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)  
-    
-   % Public Properties
-   properties (Dependent, SetAccess = protected)
-       nwbIsCached;
-       nwbLocalFile;
-   end 
+   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
    
    % Public Property Access Methods 
    methods
-       function tf = get.nwbIsCached(bos)
-           tf = bos.bot_cache.IsURLInCache(bos.nwbURL);
-       end
    
        function url = get.nwbURL(bos)
           %Get the cloud URL for the NWB data file corresponding to this session
@@ -38,29 +29,15 @@ classdef session_base < handle & bot.item.abstract.NWBItem
        nwbURL;
    end
    
-   % Developer Property Access Methods
-   methods 
-      function local_nwb_file_location = get.nwbLocalFile(bos)
-         if ~bos.nwbIsCached()
-            local_nwb_file_location = "";
-         else
-            % - Get the local file location for the session NWB URL
-            local_nwb_file_location = string(bos.bot_cache.ccCache.CachedFileForURL(bos.nwbURL));
-         end
-      end
-   end   
-       
    % Hidden Methods
    methods (Hidden)
-       function strCacheFile = EnsureCached(bos)
-           % EnsureCached - METHOD Ensure the data files corresponding to this session are cached
-           %
-           % Usage: strCachelFile = EnsureCached(bos)
-           %
-           % This method will force the session data to be downloaded and cached,
-           % if it is not already available.
-           bos.CacheFilesForSessionIDs(bos.id);
-           strCacheFile = bos.nwbLocalFile;
+       
+       % Override bot.item.abstract.NWBItem
+       function loc = ensureNWBCached(bos)                      
+           if ~bos.nwbIsCached
+               bos.CacheFilesForSessionIDs(bos.id); % dispatch to session cacher               
+           end
+           loc = bos.nwbLocalFile;
        end
    end         
    

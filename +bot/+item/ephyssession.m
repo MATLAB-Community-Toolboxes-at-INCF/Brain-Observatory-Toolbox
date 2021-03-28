@@ -898,7 +898,7 @@ classdef ephyssession < bot.item.session_base
         function nwb = get.nwb_file(self)
             % - Retrieve and cache the NWB file
             if ~self.in_cache('nwb_file')
-                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.EnsureCached());
+                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.ensureNWBCached());
             end
             
             % - Return an NWB file access object

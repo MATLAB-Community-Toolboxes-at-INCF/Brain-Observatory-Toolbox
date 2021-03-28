@@ -25,23 +25,15 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    end
    
    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)      
-   properties (Dependent, SetAccess = protected)
-       nwbIsCached; 
-       nwbLocalFile;
-   end   
-   
+      
    properties (SetAccess = immutable, GetAccess = protected)
        NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
-   end
-   
+   end  
+    
    properties (Dependent, Hidden)
        nwbURL;
-   end
-   
-   % THIS CLASS
-   properties (Hidden)
-      well_known_file; % Metadata about probe NWB files
    end  
+
     
    %% PROPERTY ACCESS METHODS
    
@@ -56,7 +48,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
            % this probe. `timestamps` will be a Tx1 vector of timestamps,
            % corresponding to each row in `lfp`.
            if ~self.in_cache('lfp')
-               self.EnsureCached();
+               self.ensureNWBCached();
                [self.property_cache.lfp, self.property_cache.lfp_timestamps] = self.zprpGetLFP();
            end
            
@@ -76,7 +68,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
            % horizontal and vertical positions corresponding to each column
            % of `csd`.
            if ~self.in_cache('csd')
-               self.EnsureCached();
+               self.ensureNWBCached();
                [self.property_cache.csd, ...
                    self.property_cache.csd_timestamps, ...
                    self.property_cache.horizontal_position, ...
@@ -100,23 +92,9 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    methods
        function url = get.nwbURL(self)
            boc = bot.internal.cache;
-           url = [boc.strABOBaseUrl self.well_known_file.download_link];
-       end
-       
-       function tf = get.nwbIsCached(self)
-           boc = bot.internal.cache;
-           tf = boc.IsURLInCache(self.nwbURL);
-       end
-       
-       function local_nwb_file_location = get.nwbLocalFile(self)
-           if ~self.nwbIsCached()
-               local_nwb_file_location = "";
-           else
-               % - Get the local file location for the session NWB URL
-               boc = bot.internal.cache;
-               local_nwb_file_location = string(boc.ccCache.CachedFileForURL(self.nwbURL));
-           end
-       end       
+           url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
+       end      
+  
    end
    
    % PROPERTY ACCESS HELPERS
@@ -152,20 +130,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
       end 
        
        
-   end
-   
-  %% METHODS - SUPERCLASS (bot.item.abstract.NWBItem)        
-
-   methods (Hidden)
-       function strNWBFile = EnsureCached(self)
-           if ~self.nwbIsCached
-               boc = bot.internal.cache;
-               strNWBFile = boc.CacheFile([boc.strABOBaseUrl, self.well_known_file.download_link], self.well_known_file.path);
-           else
-               strNWBFile = self.nwbLocalFile;
-           end
-       end
-   end
+   end   
    
    
    %% METHODS - THIS CLASS 
@@ -200,16 +165,16 @@ classdef ephysprobe < bot.item.abstract.NWBItem
          probe.session = bot.session(probe.info.ephys_session_id);
          
          % - Identify NWB file link
-         probe.well_known_file = znstGetLFPFileLink(probe);
+         probe.nwbFileInfo = znstGetLFPFileInfo(probe);
          
          return;
          
-          function well_known_file = znstGetLFPFileLink(probe)
+          function info = znstGetLFPFileInfo(probe)
               probe_id = probe.info.id;
               strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
               
               boc = bot.internal.cache;
-              well_known_file = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
+              info = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
           end
       end
 
