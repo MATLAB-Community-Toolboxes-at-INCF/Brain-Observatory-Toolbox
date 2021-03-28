@@ -98,7 +98,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    end
    
    % PROPERTY ACCESS HELPERS
-   methods
+   methods (Access=private)
        function [lfp, timestamps] = zprpGetLFP(self)
            
            id_ = uint64(self.id);
