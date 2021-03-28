@@ -48,26 +48,26 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    % USER PROPERTIES
    methods
        function lfpData = get.lfpData(self)
-           % fetch_lfp - METHOD Return local field potential data for this probe
+           % zprpGetLFP - METHOD Return local field potential data for this probe
            %
-           % Usage: [lfp, timestamps] = probe.fetch_lfp()
+           % Usage: [lfp, timestamps] = probe.zprpGetLFP()
            %
            % `lfp` will be a TxN matrix containing LFP data recorded from
            % this probe. `timestamps` will be a Tx1 vector of timestamps,
            % corresponding to each row in `lfp`.
            if ~self.in_cache('lfp')
-               nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
-               [self.property_cache.lfp, self.property_cache.lfp_timestamps] = nwb_probe.fetch_lfp();
+               self.EnsureCached();
+               [self.property_cache.lfp, self.property_cache.lfp_timestamps] = self.zprpGetLFP();
            end
            
            lfpData = timetable(seconds(self.property_cache.lfp_timestamps),self.property_cache.lfp,'VariableNames',"LocalFieldPotential");           
        end
        
        function csdData = get.csdData(self)
-           % fetch_current_source_density - METHOD Return current source density data recorded from this probe
+           % zprpGetCSD - METHOD Return current source density data recorded from this probe
            %
            % Usage: [csd, timestamps, horizontal_position, vertical_position] = ...
-           %           probe.fetch_current_source_density()
+           %           probe.zprpGetCSD()
            %
            % `csd` will be a TxN matrix containing CSD data recorded from
            % this probe. `timestamps` will be a Tx1 vector of timestamps,
@@ -76,11 +76,11 @@ classdef ephysprobe < bot.item.abstract.NWBItem
            % horizontal and vertical positions corresponding to each column
            % of `csd`.
            if ~self.in_cache('csd')
-               nwb_probe = bot.internal.nwb.nwb_probe(self.EnsureCached());
+               self.EnsureCached();
                [self.property_cache.csd, ...
                    self.property_cache.csd_timestamps, ...
                    self.property_cache.horizontal_position, ...
-                   self.property_cache.vertical_position] = nwb_probe.fetch_current_source_density();
+                   self.property_cache.vertical_position] = self.zprpGetCSD();
            end
            
            csdData = struct;
@@ -117,6 +117,41 @@ classdef ephysprobe < bot.item.abstract.NWBItem
                local_nwb_file_location = string(boc.ccCache.CachedFileForURL(self.nwbURL));
            end
        end       
+   end
+   
+   % PROPERTY ACCESS HELPERS
+   methods
+       function [lfp, timestamps] = zprpGetLFP(self)
+           
+           id_ = uint64(self.id);
+           
+           % - Read lfp data
+           lfp = h5read(self.nwbLocalFile, ...
+               sprintf('/acquisition/probe_%d_lfp/probe_%d_lfp_data/data', id_, id_))';
+           
+           % - Read timestamps
+           timestamps = h5read(self.nwbLocalFile, ...
+               sprintf('/acquisition/probe_%d_lfp/probe_%d_lfp_data/timestamps', id_, id_));
+       end
+      
+   
+      function [csd, timestamps, virtual_electrode_x_positions, virtual_electrode_y_positions] = zprpGetCSD(self)
+         % - Read CSD data
+         csd = h5read(self.nwbLocalFile, ...
+            '/processing/current_source_density/ecephys_csd/current_source_density/data');
+         
+         % - Read timestamps
+         timestamps = h5read(self.nwbLocalFile, ...
+            '/processing/current_source_density/ecephys_csd/current_source_density/timestamps');
+         
+         % - Read electrode position
+         virtual_electrode_x_positions = h5read(self.nwbLocalFile, ...
+            '/processing/current_source_density/ecephys_csd/virtual_electrode_x_positions');
+         virtual_electrode_y_positions = h5read(self.nwbLocalFile, ...
+            '/processing/current_source_density/ecephys_csd/virtual_electrode_y_positions');
+      end 
+       
+       
    end
    
   %% METHODS - SUPERCLASS (bot.item.abstract.NWBItem)        
