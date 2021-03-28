@@ -1,12 +1,12 @@
 classdef ephysprobe < bot.item.abstract.NWBItem
     
-   %% USER INTERFACE
+   %% PROPERTIES - USER
    
    % Linked Items
    properties (SetAccess = private)
-      session;       % `bot.session` object containing this probe
-      channels;      % Table of channels recorded from this probe
-      units;         % Table of units recorded from this probe
+       session;       % `bot.session` object containing this probe
+       channels;      % Table of channels recorded from this probe
+       units;         % Table of units recorded from this probe
    end
    
    % NWB Info
@@ -15,7 +15,37 @@ classdef ephysprobe < bot.item.abstract.NWBItem
        csdData (1,1) struct; % Current source density (csd) data for this probe      
    end
    
-   % Property Access Methods
+   
+   %% PROPERTIES - HIDDEN
+      
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+   properties (Access = protected)
+       CORE_PROPERTIES_EXTENDED = [];
+       LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
+   end
+   
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)      
+   properties (Dependent, SetAccess = protected)
+       nwbIsCached; 
+       nwbLocalFile;
+   end   
+   
+   properties (SetAccess = immutable, GetAccess = protected)
+       NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
+   end
+   
+   properties (Dependent, Hidden)
+       nwbURL;
+   end
+   
+   % THIS CLASS
+   properties (Hidden)
+      well_known_file; % Metadata about probe NWB files
+   end  
+    
+   %% PROPERTY ACCESS METHODS
+   
+   % USER PROPERTIES
    methods
        function lfpData = get.lfpData(self)
            % fetch_lfp - METHOD Return local field potential data for this probe
@@ -65,80 +95,32 @@ classdef ephysprobe < bot.item.abstract.NWBItem
            %            vertical_position = self.property_cache.vertical_position;
        end
    end
-
-
    
-   
-   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-   properties (Access = protected)
-       CORE_PROPERTIES_EXTENDED = [];
-       LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
-   end
-   
-   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-   
-   % User Properties
-   properties (Dependent, SetAccess = protected)
-       nwbIsCached; 
-       nwbLocalFile;
-   end   
-   
-   % User Property Access Methods
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
    methods
-%        function tf = get.nwbIsCached(bos)
-%            tf = bos.bot_cache.IsURLInCache(bos.nwbURL);
-%        end
-% %    
-%        function url = get.nwbURL(bos)
-%           %Get the cloud URL for the NWB data file corresponding to this session
-%            
-%            % - Get well known files
-%            well_known_files = bos.info.well_known_files;
-%            
-%            % - Find (first) NWB file
-%            file_types = [well_known_files.well_known_file_type];
-%            type_names = {file_types.name};
-%            nwb_file_index = find(cellfun(@(c)strcmp(c, bos.NWB_WELL_KNOWN_FILE_PREFIX.char()), type_names), 1, 'first');
-%            
-%            % - Build URL
-%            url = [bos.bot_cache.strABOBaseUrl well_known_files(nwb_file_index).download_link];
-%        end
-%        
        function url = get.nwbURL(self)
-         boc = bot.internal.cache;
-         url = [boc.strABOBaseUrl self.well_known_file.download_link];
-      end
-      
-      function tf = get.nwbIsCached(self)
-         boc = bot.internal.cache;
-         tf = boc.IsURLInCache(self.nwbURL);
-      end
-       
-   end
-   
-   % Developer Properties
-   properties (SetAccess = immutable, GetAccess = protected)
-       NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
-   end
-   
-   properties (Dependent, Hidden)
-       nwbURL;
-   end
-    
-   % Developer Property Access Methods
-   methods
-       function local_nwb_file_location = get.nwbLocalFile(self)
-         if ~self.nwbIsCached()
-            local_nwb_file_location = "";
-         else
-            % - Get the local file location for the session NWB URL
-            boc = bot.internal.cache;
-            local_nwb_file_location = string(boc.ccCache.CachedFileForURL(self.nwbURL));
-         end
+           boc = bot.internal.cache;
+           url = [boc.strABOBaseUrl self.well_known_file.download_link];
        end
+       
+       function tf = get.nwbIsCached(self)
+           boc = bot.internal.cache;
+           tf = boc.IsURLInCache(self.nwbURL);
+       end
+       
+       function local_nwb_file_location = get.nwbLocalFile(self)
+           if ~self.nwbIsCached()
+               local_nwb_file_location = "";
+           else
+               % - Get the local file location for the session NWB URL
+               boc = bot.internal.cache;
+               local_nwb_file_location = string(boc.ccCache.CachedFileForURL(self.nwbURL));
+           end
+       end       
    end
    
-   % Developer Methods
+  %% METHODS - SUPERCLASS (bot.item.abstract.NWBItem)        
+
    methods (Hidden)
        function strNWBFile = EnsureCached(self)
            if ~self.nwbIsCached
@@ -151,14 +133,9 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    end
    
    
-   %% DEVELOPER INTERFACE - Properties  
-   properties (Hidden)
-      well_known_file; % Metadata about probe NWB files
-   end  
+   %% METHODS - THIS CLASS 
 
-   %% DEVELOPER INTERFACE - Methods
-
-   % constructor
+   % CONSTRUCTOR
    methods
       function probe = ephysprobe(probe_id, oManifest)
          % - Handle "no arguments" usage
@@ -204,7 +181,3 @@ classdef ephysprobe < bot.item.abstract.NWBItem
    end          
      
 end
-
-
-
-%% 
