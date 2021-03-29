@@ -60,7 +60,7 @@ classdef NWBItem < bot.item.abstract.Item
     
     %% DEVELOPER PROPERTIES
     properties (Hidden = true)
-        property_cache;
+        property_cache = struct();
     end
     
     %% DEVELOPER METHODS
@@ -125,15 +125,22 @@ classdef NWBItem < bot.item.abstract.Item
                 groups = getPropertyGroups@bot.item.abstract.Item(obj);
                 
                 % NWB-bound properties
-                if obj.nwbIsCached
-                    description = '[cached]';
+                if ~obj.nwbIsCached
+                    description = '[NWB download required]';
                 else
-                    description = '[not cached]';
+                    description = '[on demand]';                
                 end
                 
-                propList = struct();
                 for prop = obj.NWB_DATA_PROPERTIES
-                    propList.(prop) = description;
+                    if ~obj.in_cache(prop)
+                        propList.(prop) = description;
+                    elseif isscalar(obj.property_cache.(prop)) || isempty(obj.property_cache.(prop))
+                        propList.(prop)  = obj.fetch_cached(prop);                                                
+                    else
+                        %propList.(prop) = convertStringsToChars("cached (class: " + class(obj.fetch_cached(prop)) + ", size: " + mat2str(size(obj.fetch_cached(prop))) + ")");
+                        propList.(prop) = convertStringsToChars(class(obj.fetch_cached(prop)) + " of size: " + mat2str(size(obj.fetch_cached(prop))));
+                    end
+
                 end
                 
                 groups(end+1) = matlab.mixin.util.PropertyGroup(propList, 'NWB Info');
