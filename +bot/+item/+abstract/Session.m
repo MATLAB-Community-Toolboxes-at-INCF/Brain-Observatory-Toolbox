@@ -1,6 +1,6 @@
 %% bot.item.session_base — CLASS Base class for experimental sessionss
 
-classdef session_base < handle & bot.item.abstract.NWBItem
+classdef Session < handle & bot.item.abstract.NWBItem
  
 
    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
@@ -59,7 +59,7 @@ classdef session_base < handle & bot.item.abstract.NWBItem
          
    % constructor
    methods
-      function sess = session_base(~)        
+      function sess = Session(~)        
          % - Handle calling with no arguments
          if nargin == 0
             return;

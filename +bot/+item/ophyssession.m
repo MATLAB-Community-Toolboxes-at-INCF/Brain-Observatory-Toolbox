@@ -63,7 +63,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 
 
-classdef ophyssession < bot.item.session_base 
+classdef ophyssession < bot.item.abstract.Session
    
    %% USER INTERFACE 
    %% - Default visible properties
@@ -96,7 +96,7 @@ classdef ophyssession < bot.item.session_base
    end
    
    
-   %% SUPERCLASS IMPLEMENTATION (bot.item.session_base)
+   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Session)
    properties (Constant, Hidden)
        NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
    end

@@ -1,6 +1,6 @@
 %% CLASS bot.item.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
-classdef ephyssession < bot.item.session_base 
+classdef ephyssession < bot.item.abstract.Session
   
     
     %% USER INTERFACE - Properties
