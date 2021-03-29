@@ -22,5 +22,5 @@ function sessions = fetchSessions(experiment_type)
    end
    
    % Return a "refined" manifest table (eliminates redundant vars)
-   sessions = bot.internal.refineManifest(tbl);
+   sessions = bot.internal.manifest2item(tbl);
 end

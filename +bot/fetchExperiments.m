@@ -6,5 +6,5 @@
 
 function experiments = fetchExperiments(~)
    tbl = bot.internal.manifest('ophys').ophys_containers;
-   experiments = bot.internal.refineManifest(tbl);
+   experiments = bot.internal.manifest2item(tbl);
 end

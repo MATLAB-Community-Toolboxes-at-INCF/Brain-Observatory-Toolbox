@@ -6,5 +6,5 @@
 
 function units = fetchUnits(~)
    tbl = bot.internal.manifest('ephys').ephys_units;
-   units = bot.internal.refineManifest(tbl);   
+   units = bot.internal.manifest2item(tbl);   
 end

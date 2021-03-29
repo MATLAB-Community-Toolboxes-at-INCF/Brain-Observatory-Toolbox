@@ -6,6 +6,6 @@
 
 function probes = fetchProbes(~)
    tbl = bot.internal.manifest('ephys').ephys_probes;
-   probes = bot.internal.refineManifest(tbl);
+   probes = bot.internal.manifest2item(tbl);
 
 end

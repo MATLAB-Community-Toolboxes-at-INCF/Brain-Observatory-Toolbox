@@ -1,4 +1,4 @@
-function manifest = refineManifest(manifest)
+function manifest = manifest2item(manifest)
 % MANIFEST2ITEM Refine manifest table for display as an Item table
 
 assert(isa(manifest,'table'),"The input manifest must be a table object");

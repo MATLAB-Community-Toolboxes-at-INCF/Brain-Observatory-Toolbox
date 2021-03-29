@@ -6,6 +6,6 @@
 
 function channels = fetchChannels(~)
    tbl = bot.internal.manifest('ephys').ephys_channels;
-   channels = bot.internal.refineManifest(tbl);
+   channels = bot.internal.manifest2item(tbl);
 
 end
