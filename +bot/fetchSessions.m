@@ -12,15 +12,15 @@ function sessions = fetchSessions(experiment_type)
    
    switch lower(experiment_type)
       case {'ephys', 'e'}
-         manifest = bot.internal.manifest('ephys').ephys_sessions;
+         tbl = bot.internal.manifest('ephys').ephys_sessions;
          
       case {'ophys', 'o'}
-         manifest = bot.internal.manifest('ophys').ophys_sessions;
+         tbl = bot.internal.manifest('ophys').ophys_sessions;
          
       otherwise
          error('BOT:Usage', '`experiment_type` must be one of {''ophys'', ''ephys''}');
    end
    
    % Return a "refined" manifest table (eliminates redundant vars)
-   sessions = bot.internal.refineManifest(manifest);
+   sessions = bot.internal.refineManifest(tbl);
 end
