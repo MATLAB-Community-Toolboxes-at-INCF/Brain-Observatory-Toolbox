@@ -11,6 +11,8 @@ tbl.Properties.UserData = struct();
 %% Remove columns whose values are "redundant" (the same for all rows); store these as table properties instead
 redundantVarNames = string([]);
 
+userDataString = "";
+
 for col = 1:length(varNames)    
     
    if ~isstruct(tbl{1,col}) && ~iscell(tbl{1,col}) && numel(unique(tbl{:,col},'stable')) == 1 % all (non-compound) values in a column are equal 
@@ -19,9 +21,16 @@ for col = 1:length(varNames)
        redundantVarNames = [redundantVarNames redundantVar]; %#ok<AGROW>
               
        %addfield(manifest.Properties.UserData,redundantVar);
-       tbl.Properties.UserData.(redundantVar) = tbl{1,col};
+       redundantVal = tbl{1,col};
+       tbl.Properties.UserData.(redundantVar) = redundantVal;
+       
+      
+       userDataString = userDataString + redundantVar + ": " + string(redundantVal) + " - ";              
    end     
-end    
+end 
+userDataString = userDataString.strip();
+userDataString = userDataString.strip("-");
+tbl.Properties.Description = userDataString;
 
 tbl = removevars(tbl, redundantVarNames);
 
