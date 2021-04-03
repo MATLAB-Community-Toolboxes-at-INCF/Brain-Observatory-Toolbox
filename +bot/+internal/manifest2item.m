@@ -42,7 +42,6 @@ tbl = removevars(tbl, containsDirVars);
 
 %% Initialize refined variable lists (names, values)
 refinedVars = setdiff(varNames,[redundantVarNames containsDirVars],"stable");
-firstRowVals = table2cell(tbl(1,:));
 
 %% Convert ephys_structure_acronym from cell types to the most string type possible (string type for scalars, cell array of strings for string lists)
  
@@ -51,19 +50,13 @@ if varIdx
     var = tbl.(refinedVars(varIdx));
     
     if iscell(var)
-        if iscell(var{1}) % Handle string lists with empty last value (e.g. ephys session)
+        if iscell(var{1}) % case of: string lists, with empty last value (e.g. ephys session)
             
             % convert to cell string array
             assert(all(cellfun(@(x)isempty(x{end}),var))); % all the cell string arrays end with an empty double array, for reason TBD
-            tbl.(refinedVars(varIdx)) = cellfun(@(x)x(1:end-1)',var,'UniformOutput',false);  % convert each cell element to string, skipping the ending empty double array
-            
-            % dereference to cell array of strings
-            for ii=1:height(tbl)
-                tbl{ii,varIdx}{1} = string(tbl{ii,varIdx}{1});
-            end
-            
-        else % cell string arrays (almost)
-            % Allow case where empty values are numerics
+            tbl.(refinedVars(varIdx)) = cellfun(@(x)join(string(x(1:end-1))',"; "),var); % convert each cell element to string, skipping the ending empty double array
+                
+        else % case of: 'almost' cell string arrays (w/ empty values represented as numerics) 
             assert(all(cellfun(@isempty,var(cellfun(@(x)~ischar(x),var)))));
             
             var2 = var;
@@ -76,23 +69,27 @@ end
 
 %% Reorder columns
 
+%TODO: reimplement the mapping of string patterns to variable types programatically as a containers.Map 
 
 % Identify variables containing string patterns identifying the kind of item info 
-containsIDVars = refinedVars(refinedVars.contains("id") & ~refinedVars.matches("id"));
-countVars = refinedVars(refinedVars.contains("count"));
-dateVars = refinedVars(refinedVars.contains("date"));
-typeVars = refinedVars(refinedVars.contains("type"));
-stimVars = refinedVars(refinedVars.contains("stimulus"));
-nameVars = refinedVars(refinedVars.matches("name"));
+containsIDVars = refinedVars(refinedVars.contains("id") & ~refinedVars.matches("id") & ~refinedVars.contains("structure")); % the "id" var & brain structure vars will be handled separately
+countVars = refinedVars(refinedVars.contains("count")); % counts of linked items
+dateVars = refinedVars(refinedVars.contains("date")); 
+typeVars = refinedVars(refinedVars.contains("type")); % specifies some type of the item, i.e. a categorical
+stimVars = refinedVars(refinedVars.contains("stimulus")); % specifies external stimulus applied for the item
+nameVars = refinedVars(refinedVars.matches("name")); % a string variable associated to each item in Visual Coding - 2P
+structVars = refinedVars(refinedVars.contains("structure")); % specifies the brain structure(s) associated to the item
 
-% Identify variables with compound data
+reorderedVars = ["id" containsIDVars countVars dateVars typeVars stimVars nameVars structVars]; 
+
+% Identify any remaining variables with compound data
+firstRowVals = table2cell(tbl(1,:));
 compoundVarIdxs = cellfun(@(x)isstruct(x) || iscell(x),firstRowVals);
-compoundVars = refinedVars(compoundVarIdxs);
+compoundVars = setdiff(refinedVars(compoundVarIdxs), reorderedVars);
 
 % Create new column order
-reorderedVars = ["id" containsIDVars countVars dateVars typeVars compoundVars nameVars stimVars]; 
-newVarOrder = ["id" containsIDVars typeVars stimVars setdiff(refinedVars,reorderedVars,"stable") dateVars countVars nameVars compoundVars];
-
+reorderedVars = [reorderedVars compoundVars];
+newVarOrder = ["id" containsIDVars typeVars stimVars setdiff(refinedVars,reorderedVars,"stable") structVars dateVars countVars nameVars compoundVars];
 
 % Do reorder in one step
 tbl = tbl(:,newVarOrder);
