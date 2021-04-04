@@ -391,6 +391,12 @@ classdef ephysmanifest < handle
          % - Convert variables to useful types
          ephys_probes_manifest.ephys_session_id = uint32(ephys_probes_manifest.ephys_session_id);
          ephys_probes_manifest.id = uint32(ephys_probes_manifest.id);
+         ephys_probes_manifest.phase = categorical(ephys_probes_manifest.phase);
+         ephys_probes_manifest.name= categorical(ephys_probes_manifest.name);
+         
+         ltsf = ephys_probes_manifest.lfp_temporal_subsampling_factor;
+         [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this shoudl be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
+         ephys_probes_manifest.lfp_temporal_subsampling_factor = cell2mat(ltsf);
 
 
       end
@@ -410,9 +416,11 @@ classdef ephysmanifest < handle
          dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
          left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.left_right_ccf_coordinate, 'UniformOutput', false)));
          
-         ephys_structure_id = cellfun(@str2num_nan, ephys_channels_manifest.ephys_structure_id, 'UniformOutput', false);
-         
          ephys_structure_acronym = ephys_channels_manifest.ephys_structure_acronym;
+         
+         ephys_structure_id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.ephys_structure_id, 'UniformOutput', false))); % so long as it's retained, convert from cell to numeric
+         % TODO: consider removing ephys_structure_id altogether from table, after verifying it's fundamentally redundant
+         % assert(isempty(setdiff(histcounts(ephys_structure_id),histcounts(categorical(cell2mat(ephys_structure_acronym))))));          
          
          % - Rebuild table
          ephys_channels_manifest = table(id, ephys_probe_id, local_index, ...
