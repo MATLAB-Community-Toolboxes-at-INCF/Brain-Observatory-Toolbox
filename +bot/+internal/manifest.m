@@ -65,12 +65,26 @@ classdef manifest < handle
             containsDirVars = varNames(varNames.contains("directory"));
             tbl = removevars(tbl, containsDirVars);
             
+            %%  Convert _structure_id to _structure_acronym
+                    
+            areaIDVar = varNames(varNames.endsWith("_structure_id"));
+            areaStrVar = replace(areaIDVar,"id","acronym");
+            if ~isempty(areaIDVar)
+                areaStructVar = varNames(varNames.endsWith("_structure"));
+                
+                assert(~isempty(areaStructVar) && isstruct(tbl.(areaStructVar)) && isfield(tbl.(areaStructVar),'acronym'));                 
+                                
+                %idVals = tbl.(areaIDVar);                                                           
+                tbl.(areaIDVar) = categorical(string({tbl.(areaStructVar).acronym}')); % "structure" vars are scalar-valued, so can convert to categorical
+                tbl = renamevars(tbl,areaIDVar,areaStrVar);                
+            end           
+            
             
             %% Initialize refined variable lists (names, values)
-            refinedVars = setdiff(varNames,[redundantVarNames containsDirVars],"stable");
+            refinedVars = setdiff(string(tbl.Properties.VariableNames),[redundantVarNames containsDirVars],"stable");
             
             %% Convert ephys_structure_acronym from cell types to string type
-            
+            % TODO: refactor to generalize this for all cell2str convers (some of which is currently implemented in ephysmanifest)
             varIdx = find(refinedVars.contains("structure_acronym"));
             if varIdx
                 var = tbl.(refinedVars(varIdx));
@@ -90,22 +104,65 @@ classdef manifest < handle
                         tbl.(refinedVars(varIdx)) = string(var2);
                     end
                 end
-            end                                               
+            end    
+            
+
             
             %% Reorder columns
             
             %TODO: reimplement the mapping of string patterns to variable types programatically as a containers.Map
             
             % Identify variables containing string patterns identifying the kind of item info
-            containsIDVars = refinedVars(refinedVars.contains("id") & ~refinedVars.matches("id") & ~refinedVars.contains("structure")); % the "id" var & brain structure vars will be handled separately
+            
+            IDVar = refinedVars(refinedVars.matches("id")); % the Item ID will be shown first
+            experIDVars = refinedVars(refinedVars.endsWith("experiment_id")); % experiments are "virtual" items; these will be ordered towards end
+            specimenIDVars = refinedVars(refinedVars.endsWith("specimen_id")); % specimen structures are part of compound types at end; these will be ordered just before
+            %structIDVars = refinedVars(refinedVars.endsWith("structure_id")); % specimen structures are part of compound types at end; these will be ordered just before
+            
+            linkedItemIDVars = setdiff(refinedVars(refinedVars.endsWith("id")), [IDVar experIDVars specimenIDVars]);
+                
             countVars = refinedVars(refinedVars.contains("count")); % counts of linked items
             dateVars = refinedVars(refinedVars.contains("date"));
-            typeVars = refinedVars(refinedVars.contains("type")); % specifies some type of the item, i.e. a categorical
-            stimVars = refinedVars(refinedVars.contains("stimulus")); % specifies external stimulus applied for the item
-            nameVars = refinedVars(refinedVars.matches("name")); % a string variable associated to each item in Visual Coding - 2P
-            structVars = refinedVars(refinedVars.contains("structure")); % specifies the brain structure(s) associated to the item
+            typeVars = refinedVars(refinedVars.contains("_type")); % specifies some type of the item, i.e. a categorical
+            genotypeVars = refinedVars(refinedVars.endsWith(["genotype" "cre_line"])); % specifies some type of the item, i.e. a categorical
+            stimVars = refinedVars(refinedVars.contains("stimulus")); % specifies external stimulus applied for the item           
             
-            reorderedVars = ["id" containsIDVars countVars dateVars typeVars stimVars nameVars structVars];
+            structVars = refinedVars(refinedVars.contains("structure")); %& ~refinedVars.endsWith("id")); % lists out brain structure(s) associated to the item in a stringish way
+            longStructVars = string();
+            shortStructVars = string();
+            for var = structVars
+                if iscategorical(tbl.(var))
+                    shortStructVars = [shortStructVars var]; %#ok<AGROW>
+                elseif isstring(tbl.(var)) 
+                    if mean(strlength(tbl.(var))) > 10
+                        longStructVars = [longStructVars var]; %#ok<AGROW>
+                    else
+                        shortStructVars = [shortStructVars var]; %#ok<AGROW>
+                    end
+                else
+                    % no-op (for the brain structure id & struct vars in ophys)
+                end
+            end                                               
+            
+            
+            nameVars = refinedVars(refinedVars.matches("name")); 
+            longNameVars = string();
+            shortNameVars = string();
+            for var = nameVars
+                if iscategorical(tbl.(var))
+                    shortNameVars = [shortNameVars var]; %#ok<AGROW>
+                elseif isstring(tbl.(var)) 
+                    if mean(strlength(tbl.(var))) > 10
+                        longNameVars = [longNameVars var]; %#ok<AGROW>
+                    else
+                        shortNameVars = [shortNameVars var]; %#ok<AGROW>
+                    end
+                else
+                    assert(false);
+                end
+            end                                               
+            
+            reorderedVars = [IDVar linkedItemIDVars experIDVars specimenIDVars  countVars dateVars typeVars genotypeVars stimVars longNameVars shortNameVars shortStructVars longStructVars];
             
             % Identify any remaining variables with compound data
             firstRowVals = table2cell(tbl(1,:));
@@ -114,7 +171,8 @@ classdef manifest < handle
             
             % Create new column order
             reorderedVars = [reorderedVars compoundVars];
-            newVarOrder = ["id" containsIDVars typeVars stimVars setdiff(refinedVars,reorderedVars,"stable") structVars dateVars countVars nameVars compoundVars];
+            newVarOrder = [IDVar linkedItemIDVars countVars typeVars shortNameVars shortStructVars setdiff(refinedVars,reorderedVars,"sort") genotypeVars  longStructVars stimVars experIDVars dateVars longNameVars specimenIDVars compoundVars];
+            newVarOrder(newVarOrder.strlength == 0) = [];
             
             % Do reorder in one step
             tbl = tbl(:,newVarOrder);

@@ -93,12 +93,16 @@ classdef ophysmanifest < handle
     methods
         function ophys_sessions = get.ophys_sessions(oManifest)
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
-            ophys_sessions = ophys_manifests.ophys_session_manifest;
+            
+            % Apply standardized table display logic
+            ophys_sessions = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_session_manifest); 
         end
         
         function ophys_containers = get.ophys_containers(oManifest)
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
-            ophys_containers = ophys_manifests.ophys_container_manifest;
+            
+            % Apply standardized table display logic
+            ophys_containers = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_container_manifest); 
         end
     end
     
@@ -107,7 +111,7 @@ classdef ophysmanifest < handle
         function UpdateManifests(manifest,clearMemoOnly)
             
             arguments
-                manifest (1,1) bot.internal.ephysmanifest
+                manifest (1,1) bot.internal.ophysmanifest
                 clearMemoOnly (1,1) logical = true
             end
             
@@ -193,10 +197,9 @@ classdef ophysmanifest < handle
             ophys_session_manifest.name = string(ophys_session_manifest.name);
             ophys_session_manifest.stimulus_name = string(ophys_session_manifest.stimulus_name);
             ophys_session_manifest.storage_directory = string(ophys_session_manifest.storage_directory);
-            ophys_session_manifest.cre_line = string(ophys_session_manifest.cre_line);
+            ophys_session_manifest.cre_line = string(ophys_session_manifest.cre_line);                                               
             
-            % Apply standardized table display logic
-            ophys_manifests.ophys_session_manifest = bot.internal.manifest.applyUserDisplayLogic(ophys_session_manifest);
+            ophys_manifests.ophys_session_manifest = ophys_session_manifest;
             
             %% - Fetch cell ID mapping
             
@@ -216,7 +219,8 @@ classdef ophysmanifest < handle
             else
                 ophys_manifests = fetch_ophys_manifests_info_from_api(manifest);
                 manifest.cache.InsertObject(nwb_key, ophys_manifests);
-            end
+            end            
+
         end
     end
 end
