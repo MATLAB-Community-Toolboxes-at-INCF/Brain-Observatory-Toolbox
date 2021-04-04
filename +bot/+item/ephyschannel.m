@@ -11,7 +11,7 @@ classdef ephyschannel < bot.item.abstract.Item
 
     properties (Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
-        LINKED_ITEM_PROPERTIES = ["session" "channel" "probe"];
+        LINKED_ITEM_PROPERTIES = ["session" "probe" "units"];
     end
    
     % constructor
@@ -38,6 +38,8 @@ classdef ephyschannel < bot.item.abstract.Item
             
             % - Assign associated table rows
             channel.units = oManifest.ephys_units(oManifest.ephys_units.ephys_channel_id == channel_id, :);
+            channel.units = bot.item.abstract.Item.removeUnusedCategories(channel.units);
+            
             channel.probe = bot.probe(channel.info.ephys_probe_id);
             channel.session = bot.session(channel.info.ephys_session_id);
         end
