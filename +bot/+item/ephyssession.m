@@ -1110,8 +1110,8 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function warn_invalid_spike_intervals(self)
-            fail_tags = self.probes.name;
-            fail_tags{end+1} = 'all_probes';
+            fail_tags = string(self.probes.name);
+            fail_tags(end+1) = "all_probes";
             
             if ~isempty(self.filter_invalid_times_by_tags(fail_tags))
                 warning('BOT:InvalidIntervals', ['Session includes invalid time intervals that could be accessed with the attribute `invalid_times`.\n', ...
