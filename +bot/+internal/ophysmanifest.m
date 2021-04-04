@@ -195,7 +195,7 @@ classdef ophysmanifest < handle
             ophys_session_manifest.specimen_id = uint32(ophys_session_manifest.specimen_id);
             
             ophys_session_manifest.name = string(ophys_session_manifest.name);
-            ophys_session_manifest.stimulus_name = string(ophys_session_manifest.stimulus_name);
+            ophys_session_manifest.stimulus_name = categorical(string(ophys_session_manifest.stimulus_name)); 
             ophys_session_manifest.storage_directory = string(ophys_session_manifest.storage_directory);
             ophys_session_manifest.cre_line = string(ophys_session_manifest.cre_line);                                               
             
