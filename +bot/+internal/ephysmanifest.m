@@ -367,6 +367,27 @@ classdef ephysmanifest < handle
          % - Convert variables to useful types
          ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
          ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);         
+
+         
+         for var = string(ephys_unit_manifest.Properties.VariableNames)
+             firstRowVal = ephys_unit_manifest{1,var};
+             
+             if iscellstr(ephys_unit_manifest.(var)) %#ok<ISCLSTR>
+                 ephys_unit_manifest.(var) = string(ephys_unit_manifest.(var));                 
+             elseif iscell(firstRowVal)
+                 assert(isscalar(firstRowVal));
+             
+                 if all(cellfun(@isnumeric,ephys_unit_manifest.(var)))
+                     [ephys_unit_manifest.(var)(cellfun(@isempty,ephys_unit_manifest.(var)))] = deal({nan});
+                     ephys_unit_manifest.(var) = cell2mat(ephys_unit_manifest.(var));
+                 elseif any(cellfun(@ischar,ephys_unit_manifest.(var)))
+                     ephys_unit_manifest.(var) = string_emptyNonChar(ephys_unit_manifest.(var));
+                 end
+                     
+             end                                                     
+             
+         end
+      
       end
       
       function [ephys_probes_manifest] = fetch_ephys_probes(manifest)
@@ -609,4 +630,18 @@ function n = str2num_nan(s)
    else
       n = str2double(s);
    end
+end
+
+function cvec = string_emptyNonChar(cvec)
+% Convert cellstr to string, handling special cases of an "almost" cellstr array input which represents empty values as a non-char
+
+if iscellstr(cvec) %#ok<ISCLSTR>
+    cvec = string(cvec);
+else
+    assert(all(cellfun(@isempty,var(cellfun(@(x)~ischar(x),cvec)))));
+    
+    [cvec{cellfun(@(x)~ischar(x), cvec)}] = deal('');
+    cvec = string(cvec);
+end
+
 end
