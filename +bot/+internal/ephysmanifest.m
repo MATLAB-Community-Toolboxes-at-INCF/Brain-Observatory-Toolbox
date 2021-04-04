@@ -279,7 +279,7 @@ classdef ephysmanifest < handle
             
             % - Count owned units
             ephys_channels = count_owned(ephys_channels, annotated_ephys_units, ...
-                'id', 'ecephys_channel_id', 'unit_count');
+                'id', 'ephys_channel_id', 'unit_count');
             
             % - Rename variables %TODO: consider move upstream
             ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
@@ -491,12 +491,9 @@ classdef ephysmanifest < handle
                 'lfp_sampling_rate', 'probe_lfp_sampling_rate', ...
                 'local_index', 'peak_channel');
             
-            % - Convert acronyms (cell arrays) to strings, since invalid units
-            % have been filtered away
-            annotated_ephys_units.ephys_structure_acronym = arrayfun(@(e)string(e{1}), annotated_ephys_units.ephys_structure_acronym);
-            
-            % - Convert to categorical
-            annotated_ephys_units.ephys_structure_acronym = categorical(annotated_ephys_units.ephys_structure_acronym);
+            % Apply upstream transformation, converting acronymys(cell arrays) to categoricals, since invalid units  have been filtered away   
+            % TODO: Refactor ephys_structure_acronym handling to at least generalize between units & channels; possibly delegate to manifest
+            annotated_ephys_units.ephys_structure_acronym = categorical(arrayfun(@(e)string(e{1}), annotated_ephys_units.ephys_structure_acronym));            
         end
         
         function annotated_ephys_probes = fetch_annotated_ephys_probes(manifest)
@@ -513,8 +510,6 @@ classdef ephysmanifest < handle
             annotated_ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
             annotated_ephys_channels = join(annotated_ephys_channels, annotated_ephys_probes, ...
                 'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
-            
-            
             
         end
     end
