@@ -388,7 +388,7 @@ classdef ephysmanifest < handle
             end
             
             % - Convert variables to useful types
-            ephys_unit_manifest.ecephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
+            ephys_unit_manifest.ephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
             ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
             
             
