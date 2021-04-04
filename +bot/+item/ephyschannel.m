@@ -37,7 +37,7 @@ classdef ephyschannel < bot.item.abstract.Item
             end
             
             % - Assign associated table rows
-            channel.units = oManifest.ephys_units(oManifest.ephys_units.ecephys_channel_id == channel_id, :);
+            channel.units = oManifest.ephys_units(oManifest.ephys_units.ephys_channel_id == channel_id, :);
             channel.probe = bot.probe(channel.info.ephys_probe_id);
             channel.session = bot.session(channel.info.ephys_session_id);
         end
