@@ -178,10 +178,11 @@ classdef ophyssession < bot.item.abstract.Session
          % - Assign metadata
          session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
 
-         % - Ensure that we were given an EPhys session
-         if session.info.type ~= "OPhys"
-             error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
-         end         
+         % SUSPECTED CRUFT: since we've explicitly constructed an ophysmanifest, check seems unneeded. If checked, it would now use the table property.
+         %          % - Ensure that we were given an OPhys session
+         %          if session.info.type ~= "OPhys"
+         %              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
+         %          end
 
       end
    end

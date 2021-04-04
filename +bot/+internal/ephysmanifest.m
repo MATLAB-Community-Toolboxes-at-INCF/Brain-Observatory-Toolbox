@@ -1,9 +1,9 @@
 %% CLASS ephysmanifest
 
 % Notes regarding various item fetchers
-%  fetch_ephys_XXX: retrieves raw item table from cloud cache. Pre-memoized --> place to do core representional transformations
-%  fetch_annotated_ephys_XXX: retrieves item table joined with item table one level up in hierarchy, w/ some post-join tranformations (e.g. identifying source table in joined table variable name). Pre-memoized. 
-%  fetch_ephys_XXX_table: retrieves item table for public property access, including final transformations (e.g. linked item counts). Post-memoized --> should be cheaper transformations
+%  fetch_ephys_XXX: retrieves raw item table from cloud cache. Pre-memoized.
+%  fetch_annotated_ephys_XXX: retrieves item table joined with item table one level up in hierarchy, w/ some post-join tranformations (e.g. identifying source table in joined table variable name). Pre-memoized.
+%  fetch_ephys_XXX_table: retrieves item table for public property access, including final transformations (e.g. linked item counts). Post-memoized & pre-cached. 
 
 %% Class definition
 
@@ -222,30 +222,39 @@ classdef ephysmanifest < handle
          
          % - Rename variables %TODO: consider move upstream
          ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
+         
+         % Apply standardized table display logic
+         ephys_sessions = bot.internal.manifest.applyUserDisplayLogic(ephys_sessions);
       end
       
       function ephys_units = fetch_ephys_units_table(manifest)
          % METHOD - Return the table of all EPhys recorded units
          ephys_units = manifest.fetch_annotated_ephys_units();
+         
+         % Apply standardized table display logic
+          ephys_units = bot.internal.manifest.applyUserDisplayLogic(ephys_units);
       end
       
       function ephys_probes = fetch_ephys_probes_table(manifest)
-         % METHOD - Return the table of all EPhys recorded probes
-         
-         % - Get the annotated probes
-         ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
-         annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
-         annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
-         
-         % - Count units and channels
-         ephys_probes = count_owned(ephys_probes, annotated_ephys_units, ...
-            'id', 'ephys_probe_id', 'unit_count');
-         ephys_probes = count_owned(ephys_probes, annotated_ephys_channels, ...
-            'id', 'ephys_probe_id', 'channel_count');
-         
-         % - Get structure acronyms
-         ephys_probes = fetch_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
-            'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
+          % METHOD - Return the table of all EPhys recorded probes
+          
+          % - Get the annotated probes
+          ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
+          annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
+          annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
+          
+          % - Count units and channels
+          ephys_probes = count_owned(ephys_probes, annotated_ephys_units, ...
+              'id', 'ephys_probe_id', 'unit_count');
+          ephys_probes = count_owned(ephys_probes, annotated_ephys_channels, ...
+              'id', 'ephys_probe_id', 'channel_count');
+          
+          % - Get structure acronyms
+          ephys_probes = fetch_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
+              'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
+          
+          % Apply standardized table display logic
+          ephys_probes = bot.internal.manifest.applyUserDisplayLogic(ephys_probes);
       end
       
       function ephys_channels = fetch_ephys_channels_table(manifest)
@@ -261,6 +270,9 @@ classdef ephysmanifest < handle
          
          % - Rename variables %TODO: consider move upstream
          ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
+         
+         % Apply standardized table display logic 
+         ephys_channels = bot.internal.manifest.applyUserDisplayLogic(ephys_channels);
       end
       
       function [ephys_session_manifest] = fetch_ephys_sessions(manifest)

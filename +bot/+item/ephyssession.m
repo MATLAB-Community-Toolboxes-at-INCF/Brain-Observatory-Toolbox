@@ -826,10 +826,11 @@ classdef ephyssession < bot.item.abstract.Session
             session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
             session_id = session.id;
             
-            % - Ensure that we were given an EPhys session
-            if session.info.type ~= "EPhys"
-                error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
-            end
+            % SUSPECTED CRUFT: since we've constructed an ephysmanifest, check seems unneeded. If checked, it would now use the table property. 
+            %             % - Ensure that we were given an EPhys session
+            %             if session.info.type ~= "EPhys"
+            %                 error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
+            %             end
             
             % - Assign associated table rows
             session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);

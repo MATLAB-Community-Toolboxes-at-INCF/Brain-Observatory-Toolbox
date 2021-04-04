@@ -10,7 +10,7 @@
 function new_unit = unit(unit_id)
 
 % - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest('ephys');
+ephys_manifest = bot.internal.manifest.instance('ephys');
 
 % - Return the unit object
 new_unit = bot.item.ephysunit(unit_id, ephys_manifest);

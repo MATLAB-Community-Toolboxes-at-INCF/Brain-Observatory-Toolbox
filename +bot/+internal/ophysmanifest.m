@@ -187,7 +187,8 @@ classdef ophysmanifest < handle
          ophys_session_manifest.storage_directory = string(ophys_session_manifest.storage_directory);
          ophys_session_manifest.cre_line = string(ophys_session_manifest.cre_line);
 
-         ophys_manifests.ophys_session_manifest = ophys_session_manifest;
+         % Apply standardized table display logic          
+         ophys_manifests.ophys_session_manifest = bot.internal.manifest.applyUserDisplayLogic(ophys_session_manifest);
          
          %% - Fetch cell ID mapping
          

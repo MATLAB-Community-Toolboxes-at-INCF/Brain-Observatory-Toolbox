@@ -47,14 +47,14 @@ end
 
 % Access manifest singleton tables & extract matching rows
 if isequal(sessionType,"OPhys")
-    ophys_manifest = bot.internal.manifest('ophys');
+    ophys_manifest = bot.internal.manifest.instance('ophys');
     rowIdxs = ophys_manifest.ophys_sessions.id == sessionIDs;
 elseif isequal(sessionType,"Ephys")
-    ephys_manifest = bot.internal.manifest('ephys');
+    ephys_manifest = bot.internal.manifest.instance('ephys');
     rowIdxs = ephys_manifest.ephys_sessions.id == sessionIDs;
 else
-    ophys_manifest = bot.internal.manifest('ophys');
-    ephys_manifest = bot.internal.manifest('ephys');
+    ophys_manifest = bot.internal.manifest.instance('ophys');
+    ephys_manifest = bot.internal.manifest.instance('ephys');
     
     rowIdxs = ophys_manifest.ophys_sessions.id == sessionIDs;
     if isempty(rowIdxs)
