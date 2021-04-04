@@ -35,32 +35,63 @@ classdef Item < handle & matlab.mixin.CustomDisplay
    end   
 
    
-   %% DEVEOPER INTERFACE - Methods
+   %% METHODS - HIDDEN 
            
    
    methods (Access = protected)
-      function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)
-         % - Check usage
-         if istable(id)
-            assert(size(id, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
-            table_row = id;
-         else
-            assert(isnumeric(id), 'BOT:Usage', '`nID` must be an integer ID.');
-            id = uint32(round(id));
-            
-            % - Locate an ID in the manifest table
-            matching_row = manifest_table.id == id;
-            if ~any(matching_row)
-               error('BOT:Usage', 'Item not found in %s manifest.', type);
-            end
-            
-            table_row = manifest_table(matching_row, :);
-         end
-         
-         % - Assign the table data to the metadata structure
-         item.info = table2struct(table_row);
-         item.id = item.info.id;
-      end
-   end      
+       function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)
+           % - Check usage
+           if istable(id)
+               assert(size(id, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
+               table_row = id;
+           else
+               assert(isnumeric(id), 'BOT:Usage', '`nID` must be an integer ID.');
+               id = uint32(round(id));
+               
+               % - Locate an ID in the manifest table
+               matching_row = manifest_table.id == id;
+               if ~any(matching_row)
+                   error('BOT:Usage', 'Item not found in %s manifest.', type);
+               end
+               
+               table_row = manifest_table(matching_row, :);
+           end
+           
+           % - Assign the table data to the metadata structure
+           item.info = table2struct(table_row);
+           item.id = item.info.id;
+       end       
+       
+   end
+   
+   %% METHODS - STATIC
+   
+   %    methods (Static)
+   %
+   %        function tbl = removeUnusedCategories(tbl)
+   %        % TODO: Consider if it's a desired behavior for category lists to be narrowed for linked item tables? Or better to retain the "global" view of all available in the container session?
+   %
+   %            if isempty(tbl)
+   %                return;
+   %            end
+   %
+   %            varTypes = string(cellfun(@class,table2cell(tbl(1,:)),'UniformOutput',false));
+   %            varNames = string(tbl.Properties.VariableNames);
+   %
+   %            catVarIdxs = find(varTypes.matches("categorical"));
+   %
+   %            for idx = catVarIdxs
+   %                varName = varNames(idx);
+   %
+   %                validCats = unique(tbl.(varName));
+   %                allCats = categories(tbl{1,varName});
+   %                invalidCats = setdiff(allCats,validCats);
+   %
+   %                tbl.(varName) = removecats(tbl.(varName),invalidCats);
+   %
+   %            end
+   %
+   %        end
+   %    end
    
 end
