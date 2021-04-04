@@ -12,11 +12,13 @@ function sessions = fetchSessions(experiment_type)
    
    switch lower(experiment_type)
       case {'ephys', 'e'}
-         sessions = bot.internal.manifest.instance('ephys').ephys_sessions;
+         manifest = bot.internal.manifest.instance('ephys');
+         sessions = manifest.ephys_sessions;
          
       case {'ophys', 'o'}
-         sessions = bot.internal.manifest.instance('ophys').ophys_sessions;
-         
+         manifest = bot.internal.manifest.instance('ophys');
+         sessions = manifest.ophys_sessions;
+
       otherwise
          error('BOT:Usage', '`experiment_type` must be one of {''ophys'', ''ephys''}');
    end

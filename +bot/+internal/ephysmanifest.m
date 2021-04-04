@@ -93,6 +93,9 @@ classdef ephysmanifest < handle
                % - Insert object in disk cache
                manifest.cache.InsertObject(strKey, ephys_sessions);
             end
+                        
+            % Apply standardized display logic
+            ephys_sessions = bot.internal.manifest.applyUserDisplayLogic(ephys_sessions);
             
             % - Store table in memory cache
             manifest.api_access.ephys_sessions = ephys_sessions;
@@ -117,6 +120,9 @@ classdef ephysmanifest < handle
                manifest.cache.InsertObject(nwb_key, ephys_channels);
             end
             
+            % Apply standardized display logic
+            ephys_channels = bot.internal.manifest.applyUserDisplayLogic(ephys_channels);
+            
             % - Store table in memory cache
             manifest.api_access.ephys_channels = ephys_channels;
          end
@@ -140,6 +146,9 @@ classdef ephysmanifest < handle
                manifest.cache.InsertObject(nwb_key, ephys_probes);
             end
             
+            % Apply standardized display logic
+            ephys_probes = bot.internal.manifest.applyUserDisplayLogic(ephys_probes);
+            
             % - Store table in memory cache
             manifest.api_access.ephys_probes = ephys_probes;
          end
@@ -161,7 +170,10 @@ classdef ephysmanifest < handle
                
                % - Insert object in disk cache
                manifest.cache.InsertObject(nwb_key, ephys_units);
-            end
+            end            
+                        
+            % Apply standardized display logic
+            ephys_units = bot.internal.manifest.applyUserDisplayLogic(ephys_units);
             
             % - Store table in memory cache
             manifest.api_access.ephys_units = ephys_units;
@@ -222,17 +234,12 @@ classdef ephysmanifest < handle
          
          % - Rename variables %TODO: consider move upstream
          ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
-         
-         % Apply standardized table display logic
-         ephys_sessions = bot.internal.manifest.applyUserDisplayLogic(ephys_sessions);
+
       end
       
       function ephys_units = fetch_ephys_units_table(manifest)
          % METHOD - Return the table of all EPhys recorded units
-         ephys_units = manifest.fetch_annotated_ephys_units();
-         
-         % Apply standardized table display logic
-          ephys_units = bot.internal.manifest.applyUserDisplayLogic(ephys_units);
+         ephys_units = manifest.fetch_annotated_ephys_units();         
       end
       
       function ephys_probes = fetch_ephys_probes_table(manifest)
@@ -251,10 +258,8 @@ classdef ephysmanifest < handle
           
           % - Get structure acronyms
           ephys_probes = fetch_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
-              'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
+              'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');          
           
-          % Apply standardized table display logic
-          ephys_probes = bot.internal.manifest.applyUserDisplayLogic(ephys_probes);
       end
       
       function ephys_channels = fetch_ephys_channels_table(manifest)
@@ -269,10 +274,8 @@ classdef ephysmanifest < handle
             'id', 'ecephys_channel_id', 'unit_count');
          
          % - Rename variables %TODO: consider move upstream
-         ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
+         ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');         
          
-         % Apply standardized table display logic 
-         ephys_channels = bot.internal.manifest.applyUserDisplayLogic(ephys_channels);
       end
       
       function [ephys_session_manifest] = fetch_ephys_sessions(manifest)

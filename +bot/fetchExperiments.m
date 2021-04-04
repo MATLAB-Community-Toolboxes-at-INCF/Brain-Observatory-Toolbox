@@ -5,5 +5,6 @@
 % `experiments` will be the manifest table of OPhys experiment containers.
 
 function experiments = fetchExperiments(~)
-   experiments = bot.internal.manifest.instance('ophys').ophys_containers;
+   manifest = bot.internal.manifest.instance('ophys');
+   experiments = manifest.ophys_containers;
 end

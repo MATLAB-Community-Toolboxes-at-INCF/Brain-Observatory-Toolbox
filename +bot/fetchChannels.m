@@ -5,5 +5,6 @@
 % `channels` will be the manifest table of EPhys channels.
 
 function channels = fetchChannels(~)
-   channels = bot.internal.manifest.instance('ephys').ephys_channels;
+   manifest = bot.internal.manifest.instance('ephys');
+   channels = manifest.ephys_channels;
 end
