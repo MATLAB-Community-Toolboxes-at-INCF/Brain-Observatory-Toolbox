@@ -110,13 +110,15 @@ classdef manifest < handle
                 
                 % Case of tandem acronym var
                 areaStrVar = varNames(varNames.endsWith("_structure_acronym"));
-                                                
+                areaStrVarVals = tbl.(areaStrVar);
+                areaStrVarVals(isundefined(areaStrVarVals)) = [];
+                
                 if ~isempty(areaStrVar)
-                    if numel(unique(tbl.(areaStrVar))) == numel(unique(tbl.(areaIDVar))) % check for correspondence before removing ID var
-                        tbl = removevars(tbl,areaIDVar);
-                    else
-                        % no-op TODO: handle cases of undefined values (e.g. channels table) which should also work since both id & acronym would be 'null' case
-                    end
+                    assert(numel(unique(areaStrVarVals)) == numel(setdiff(unique(tbl.(areaIDVar)),0))) % sanity-check for correspondence before removing ID var
+                    tbl = removevars(tbl,areaIDVar);
+%                     else
+%                         % no-op TODO: handle cases of undefined values (e.g. channels table) which should also work since both id & acronym would be 'null' case
+%                     end
                 end
             end
             
