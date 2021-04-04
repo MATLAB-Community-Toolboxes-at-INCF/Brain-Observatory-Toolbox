@@ -1,9 +1,9 @@
 %% CLASS bot.item.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
 
 classdef ephyssession < bot.item.abstract.Session
-  
     
-    %% USER INTERFACE - Properties
+    
+    %% PROPERTIES - USER
     
     % Linked Items
     properties (SetAccess = private)
@@ -12,7 +12,7 @@ classdef ephyssession < bot.item.abstract.Session
         channels;                       % A Table of all channels in this session
     end
     
-    % NWB Info 
+    % NWB Info
     properties (Dependent)
         rig_geometry_data;               % Metadata about the geometry of the rig used in this session
         rig_equipment_name;              % Metadata: name of the rig used in this session
@@ -36,9 +36,78 @@ classdef ephyssession < bot.item.abstract.Session
         
         stimulus_templates;           % Stimulus template table
     end
-     
     
-    % Property Access Methods
+    %%  PROPERTIES - HIDDEN
+    
+    properties (Hidden = true, Access = public, Transient = true)
+        spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
+        nwb_metadata;
+        rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
+        
+        nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
+        
+        NON_STIMULUS_PARAMETERS = [
+            "start_time", ...
+            "stop_time", ...
+            "duration", ...
+            "stimulus_block", ...
+            "stimulus_condition_id"]
+        
+        DETAILED_STIMULUS_PARAMETERS = [
+            "colorSpace", ...
+            "flipHoriz", ...
+            "flipVert", ...
+            "depth", ...
+            "interpolate", ...
+            "mask", ...
+            "opacity", ...
+            "rgbPedestal", ...
+            "tex", ...
+            "texRes", ...
+            "units", ...
+            "rgb", ...
+            "signalDots", ...
+            "noiseDots", ...
+            "fieldSize", ...
+            "fieldShape", ...
+            "fieldPos", ...
+            "nDots", ...
+            "dotSize", ...
+            "dotLife", ...
+            "color_triplet"]
+    end
+    
+    % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
+    properties (Constant, Hidden)
+        NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
+    end
+    
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden = true, Access = protected)
+        CORE_PROPERTIES_EXTENDED = ["specimen_name", "age_in_days", ...
+            "sex", "full_genotype", "session_type", ...
+            "num_units", "num_probes", "num_channels", ...
+            ];
+        LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
+    end
+    
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
+    properties (SetAccess = immutable, GetAccess = protected)
+        NWB_DATA_PROPERTIES = ["rig_geometry_data", ...
+            "rig_equipment_name", "inter_presentation_intervals", ...
+            "running_speed", "mean_waveforms", "stimulus_presentations", ...
+            "stimulus_conditions", "optogenetic_stimulation_epochs", ...
+            "session_start_time", "spike_amplitudes", "invalid_times", ...
+            "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
+            "structurewise_unit_counts", "stimulus_templates", ...
+            "stimulus_epochs", ...
+            ];
+    end
+    
+    
+    %% PROPERTY ACCESS METHODS
+    
+    % USER PROPERTIES
     methods
         
         function inter_presentation_intervals = get.inter_presentation_intervals(self)
@@ -94,7 +163,7 @@ classdef ephyssession < bot.item.abstract.Session
         end
     end
     
-    % Property access methods  (second-order derived values)
+    % USER PROPERTIES (second-order derived values)
     methods
         
         function num_stimulus_presentations = get.num_stimulus_presentations(self)
@@ -121,9 +190,9 @@ classdef ephyssession < bot.item.abstract.Session
         end
     end
     
-    % Property access methods (first-order NWB-bound values)
-    methods         
- 
+    % USER PROPERTIES  (NWB-bound values)
+    methods
+        
         function rig_geometry_data = get.rig_geometry_data(self)
             try
                 rig_geometry_data = self.rig_metadata.rig_geometry_data;
@@ -138,7 +207,7 @@ classdef ephyssession < bot.item.abstract.Session
             catch
                 rig_equipment_name = [];
             end
-        end                
+        end
         
         function stimulus_table = get.stimulus_templates(self)
             % - Query list of stimulus templates from Allen Brain API
@@ -181,9 +250,103 @@ classdef ephyssession < bot.item.abstract.Session
         
     end
     
-    %% USER INTERFACE - Methods
+    % HIDDEN PROPERTIES
+    methods
+        
+        function spike_times = get.spike_times(self)
+            if ~self.in_cache('checked_spike_times')
+                self.warn_invalid_spike_intervals();
+                self.property_cache.checked_spike_times = true;
+            end
+            
+            if ~self.in_cache('spike_times')
+                self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
+            end
+            
+            spike_times = self.property_cache.spike_times;
+        end
+        
+        function nwb = get.nwb_file(self)
+            % - Retrieve and cache the NWB file
+            if ~self.in_cache('nwb_file')
+                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.ensureNWBCached());
+            end
+            
+            % - Return an NWB file access object
+            nwb = self.property_cache.nwb_file;
+        end
+        
+        function metadata = get.nwb_metadata(self)
+            n = self.nwb_file;
+            try
+                metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+            catch
+                metadata = [];
+            end
+        end
+        
+        function rig_metadata = get.rig_metadata(self)
+            n = self.nwb_file;
+            try
+                rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
+            catch
+                rig_metadata = [];
+            end
+        end
+    end
     
-    methods 
+    %% CONSTRUCTOR
+    
+    methods
+        function session = ephyssession(session_id, manifest)
+            % bot.item.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+            %
+            % Usage: bsObj = bot.item.ephyssession(id, manifest)
+            %        vbsObj = bot.item.ephyssession(ids, manifest)
+            %        bsObj = bot.item.ephyssession(session_table_row, manifest)
+            %
+            % `manifest` is the EPhys manifest object. `id` is the session ID
+            % of an EPhys experimental session. Optionally, a vector `ids` of
+            % multiple session IDs may be provided to return a vector of
+            % session objects. A table row of the EPhys sessions manifest
+            % table may also be provided as `session_table_row`.
+            if nargin == 0
+                return;
+            end
+            
+            % Load associated singleton
+            if ~exist('manifest', 'var') || isempty(manifest)
+                manifest = bot.internal.ephysmanifest.instance();
+            end
+            
+            % - Handle a vector of session IDs
+            if ~istable(session_id) && numel(session_id) > 1
+                for index = numel(session_id):-1:1
+                    session(session_id) = bot.item.ephyssession(session_id(index), manifest);
+                end
+                return;
+            end
+            
+            % - Assign metadata
+            session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
+            session_id = session.id;
+            
+            % SUSPECTED CRUFT: since we've constructed an ephysmanifest, check seems unneeded. If checked, it would now use the table property.
+            %             % - Ensure that we were given an EPhys session
+            %             if session.info.type ~= "EPhys"
+            %                 error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
+            %             end
+            
+            % - Assign associated table rows
+            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
+            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
+            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
+        end
+    end
+    
+    %% METHODS - USER
+    
+    methods
         
         function epochs = fetch_stimulus_epochs(self, duration_thresholds)
             % fetch_stimulus_epochs - METHOD Reports continuous periods of time during which a single kind of stimulus was presented
@@ -618,41 +781,15 @@ classdef ephyssession < bot.item.abstract.Session
             intervals = nan_intervals(channels_selected.(structure_id_key));
             labels = channels_selected.(structure_label_key)(intervals);
         end
-    end         
+    end
     
     
-    %% SUPERCLASS IMPLEMENTATION (bot.item.session_base)
-   properties (Constant, Hidden)
-       NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
-   end
-   
-    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-     properties (Hidden = true, Access = protected)
-        CORE_PROPERTIES_EXTENDED = ["specimen_name", "age_in_days", ...
-            "sex", "full_genotype", "session_type", ...
-            "num_units", "num_probes", "num_channels", ...
-            ];
-        LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
-     end
-     
-    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    properties (SetAccess = immutable, GetAccess = protected)
-        NWB_DATA_PROPERTIES = ["rig_geometry_data", ...
-            "rig_equipment_name", "inter_presentation_intervals", ...
-            "running_speed", "mean_waveforms", "stimulus_presentations", ...
-            "stimulus_conditions", "optogenetic_stimulation_epochs", ...
-            "session_start_time", "spike_amplitudes", "invalid_times", ...
-            "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
-            "structurewise_unit_counts", "stimulus_templates", ...
-            "stimulus_epochs", ...
-            ];
-    end    
     
-    %% HIDDEN INTERFACE - TBD public in future
+    %% METHODS - HIDDEN
     
     % possibly intended to be public
     methods (Hidden)
-            
+        
         function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
             % ''' Get a subset of this session's inter-presentation intervals, filtered by stimulus name.
             %
@@ -704,7 +841,7 @@ classdef ephyssession < bot.item.abstract.Session
             %         download_link = well_known_files.iloc[0]["download_link"]
             %         return self.rma_engine.stream(download_link)
         end
-    
+        
         function fetch_natural_scene_template(self, number) %#ok<INUSD>
             error('BOT:NotImplemented', 'This method is not implemented');
             
@@ -788,146 +925,10 @@ classdef ephyssession < bot.item.abstract.Session
         function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
             error('BOT:NotImplemented', 'This method is not implemented');
         end
-    end           
-    
-    %% HIDDEN INTERFACE - Construction
-    
-    methods
-        function session = ephyssession(session_id, manifest)
-            % bot.item.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
-            %
-            % Usage: bsObj = bot.item.ephyssession(id, manifest)
-            %        vbsObj = bot.item.ephyssession(ids, manifest)
-            %        bsObj = bot.item.ephyssession(session_table_row, manifest)
-            %
-            % `manifest` is the EPhys manifest object. `id` is the session ID
-            % of an EPhys experimental session. Optionally, a vector `ids` of
-            % multiple session IDs may be provided to return a vector of
-            % session objects. A table row of the EPhys sessions manifest
-            % table may also be provided as `session_table_row`.
-            if nargin == 0
-                return;
-            end
-            
-            % Load associated singleton
-            if ~exist('manifest', 'var') || isempty(manifest)
-                manifest = bot.internal.ephysmanifest.instance();
-            end
-            
-            % - Handle a vector of session IDs
-            if ~istable(session_id) && numel(session_id) > 1
-                for index = numel(session_id):-1:1
-                    session(session_id) = bot.item.ephyssession(session_id(index), manifest);
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
-            session_id = session.id;
-            
-            % SUSPECTED CRUFT: since we've constructed an ephysmanifest, check seems unneeded. If checked, it would now use the table property. 
-            %             % - Ensure that we were given an EPhys session
-            %             if session.info.type ~= "EPhys"
-            %                 error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
-            %             end
-            
-            % - Assign associated table rows
-            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
-            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
-            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
-        end
-    end    
-   
-    
-    %%  HIDDEN INTERFACE - Properties
-    
-    properties (Hidden = true, Access = public, Transient = true)
-        spike_times;                  % Maps integer unit ids to arrays of spike times (float) for those units
-        nwb_metadata;
-        rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
-        
-        nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
-        
-        NON_STIMULUS_PARAMETERS = [
-            "start_time", ...
-            "stop_time", ...
-            "duration", ...
-            "stimulus_block", ...
-            "stimulus_condition_id"]
-        
-        DETAILED_STIMULUS_PARAMETERS = [
-            "colorSpace", ...
-            "flipHoriz", ...
-            "flipVert", ...
-            "depth", ...
-            "interpolate", ...
-            "mask", ...
-            "opacity", ...
-            "rgbPedestal", ...
-            "tex", ...
-            "texRes", ...
-            "units", ...
-            "rgb", ...
-            "signalDots", ...
-            "noiseDots", ...
-            "fieldSize", ...
-            "fieldShape", ...
-            "fieldPos", ...
-            "nDots", ...
-            "dotSize", ...
-            "dotLife", ...
-            "color_triplet"]
     end
     
-    % Property access methods
-    methods 
-        
-        function spike_times = get.spike_times(self)
-            if ~self.in_cache('checked_spike_times')
-                self.warn_invalid_spike_intervals();
-                self.property_cache.checked_spike_times = true;
-            end
-            
-            if ~self.in_cache('spike_times')
-                self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
-            end
-            
-            spike_times = self.property_cache.spike_times;
-        end
-        
-        function nwb = get.nwb_file(self)
-            % - Retrieve and cache the NWB file
-            if ~self.in_cache('nwb_file')
-                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.ensureNWBCached());
-            end
-            
-            % - Return an NWB file access object
-            nwb = self.property_cache.nwb_file;
-        end
-        
-        function metadata = get.nwb_metadata(self)
-            n = self.nwb_file;
-            try
-                metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
-            catch
-                metadata = [];
-            end
-        end
-        
-        function rig_metadata = get.rig_metadata(self)
-            n = self.nwb_file;
-            try
-                rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
-            catch
-                rig_metadata = [];
-            end
-        end
-        
-    end
-           
-    %%  HIDDEN INTERFACE - Methods
-    methods (Hidden)                
+    % Clearly intended as Hidden
+    methods (Hidden)
         
         function presentations = fetch_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
             arguments
@@ -960,7 +961,7 @@ classdef ephyssession < bot.item.abstract.Session
             if ~include_unused_parameters
                 presentations = remove_unused_stimulus_presentation_columns(presentations);
             end
-        end                                     
+        end
         
         function invalid_times = filter_invalid_times_by_tags(self, tags)
             arguments
@@ -1077,7 +1078,7 @@ classdef ephyssession < bot.item.abstract.Session
             % - Build the units table from the session NWB file
             % - Allen SDK ecephys_session.units
             units_table = self.build_units_table(self.nwb_file.fetch_units());
-        end               
+        end
         
         function intervals = build_inter_presentation_intervals(self)
             self.cache_stimulus_presentations();
@@ -1124,18 +1125,18 @@ classdef ephyssession < bot.item.abstract.Session
             matching_vars = ismember(self.DETAILED_STIMULUS_PARAMETERS, presentations.Properties.VariableNames);
             presentations = removevars(presentations, self.DETAILED_STIMULUS_PARAMETERS(matching_vars));
         end
-    end       
-  
-% MARK FOR DELETION - potential use case indeterminate    
-%     %% HIDDEN INTERFACE - Static Methods
-%     methods(Static, Hidden)
-%         function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
-%             error('BOT:NotImplemented', 'This method is not implemented');
-%         end
-%     end    
-
-end
+    end
     
+    % MARK FOR DELETION - potential use case indeterminate
+    %     %% HIDDEN INTERFACE - Static Methods
+    %     methods(Static, Hidden)
+    %         function from_nwb_path(cls, path, nwb_version, api_kwargs) %#ok<INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %         end
+    %     end
+    
+end
+
 %% LOCAL FUNCTIONS
 
 function tiled_data = build_spike_histogram(time_domain, spike_times, unit_ids, binarize, dtype)
