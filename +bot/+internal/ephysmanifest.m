@@ -1,5 +1,10 @@
 %% CLASS ephysmanifest
 
+% Notes regarding various item fetchers
+%  fetch_ephys_XXX: retrieves raw item table from cloud cache. Pre-memoized --> place to do core representional transformations
+%  fetch_annotated_ephys_XXX: retrieves item table joined with item table one level up in hierarchy, w/ some post-join tranformations (e.g. identifying source table in joined table variable name). Pre-memoized. 
+%  fetch_ephys_XXX_table: retrieves item table for public property access, including final transformations (e.g. linked item counts). Post-memoized --> should be cheaper transformations
+
 %% Class definition
 
 classdef ephysmanifest < handle
@@ -215,7 +220,7 @@ classdef ephysmanifest < handle
          ephys_sessions = fetch_grouped_uniques(ephys_sessions, annotated_ephys_channels, ...
             'id', 'ephys_session_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
          
-         % - Rename variables
+         % - Rename variables %TODO: consider move upstream
          ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
       end
       
@@ -254,7 +259,7 @@ classdef ephysmanifest < handle
          ephys_channels = count_owned(ephys_channels, annotated_ephys_units, ...
             'id', 'ecephys_channel_id', 'unit_count');
          
-         % - Rename variables
+         % - Rename variables %TODO: consider move upstream
          ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
       end
       
@@ -377,7 +382,7 @@ classdef ephysmanifest < handle
          if all(ismember({'lfp_sampling_rate', 'lfp_temporal_subsampling_factor'}, ...
                ephys_probes_manifest.Properties.VariableNames))
             cfTSF = ephys_probes_manifest.lfp_temporal_subsampling_factor;
-            cfTSF(cellfun(@isempty, cfTSF)) = {1};
+            cfTSF(cellfun(@isempty, cfTSF)) = {1}; 
             vfTSF = cell2mat(cfTSF);
             ephys_probes_manifest.lfp_sampling_rate = ...
                ephys_probes_manifest.lfp_sampling_rate ./ vfTSF;
@@ -386,6 +391,8 @@ classdef ephysmanifest < handle
          % - Convert variables to useful types
          ephys_probes_manifest.ephys_session_id = uint32(ephys_probes_manifest.ephys_session_id);
          ephys_probes_manifest.id = uint32(ephys_probes_manifest.id);
+
+
       end
       
       function [ephys_channels_manifest] = fetch_ephys_channels(manifest)
@@ -454,6 +461,9 @@ classdef ephysmanifest < handle
          annotated_ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
          annotated_ephys_channels = join(annotated_ephys_channels, annotated_ephys_probes, ...
             'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
+        
+        
+        
       end
    end
 end

@@ -43,20 +43,20 @@ tbl = removevars(tbl, containsDirVars);
 %% Initialize refined variable lists (names, values)
 refinedVars = setdiff(varNames,[redundantVarNames containsDirVars],"stable");
 
-%% Convert ephys_structure_acronym from cell types to the most string type possible (string type for scalars, cell array of strings for string lists)
+%% Convert ephys_structure_acronym from cell types to string type
  
 varIdx = find(refinedVars.contains("structure_acronym"));
 if varIdx    
     var = tbl.(refinedVars(varIdx));
     
     if iscell(var)
-        if iscell(var{1}) % case of: string lists, with empty last value (e.g. ephys session)
+        if iscell(var{1}) % case of: cell string array with empty last value (ephys session case)
             
             % convert to cell string array
             assert(all(cellfun(@(x)isempty(x{end}),var))); % all the cell string arrays end with an empty double array, for reason TBD
             tbl.(refinedVars(varIdx)) = cellfun(@(x)join(string(x(1:end-1))',"; "),var); % convert each cell element to string, skipping the ending empty double array
                 
-        else % case of: 'almost' cell string arrays (w/ empty values represented as numerics) 
+        else % case of: 'almost' cell string arrays, w/ empty values represented as numerics 
             assert(all(cellfun(@isempty,var(cellfun(@(x)~ischar(x),var)))));
             
             var2 = var;
@@ -65,6 +65,9 @@ if varIdx
         end
     end
 end    
+
+
+
 
 
 %% Reorder columns
