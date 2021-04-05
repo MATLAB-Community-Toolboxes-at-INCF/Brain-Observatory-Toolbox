@@ -28,6 +28,8 @@ classdef ephyssession < bot.item.abstract.Session
         
         % Behavior data
         running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
+        pupil_data;                      % Table of pupil data captured via eye tracking during session
+        pupil_data_detailed;             % Table of pupil data captured via eye tracking during session, including detailed gaze tracking information
         
         % Metadata
         inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
@@ -98,17 +100,7 @@ classdef ephyssession < bot.item.abstract.Session
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    properties (SetAccess = immutable, GetAccess = protected)
-        %         NWB_DATA_PROPERTIES = ["rig_geometry_data", ...
-        %             "rig_equipment_name", "inter_presentation_intervals", ...
-        %             "running_speed", "mean_waveforms", "stimulus_presentations", ...
-        %             "stimulus_conditions", "optogenetic_stimulation_epochs", ...
-        %             "session_start_time", "spike_amplitudes", "invalid_times", ...
-        %             "num_stimulus_presentations", "stimulus_names", "structure_acronyms", ...
-        %             "structurewise_unit_counts", "stimulus_templates", ...
-        %             "stimulus_epochs", ...
-        %             ];
-        
+    properties (SetAccess = immutable, GetAccess = protected)        
         NWB_DATA_PROPERTIES = zlclInitIndirectFileProps();                        
     end
         
@@ -139,10 +131,18 @@ classdef ephyssession < bot.item.abstract.Session
             structurewise_unit_counts = sortrows(structurewise_unit_counts, 2, 'descend');
         end
         
+        function pupilData = get.pupil_data(self)                                
+            n = self.nwb_file;
+            pupilData = n.fetch_pupil_data(true); % suppress detailed gaze tracking info
+        end       
 
+        function pupilData = get.pupil_data_detailed(self)
+            n = self.nwb_file;
+            pupilData = n.fetch_pupil_data(false); % include (don't suppress) detailed gaze tracking info
+        end    
     end
     
-    % USER PROPERTIES - Primary File  (NWB), Directly Fetched
+    % USER PROPERTIES - Primary File (NWB)
             
     methods        
               
@@ -174,11 +174,9 @@ classdef ephyssession < bot.item.abstract.Session
             n = self.nwb_file;
             running_speed = self.fetch_cached('running_speed', @n.fetch_running_speed);
         end
-    end
+    end   
     
-    % USER PROPERTIES - Primary File  (NWB), Indirectly Fetched
-    
-    % Indirect via rig_metadata   
+    % via rig_metadata   
     methods      
         function rig_geometry_data = get.rig_geometry_data(self)
             try
@@ -197,7 +195,7 @@ classdef ephyssession < bot.item.abstract.Session
         end
     end
     
-    % Indirect via stimulus_conditions_raw
+    % via stimulus_conditions_raw
     methods
       function stimulus_conditions = get.stimulus_conditions(self)
             self.zprpCacheStimulusPresentations();
@@ -258,14 +256,13 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function epochs = get.stimulus_epochs(self)
-            epochs = self.fetch_stimulus_epochs();
+            epochs = self.getStimulusEpochsByDuration();
         end
         
     end
     
     % HIDDEN PROPERTIES - Primary File (NWB)   
-    methods
-        
+    methods        
                 
         function nwb = get.nwb_file(self)
             % - Retrieve and cache the NWB file
@@ -275,8 +272,7 @@ classdef ephyssession < bot.item.abstract.Session
             
             % - Return an NWB file access object
             nwb = self.property_cache.nwb_file;
-        end
-        
+        end        
         
         function spike_times = get.spike_times(self)
             if ~self.in_cache('checked_spike_times')
@@ -340,7 +336,7 @@ classdef ephyssession < bot.item.abstract.Session
             
             intervals = table(from_presentation_id, to_presentation_id, interval);
         end       
-        
+
     end       
     
     
@@ -397,7 +393,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     methods
         
-        function epochs = fetch_stimulus_epochs(self, duration_thresholds)
+        function epochs = getStimulusEpochsByDuration(self, duration_thresholds)
             % fetch_stimulus_epochs - METHOD Reports continuous periods of time during which a single kind of stimulus was presented
             %
             % Usage: epochs = sess.fetch_stimulus_epochs(<duration_thresholds>)
@@ -433,28 +429,8 @@ classdef ephyssession < bot.item.abstract.Session
             
             epochs = epochs(:, ["start_time", "stop_time", "duration", "stimulus_name", "stimulus_block"]);
         end
-        
-        function pupil_data = fetch_pupil_data(self, suppress_pupil_data)
-            % fetch_pupil_data - METHOD Return the pupil-tracking data for this session, if present
-            %
-            % Usage: pupil_data = sess.fetch_pupil_data(<suppress_pupil_data>)
-            %
-            % `pupil_data` will be a table containing pupil location data for
-            % the current session.
-            %
-            % `suppress_pupil_data` is an optional flag (default: `true`),
-            % indicating that detailed gaze mapping adat should be excluded
-            % from the returned table.
-            arguments
-                self;
-                suppress_pupil_data logical = true;
-            end
-            
-            n = self.nwb_file;
-            pupil_data = n.fetch_pupil_data(suppress_pupil_data);
-        end
-        
-        function [tiled_data, time_base] = presentationwise_spike_counts(self, ...
+                
+        function [tiled_data, time_base] = getPresentationwiseSpikeCounts(self, ...
                 bin_edges, stimulus_presentation_ids, unit_ids, binarize, ...
                 large_bin_size_threshold, time_domain_callback)
             % presentationwise_spike_counts - METHODS Build an array of spike counts surrounding stimulus onset per unit and stimulus frame
@@ -534,7 +510,7 @@ classdef ephyssession < bot.item.abstract.Session
             time_base = bin_edges(1:end-1) + diff(bin_edges) / 2;
         end
         
-        function spikes_with_onset = presentationwise_spike_times(self, stimulus_presentation_ids, unit_ids)
+        function spikes_with_onset = getPresentationwiseSpikeTimes(self, stimulus_presentation_ids, unit_ids)
             % presentationwise_spike_times - METHOD Produce a table associating spike times with units and stimulus presentations
             %
             % Usage: spikes_with_onset = sess.presentationwise_spike_times(self, stimulus_presentation_ids, unit_ids)
@@ -651,7 +627,7 @@ classdef ephyssession < bot.item.abstract.Session
             spikes_with_onset = removevars(spikes_with_onset, 'start_time');
         end
         
-        function summary = conditionwise_spike_statistics(self, stimulus_presentation_ids, unit_ids, use_rates)
+        function summary = getConditionwiseSpikeStatistics(self, stimulus_presentation_ids, unit_ids, use_rates)
             % """ Produce summary statistics for each distinct stimulus condition
             %
             % Parameters
@@ -682,7 +658,7 @@ classdef ephyssession < bot.item.abstract.Session
             select_presentations = ismember(self.stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids);
             presentations = self.stimulus_presentations(select_presentations, {'stimulus_presentation_id', 'stimulus_condition_id', 'duration'});
             
-            spikes = self.presentationwise_spike_times(stimulus_presentation_ids, unit_ids);
+            spikes = self.getPresentationwiseSpikeTimes(stimulus_presentation_ids, unit_ids);
             
             if isempty(unit_ids)
                 unit_ids = unique(spikes.unit_id, 'stable');
@@ -732,7 +708,7 @@ classdef ephyssession < bot.item.abstract.Session
             end
         end
         
-        function param_values = fetch_parameter_values_for_stimulus(self, stimulus_name, drop_nulls)
+        function conditions = getConditionsByStimulusName(self, stimulus_name, drop_nulls)
             % """ For each stimulus parameter, report the unique values taken on by that
             % parameter while a named stimulus was presented.
             %
@@ -747,55 +723,16 @@ classdef ephyssession < bot.item.abstract.Session
             %    maps parameters (column names) to their unique values.
             arguments
                 self;
-                stimulus_name char;
-                drop_nulls logical = true;
+                stimulus_name char; % a stimulus_name (from the available stimulus_names) for which conditions will be retrieved
+                drop_nulls logical = true; % drop null-valued presentations
             end
             
             presentation_ids = self.fetch_stimulus_table(stimulus_name).stimulus_presentation_id;
-            param_values = self.fetch_stimulus_parameter_values(presentation_ids, drop_nulls);
-        end
-        
-        function parameters = fetch_stimulus_parameter_values(self, stimulus_presentation_ids, drop_nulls)
-            % fetch_stimulus_parameter_values - METHOD For each stimulus parameter, report the unique values taken on by that parameter throughout the course of the  session
-            arguments
-                self;
-                stimulus_presentation_ids {mustBeNumeric} = [];
-                drop_nulls logical = true;
-            end
-            
-            % - Filter stimulus_presentations table
-            stimulus_presentations = self.stimulus_presentations; %#ok<PROPLC>
-            
-            if ~isempty(stimulus_presentation_ids)
-                select_stimuli = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
-                stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
-            end
-            
-            stimulus_presentations = removevars(stimulus_presentations, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC>
-            stimulus_presentations = zlclRemoveUnusedStimulusPresentationColumns(stimulus_presentations); %#ok<PROPLC>
-            
-            parameters = struct();
-            
-            for colname = stimulus_presentations.Properties.VariableNames %#ok<PROPLC>
-                uniques = unique(stimulus_presentations.(colname{1})); %#ok<PROPLC>
+            conditions = self.zprvGetConditionByPresentationID(presentation_ids, drop_nulls);
+            conditions.stimulus_name = stimulus_name;
+        end        
                 
-                is_null = arrayfun(@(s)isequal(s, "null"), uniques);
-                is_null = is_null | arrayfun(@(s)isequal(s, ""), uniques);
-                if isnumeric(uniques)
-                    is_null = is_null | isnan(uniques);
-                end
-                
-                non_null = uniques(~is_null);
-                
-                if ~drop_nulls && any(is_null)
-                    non_null = [non_null; nan]; %#ok<AGROW>
-                end
-                
-                parameters.(colname{1}) = non_null;
-            end
-        end
-        
-        function [labels, intervals] = channel_structure_intervals(self, channel_ids)
+        function [labels, intervals] = getChannelStructureIntervals(self, channel_ids)
             % """ find on a list of channels the intervals of channels inserted into particular structures
             %
             % Parameters
@@ -978,6 +915,47 @@ classdef ephyssession < bot.item.abstract.Session
     
     % Clearly intended as Hidden
     methods (Hidden)
+        
+        
+        function parameters = zprvGetConditionByPresentationID(self, stimulus_presentation_ids, drop_nulls)
+            % fetch_stimulus_parameter_values - METHOD For each stimulus parameter, report the unique values taken on by that parameter throughout the course of the  session
+            arguments
+                self;
+                stimulus_presentation_ids {mustBeNumeric} = [];
+                drop_nulls logical = true;
+            end
+            
+            % - Filter stimulus_presentations table
+            stimulus_presentations = self.stimulus_presentations; %#ok<PROPLC>
+            
+            if ~isempty(stimulus_presentation_ids)
+                select_stimuli = ismember(stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids); %#ok<PROPLC>
+                stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
+            end
+            
+            stimulus_presentations = removevars(stimulus_presentations, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC>
+            stimulus_presentations = zlclRemoveUnusedStimulusPresentationColumns(stimulus_presentations); %#ok<PROPLC>
+            
+            parameters = struct();
+            
+            for colname = stimulus_presentations.Properties.VariableNames %#ok<PROPLC>
+                uniques = unique(stimulus_presentations.(colname{1})); %#ok<PROPLC>
+                
+                is_null = arrayfun(@(s)isequal(s, "null"), uniques);
+                is_null = is_null | arrayfun(@(s)isequal(s, ""), uniques);
+                if isnumeric(uniques)
+                    is_null = is_null | isnan(uniques);
+                end
+                
+                non_null = uniques(~is_null);
+                
+                if ~drop_nulls && any(is_null)
+                    non_null = [non_null; nan]; %#ok<AGROW>
+                end
+                
+                parameters.(colname{1}) = non_null;
+            end
+        end
         
         function presentations = fetch_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
             arguments
