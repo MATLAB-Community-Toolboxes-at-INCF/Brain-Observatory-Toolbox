@@ -7,6 +7,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     % Core Properties
     properties (Dependent)
+        channel_structure_intervals;     % Table of channel intervals crossing a particular brain structure for this session
         structure_acronyms;              % EPhys structures recorded across all channels in this session
         structurewise_unit_counts;       % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session 
     end
@@ -107,7 +108,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     %% PROPERTY ACCESS METHODS
     
-    % USER PROPERTIES - Info Struct
+    % USER PROPERTIES - from Item info
     methods        
         function inter_presentation_intervals = get.inter_presentation_intervals(self)
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
@@ -140,10 +141,30 @@ classdef ephyssession < bot.item.abstract.Session
             n = self.nwb_file;
             pupilData = n.fetch_pupil_data(false); % include (don't suppress) detailed gaze tracking info
         end    
+        
+         function tbl = get.channel_structure_intervals(self)
+            
+            %structure_id_key = "ephys_structure_id";
+            structure_label_key = "ephys_structure_acronym";
+            
+            channel_ids = self.channels.id;
+            
+            select_channels = ismember(self.channels.id, channel_ids);
+            channels_selected = self.channels(select_channels, :);
+            
+            unique_probes = unique(self.channels.ephys_probe_id);
+            if numel(unique_probes) > 1
+                warning("Calculating structure boundaries across channels from multiple probes.")
+            end
+            
+            tbl = table;
+            tbl.intervals = zlclDiffIntervals(channels_selected.(structure_label_key))';
+            tbl.labels = channels_selected.(structure_label_key)(tbl.intervals);
+         end    
+        
     end
     
-    % USER PROPERTIES - Primary File (NWB)
-            
+    % USER PROPERTIES - from Primary File (NWB)            
     methods        
               
         function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
@@ -411,7 +432,7 @@ classdef ephyssession < bot.item.abstract.Session
             end
             
             presentations = self.stimulus_presentations;
-            diff_indices = zlclNaNIntervals(presentations.stimulus_block);
+            diff_indices = zlclDiffIntervals(presentations.stimulus_block);
             
             epochs.start_time = presentations.start_time(diff_indices(1:end-1));
             epochs.stop_time = presentations.stop_time(diff_indices(2:end)-1);
@@ -730,45 +751,8 @@ classdef ephyssession < bot.item.abstract.Session
             presentation_ids = self.fetch_stimulus_table(stimulus_name).stimulus_presentation_id;
             conditions = self.zprvGetConditionByPresentationID(presentation_ids, drop_nulls);
             conditions.stimulus_name = stimulus_name;
-        end        
-                
-        function [labels, intervals] = getChannelStructureIntervals(self, channel_ids)
-            % """ find on a list of channels the intervals of channels inserted into particular structures
-            %
-            % Parameters
-            % ----------
-            % channel_ids : list
-            %    A list of channel ids
-            %
-            % Returns
-            % -------
-            % labels : np.ndarray
-            %    for each detected interval, the label associated with that interval
-            % intervals : np.ndarray
-            %    one element longer than labels. Start and end indices for intervals.
-            arguments
-                self;
-                channel_ids {mustBeNumeric};
-            end
-            
-            structure_id_key = "ephys_structure_id";
-            structure_label_key = "ephys_structure_acronym";
-            
-            channel_ids = sort(channel_ids);
-            
-            select_channels = ismember(self.channels.id, channel_ids);
-            channels_selected = self.channels(select_channels, :);
-            
-            unique_probes = unique(channels_selected.ephys_probe_id);
-            if numel(unique_probes) > 1
-                warning("Calculating structure boundaries across channels from multiple probes.")
-            end
-            
-            intervals = zlclNaNIntervals(channels_selected.(structure_id_key));
-            labels = channels_selected.(structure_label_key)(intervals);
-        end
+        end 
     end
-    
     
     
     %% METHODS - HIDDEN
@@ -1263,40 +1247,42 @@ stimulus_presentations = stimulus_presentations(:, ~is_empty_col);
 end
 
 
-function intervals = zlclNaNIntervals(array)
-%     """ find interval bounds (bounding consecutive identical values) in an array, which may contain nans
-%
-%     Parameters
-%     -----------
-%     array : np.ndarray
-%
-%     Returns
-%     -------
-%     np.ndarray :
-%         start and end indices of detected intervals (one longer than the number of intervals)
+function intervals = zlclDiffIntervals(array)
 
 intervals = [];
-current = 0;
 
-for nIndex = 2:numel(array)
+
+if iscategorical(array)
+    nilFcn = @isundefined;
+elseif isnumeric(array)
+    nilFcn = @isnan;
+else
+    assert(false);
+end
+
+current = -1;
+for nIndex = 1:numel(array)
     item = array(nIndex);
-    if zlclIsDistinctFrom(item, current)
-        intervals(end+1) = nIndex + 1; %#ok<AGROW>
+    if znstIsDistinctFrom(item, current, nilFcn)
+        intervals(end+1) = nIndex; %#ok<AGROW>
     end
     current = item;
 end
 
 intervals(end+1) = numel(array);
 intervals = unique(intervals);
+
+    function is_distinct = znstIsDistinctFrom(left, right, nilFcn)                
+        if nilFcn(left) && nilFcn(right)
+            is_distinct = false;        
+        else
+            is_distinct = ~isequal(left, right);
+        end
+    end
+
 end
 
-function is_distinct = zlclIsDistinctFrom(left, right)
-if isnan(left) && isnan(right)
-    is_distinct = false;
-else
-    is_distinct = ~isequal(left, right);
-end
-end
+
 
 
 % function coerce_scalar(value, message, warn)
