@@ -7,9 +7,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     % Core Properties
     properties (Dependent)
-        channel_structure_intervals;     % Table of channel intervals crossing a particular brain structure for this session
         structure_acronyms;              % EPhys structures recorded across all channels in this session
-        structurewise_unit_counts;       % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session 
     end
     
     % Linked Items
@@ -17,6 +15,12 @@ classdef ephyssession < bot.item.abstract.Session
         units;                          % A Table of all units in this session
         probes;                         % A Table of all probes in this session
         channels;                       % A Table of all channels in this session
+    end
+    
+    % Linked Item Values
+    properties (SetAccess = private)
+        channel_structure_intervals;     % Table of channel intervals crossing a particular brain structure for this session
+        structurewise_unit_counts;       % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
     end
         
     % NWB-bound Properties
@@ -407,6 +411,11 @@ classdef ephyssession < bot.item.abstract.Session
             session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
             session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
             session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
+            
+            % Identify property display groups
+            session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
+            session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,session.LINKED_ITEM_VALUE_PROPERTIES);
+
         end
     end
     

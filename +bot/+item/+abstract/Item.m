@@ -14,6 +14,10 @@ classdef Item < handle & matlab.mixin.CustomDisplay
        LINKED_ITEM_PROPERTIES (1,:) string        
    end
    
+   properties (SetAccess=protected, GetAccess = protected)
+       LINKED_ITEM_VALUE_PROPERTIES (1,:) string = string.empty();
+   end   
+   
    %% SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
    
    properties (Constant, GetAccess = protected)
@@ -28,7 +32,11 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 
                 % Core properties
                 groups(1) = matlab.mixin.util.PropertyGroup([obj.CORE_PROPERTIES obj.CORE_PROPERTIES_EXTENDED]);
-                groups(2) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');               
+                groups(2) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');    
+                
+                if ~isempty(obj.LINKED_ITEM_VALUE_PROPERTIES)
+                    groups(3) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_VALUE_PROPERTIES, 'Linked Item Values');
+                end
             end
         end
        
