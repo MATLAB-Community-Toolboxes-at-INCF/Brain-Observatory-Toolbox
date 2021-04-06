@@ -415,20 +415,11 @@ classdef ephyssession < bot.item.abstract.Session
     methods
         
         function epochs = getStimulusEpochsByDuration(self, duration_thresholds)
-            % fetch_stimulus_epochs - METHOD Reports continuous periods of time during which a single kind of stimulus was presented
-            %
-            % Usage: epochs = sess.fetch_stimulus_epochs(<duration_thresholds>)
-            %
-            % `duration_thresholds` is an optional structure, linking stimulus
-            % names to times in seconds. If present in the structure, any
-            % stimulus with the matching name, for which an epoch of that
-            % stimulus shorter than the threshold duration given in the
-            % structure, will be removed from the returned stimulus epochs.
-            % `epochs` will be a table of stimulus epochs for the stimuli in
-            % this session.
+            % Reports continuous periods of time during which a single kind of stimulus was presented
+            
             arguments
                 self;
-                duration_thresholds = struct('spontaneous_activity', 90);
+                duration_thresholds = struct('spontaneous_activity', 90); % Optional structure specifying minimum duration (seconds) required for specified stimulus_names to be reported as an epoch
             end
             
             presentations = self.stimulus_presentations;
@@ -454,38 +445,16 @@ classdef ephyssession < bot.item.abstract.Session
         function [tiled_data, time_base] = getPresentationwiseSpikeCounts(self, ...
                 bin_edges, stimulus_presentation_ids, unit_ids, binarize, ...
                 large_bin_size_threshold, time_domain_callback)
-            % presentationwise_spike_counts - METHODS Build an array of spike counts surrounding stimulus onset per unit and stimulus frame
-            %
-            % Parameters
-            % ---------
-            % bin_edges : numpy.ndarray
-            %    Spikes will be counted into the bins defined by these edges. Values are in seconds, relative
-            %    to stimulus onset.
-            % stimulus_presentation_ids : array-like
-            %    Filter to these stimulus presentations
-            % unit_ids : array-like
-            %    Filter to these units
-            % binarize : bool, optional
-            %    If true, all counts greater than 0 will be treated as 1. This results in lower storage overhead,
-            %    but is only reasonable if bin sizes are fine (<= 1 millisecond).
-            % large_bin_size_threshold : float, optional
-            %    If binarize is True and the largest bin width is greater than this value, a warning will be emitted.
-            % time_domain_callback : callable, optional
-            %    The time domain is a numpy array whose values are trial-aligned bin
-            %    edges (each row is aligned to a different trial). This optional function will be
-            %    applied to the time domain before counting spikes.
-            %
-            % Returns
-            % -------
-            % Table whose dimensions are stimulus presentation, unit, and time bin and whose values are spike counts.
+            % Build array of spike counts surrounding stimulus onset per unit and stimulus frame
+            
             arguments
                 self;
-                bin_edges;
-                stimulus_presentation_ids;
-                unit_ids;
-                binarize logical = false;
-                large_bin_size_threshold = 0.001;
-                time_domain_callback function_handle = str2func('@(x)x');
+                bin_edges;  % Spikes will be counted into the bins defined by these edges. Values are in seconds, relative to stimulus onset
+                stimulus_presentation_ids; % Filter to these stimulus presentations
+                unit_ids;  % Filter to these units
+                binarize logical = false; % If true, all counts greater than 0 will be treated as 1. This results in lower storage overhead, but is only reasonable if bin sizes are fine (<= 1 millisecond).
+                large_bin_size_threshold = 0.001;  % If binarize is True and the largest bin width is greater than this value, a warning will be emitted.
+                time_domain_callback function_handle = str2func('@(x)x'); % Optional Callback function applied to the time domain before counting spikes. Returns numeric array whose values are trial-aligned bin edges (each row is aligned to a different trial).              
             end
             
             % - Filter stimulus_presentations table
@@ -532,32 +501,12 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function spikes_with_onset = getPresentationwiseSpikeTimes(self, stimulus_presentation_ids, unit_ids)
-            % presentationwise_spike_times - METHOD Produce a table associating spike times with units and stimulus presentations
-            %
-            % Usage: spikes_with_onset = sess.presentationwise_spike_times(self, stimulus_presentation_ids, unit_ids)
-            %
-            %   Parameters
-            %   ----------
-            %   stimulus_presentation_ids : array-like
-            %       Filter to these stimulus presentations
-            %   unit_ids : array-like
-            %       Filter to these units
-            %
-            %   Returns
-            %   -------
-            %   pandas.DataFrame :
-            %   Index is
-            %       spike_time : float
-            %           On the session's master clock.
-            %   Columns are
-            %       stimulus_presentation_id : int
-            %           The stimulus presentation on which this spike occurred.
-            %       unit_id : int
-            %           The unit that emitted this spike.
+            % Produce a table associating spike times with units and stimulus presentations
+          
             arguments
                 self;
-                stimulus_presentation_ids = [];
-                unit_ids = [];
+                stimulus_presentation_ids = [];   % Filter to these stimulus presentations
+                unit_ids = [];  % Filter to these units
             end
             
             % - Filter stimulus_presentations table
@@ -649,27 +598,13 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function summary = getConditionwiseSpikeStatistics(self, stimulus_presentation_ids, unit_ids, use_rates)
-            % """ Produce summary statistics for each distinct stimulus condition
-            %
-            % Parameters
-            % ----------
-            % stimulus_presentation_ids : array-like
-            %    identifies stimulus presentations from which spikes will be considered
-            % unit_ids : array-like
-            %    identifies units whose spikes will be considered
-            % use_rates : bool, optional
-            %    If True, use firing rates. If False, use spike counts.
-            %
-            % Returns
-            % -------
-            % pd.DataFrame :
-            %    Rows are indexed by unit id and stimulus condition id. Values are summary statistics describing spikes
-            %    emitted by a specific unit across presentations within a specific condition.
+            % Produce summary statistics for each distinct stimulus condition            
+            
             arguments
                 self;
-                stimulus_presentation_ids {mustBeNumeric} = [];
-                unit_ids {mustBeNumeric} = [];
-                use_rates logical = false;
+                stimulus_presentation_ids {mustBeNumeric} = [];  % identifies stimulus presentations from which spikes will be considered
+                unit_ids {mustBeNumeric} = []; % identifies units whose spikes will be considered
+                use_rates logical = false; % If True, use firing rates. If False, use spike counts.
             end
             
             if isempty(stimulus_presentation_ids)
@@ -730,18 +665,8 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function conditions = getConditionsByStimulusName(self, stimulus_name, drop_nulls)
-            % """ For each stimulus parameter, report the unique values taken on by that
-            % parameter while a named stimulus was presented.
-            %
-            % Parameters
-            % ----------
-            % stimulus_name : str
-            %    filter to presentations of this stimulus
-            %
-            % Returns
-            % -------
-            % dict :
-            %    maps parameters (column names) to their unique values.
+            % For each stimulus parameter, report the unique values taken on by that parameter while a named stimulus was presented.
+
             arguments
                 self;
                 stimulus_name char; % a stimulus_name (from the available stimulus_names) for which conditions will be retrieved
@@ -757,22 +682,11 @@ classdef ephyssession < bot.item.abstract.Session
     
     %% METHODS - HIDDEN
     
-    % possibly intended to be public
+    % Implemented, but needs work
     methods (Hidden)
-        
+
+        % TODO: Investigate intended/actual behavior here. Returns successfully, but there appear to be no intervals, as it loo(every stimulus_presentation_id is 
         function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
-            % ''' Get a subset of this session's inter-presentation intervals, filtered by stimulus name.
-            %
-            % Parameters
-            % ----------
-            % stimulus_names : array-like of str
-            %    The names of stimuli to include in the output.
-            %
-            % Returns
-            % -------
-            % pd.DataFrame :
-            %    inter-presentation intervals, filtered to the requested stimulus names.
-            
             self.zprpCacheStimulusPresentations();
             
             select_stimuli = ismember(self.property_cache.stimulus_presentations_raw.stimulus_name, stimulus_names);
@@ -788,121 +702,51 @@ classdef ephyssession < bot.item.abstract.Session
         
     end
     
-    % currently not fully implemented
-    methods (Hidden)
-        
-        function fetch_natural_movie_template(self, number) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :); %#ok<UNRCH>
-            
-            if size(well_known_files, 1) ~= 1
-                error('BOT:NotFound', ...
-                    'Expected exactly one natural movie template with number %d, found %d.', number, size(well_known_files, 1));
-            end
-            
-            download_url = self.bot_cache.strABOBaseUrl + well_known_files.download_link;
-            local_filename = self.bot_cache.CacheFile(download_url, well_known_files.path);
-            
-            %         well_known_files = self.stimulus_templates[self.stimulus_templates["movie_number"] == number]
-            %         if well_known_files.shape[0] != 1:
-            %             raise ValueError(f"expected exactly one natural movie template with number {number}, found {well_known_files}")
-            %
-            %         download_link = well_known_files.iloc[0]["download_link"]
-            %         return self.rma_engine.stream(download_link)
-        end
-        
-        function fetch_natural_scene_template(self, number) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            %         well_known_files = self.stimulus_templates[self.stimulus_templates["scene_number"] == number]
-            %         if well_known_files.shape[0] != 1:
-            %             raise ValueError(f"expected exactly one natural scene template with number {number}, found {well_known_files}")
-            %
-            %         download_link = well_known_files.iloc[0]["download_link"]
-            %         return self.rma_engine.stream(download_link)
-        end
-        
-        
-        function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            
-            %         all_time_points = xr.DataArray(
-            %             name="time_points",
-            %             data=[True] * len(time_points),
-            %             dims=['time'],
-            %             coords=[time_points]
-            %         )
-            %
-            %         valid_time_points = all_time_points
-            %         for ix, invalid_time_interval in invalid_time_intevals.iterrows():
-            %             invalid_time_points = (time_points >= invalid_time_interval['start_time']) & (time_points <= invalid_time_interval['stop_time'])
-            %             valid_time_points = np.logical_and(valid_time_points, np.logical_not(invalid_time_points))
-            %
-            %         return valid_time_points
-            
-        end
-        
-        function units_table = build_units_table(self, units_table) %#ok<INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-            
-            %       channels = self.fetch_channels_from_nwb;
-            %       probes = self.fetch_probes_from_nwb;
-            %
-            %       unmerged_units = units_table;
-            %          units_table = merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel']);
-            
-            
-            %     def _build_units_table(self, units_table):
-            %         channels = self.channels.copy()
-            %         probes = self.probes.copy()
-            %
-            %         self._unmerged_units = units_table.copy()
-            %         table = pd.merge(units_table, channels, left_on='peak_channel_id', right_index=True, suffixes=['_unit', '_channel'])
-            %         table = pd.merge(table, probes, left_on='probe_id', right_index=True, suffixes=['_unit', '_probe'])
-            %
-            %         table.index.name = 'unit_id'
-            %         table = table.rename(columns={
-            %             'description': 'probe_description',
-            %             'local_index_channel': 'channel_local_index',
-            %             'PT_ratio': 'waveform_PT_ratio',
-            %             'amplitude': 'waveform_amplitude',
-            %             'duration': 'waveform_duration',
-            %             'halfwidth': 'waveform_halfwidth',
-            %             'recovery_slope': 'waveform_recovery_slope',
-            %             'repolarization_slope': 'waveform_repolarization_slope',
-            %             'spread': 'waveform_spread',
-            %             'velocity_above': 'waveform_velocity_above',
-            %             'velocity_below': 'waveform_velocity_below',
-            %             'sampling_rate': 'probe_sampling_rate',
-            %             'lfp_sampling_rate': 'probe_lfp_sampling_rate',
-            %             'has_lfp_data': 'probe_has_lfp_data',
-            %             'l_ratio': 'L_ratio',
-            %             'pref_images_multi_ns': 'pref_image_multi_ns',
-            %         })
-            %
-            %         return table.sort_values(by=['probe_description', 'probe_vertical_position', 'probe_horizontal_position'])
-        end
-        
-        function output_waveforms = build_nwb1_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
-            %         # _build_mean_waveforms() assumes every unit has the same number of waveforms and that a unit-waveform exists
-            %         # for all channels. This is not true for NWB 1 files where each unit has ONE waveform on ONE channel
-            
-            error('BOT:NotImplemented', 'This method is not implemented');
-        end
-        
-        function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
-            error('BOT:NotImplemented', 'This method is not implemented');
-        end
-    end
+    %     % currently not fully implemented
+    %     methods (Hidden)
+    %
+    %         function fetch_natural_movie_template(self, number) %#ok<INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %
+    %             well_known_files = self.stimulus_templates(self.stimulus_templates.movie_number == number, :); %#ok<UNRCH>
+    %
+    %             if size(well_known_files, 1) ~= 1
+    %                 error('BOT:NotFound', ...
+    %                     'Expected exactly one natural movie template with number %d, found %d.', number, size(well_known_files, 1));
+    %             end
+    %
+    %             download_url = self.bot_cache.strABOBaseUrl + well_known_files.download_link;
+    %             local_filename = self.bot_cache.CacheFile(download_url, well_known_files.path);
+    %         end
+    %
+    %         function fetch_natural_scene_template(self, number) %#ok<INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %         end
+    %
+    %
+    %         function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %         end
+    %
+    %         function units_table = build_units_table(self, units_table) %#ok<INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %         end
+    %
+    %         function output_waveforms = build_nwb1_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %         end
+    %
+    %         function output_waveforms = build_mean_waveforms(self, mean_waveforms) %#ok<STOUT,INUSD>
+    %             error('BOT:NotImplemented', 'This method is not implemented');
+    %         end
+    %     end
     
     % Clearly intended as Hidden
     methods (Hidden)
         
         
         function parameters = zprvGetConditionByPresentationID(self, stimulus_presentation_ids, drop_nulls)
-            % fetch_stimulus_parameter_values - METHOD For each stimulus parameter, report the unique values taken on by that parameter throughout the course of the  session
+            % For each stimulus parameter, report the unique values taken on by that parameter throughout the course of the  session
             arguments
                 self;
                 stimulus_presentation_ids {mustBeNumeric} = [];
@@ -942,23 +786,15 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function presentations = fetch_stimulus_table(self, stimulus_names, include_detailed_parameters, include_unused_parameters)
+            % Get a subset of stimulus presentations by name, with irrelevant parameters filtered off
+            
             arguments
                 self;
-                stimulus_names = self.stimulus_names;
+                stimulus_names = self.stimulus_names; % Names of stimuli to include in the output.
                 include_detailed_parameters logical = false;
                 include_unused_parameters logical = false;
             end
-            % '''Get a subset of stimulus presentations by name, with irrelevant parameters filtered off
-            %
-            % Parameters
-            % ----------
-            % stimulus_names : array-like of str
-            %    The names of stimuli to include in the output.
-            %
-            % Returns
-            % -------
-            % pd.DataFrame :
-            %    Rows are filtered presentations, columns are the relevant subset of stimulus parameters
+
             
             self.zprpCacheStimulusPresentations();
             
