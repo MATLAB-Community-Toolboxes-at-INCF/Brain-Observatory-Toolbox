@@ -1,4 +1,4 @@
-classdef NWBItem < bot.item.abstract.Item
+classdef NWBItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     
     
     %% USER INTERFACE - Properties
@@ -7,9 +7,7 @@ classdef NWBItem < bot.item.abstract.Item
         nwbLocalFile (1,1) string
         nwbIsCached (1,1) logical % true if NWB file corresponding to this item is already cached        
     end
-    
-    properties (Abstract, Dependent, SetAccess=protected)
-    end    
+
     
     %% DEVELOPER INTERFACE - Properties
     
@@ -56,51 +54,8 @@ classdef NWBItem < bot.item.abstract.Item
             end
         end
             
-    end
-    
-    %% DEVELOPER PROPERTIES
-    properties (Hidden = true)
-        property_cache = struct();
-    end
-    
-    %% DEVELOPER METHODS
-    methods (Access = protected)
-        function data = fetch_cached(self, property, fun_access)
-            % fetch_cached - METHOD Access a cached property
-            %
-            % Usage: data = fetch_cached(self, property, fun_access)
-            %
-            % `property` is a string containing a property name. `fun_access`
-            % is a function handle that returns the property data, if not
-            % found in the cache. The property data will be returned from the
-            % local property cache, or else inserted after calling
-            % `fun_access`.
-            %
-            % `data` will be the cached property data.
-            
-            % - Check for cached property
-            if ~isfield(self.property_cache, property)
-                % - Use the access function
-                self.property_cache.(property) = fun_access();
-            end
-            
-            % - Return the cached property
-            data = self.property_cache.(property);
-        end
+    end    
         
-        function is_in_cache = in_cache(self, property)
-            % in_cache — METHOD Test if a property value has been cached
-            %
-            % Usage: is_in_cache = in_cache(self, property)
-            %
-            % `property` is a string containing a property name. `is_in_cache`
-            % will be `true` iff the property is present in the property
-            % cache.
-            is_in_cache = isfield(self.property_cache, property) && ~isempty(self.property_cache.(property));
-        end
-    end
-    
-    
     %% SUPERCLASS OVERRIDES (bot.item.abstract.Item)
     
     % Constructor extension
@@ -109,8 +64,10 @@ classdef NWBItem < bot.item.abstract.Item
             
             obj@bot.item.abstract.Item;
             
-            % Add NWB information to the core property list for this item
+            
+            % Add NWB information to the relevant property list PROPERTIES for this item
             obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];
+            obj.ON_DEMAND_PROPERTIES = [obj.ON_DEMAND_PROPERTIES obj.NWB_DATA_PROPERTIES];
         end
     end
     
@@ -124,26 +81,16 @@ classdef NWBItem < bot.item.abstract.Item
             else
                 groups = getPropertyGroups@bot.item.abstract.Item(obj);
                 
+                [propListing, onDemandPropList] = obj.getOnDemandPropListing(obj.NWB_DATA_PROPERTIES);                                            
+                
                 % NWB-bound properties
                 if ~obj.nwbIsCached
-                    description = '[NWB download required]';
-                else
-                    description = '[on demand]';                
-                end
-                
-                for prop = obj.NWB_DATA_PROPERTIES
-                    if ~obj.in_cache(prop)
-                        propList.(prop) = description;
-                    elseif isscalar(obj.property_cache.(prop)) || isempty(obj.property_cache.(prop))
-                        propList.(prop)  = obj.fetch_cached(prop);                                                
-                    else
-                        %propList.(prop) = convertStringsToChars("cached (class: " + class(obj.fetch_cached(prop)) + ", size: " + mat2str(size(obj.fetch_cached(prop))) + ")");
-                        propList.(prop) = convertStringsToChars(class(obj.fetch_cached(prop)) + " of size: " + mat2str(size(obj.fetch_cached(prop))));
-                    end
-
-                end
-                
-                groups(end+1) = matlab.mixin.util.PropertyGroup(propList, 'NWB Info');
+                    for odProp = onDemandPropList
+                        propListing.(odProp) = '[NWB download required]';
+                    end                    
+                end                
+     
+                groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, 'NWB Info');
             end
         end
     end

@@ -180,7 +180,7 @@ classdef ephyssession < bot.item.abstract.Session
             try
                 optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.fetch_optogenetic_stimulation);
             catch
-                warning('BOT:DataNotPresent', 'Optogenetic stimulation data is not present for this session');
+                optogenetic_stimulation_epochs = [];
             end
         end
         
