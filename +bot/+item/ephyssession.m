@@ -5,7 +5,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     %% PROPERTIES - USER
     
-    % Core Properties
+    % Info Item Values
     properties (Dependent)
         structure_acronyms;              % EPhys structures recorded across all channels in this session
     end
@@ -124,6 +124,10 @@ classdef ephyssession < bot.item.abstract.Session
         
         function stimulus_names = get.stimulus_names(self)
             stimulus_names = unique(self.stimulus_presentations.stimulus_name);
+        end
+        
+        function structure_acronyms = get.structure_acronyms(self)
+            structure_acronyms = strip(split(self.info.ephys_structure_acronyms,";"));
         end
         
         
@@ -413,8 +417,10 @@ classdef ephyssession < bot.item.abstract.Session
             session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
             
             % Identify property display groups
-            session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
-            session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,session.LINKED_ITEM_VALUE_PROPERTIES);
+            session.ITEM_INFO_VALUE_PROPERTIES = ["structure_acronyms"];
+            session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];                       
+            session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
+            
 
         end
     end
