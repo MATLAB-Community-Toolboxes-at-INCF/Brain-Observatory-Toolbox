@@ -127,7 +127,7 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function structure_acronyms = get.structure_acronyms(self)
-            structure_acronyms = strip(split(self.info.ephys_structure_acronyms,";"));
+            structure_acronyms = strip(split(self.info.ephys_structure_acronyms,";"))';
         end
         
         
