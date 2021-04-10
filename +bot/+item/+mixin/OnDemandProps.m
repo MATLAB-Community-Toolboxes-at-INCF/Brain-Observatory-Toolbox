@@ -73,7 +73,7 @@ classdef (Abstract) OnDemandProps < handle
             
             onDemandPropList = string.empty();
             
-            for prop = propSet
+            for prop = propSet'
                 if ~obj.in_cache(prop)
                     propListing.(prop) = '[on demand]';
                     onDemandPropList(end+1) = prop; %#ok<AGROW>
