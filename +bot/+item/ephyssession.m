@@ -205,19 +205,19 @@ classdef ephyssession < bot.item.abstract.Session
             n = self.nwb_file;
             rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);            
         end
+        
+        function mean_waveforms = get.mean_waveforms(self)
+            n = self.nwb_file;
+            mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
+        end
     end 
     
     
     % via stimulus_conditions_raw
     methods
-      function stimulus_conditions = get.stimulus_conditions(self)
+        function stimulus_conditions = get.stimulus_conditions(self)
             self.zprpCacheStimulusPresentations();
             stimulus_conditions = self.property_cache.stimulus_conditions_raw;
-        end
-        
-        function mean_waveforms = get.mean_waveforms(self)
-            n = self.nwb_file;
-            mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
         end
         
         function stimulus_presentations = get.stimulus_presentations(self)
