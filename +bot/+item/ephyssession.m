@@ -139,12 +139,12 @@ classdef ephyssession < bot.item.abstract.Session
         
         function pupilData = get.pupil_data(self)                                
             n = self.nwb_file;
-            pupilData = n.fetch_pupil_data(true); % suppress detailed gaze tracking info
+            pupilData = self.fetch_cached('pupil_data', @()n.fetch_pupil_data(true)); % suppress detailed gaze tracking info
         end       
 
         function pupilData = get.pupil_data_detailed(self)
             n = self.nwb_file;
-            pupilData = n.fetch_pupil_data(false); % include (don't suppress) detailed gaze tracking info
+            pupilData = self.fetch_cached('pupil_data_detailed', @()n.fetch_pupil_data(false)); % include (don't suppress) detailed gaze tracking info
         end    
         
          function tbl = get.channel_structure_intervals(self)
