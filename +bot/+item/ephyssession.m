@@ -49,16 +49,13 @@ classdef ephyssession < bot.item.abstract.Session
         stimulus_epochs;                % Table of stimulus presentation epochs
         optogenetic_stimulation_epochs;  % Table of optogenetic stimulation epochs for this experimental session (if present)
                 
-        rig_geometry_data;               % Metadata about the geometry of the rig used in this session
-        rig_equipment_name;              % Metadata: name of the rig used in this session
-        
+        rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)        
     end
     
     %%  PROPERTIES - HIDDEN
     
     properties (Hidden = true, Access = public, Transient = true)
         nwb_metadata;
-        rig_metadata;                 % Metadata: structure containing metadata about the rig used in this experimental session
         
         nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
         
@@ -203,26 +200,13 @@ classdef ephyssession < bot.item.abstract.Session
             n = self.nwb_file;
             running_speed = self.fetch_cached('running_speed', @n.fetch_running_speed);
         end
-    end   
-    
-    % via rig_metadata   
-    methods      
-        function rig_geometry_data = get.rig_geometry_data(self)
-            try
-                rig_geometry_data = self.rig_metadata.rig_geometry_data;
-            catch
-                rig_geometry_data = [];
-            end
-        end
         
-        function rig_equipment_name = get.rig_equipment_name(self)
-            try
-                rig_equipment_name = self.rig_metadata.rig_equipment;
-            catch
-                rig_equipment_name = [];
-            end
+        function rig_metadata = get.rig_metadata(self)
+            n = self.nwb_file;
+            rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);            
         end
-    end
+    end 
+    
     
     % via stimulus_conditions_raw
     methods
@@ -321,21 +305,9 @@ classdef ephyssession < bot.item.abstract.Session
 
         function metadata = get.nwb_metadata(self)
             n = self.nwb_file;
-            try
-                metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
-            catch
-                metadata = [];
-            end
-        end
-        
-        function rig_metadata = get.rig_metadata(self)
-            n = self.nwb_file;
-            try
-                rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
-            catch
-                rig_metadata = [];
-            end
-        end
+            metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
+        end        
+
     end
     
     % PROPERTY ACCESS HELPERS

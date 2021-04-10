@@ -1,5 +1,5 @@
 classdef (Abstract) OnDemandProps < handle
-    %ONDEMANDPROPS Implements an on-demand property cache, allow deferral of potentially expernsive property access operations
+    %ONDEMANDPROPS Implements an on-demand property cache, allowing deferral of potentially expensive property access operations
     
     %% PROPERTIES - HIDDEN
     properties (Hidden)
@@ -8,7 +8,7 @@ classdef (Abstract) OnDemandProps < handle
     
     properties (Access = protected)
         ON_DEMAND_PROPERTIES (1,:) string = string.empty();
-    end
+    end       
     
     
     %% METHODS - HIDDEN
@@ -30,7 +30,12 @@ classdef (Abstract) OnDemandProps < handle
             % - Check for cached property
             if ~isfield(self.property_cache, property)
                 % - Use the access function
-                self.property_cache.(property) = fun_access();
+                
+                try 
+                    self.property_cache.(property) = fun_access();
+                catch 
+                    self.property_cache.(property) = bot.item.internal.OnDemandState.Unavailable;
+                end
             end
             
             % - Return the cached property
@@ -45,7 +50,7 @@ classdef (Abstract) OnDemandProps < handle
             % `property` is a string containing a property name. `is_in_cache`
             % will be `true` iff the property is present in the property
             % cache.
-            is_in_cache = isfield(self.property_cache, property) && ~isempty(self.property_cache.(property));
+            is_in_cache = isfield(self.property_cache, property);
         end
     end
     
@@ -68,15 +73,36 @@ classdef (Abstract) OnDemandProps < handle
             
             onDemandPropList = string.empty();
             
-            for prop = propSet'
+            for prop = propSet
                 if ~obj.in_cache(prop)
                     propListing.(prop) = '[on demand]';
                     onDemandPropList(end+1) = prop; %#ok<AGROW>
-                elseif isscalar(obj.property_cache.(prop)) || isempty(obj.property_cache.(prop))
-                    propListing.(prop)  = obj.fetch_cached(prop);
-                else
-                    %propList.(prop) = convertStringsToChars("cached (class: " + class(obj.fetch_cached(prop)) + ", size: " + mat2str(size(obj.fetch_cached(prop))) + ")");
-                    propListing.(prop) = convertStringsToChars(class(obj.fetch_cached(prop)) + " of size: " + mat2str(size(obj.fetch_cached(prop))));
+                elseif isa(obj.property_cache.(prop),'bot.item.internal.OnDemandState')
+                    %Decode the state
+                    if isequal(obj.property_cache.(prop),bot.item.internal.OnDemandState.Unavailable)
+                       propListing.(prop) = '[unavailable]'; 
+                    end
+                else                    
+                    szProp = size(obj.property_cache.(prop));
+                    
+                    if numel(szProp) == 2 && min(szProp) == 1
+                        val = obj.fetch_cached(prop);
+                        propListing.(prop)  = val(:)';
+                    else 
+                        %propList.(prop) = convertStringsToChars("cached (class: " + class(obj.fetch_cached(prop)) + ", size: " + mat2str(size(obj.fetch_cached(prop))) + ")");
+                        %propListing.(prop) = convertStringsToChars(class(obj.fetch_cached(prop)) + " of size: " + mat2str(size(obj.fetch_cached(prop))));
+                        %propListing.(prop) = "[" +                        
+                        propSummaryStr = "[";
+                        for ii = 1:numel(szProp)
+                            propSummaryStr = propSummaryStr + szProp(ii);
+                            if ii < numel(szProp)
+                                propSummaryStr = propSummaryStr + "x";
+                            end
+                        end
+                        propSummaryStr = propSummaryStr + " " + class(obj.fetch_cached(prop)) + "]";
+                        
+                        propListing.(prop)  = propSummaryStr.char();
+                    end                                           
                 end
             end
         end
