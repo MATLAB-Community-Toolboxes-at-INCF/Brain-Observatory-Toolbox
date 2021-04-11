@@ -57,7 +57,6 @@ classdef ephyssession < bot.item.abstract.Session
     properties (Hidden = true, Access = public, Transient = true)
         nwb_metadata;
         
-        nwb_file bot.internal.nwb.nwb_ephys; % NWB file acess object
         
         NON_STIMULUS_PARAMETERS = [
             "start_time", ...
@@ -90,6 +89,10 @@ classdef ephyssession < bot.item.abstract.Session
             "color_triplet"]
     end
     
+    properties (Access=private)
+        nwbLocal_;        
+    end
+    
     % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
     properties (Constant, Hidden)
         NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
@@ -104,8 +107,11 @@ classdef ephyssession < bot.item.abstract.Session
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
-        LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"StimTemplatesGroup",false);
-
+        %LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"StimTemplatesGroup",false);
+    end
+    
+    properties (Dependent, SetAccess=protected)
+       nwbLocal;
     end
         
     
@@ -140,12 +146,12 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function pupilData = get.pupil_data(self)                                
-            n = self.nwb_file;
+            n = self.nwbLocal;
             pupilData = self.fetch_cached('pupil_data', @()n.fetch_pupil_data(true)); % suppress detailed gaze tracking info
         end       
 
         function pupilData = get.pupil_data_detailed(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             pupilData = self.fetch_cached('pupil_data_detailed', @()n.fetch_pupil_data(false)); % include (don't suppress) detailed gaze tracking info
         end    
         
@@ -175,7 +181,7 @@ classdef ephyssession < bot.item.abstract.Session
     methods        
               
         function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             try
                 optogenetic_stimulation_epochs = self.fetch_cached('optogenetic_stimulation_epochs', @n.fetch_optogenetic_stimulation);
             catch
@@ -184,32 +190,32 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function session_start_time = get.session_start_time(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             session_start_time = self.fetch_cached('session_start_time', @n.fetch_session_start_time);
         end
         
         function spike_amplitudes = get.spike_amplitudes(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.fetch_spike_amplitudes);
         end
         
         function invalid_times = get.invalid_times(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             invalid_times = self.fetch_cached('invalid_times', @n.fetch_invalid_times);
         end
         
         function running_speed = get.running_speed(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             running_speed = self.fetch_cached('running_speed', @n.fetch_running_speed);
         end
         
         function rig_metadata = get.rig_metadata(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);            
         end
         
         function mean_waveforms = get.mean_waveforms(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
         end
     end 
@@ -281,15 +287,9 @@ classdef ephyssession < bot.item.abstract.Session
     % HIDDEN PROPERTIES - Primary File (NWB)   
     methods        
                 
-        %         function nwb = get.nwb_file(self)
-        %             % - Retrieve and cache the NWB file
-        %             if ~self.in_cache('nwb_file')
-        %                 self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.ensureNWBCached());
-        %             end
-        %
-        %             % - Return an NWB file access object
-        %             nwb = self.property_cache.nwb_file;
-        %         end
+        function nwb = get.nwbLocal(obj)
+            nwb = obj.nwbLocal_;
+        end
         
         function spike_times = get.spike_times(self)
             if ~self.in_cache('checked_spike_times')
@@ -297,18 +297,18 @@ classdef ephyssession < bot.item.abstract.Session
                 self.property_cache.checked_spike_times = true;
             end
             
-            n = self.nwb_file;            
+            n = self.nwbLocal;            
             spike_times = self.fetch_cached('metadata', @n.fetch_spike_times);
             
             %             if ~self.in_cache('spike_times')
-            %                 self.property_cache.spike_times = self.build_spike_times(self.nwb_file.fetch_spike_times());
+            %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
             %             end
             %
             %             spike_times = self.property_cache.spike_times;
         end
 
         function metadata = get.nwb_metadata(self)
-            n = self.nwb_file;
+            n = self.nwbLocal;
             metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
         end        
 
@@ -319,7 +319,7 @@ classdef ephyssession < bot.item.abstract.Session
         function zprpCacheStimulusPresentations(self)
             if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
                 % - Read stimulus presentations from NWB file
-                stimulus_presentations_raw = self.nwb_file.fetch_stimulus_presentations();
+                stimulus_presentations_raw = self.nwbLocal.fetch_stimulus_presentations();
                 
                 % - Build stimulus presentations tables
                 [stimulus_presentations_raw, stimulus_conditions_raw] = self.build_stimulus_presentations(stimulus_presentations_raw);
@@ -401,21 +401,17 @@ classdef ephyssession < bot.item.abstract.Session
             session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
             
             
-            % Superclass initialization (bot.item.mixin.LinkedFiles)            
-            session.insertLinkedFileInfo("SessNWB",session.info.well_known_files(1));
+            % Superclass initialization (bot.item.mixin.LinkedFiles)     
+            session.initSession();
             
-            ecephys_product_id = 714914585;
-            session.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
+            session.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
+            ecephys_product_id = 714914585;            
+            session.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);            
             
             session.initLinkedFiles();
-
             
             % Linked file prop initializations
-            session.nwb_file = bot.internal.nwb.nwb_ephys(session.linkedFiles{"SessNWB","LocalFile"});
-            
-                        %             ecephys_product_id = 714914585;
-            %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
-            %             stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
+            session.nwbLocal_ = bot.internal.nwb.nwb_ephys(session.linkedFiles{"SessNWB","LocalFile"});            
 
         end
     end
@@ -732,7 +728,7 @@ classdef ephyssession < bot.item.abstract.Session
     %         function fetch_natural_scene_template(self, number) %#ok<INUSD>
     %             error('BOT:NotImplemented', 'This method is not implemented');
     %         end
-    %
+    %   
     %
     %         function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
     %             error('BOT:NotImplemented', 'This method is not implemented');
@@ -919,7 +915,7 @@ classdef ephyssession < bot.item.abstract.Session
         function units_table = fetch_units_table_from_nwb(self)
             % - Build the units table from the session NWB file
             % - Allen SDK ecephys_session.units
-            units_table = self.build_units_table(self.nwb_file.fetch_units());
+            units_table = self.build_units_table(self.nwbLocal.fetch_units());
         end
                 
         
