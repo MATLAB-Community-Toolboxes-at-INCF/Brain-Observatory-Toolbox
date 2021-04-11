@@ -23,17 +23,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
         CORE_PROPERTIES_EXTENDED = [];
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end
-    
-    %     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    %
-    %     properties (SetAccess = immutable, GetAccess = protected)
-    %         NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
-    %     end
-    %
-    %     properties (Dependent, Hidden)
-    %         nwbURL;
-    %     end
-    
+
     % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)    
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = struct("LFPNWB",["lfpData" "csdData"]);
@@ -92,16 +82,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
             %            horizontal_position = self.property_cache.horizontal_position;
             %            vertical_position = self.property_cache.vertical_position;
         end
-    end
-    
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    %     methods
-    %         function url = get.nwbURL(self)
-    %             boc = bot.internal.cache;
-    %             url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
-    %         end
-    %
-    %     end
+    end   
     
     % PROPERTY ACCESS HELPERS
     methods (Access=private)
@@ -178,15 +159,8 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
             probe.initLinkedFiles();
             
             
-            return;
-            
-%             function info = znstGetLFPFileInfo(probe)
-%                 probe_id = probe.info.id;
-%                 strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
-%                 
-%                 boc = bot.internal.cache;
-%                 info = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
-%             end
+            return;            
+
         end
         
     end
