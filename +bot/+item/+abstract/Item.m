@@ -56,6 +56,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
            
    
    methods (Access = protected)
+       
+       % TODO: Explore moving this logic to Item constructor
        function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)
            % - Check usage
            if istable(id)

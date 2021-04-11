@@ -20,12 +20,13 @@ classdef Session < handle & bot.item.mixin.LinkedFiles
         LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true);
     end
     
-    % LOCAL ONLY
-    properties (Access = private)
-        bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
-        ophys_manifest = bot.internal.ophysmanifest.instance();              % Private handle to the OPhys data manifest
-        ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
-    end
+    
+    % SUSPECTED CRUFT
+    %     properties (Access = private)
+    %         bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
+    %         ophys_manifest = bot.internal.ophysmanifest.instance();              % Private handle to the OPhys data manifest
+    %         ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
+    %     end
     
    %% CONSTRUCTOR       
    

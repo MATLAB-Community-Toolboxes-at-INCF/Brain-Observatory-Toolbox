@@ -107,7 +107,6 @@ classdef ephyssession < bot.item.abstract.Session
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
-        %LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"StimTemplatesGroup",false);
     end
     
     properties (Dependent, SetAccess=protected)
