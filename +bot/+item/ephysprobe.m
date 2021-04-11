@@ -54,7 +54,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
             % this probe. `timestamps` will be a Tx1 vector of timestamps,
             % corresponding to each row in `lfp`.
             if ~self.in_cache('lfp')
-                self.ensurePropDownloaded("lfpData");
+                self.ensurePropFileDownloaded("lfpData");
                 [self.property_cache.lfp, self.property_cache.lfp_timestamps] = self.zprpGetLFP();
             end
             
@@ -74,7 +74,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
             % horizontal and vertical positions corresponding to each column
             % of `csd`.
             if ~self.in_cache('csd')
-                self.ensurePropDownloaded("csdData");
+                self.ensurePropFileDownloaded("csdData");
                 [self.property_cache.csd, ...
                     self.property_cache.csd_timestamps, ...
                     self.property_cache.horizontal_position, ...

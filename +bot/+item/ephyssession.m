@@ -57,7 +57,7 @@ classdef ephyssession < bot.item.abstract.Session
     properties (Hidden = true, Access = public, Transient = true)
         nwb_metadata;
         
-        nwb_file bot.internal.nwb.nwb_ephys = bot.internal.nwb.nwb_ephys();                % NWB file acess object
+        nwb_file bot.internal.nwb.nwb_ephys; % NWB file acess object
         
         NON_STIMULUS_PARAMETERS = [
             "start_time", ...
@@ -360,9 +360,12 @@ classdef ephyssession < bot.item.abstract.Session
             % multiple session IDs may be provided to return a vector of
             % session objects. A table row of the EPhys sessions manifest
             % table may also be provided as `session_table_row`.
+            
             if nargin == 0
                 return;
             end
+            
+  
             
             % Load associated singleton
             if ~exist('manifest', 'var') || isempty(manifest)
@@ -406,6 +409,9 @@ classdef ephyssession < bot.item.abstract.Session
             
             session.initLinkedFiles();
 
+            
+            % Linked file prop initializations
+            session.nwb_file = bot.internal.nwb.nwb_ephys(session.linkedFiles{"SessNWB","LocalFile"});
             
                         %             ecephys_product_id = 714914585;
             %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
