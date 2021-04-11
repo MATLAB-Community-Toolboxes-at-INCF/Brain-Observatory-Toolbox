@@ -65,14 +65,15 @@
 
 classdef ophyssession < bot.item.abstract.Session
    
-   %% USER INTERFACE 
-   %% - Default visible properties
+   %% PROPERTIES - USER 
+   
+   % Direct Item Values
    properties (SetAccess = private)
       session_type;                 % Type of experimental session (i.e. set of stimuli)
    end
    
-   %% - Lazy loading properties
-   properties (SetAccess = private)
+   % Linked File Values 
+   properties (Dependent, Transient)
       nwb_metadata;                 % Metadata extracted from NWB data file
       fluorescence_timestamps;      % Vector of fluorescence timestamps corresponding to imaging frames
       cell_specimen_ids;            % Vector of cell specimen IDs recorded in this session
@@ -96,30 +97,43 @@ classdef ophyssession < bot.item.abstract.Session
    end
    
    
-   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Session)
+   %% PROPERTIES - HIDDEN 
+   
+   
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Session)
    properties (Constant, Hidden)
        NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
    end
    
-   %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-     properties (Access = protected)
-        CORE_PROPERTIES_EXTENDED = "session_type";
-        LINKED_ITEM_PROPERTIES = [];
-     end
-     
-    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    properties (SetAccess = immutable, GetAccess = protected)
-        NWB_DATA_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
-         "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
-         "demixed_traces", "fluorescence_traces", "neuropil_r", ...
-         "neuropil_traces", "corrected_fluorescence_traces", ...
-         "dff_traces", "stimulus_epoch_table", "max_projection", ...
-         "roi_ids", "stimulus_list", "motion_correction", ...
-         "pupil_location", "pupil_size", "roi_mask", "running_speed", ...
-         ];
-    end    
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+   properties (Access = protected)
+       CORE_PROPERTIES_EXTENDED = "session_type";
+       LINKED_ITEM_PROPERTIES = [];
+   end
    
-   %% HIDDEN INTERFACE - roperties
+   % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)
+   properties (SetAccess = protected, Hidden)
+       LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
+       LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"SessH5",false); 
+   end
+   
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
+   %     properties (SetAccess = immutable, GetAccess = protected)
+   %         NWB_DATA_PROPERTIES = ["nwb_metadata", "fluorescence_timestamps", ...
+   %          "cell_specimen_ids", "spontaneous_activity_stimulus_table", ...
+   %          "demixed_traces", "fluorescence_traces", "neuropil_r", ...
+   %          "neuropil_traces", "corrected_fluorescence_traces", ...
+   %          "dff_traces", "stimulus_epoch_table", "max_projection", ...
+   %          "roi_ids", "stimulus_list", "motion_correction", ...
+   %          "pupil_location", "pupil_size", "roi_mask", "running_speed", ...
+   %          ];
+   %     end
+   
+   %% PROPERTIES - HIDDEN 
+   properties (Dependent, SetAccess=protected)
+       nwbLocalFile (1,1) string;
+   end
+    
    properties (Hidden = true, SetAccess = private, Transient = true)
       strSupportedPipelineVersion = '2.0';               % Pipeline version supported by this class
       strPipelineDataset = 'brain_observatory_pipeline'; % Key in NWB file containing the analysed data
@@ -184,19 +198,32 @@ classdef ophyssession < bot.item.abstract.Session
          %              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
          %          end
 
+         
+         % Superclass initialization (bot.item.mixin.LinkedFiles)
+         nwbIdx = find(contains(string({session.info.well_known_files.path}),"nwb",'IgnoreCase',true));
+         h5Idx = find(contains(string({session.info.well_known_files.path}),"h5",'IgnoreCase',true));
+         assert(isscalar(nwbIdx) && isscalar(h5Idx),"Expected to find exactly one NWB and one H5 file each");
+         session.insertLinkedFileInfo("SessNWB",session.info.well_known_files(nwbIdx));
+         session.insertLinkedFileInfo("SessH5",session.info.well_known_files(h5Idx));
+         session.initLinkedFiles();
+
       end
    end
    
 
    %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
    methods
+       function loc = get.nwbLocalFile(self)
+           loc = self.linkedFiles{"SessNWB","LocalFile"};
+       end       
+       
       function metadata = get.nwb_metadata(bos)
          % get.nwb_metadata - GETTER Read metadata from the NWB file
          %
          % Usage: metadata = bos.nwb_metadata
          
          % - Ensure the data has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("nwb_metadata");
          
          % - Attempt to read each of the metadata fields from the NWB file
          metadata = bos.FILE_METADATA_MAPPING;
@@ -270,7 +297,7 @@ classdef ophyssession < bot.item.abstract.Session
          % fluorescence samples, in seconds.
          
          % - Ensure the file has been cached
-         ensureNWBCached(bos);
+         bos.ensurePropFileDownloaded("fluorescence_timestamps");
          
          % - Read imaging timestamps from NWB file
          timestamps = h5read(bos.nwbLocalFile, ...
@@ -290,7 +317,7 @@ classdef ophyssession < bot.item.abstract.Session
          % analysed in this session.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("cell_specimen_ids");
          
          % - Read list of specimen IDs
          cell_specimen_ids = h5read(bos.nwbLocalFile, ...
@@ -309,7 +336,7 @@ classdef ophyssession < bot.item.abstract.Session
          % the NWB data tables and fluorescence matrices.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         %bos.ensurePropFileDownloaded();
          
          % - Read all cell specimen IDs
          all_cell_specimen_ids = bos.cell_specimen_ids;
@@ -343,7 +370,7 @@ classdef ophyssession < bot.item.abstract.Session
          % should be returned.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("demixed_traces");
          
          % - Get the fluorescence timestamps
          timestamps = bos.fluorescence_timestamps;
@@ -385,7 +412,7 @@ classdef ophyssession < bot.item.abstract.Session
          % should be returned.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("fluorescence_traces");
          
          % - Get the fluorescence timestamps
          timestamps = bos.fluorescence_timestamps;
@@ -422,7 +449,7 @@ classdef ophyssession < bot.item.abstract.Session
          % returned.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("neuropil_r");
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
@@ -467,7 +494,7 @@ classdef ophyssession < bot.item.abstract.Session
          % should be returned.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("neuropil_traces");
          
          % - Get the fluorescence timestamps
          timestamps = bos.fluorescence_timestamps;
@@ -515,7 +542,7 @@ classdef ophyssession < bot.item.abstract.Session
          % should be returned.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("corrected_fluorescence_traces");
          
          % - Pass an empty matrix to return all cell specimen IDs
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
@@ -558,7 +585,7 @@ classdef ophyssession < bot.item.abstract.Session
          % should be returned.
          
          % - Ensure the file has been cached
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("dff_traces");
          
          % - Find cell specimen IDs, if provided
          if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
@@ -595,7 +622,7 @@ classdef ophyssession < bot.item.abstract.Session
          % - Read and convert stimulus data from the NWB file
          try
             % - Read data from the NWB file
-            bos.ensureNWBCached();
+            bos.ensurePropFileDownloaded("spontaneous_activity_stimulus_table");
             nwb_file = bos.nwbLocalFile;
             events = h5read(nwb_file, h5path(strKey, 'data'))';
             frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'))';
@@ -630,7 +657,7 @@ classdef ophyssession < bot.item.abstract.Session
          % individual stimulus sets were presented in this session.
          
          % - Get local NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("stimulus_list");
          nwb_file = bos.nwbLocalFile;
          
          % - Get list of stimuli from NWB file
@@ -713,7 +740,7 @@ classdef ophyssession < bot.item.abstract.Session
          % method bos.fetch_stimulus_template().
          
          % - Ensure the NWB file is cached
-         bos.ensureNWBCached();
+         %bos.ensurePropFileDownloaded();
          
          % - Return a stimulus table for one of the stimulus types
          if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
@@ -778,7 +805,7 @@ classdef ophyssession < bot.item.abstract.Session
          % in this session.
          
          % - Ensure session data is cached, and locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("max_projection");
          nwb_file = bos.nwbLocalFile;
          
          % - Extract the maximum projection from the session
@@ -797,7 +824,7 @@ classdef ophyssession < bot.item.abstract.Session
          % this session.
          
          % - Ensure session data is cached, and locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("roi_ids");
          nwb_file = bos.nwbLocalFile;
          
          % - Extract list of ROI IDs from NWB file
@@ -821,7 +848,7 @@ classdef ophyssession < bot.item.abstract.Session
          % corresponding time point, in cm/s.
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("running_speed");
          nwb_file = bos.nwbLocalFile;
          
          % - Build a base key for the running speed data
@@ -844,7 +871,7 @@ classdef ophyssession < bot.item.abstract.Session
          % information applied in this experimental session.
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("motion_correction");
          nwb_file = bos.nwbLocalFile;
          
          % - Try to locate the motion correction data
@@ -900,7 +927,7 @@ classdef ophyssession < bot.item.abstract.Session
          end
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("pupil_location");
          nwb_file = bos.nwbLocalFile;
          
          % - Default for spherical coordinates
@@ -954,7 +981,7 @@ classdef ophyssession < bot.item.abstract.Session
          end
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("pupil_size");
          nwb_file = bos.nwbLocalFile;
          
          % - Extract session data from NWB file
@@ -996,7 +1023,7 @@ classdef ophyssession < bot.item.abstract.Session
          end
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("roi_mask_array");
          nwb_file = bos.nwbLocalFile;
          
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -1043,7 +1070,7 @@ classdef ophyssession < bot.item.abstract.Session
          end
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         bos.ensurePropFileDownloaded("roi_mask");
          nwb_file = bos.nwbLocalFile;
          
          nwb_key = h5path('processing', bos.strPipelineDataset, ...
@@ -1088,7 +1115,7 @@ classdef ophyssession < bot.item.abstract.Session
          % fetch_stimulus_table()).
          
          % - Ensure session data is cached, locate NWB file
-         bos.ensureNWBCached();
+         %bos.ensurePropFileDownloaded();
          nwb_file = bos.nwbLocalFile;
          
          % - Extract stimulus template from NWB file
@@ -1202,7 +1229,7 @@ classdef ophyssession < bot.item.abstract.Session
          % noise, natural movies, etc.)
          
          % - Ensure NWB file is cached
-         bos.ensureNWBCached();
+         %bos.ensurePropFileDownloaded();
          
          % - Obtain and cache the master stimulus table for this session
          %   Also handles to accelerated search functions
@@ -1582,4 +1609,18 @@ nwb_key = fullfile(filesep, varargin{:});
 if ispc
    nwb_key = strrep(nwb_key, filesep, '/');
 end
+end
+
+
+function s = zlclInitLinkedFilePropBindings()
+
+s = struct();
+
+s.SessH5 = string.empty();
+
+mc = meta.class.fromName(mfilename('class'));
+propNames = string({findobj(mc.PropertyList,'GetAccess','public','-and','Dependent',1,'-and','Transient',1).Name});
+
+s.SessNWB = setdiff(propNames,s.SessH5);
+
 end

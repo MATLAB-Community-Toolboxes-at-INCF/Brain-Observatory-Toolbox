@@ -66,10 +66,9 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
             obj.linkedFiles{fileNickname,"LocalFile"} = string(lclFilename);
             
-        end        
-
+        end             
         
-        function ensurePropDownloaded(obj,propName)
+        function ensurePropFileDownloaded(obj,propName)                                    
             if ~ismember(propName,obj.downloadedFileProps)
                 obj.downloadLinkedFile(obj.prop2LinkedFileMap(propName));
             end
@@ -99,15 +98,16 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
                     
                     propListing = obj.getOnDemandPropListing(obj.LINKED_FILE_PROP_BINDINGS.(nickname));
                     
-                    lclFile = obj.linkedFiles{nickname,"LocalFile"};
-                    if ismissing(lclFile)
-                        for odProp = string(fieldnames(propListing))'
-                            propListing.(odProp) = '[download required]';
+                    if ~isempty(propListing) 
+                        lclFile = obj.linkedFiles{nickname,"LocalFile"};
+                        if ismissing(lclFile)
+                            for odProp = string(fieldnames(propListing))'
+                                propListing.(odProp) = '[download required]';
+                            end
                         end
+                        
+                        groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, "Linked File Values ('" + nickname + "')"); %#ok<AGROW>
                     end
-                    
-                    groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, "Linked File Values ('" + nickname + "')"); %#ok<AGROW>
-                    
                 end
             end
         end

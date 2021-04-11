@@ -6,7 +6,7 @@ classdef (Abstract) OnDemandProps < handle
         property_cache = struct();
     end
     
-    properties (Access = protected)
+    properties (SetAccess = protected, Hidden)
         ON_DEMAND_PROPERTIES (1,:) string = string.empty();
     end       
     
@@ -65,15 +65,16 @@ classdef (Abstract) OnDemandProps < handle
                propSet (:,1) string = string.empty(); 
             end
             
-            if ~isempty(propSet)
-                assert(all(ismember(propSet, obj.ON_DEMAND_PROPERTIES)));
-            else
-                propSet = obj.ON_DEMAND_PROPERTIES;
-            end
-            
+            propListing = struct();
             onDemandPropList = string.empty();
             
-            for prop = propSet'
+            if isempty(propSet)
+                return;
+            else
+                assert(all(ismember(propSet, obj.ON_DEMAND_PROPERTIES)));
+            end                
+            
+            for prop = propSet(:)'
                 if ~obj.in_cache(prop)
                     propListing.(prop) = '[on demand]';
                     onDemandPropList(end+1) = prop; %#ok<AGROW>
