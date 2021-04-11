@@ -72,7 +72,7 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             try 
                 disp("Downloading URL: [" + url + "]...");
                 lclFilename = boc.CacheFile(url, fileInfo.path);
-                disp(lclFilename)
+                disp("Download complete.");
             catch ME
                 % TODO: handle caching errors
                 ME.rethrow();
@@ -81,7 +81,7 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
             
             assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
-            obj.linkedFiles{fileNickname,"LocalFile"} = lclFilename;
+            obj.linkedFiles{fileNickname,"LocalFile"} = string(lclFilename);
                 
        end        
        
