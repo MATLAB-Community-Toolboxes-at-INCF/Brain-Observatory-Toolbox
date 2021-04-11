@@ -104,7 +104,7 @@ classdef ephyssession < bot.item.abstract.Session
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
-        LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"StimTemplates",false);
+        LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"StimTemplatesGroup",false);
 
     end
         
@@ -241,7 +241,7 @@ classdef ephyssession < bot.item.abstract.Session
             %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
             %             stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
             
-           stimulus_table = self.linkedFileRespTables.("StimTemplates");
+           stimulus_table = self.linkedFileRespTables.("StimTemplatesGroup");
             
             % - Convert table variables to sensible types
             stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
@@ -402,7 +402,7 @@ classdef ephyssession < bot.item.abstract.Session
             session.insertLinkedFileInfo("SessNWB",session.info.well_known_files(1));
             
             ecephys_product_id = 714914585;
-            session.fetchLinkedFileInfo("StimTemplates", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
+            session.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
             
             session.initLinkedFiles();
 
@@ -1211,11 +1211,11 @@ function s = zlclInitLinkedFilePropBindings()
 
 s = struct();
 
-s.StimTemplates = "stimulus_templates";
+s.StimTemplatesGroup = "stimulus_templates";
 
 mc = meta.class.fromName(mfilename('class'));
 propNames = string({findobj(mc.PropertyList,'GetAccess','public','-and','Dependent',1,'-and','Transient',1).Name});
 
-s.SessNWB = setdiff(propNames,s.StimTemplates);        
+s.SessNWB = setdiff(propNames,s.StimTemplatesGroup);        
 
 end

@@ -208,6 +208,15 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             obj.linkedFiles{height(obj.linkedFilesInfo),"LocalFile"} = missing; % grow table to match height of linkedFilesInfo
             obj.linkedFiles.Properties.RowNames = nicknames;
             
+            % Update display for linkedFile groups
+            for nickname = nicknames'
+                if numel(split(obj.linkedFilesInfo{nickname,"path"},";")) > 1
+                    assert(endsWith(nickname,"group",'IgnoreCase',true),"Nicknames for linkedFile groups must end with 'Group'");
+                    obj.linkedFiles{nickname,"LocalFile"} = "N/A";
+                end
+            end                    
+                    
+            % Reflect/revise linkedFiles download states
             boc = bot.internal.cache;
             
             for nickname = nicknames'
