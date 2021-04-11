@@ -22,7 +22,7 @@ classdef ephyssession < bot.item.abstract.Session
         channel_structure_intervals;     % Table of channel intervals crossing a particular brain structure for this session
         structurewise_unit_counts;       % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
     end
-        
+    
     % NWB-bound Properties
     properties (Dependent, Transient) % Transient used as a "tag" for file-bound properties
         
@@ -48,8 +48,8 @@ classdef ephyssession < bot.item.abstract.Session
         stimulus_names;                  % Names of stimuli presented in this session
         stimulus_epochs;                % Table of stimulus presentation epochs
         optogenetic_stimulation_epochs;  % Table of optogenetic stimulation epochs for this experimental session (if present)
-                
-        rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)        
+        
+        rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)
     end
     
     %%  PROPERTIES - HIDDEN
@@ -90,7 +90,7 @@ classdef ephyssession < bot.item.abstract.Session
     end
     
     properties (Access=private)
-        nwbLocal_;        
+        nwbLocal_;
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
@@ -110,17 +110,17 @@ classdef ephyssession < bot.item.abstract.Session
     end
     
     properties (Dependent, SetAccess=protected)
-       nwbLocal;
+        nwbLocal;
     end
-        
+    
     
     %% PROPERTY ACCESS METHODS
     
     % USER PROPERTIES - from Item info
-    methods        
+    methods
         function inter_presentation_intervals = get.inter_presentation_intervals(self)
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
-        end   
+        end
         
         function num_stimulus_presentations = get.num_stimulus_presentations(self)
             num_stimulus_presentations = size(self.stimulus_presentations, 1);
@@ -144,17 +144,17 @@ classdef ephyssession < bot.item.abstract.Session
             structurewise_unit_counts = sortrows(structurewise_unit_counts, 2, 'descend');
         end
         
-        function pupilData = get.pupil_data(self)                                
+        function pupilData = get.pupil_data(self)
             n = self.nwbLocal;
             pupilData = self.fetch_cached('pupil_data', @()n.fetch_pupil_data(true)); % suppress detailed gaze tracking info
-        end       
-
+        end
+        
         function pupilData = get.pupil_data_detailed(self)
             n = self.nwbLocal;
             pupilData = self.fetch_cached('pupil_data_detailed', @()n.fetch_pupil_data(false)); % include (don't suppress) detailed gaze tracking info
-        end    
+        end
         
-         function tbl = get.channel_structure_intervals(self)
+        function tbl = get.channel_structure_intervals(self)
             
             %structure_id_key = "ephys_structure_id";
             structure_label_key = "ephys_structure_acronym";
@@ -172,13 +172,13 @@ classdef ephyssession < bot.item.abstract.Session
             tbl = table;
             tbl.intervals = zlclDiffIntervals(channels_selected.(structure_label_key))';
             tbl.labels = channels_selected.(structure_label_key)(tbl.intervals);
-         end    
+        end
         
     end
     
-    % USER PROPERTIES - from Primary File (NWB)            
-    methods        
-              
+    % USER PROPERTIES - from Primary File (NWB)
+    methods
+        
         function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
             n = self.nwbLocal;
             try
@@ -210,14 +210,14 @@ classdef ephyssession < bot.item.abstract.Session
         
         function rig_metadata = get.rig_metadata(self)
             n = self.nwbLocal;
-            rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);            
+            rig_metadata = self.fetch_cached('rig_metadata', @n.fetch_rig_metadata);
         end
         
         function mean_waveforms = get.mean_waveforms(self)
             n = self.nwbLocal;
             mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
         end
-    end 
+    end
     
     
     % via stimulus_conditions_raw
@@ -235,18 +235,18 @@ classdef ephyssession < bot.item.abstract.Session
             stimulus_presentations = self.remove_detailed_stimulus_parameters(self.property_cache.stimulus_presentations_raw);
         end
     end
-
+    
     
     % USER PROPERTIES - Auxiliary File (NWB)
-    methods             
+    methods
         
         function stimulus_table = get.stimulus_templates(self)
-            % - Query list of stimulus templates from Allen Brain API
-            %             ecephys_product_id = 714914585;
-            %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
-            %             stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
+            stimulus_table = self.fetch_cached('stimulus_templates', @self.zprpGetStimulusTemplates);
+        end
+        
+        function stimulus_table = zprpGetStimulusTemplates(self)
             
-           stimulus_table = self.linkedFileRespTables.("StimTemplatesGroup");
+            stimulus_table = self.linkedFileRespTables.("StimTemplatesGroup");
             
             % - Convert table variables to sensible types
             stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
@@ -277,15 +277,16 @@ classdef ephyssession < bot.item.abstract.Session
             stimulus_table.movie_number = movie_number;
         end
         
+        
         function epochs = get.stimulus_epochs(self)
             epochs = self.getStimulusEpochsByDuration();
         end
         
     end
     
-    % HIDDEN PROPERTIES - Primary File (NWB)   
-    methods        
-                
+    % HIDDEN PROPERTIES - Primary File (NWB)
+    methods
+        
         function nwb = get.nwbLocal(obj)
             nwb = obj.nwbLocal_;
         end
@@ -296,7 +297,7 @@ classdef ephyssession < bot.item.abstract.Session
                 self.property_cache.checked_spike_times = true;
             end
             
-            n = self.nwbLocal;            
+            n = self.nwbLocal;
             spike_times = self.fetch_cached('metadata', @n.fetch_spike_times);
             
             %             if ~self.in_cache('spike_times')
@@ -305,12 +306,12 @@ classdef ephyssession < bot.item.abstract.Session
             %
             %             spike_times = self.property_cache.spike_times;
         end
-
+        
         function metadata = get.nwb_metadata(self)
             n = self.nwbLocal;
             metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
-        end        
-
+        end
+        
     end
     
     % PROPERTY ACCESS HELPERS
@@ -339,9 +340,9 @@ classdef ephyssession < bot.item.abstract.Session
             interval = self.property_cache.stimulus_presentations_raw.start_time(2:end) - self.property_cache.stimulus_presentations_raw.stop_time(1:end-1);
             
             intervals = table(from_presentation_id, to_presentation_id, interval);
-        end       
-
-    end       
+        end
+        
+    end
     
     
     %% CONSTRUCTOR
@@ -364,7 +365,7 @@ classdef ephyssession < bot.item.abstract.Session
                 return;
             end
             
-  
+            
             
             % Load associated singleton
             if ~exist('manifest', 'var') || isempty(manifest)
@@ -396,22 +397,22 @@ classdef ephyssession < bot.item.abstract.Session
             
             % Identify property display groups
             session.ITEM_INFO_VALUE_PROPERTIES = ["structure_acronyms"];
-            session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];                       
+            session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
             session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
             
             
-            % Superclass initialization (bot.item.mixin.LinkedFiles)     
+            % Superclass initialization (bot.item.mixin.LinkedFiles)
             session.initSession();
             
             session.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
-            ecephys_product_id = 714914585;            
-            session.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);            
+            ecephys_product_id = 714914585;
+            session.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
             
             session.initLinkedFiles();
             
             % Linked file prop initializations
-            session.nwbLocal_ = bot.internal.nwb.nwb_ephys(session.linkedFiles{"SessNWB","LocalFile"});            
-
+            session.nwbLocal_ = bot.internal.nwb.nwb_ephys(session.linkedFiles{"SessNWB","LocalFile"});
+            
         end
     end
     
@@ -446,7 +447,7 @@ classdef ephyssession < bot.item.abstract.Session
             
             epochs = epochs(:, ["start_time", "stop_time", "duration", "stimulus_name", "stimulus_block"]);
         end
-                
+        
         function [tiled_data, time_base] = getPresentationwiseSpikeCounts(self, ...
                 bin_edges, stimulus_presentation_ids, unit_ids, binarize, ...
                 large_bin_size_threshold, time_domain_callback)
@@ -459,7 +460,7 @@ classdef ephyssession < bot.item.abstract.Session
                 unit_ids;  % Filter to these units
                 binarize logical = false; % If true, all counts greater than 0 will be treated as 1. This results in lower storage overhead, but is only reasonable if bin sizes are fine (<= 1 millisecond).
                 large_bin_size_threshold = 0.001;  % If binarize is True and the largest bin width is greater than this value, a warning will be emitted.
-                time_domain_callback function_handle = str2func('@(x)x'); % Optional Callback function applied to the time domain before counting spikes. Returns numeric array whose values are trial-aligned bin edges (each row is aligned to a different trial).              
+                time_domain_callback function_handle = str2func('@(x)x'); % Optional Callback function applied to the time domain before counting spikes. Returns numeric array whose values are trial-aligned bin edges (each row is aligned to a different trial).
             end
             
             % - Filter stimulus_presentations table
@@ -507,7 +508,7 @@ classdef ephyssession < bot.item.abstract.Session
         
         function spikes_with_onset = getPresentationwiseSpikeTimes(self, stimulus_presentation_ids, unit_ids)
             % Produce a table associating spike times with units and stimulus presentations
-          
+            
             arguments
                 self;
                 stimulus_presentation_ids = [];   % Filter to these stimulus presentations
@@ -603,7 +604,7 @@ classdef ephyssession < bot.item.abstract.Session
         end
         
         function summary = getConditionwiseSpikeStatistics(self, stimulus_presentation_ids, unit_ids, use_rates)
-            % Produce summary statistics for each distinct stimulus condition            
+            % Produce summary statistics for each distinct stimulus condition
             
             arguments
                 self;
@@ -671,7 +672,7 @@ classdef ephyssession < bot.item.abstract.Session
         
         function conditions = getConditionsByStimulusName(self, stimulus_name, drop_nulls)
             % For each stimulus parameter, report the unique values taken on by that parameter while a named stimulus was presented.
-
+            
             arguments
                 self;
                 stimulus_name char; % a stimulus_name (from the available stimulus_names) for which conditions will be retrieved
@@ -681,7 +682,7 @@ classdef ephyssession < bot.item.abstract.Session
             presentation_ids = self.fetch_stimulus_table(stimulus_name).stimulus_presentation_id;
             conditions = self.zprvGetConditionByPresentationID(presentation_ids, drop_nulls);
             conditions.stimulus_name = stimulus_name;
-        end 
+        end
     end
     
     
@@ -689,8 +690,8 @@ classdef ephyssession < bot.item.abstract.Session
     
     % Implemented, but needs work
     methods (Hidden)
-
-        % TODO: Investigate intended/actual behavior here. Returns successfully, but there appear to be no intervals, as it loo(every stimulus_presentation_id is 
+        
+        % TODO: Investigate intended/actual behavior here. Returns successfully, but there appear to be no intervals, as it loo(every stimulus_presentation_id is
         function inter_presentation_intervals = fetch_inter_presentation_intervals_for_stimulus(self, stimulus_names)
             self.zprpCacheStimulusPresentations();
             
@@ -727,7 +728,7 @@ classdef ephyssession < bot.item.abstract.Session
     %         function fetch_natural_scene_template(self, number) %#ok<INUSD>
     %             error('BOT:NotImplemented', 'This method is not implemented');
     %         end
-    %   
+    %
     %
     %         function valid_time_points = fetch_valid_time_points(self, time_points, invalid_time_intevals) %#ok<STOUT,INUSD>
     %             error('BOT:NotImplemented', 'This method is not implemented');
@@ -799,7 +800,7 @@ classdef ephyssession < bot.item.abstract.Session
                 include_detailed_parameters logical = false;
                 include_unused_parameters logical = false;
             end
-
+            
             
             self.zprpCacheStimulusPresentations();
             
@@ -916,7 +917,7 @@ classdef ephyssession < bot.item.abstract.Session
             % - Allen SDK ecephys_session.units
             units_table = self.build_units_table(self.nwbLocal.fetch_units());
         end
-                
+        
         
         function df = filter_owned_df(self, key, ids)
             arguments
@@ -1113,9 +1114,9 @@ end
 intervals(end+1) = numel(array);
 intervals = unique(intervals);
 
-    function is_distinct = znstIsDistinctFrom(left, right, nilFcn)                
+    function is_distinct = znstIsDistinctFrom(left, right, nilFcn)
         if nilFcn(left) && nilFcn(right)
-            is_distinct = false;        
+            is_distinct = false;
         else
             is_distinct = ~isequal(left, right);
         end
@@ -1197,15 +1198,15 @@ function propNames = zlclInitDirectProps()
 mc = meta.class.fromName(mfilename('class'));
 props_ = findobj(mc.PropertyList,'GetAccess','public','-and','Dependent',1,'-and','Transient',0);
 
-props = []; 
+props = [];
 for ii = 1:length(props_)
     if isequal(props_(ii).DefiningClass.Name,mfilename('class'))
         props = [props props_(ii)]; %#ok<AGROW>
     end
-end    
+end
 
 propNames = string({props.Name});
-   
+
 end
 
 function s = zlclInitLinkedFilePropBindings()
@@ -1217,6 +1218,6 @@ s.StimTemplatesGroup = "stimulus_templates";
 mc = meta.class.fromName(mfilename('class'));
 propNames = string({findobj(mc.PropertyList,'GetAccess','public','-and','Dependent',1,'-and','Transient',1).Name});
 
-s.SessNWB = setdiff(propNames,s.StimTemplatesGroup);        
+s.SessNWB = setdiff(propNames,s.StimTemplatesGroup);
 
 end
