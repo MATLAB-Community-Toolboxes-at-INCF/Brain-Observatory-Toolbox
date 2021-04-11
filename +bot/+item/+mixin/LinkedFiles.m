@@ -72,17 +72,26 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             try 
                 disp("Downloading URL: [" + url + "]...");
                 lclFilename = boc.CacheFile(url, fileInfo.path);
+                disp(lclFilename)
             catch ME
                 % TODO: handle caching errors
                 ME.rethrow();
             end
             
-            obj.downloadedFileProps(end+1) = obj.LINKED_FILE_PROP_BINDINGS.(fileNickname);
+            obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
             
-            assert(ismissing(obj.linkedFiles{fileNickName,"LocalFile"}));
-            obj.linkedFiles{fileNickName,"LocalFile"} = lclFilename;
+            assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
+            obj.linkedFiles{fileNickname,"LocalFile"} = lclFilename;
                 
        end        
+       
+%        function tmpCode(obj,fileNickname)
+%            obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
+%            
+%            assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
+%            obj.linkedFiles{fileNickname,"LocalFile"} = lclFilename;
+%                  
+%        end
         
         function ensurePropDownloaded(obj,propName)
             if ~ismember(propName,obj.downloadedFileProps)
@@ -107,8 +116,8 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             allFileInfo = boc.CachedAPICall('criteria=model::WellKnownFile', apiReqStr);
             
             fileInfo.nickname = nickname;
-            fileInfo.download_link = allFileInfo.download_link;
             fileInfo.path = allFileInfo.path;
+            fileInfo.download_link = allFileInfo.download_link;
             
              obj.linkedFilesInfo(end+1,:) = struct2table(fileInfo);
         end
@@ -136,7 +145,7 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
                         end
                     end
                     
-                    [~,stem,ext] = fileparts(obj.linkedFilesInfo{nickname,"download_link"});                                                       
+                    [~,stem,ext] = fileparts(obj.linkedFilesInfo{nickname,"path"});                                                       
                     groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, "Linked File Values ('" + stem + ext + "')"); %#ok<AGROW>
                     
                 end                           
@@ -186,14 +195,14 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             % Determine which linkedFiles have been downloaded
             boc = bot.internal.cache;
             
-            for nickname = nicknames'
-                                       
+            for nickname = nicknames'                                       
                 fileInfo = obj.linkedFilesInfo(nickname,:); %table row            
                 url = boc.strABOBaseUrl + fileInfo.download_link;
                         
                 if boc.IsURLInCache(url)
                     obj.linkedFiles{nickname,"LocalFile"} =string(boc.ccCache.CachedFileForURL(url));
-                end                
+                    obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];                                       
+                end                        
             end
             
             obj.linkedFilesInitialized = true;
