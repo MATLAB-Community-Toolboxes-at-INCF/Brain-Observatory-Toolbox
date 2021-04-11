@@ -85,10 +85,11 @@ classdef (Abstract) OnDemandProps < handle
                     end
                 else                    
                     szProp = size(obj.property_cache.(prop));
+                    clsProp = class(obj.property_cache.(prop));
                     
-                    if numel(szProp) == 2 && min(szProp) == 1
-                        val = obj.fetch_cached(prop);
-                        propListing.(prop)  = val(:)';
+                    if numel(szProp) == 2 && min(szProp) == 1 && ~ismember(clsProp,"timetable")
+                        val = obj.fetch_cached(prop);                        
+                        propListing.(prop)  = val(:)';                        
                     else 
                         %propList.(prop) = convertStringsToChars("cached (class: " + class(obj.fetch_cached(prop)) + ", size: " + mat2str(size(obj.fetch_cached(prop))) + ")");
                         %propListing.(prop) = convertStringsToChars(class(obj.fetch_cached(prop)) + " of size: " + mat2str(size(obj.fetch_cached(prop))));
