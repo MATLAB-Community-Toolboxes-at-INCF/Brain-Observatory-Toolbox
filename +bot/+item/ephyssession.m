@@ -241,6 +241,8 @@ classdef ephyssession < bot.item.abstract.Session
             %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
             %             stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
             
+           stimulus_table = self.linkedFileRespTables.("StimTemplates");
+            
             % - Convert table variables to sensible types
             stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
             stimulus_table.attachable_type = string(stimulus_table.attachable_type);
@@ -400,7 +402,7 @@ classdef ephyssession < bot.item.abstract.Session
             session.insertLinkedFileInfo("SessNWB",session.info.well_known_files(1));
             
             ecephys_product_id = 714914585;
-            session.fetchLinkedFileInfo("StimTemplates", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id));
+            session.fetchLinkedFileInfo("StimTemplates", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
             
             session.initLinkedFiles();
 
