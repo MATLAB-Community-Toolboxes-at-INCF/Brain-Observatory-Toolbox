@@ -102,8 +102,10 @@ classdef ephyssession < bot.item.abstract.Session
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    properties (SetAccess = immutable, GetAccess = protected)        
-        NWB_DATA_PROPERTIES = zlclInitIndirectFileProps();                        
+    properties (SetAccess = protected, Hidden)
+        LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
+        LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true,"StimTemplates",false);
+
     end
         
     
@@ -235,9 +237,9 @@ classdef ephyssession < bot.item.abstract.Session
         
         function stimulus_table = get.stimulus_templates(self)
             % - Query list of stimulus templates from Allen Brain API
-            ecephys_product_id = 714914585;
-            query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
-            stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
+            %             ecephys_product_id = 714914585;
+            %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
+            %             stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
             
             % - Convert table variables to sensible types
             stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
@@ -277,15 +279,15 @@ classdef ephyssession < bot.item.abstract.Session
     % HIDDEN PROPERTIES - Primary File (NWB)   
     methods        
                 
-        function nwb = get.nwb_file(self)
-            % - Retrieve and cache the NWB file
-            if ~self.in_cache('nwb_file')
-                self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.ensureNWBCached());
-            end
-            
-            % - Return an NWB file access object
-            nwb = self.property_cache.nwb_file;
-        end        
+        %         function nwb = get.nwb_file(self)
+        %             % - Retrieve and cache the NWB file
+        %             if ~self.in_cache('nwb_file')
+        %                 self.property_cache.nwb_file = bot.internal.nwb.nwb_ephys(self.ensureNWBCached());
+        %             end
+        %
+        %             % - Return an NWB file access object
+        %             nwb = self.property_cache.nwb_file;
+        %         end
         
         function spike_times = get.spike_times(self)
             if ~self.in_cache('checked_spike_times')
@@ -393,6 +395,19 @@ classdef ephyssession < bot.item.abstract.Session
             session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];                       
             session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
             
+            
+            % Superclass initialization (bot.item.mixin.LinkedFiles)            
+            session.insertLinkedFileInfo("SessNWB",session.info.well_known_files(1));
+            
+            ecephys_product_id = 714914585;
+            session.fetchLinkedFileInfo("StimTemplates", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id));
+            
+            session.initLinkedFiles();
+
+            
+                        %             ecephys_product_id = 714914585;
+            %             query = sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id);
+            %             stimulus_table = self.bot_cache.CachedAPICall('criteria=model::WellKnownFile', query);
 
         end
     end
@@ -1188,4 +1203,17 @@ end
 
 propNames = string({props.Name});
    
+end
+
+function s = zlclInitLinkedFilePropBindings()
+
+s = struct();
+
+s.StimTemplates = "stimulus_templates";
+
+mc = meta.class.fromName(mfilename('class'));
+propNames = string({findobj(mc.PropertyList,'GetAccess','public','-and','Dependent',1,'-and','Transient',1).Name});
+
+s.SessNWB = setdiff(propNames,s.StimTemplates);        
+
 end

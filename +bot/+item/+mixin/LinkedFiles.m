@@ -17,13 +17,13 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
         downloadedFileProps (1,:) string; % string array of properties whose linked file has been downloaded
         
         %linkedFilesInfo struct = struct('Nickname',{},'LocalFile',{},'URL',{},'FileInfo',{});
-        linkedFilesInfo table = table(  'Size',[0 3],...
-                                        'VariableTypes',["string" "string" "string"], ...
-                                        'VariableNames',["nickname" "path" "download_link" ]);                                                                                                                                                     
+        linkedFilesInfo table = table(  'Size',[0 4],...
+                                        'VariableTypes',["string" "logical" "string" "string"], ...
+                                        'VariableNames',["nickname" "autoDownload" "path" "download_link" ]);                                                                                                                                                     
     end
     
     properties (SetAccess = private, Hidden)
-        linkedFilesInitialized = false;
+        initState = false;
     end
     
     %% PROPERTIES - HIDDEN IMMUTABLES
@@ -34,7 +34,9 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     
     
     properties (Abstract, SetAccess=protected, Hidden)
+        % TODO: refactor this into a single "linkedFilesConfiguration" table
         LINKED_FILE_PROP_BINDINGS (1,1) struct; % structure of form s.<linked file nickname> = <property name string array>
+        LINKED_FILE_AUTO_DOWNLOAD (1,1) struct; % structure of form s.<linked file nickname> = <logical> 
     end
           
     
@@ -58,10 +60,10 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
         
     %% METHODS - HIDDEN
     
-    methods 
-       function downloadLinkedFile(obj,fileNickname)            
-            
-                        
+    % SUBCLASS API
+    methods (Access = protected)
+       function downloadLinkedFile(obj,fileNickname)           
+                                    
             fileInfo = obj.linkedFilesInfo(fileNickname,:); %table row
 
             boc = bot.internal.cache;
@@ -108,24 +110,11 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             end
             
         end
-        
-        function fetchLinkedFileInfo(obj,nickname,apiReqStr)                        
-            %fileInfo = obj.linkedFilesInfo(nickname,:); %table row
-            
-            boc = bot.internal.cache;
-            allFileInfo = boc.CachedAPICall('criteria=model::WellKnownFile', apiReqStr);
-            
-            fileInfo.nickname = nickname;
-            fileInfo.path = allFileInfo.path;
-            fileInfo.download_link = allFileInfo.download_link;
-            
-             obj.linkedFilesInfo(end+1,:) = struct2table(fileInfo);
-        end
+
         
     end    
         
-    % SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
-    
+    % SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)    
     methods (Access = protected)
         function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
@@ -141,12 +130,11 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
                     lclFile = obj.linkedFiles{nickname,"LocalFile"};
                     if ismissing(lclFile)
                         for odProp = string(fieldnames(propListing))'
-                            propListing.(odProp) = '[Download required]';
+                            propListing.(odProp) = '[download required]';
                         end
                     end
                     
-                    [~,stem,ext] = fileparts(obj.linkedFilesInfo{nickname,"path"});                                                       
-                    groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, "Linked File Values ('" + stem + ext + "')"); %#ok<AGROW>
+                    groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, "Linked File Values ('" + nickname + "')");
                     
                 end                           
             end
@@ -157,21 +145,22 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     %% CONSTRUCTOR/INITIALIZER
     
     methods
-        function obj = LinkedFiles()    
-            
-            % Compute reverse map of props to linked files
+        function obj = LinkedFiles()                
+
             obj.prop2LinkedFileMap = containers.Map;
-            for nickname = string(fieldnames(obj.LINKED_FILE_PROP_BINDINGS))
-                propNames = obj.LINKED_FILE_PROP_BINDINGS.(nickname);                
+
+            for fileNickname = string(fieldnames(obj.LINKED_FILE_PROP_BINDINGS))'
+                
+                % Compute reverse map of props to linked files
+                propNames = obj.LINKED_FILE_PROP_BINDINGS.(fileNickname);                
                 for propName = propNames
-                    obj.prop2LinkedFileMap(propName) = nickname;
-                end                
-            end
-            
-            % Mark linked file properties as on-demand properties      
-            for fileNickname = string(fieldnames(obj.LINKED_FILE_PROP_BINDINGS))'                
+                    obj.prop2LinkedFileMap(propName) = fileNickname;
+                end
+                
+                % Mark linked file properties as on-demand properties
                 obj.ON_DEMAND_PROPERTIES = [obj.ON_DEMAND_PROPERTIES obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
             end
+  
             
             % Include linkedFile prop in Item core props
             obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "linkedFiles"];
@@ -179,7 +168,48 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
         
     end
     
-    methods  %(Access = protected)
+    % SUBCLASS CONSTRUCTOR API
+    % Methods to populate linkedFileInfo table
+    methods (Access = protected)    
+            
+        function fetchLinkedFileInfo(obj,nickname,apiReqStr)                        
+            assert(~obj.initState);
+            
+            %fileInfo = obj.linkedFilesInfo(nickname,:); %table row
+            
+            boc = bot.internal.cache;
+            allFileInfo = boc.CachedAPICall('criteria=model::WellKnownFile', apiReqStr);
+            
+            fileInfo.nickname = nickname;
+            fileInfo.autoDownload = obj.LINKED_FILE_AUTO_DOWNLOAD.(nickname);
+            fileInfo.path = join(string(allFileInfo.path)',";");
+            fileInfo.download_link = join(string(allFileInfo.download_link)',";");            
+            
+            obj.linkedFilesInfo(end+1,:) = struct2table(fileInfo,'AsArray',true);
+        end
+        
+        function insertLinkedFileInfo(obj,nickname,wellKnownFileInfo)
+            arguments
+                obj
+                nickname (1,1) string
+                wellKnownFileInfo (1,1) struct
+            end
+            
+            assert(isscalar(string(wellKnownFileInfo.path))); % No known case of a linked file array within a well_known_file struct
+            
+            fileInfo.nickname = nickname;
+            fileInfo.autoDownload = obj.LINKED_FILE_AUTO_DOWNLOAD.(nickname);
+            fileInfo.path = wellKnownFileInfo.path;
+            fileInfo.download_link = wellKnownFileInfo.download_link;            
+            
+            obj.linkedFilesInfo(end+1,:) = struct2table(fileInfo);
+
+        end
+    end
+    
+    % SUBCLASS INITIALIZER
+    % Mandatory initialization step prior to object use
+    methods  (Access = protected)
         
         function initLinkedFiles(obj)                         
             
@@ -192,20 +222,25 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             obj.linkedFiles{height(obj.linkedFilesInfo),"LocalFile"} = missing; % grow table to match height of linkedFilesInfo
             obj.linkedFiles.Properties.RowNames = nicknames;
             
-            % Determine which linkedFiles have been downloaded
             boc = bot.internal.cache;
             
             for nickname = nicknames'                                       
                 fileInfo = obj.linkedFilesInfo(nickname,:); %table row            
                 url = boc.strABOBaseUrl + fileInfo.download_link;
-                        
+
+                % Determine which linkedFiles have been downloaded                
                 if boc.IsURLInCache(url)
-                    obj.linkedFiles{nickname,"LocalFile"} =string(boc.ccCache.CachedFileForURL(url));
+                    obj.linkedFiles{nickname,"LocalFile"} = string(boc.ccCache.CachedFileForURL(url));
                     obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];                                       
-                end                        
-            end
-            
-            obj.linkedFilesInitialized = true;
+                else                                      
+                    % Automatically download linkedFiles where needed
+                    if obj.linkedFilesInfo{nickname,"autoDownload"} 
+                        obj.downloadLinkedFile(nickname);
+                    end
+                end                
+            end         
+             
+            obj.initState = true;
         end
     end
     

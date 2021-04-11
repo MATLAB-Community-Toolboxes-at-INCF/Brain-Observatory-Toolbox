@@ -37,6 +37,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
     % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)    
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = struct("LFPNWB",["lfpData" "csdData"]);
+        LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB",false);
     end
     
     
