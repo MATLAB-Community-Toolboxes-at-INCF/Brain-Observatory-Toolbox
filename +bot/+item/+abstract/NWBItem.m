@@ -63,8 +63,7 @@ classdef NWBItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
         function obj = NWBItem()
             
             obj@bot.item.abstract.Item;
-            
-            
+                        
             % Add NWB information to the relevant property list PROPERTIES for this item
             obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "nwbIsCached" "nwbLocalFile" "nwbInfo"];
             obj.ON_DEMAND_PROPERTIES = [obj.ON_DEMAND_PROPERTIES obj.NWB_DATA_PROPERTIES];

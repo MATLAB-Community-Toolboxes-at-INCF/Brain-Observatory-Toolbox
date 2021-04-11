@@ -1,4 +1,4 @@
-classdef ephysprobe < bot.item.abstract.NWBItem
+classdef ephysprobe < bot.item.mixin.LinkedFiles
     
     %% PROPERTIES - USER
     
@@ -24,14 +24,19 @@ classdef ephysprobe < bot.item.abstract.NWBItem
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
+    %     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
+    %
+    %     properties (SetAccess = immutable, GetAccess = protected)
+    %         NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
+    %     end
+    %
+    %     properties (Dependent, Hidden)
+    %         nwbURL;
+    %     end
     
-    properties (SetAccess = immutable, GetAccess = protected)
-        NWB_DATA_PROPERTIES = ["lfpData" "csdData"];
-    end
-    
-    properties (Dependent, Hidden)
-        nwbURL;
+    % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)    
+    properties (SetAccess = protected, Hidden)
+        LINKED_FILE_PROP_BINDINGS = struct("LFPNWB",["lfpData" "csdData"]);
     end
     
     
@@ -48,7 +53,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
             % this probe. `timestamps` will be a Tx1 vector of timestamps,
             % corresponding to each row in `lfp`.
             if ~self.in_cache('lfp')
-                self.ensureNWBCached();
+                self.ensurePropDownloaded("lfpData");
                 [self.property_cache.lfp, self.property_cache.lfp_timestamps] = self.zprpGetLFP();
             end
             
@@ -68,7 +73,7 @@ classdef ephysprobe < bot.item.abstract.NWBItem
             % horizontal and vertical positions corresponding to each column
             % of `csd`.
             if ~self.in_cache('csd')
-                self.ensureNWBCached();
+                self.ensurePropDownloaded("csdData");
                 [self.property_cache.csd, ...
                     self.property_cache.csd_timestamps, ...
                     self.property_cache.horizontal_position, ...
@@ -89,13 +94,13 @@ classdef ephysprobe < bot.item.abstract.NWBItem
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
-    methods
-        function url = get.nwbURL(self)
-            boc = bot.internal.cache;
-            url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
-        end
-        
-    end
+    %     methods
+    %         function url = get.nwbURL(self)
+    %             boc = bot.internal.cache;
+    %             url = [boc.strABOBaseUrl self.nwbFileInfo.download_link];
+    %         end
+    %
+    %     end
     
     % PROPERTY ACCESS HELPERS
     methods (Access=private)
@@ -103,29 +108,34 @@ classdef ephysprobe < bot.item.abstract.NWBItem
             
             id_ = uint64(self.id);
             
+            nwbLocalFile = self.whichPropFile("lfpData");           
+            
             % - Read lfp data
-            lfp = h5read(self.nwbLocalFile, ...
+            lfp = h5read(nwbLocalFile, ...
                 sprintf('/acquisition/probe_%d_lfp/probe_%d_lfp_data/data', id_, id_))';
             
             % - Read timestamps
-            timestamps = h5read(self.nwbLocalFile, ...
+            timestamps = h5read(nwbLocalFile, ...
                 sprintf('/acquisition/probe_%d_lfp/probe_%d_lfp_data/timestamps', id_, id_));
         end
         
         
         function [csd, timestamps, virtual_electrode_x_positions, virtual_electrode_y_positions] = zprpGetCSD(self)
+            
+            nwbLocalFile = self.whichPropFile("csdData");
+
             % - Read CSD data
-            csd = h5read(self.nwbLocalFile, ...
+            csd = h5read(nwbLocalFile, ...
                 '/processing/current_source_density/ecephys_csd/current_source_density/data');
             
             % - Read timestamps
-            timestamps = h5read(self.nwbLocalFile, ...
+            timestamps = h5read(nwbLocalFile, ...
                 '/processing/current_source_density/ecephys_csd/current_source_density/timestamps');
             
             % - Read electrode position
-            virtual_electrode_x_positions = h5read(self.nwbLocalFile, ...
+            virtual_electrode_x_positions = h5read(nwbLocalFile, ...
                 '/processing/current_source_density/ecephys_csd/virtual_electrode_x_positions');
-            virtual_electrode_y_positions = h5read(self.nwbLocalFile, ...
+            virtual_electrode_y_positions = h5read(nwbLocalFile, ...
                 '/processing/current_source_density/ecephys_csd/virtual_electrode_y_positions');
         end
         
@@ -162,18 +172,20 @@ classdef ephysprobe < bot.item.abstract.NWBItem
             % - Get a handle to the corresponding experimental session
             probe.session = bot.session(probe.info.ephys_session_id);
             
-            % - Identify NWB file link
-            probe.nwbFileInfo = znstGetLFPFileInfo(probe);
+            % Superclass initialization (bot.item.mixin.LinkedFiles)
+            probe.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe.id));
+            probe.initLinkedFiles();
+            
             
             return;
             
-            function info = znstGetLFPFileInfo(probe)
-                probe_id = probe.info.id;
-                strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
-                
-                boc = bot.internal.cache;
-                info = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
-            end
+%             function info = znstGetLFPFileInfo(probe)
+%                 probe_id = probe.info.id;
+%                 strRequest = sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe_id);
+%                 
+%                 boc = bot.internal.cache;
+%                 info = table2struct(boc.CachedAPICall('criteria=model::WellKnownFile', strRequest));
+%             end
         end
         
     end

@@ -34,12 +34,15 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 % Core properties
                 groups(1) = matlab.mixin.util.PropertyGroup([obj.CORE_PROPERTIES obj.CORE_PROPERTIES_EXTENDED]);
                 
+                % Derived properties from Info
                 if ~isempty(obj.ITEM_INFO_VALUE_PROPERTIES)
                     groups(end+1) = matlab.mixin.util.PropertyGroup(obj.ITEM_INFO_VALUE_PROPERTIES, 'Item Info Values');
                 end
                 
+                % Linked item tables
                 groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');
                 
+                % Derived properties from Linked Item Tables
                 if ~isempty(obj.LINKED_ITEM_VALUE_PROPERTIES)
                     groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_VALUE_PROPERTIES, 'Linked Item Values');
                 end
