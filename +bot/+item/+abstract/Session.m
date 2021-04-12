@@ -11,7 +11,7 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
         NWB_WELL_KNOWN_FILE_PREFIX (1,1) string
     end
     
-    properties (Abstract, Dependent, SetAccess=protected)
+    properties (Abstract, Dependent, Access=protected)
         nwbLocal; % NWB file access prop, useful for some property access fcns TODO: eliminate or at least harmonize output type across session subclasses (currently variable)
     end
     

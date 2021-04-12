@@ -89,9 +89,7 @@ classdef ephyssession < bot.item.abstract.Session
             "color_triplet"]
     end
     
-    properties (Access=private)
-        nwbLocal_;
-    end
+
     
     % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
     properties (Constant, Hidden)
@@ -109,8 +107,12 @@ classdef ephyssession < bot.item.abstract.Session
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
     
-    properties (Dependent, SetAccess=protected)
+    properties (Dependent, Access=protected)
         nwbLocal;
+    end
+    
+    properties (Access=private)
+        nwbLocal_;
     end
     
     

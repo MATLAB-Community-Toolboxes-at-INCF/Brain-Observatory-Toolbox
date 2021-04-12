@@ -118,7 +118,7 @@ classdef ophyssession < bot.item.abstract.Session
        LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
    end   
    
-   properties (Dependent, SetAccess=protected)
+   properties (Dependent, Access=protected)
        nwbLocal; 
    end
 
