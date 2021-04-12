@@ -1,4 +1,4 @@
-classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
+classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     %LINKEDFILES Handles linked files for this BOT Item
     
     %% PROPERTIES - USER
@@ -117,7 +117,7 @@ classdef LinkedFiles < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     %% CONSTRUCTOR/INITIALIZER
     
     methods
-        function obj = LinkedFiles()                
+        function obj = LinkedFilesItem()                
 
             obj.prop2LinkedFileMap = containers.Map;
 

@@ -1,4 +1,4 @@
-classdef ephysprobe < bot.item.mixin.LinkedFiles
+classdef ephysprobe < bot.item.abstract.LinkedFilesItem
     
     %% PROPERTIES - USER
     
@@ -24,7 +24,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)    
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)    
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = struct("LFPNWB",["lfpData" "csdData"]);
         LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB",false);
@@ -154,7 +154,7 @@ classdef ephysprobe < bot.item.mixin.LinkedFiles
             % - Get a handle to the corresponding experimental session
             probe.session = bot.session(probe.info.ephys_session_id);
             
-            % Superclass initialization (bot.item.mixin.LinkedFiles)
+            % Superclass initialization (bot.item.abstract.LinkedFilesItem)
             probe.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe.id));
             probe.initLinkedFiles();
             

@@ -113,7 +113,7 @@ classdef ophyssession < bot.item.abstract.Session
        LINKED_ITEM_PROPERTIES = [];
    end
    
-   % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)
+   % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
    properties (SetAccess = protected, Hidden)
        LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
    end   
@@ -191,7 +191,7 @@ classdef ophyssession < bot.item.abstract.Session
          %          end
 
          
-         % Superclass initialization (bot.item.mixin.LinkedFiles)
+         % Superclass initialization (bot.item.abstract.LinkedFilesItem)
          session.initSession();
 
          session.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;

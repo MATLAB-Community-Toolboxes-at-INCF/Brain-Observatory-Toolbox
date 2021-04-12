@@ -104,7 +104,7 @@ classdef ephyssession < bot.item.abstract.Session
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
@@ -298,7 +298,7 @@ classdef ephyssession < bot.item.abstract.Session
             end
             
             n = self.nwbLocal;
-            spike_times = self.fetch_cached('metadata', @n.fetch_spike_times);
+            spike_times = self.fetch_cached('spike_times', @n.fetch_spike_times);
             
             %             if ~self.in_cache('spike_times')
             %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
@@ -401,7 +401,7 @@ classdef ephyssession < bot.item.abstract.Session
             session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
             
             
-            % Superclass initialization (bot.item.mixin.LinkedFiles)
+            % Superclass initialization (bot.item.abstract.LinkedFilesItem)
             session.initSession();
             
             session.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;

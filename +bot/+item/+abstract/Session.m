@@ -1,6 +1,6 @@
 %% bot.item.session_base — CLASS Base class for experimental sessionss
 
-classdef Session < handle & bot.item.mixin.LinkedFiles
+classdef Session < handle & bot.item.abstract.LinkedFilesItem
  
 
     %% PROPERTIES - HIDDEN                 
@@ -15,7 +15,7 @@ classdef Session < handle & bot.item.mixin.LinkedFiles
         nwbLocal; % NWB file access prop, useful for some property access fcns TODO: eliminate or at least harmonize output type across session subclasses (currently variable)
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true);
     end
@@ -39,7 +39,7 @@ classdef Session < handle & bot.item.mixin.LinkedFiles
    
    methods (Access=protected)
        function initSession(obj)
-           % Superclass initialization (bot.item.mixin.LinkedFiles)
+           % Superclass initialization (bot.item.abstract.LinkedFilesItem)
            nwbIdx = find(contains(string({obj.info.well_known_files.path}),"nwb",'IgnoreCase',true));
            assert(isscalar(nwbIdx),"Expected to find exactly one NWB file ");
            obj.insertLinkedFileInfo("SessNWB",obj.info.well_known_files(nwbIdx));
