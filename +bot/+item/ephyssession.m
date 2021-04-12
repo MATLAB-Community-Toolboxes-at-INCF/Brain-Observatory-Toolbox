@@ -104,7 +104,7 @@ classdef ephyssession < bot.item.abstract.Session
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.NWBItem)
+    % SUPERCLASS IMPLEMENTATION (bot.item.mixin.LinkedFiles)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
