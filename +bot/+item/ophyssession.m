@@ -581,12 +581,12 @@ classdef ophyssession < bot.item.abstract.Session
           strc.timestamps = seconds(strc.timestamps);
          
          % - Read response traces            
-         strc.dff_traces = h5read(bos.nwbLocal, ...
+         strc.traces = h5read(bos.nwbLocal, ...
             h5path('processing', bos.strPipelineDataset, ...
             'DfOverF', 'imaging_plane_1', 'data'));
          
          % - Subsample response traces to requested cell specimens
-         strc.dff_traces = strc.dff_traces(:, cell_specimen_indices);         
+         strc.traces = strc.traces(:, cell_specimen_indices);         
          
       end
       
