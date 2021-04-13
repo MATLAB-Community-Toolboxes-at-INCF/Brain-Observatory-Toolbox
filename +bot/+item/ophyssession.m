@@ -545,11 +545,11 @@ classdef ophyssession < bot.item.abstract.Session
       end
 
       
-      function strc = get.fluorescence_traces_dff(bos)
-         strc = bos.fetch_cached('fluorescence_traces_dff',@bos.fetch_fluorescence_traces_dff);
+      function traces = get.fluorescence_traces_dff(bos)
+         traces = bos.fetch_cached('fluorescence_traces_dff',@bos.fetch_fluorescence_traces_dff);
       end
       
-      function strc = fetch_fluorescence_traces_dff(bos, cell_specimen_ids)
+      function traces = fetch_fluorescence_traces_dff(bos, cell_specimen_ids)
          % fetch_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
          %
          % Usage: [timestamps, dff_traces] = fetch_dff_traces(bos <, cell_specimen_ids>)
@@ -572,21 +572,21 @@ classdef ophyssession < bot.item.abstract.Session
             cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
          end
          
-         strc = struct();
-         % TODO: Review if this can ever differ from .fluorescence_timestamps? If not, then can revert to a matrix type, aligned to .fluorescence_timestamps
-         % Read timesamps
-          strc.timestamps = h5read(bos.nwbLocal, ...
-              h5path('processing', bos.strPipelineDataset, ...
-              'DfOverF', 'imaging_plane_1', 'timestamps'));
-          strc.timestamps = seconds(strc.timestamps);
+         % TODO: Consider if readout of per-property timestamp is useful for error-checking
+         % For now skip this step as it's not done with other fluorescence trace props and it's never found to differ from .fluorescence_timestamps
+         %          % Read timesamps
+         %           timestamps = h5read(bos.nwbLocal, ...
+         %               h5path('processing', bos.strPipelineDataset, ...
+         %               'DfOverF', 'imaging_plane_1', 'timestamps'));
+         %           timestamps = seconds(strc.timestamps);
          
          % - Read response traces            
-         strc.traces = h5read(bos.nwbLocal, ...
+         traces = h5read(bos.nwbLocal, ...
             h5path('processing', bos.strPipelineDataset, ...
             'DfOverF', 'imaging_plane_1', 'data'));
          
          % - Subsample response traces to requested cell specimens
-         strc.traces = strc.traces(:, cell_specimen_indices);         
+         traces = traces(:, cell_specimen_indices);         
          
       end
       
