@@ -841,7 +841,9 @@ classdef ephyssession < bot.item.abstract.Session
             
             invalid_times = self.invalid_times;
             
-            if ~isempty(invalid_times)
+            if isequal(invalid_times, bot.item.internal.OnDemandState.Unavailable)
+                invalid_times = [];                                
+            elseif  ~isempty(invalid_times)
                 mask = cellfun(@(c)any(ismember(string(c), string(tags))), invalid_times.tags);
                 invalid_times = invalid_times(mask, :);
             end
