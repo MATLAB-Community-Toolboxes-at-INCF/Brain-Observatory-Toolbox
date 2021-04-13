@@ -266,7 +266,8 @@ classdef ephyssession < bot.item.abstract.Session
             
             n = self.nwbLocal;
             spike_times = self.fetch_cached('spike_times', @n.fetch_spike_times);
-            
+
+            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case                 
             %             if ~self.in_cache('spike_times')
             %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
             %             end
@@ -893,6 +894,7 @@ classdef ephyssession < bot.item.abstract.Session
             end
         end
         
+        % CONSIDER FOR DEPRECATION - Currently unused, not sure if this extra filtering has a use case
         function output_spike_times = build_spike_times(self, spike_times_raw)
             % - Filter spike times by unit ID
             retained_units = self.units.id;
