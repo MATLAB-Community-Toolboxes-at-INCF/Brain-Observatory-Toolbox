@@ -581,9 +581,11 @@ classdef ephyssession < bot.item.abstract.Session
             
             % - Handle the case when no spikes occurred
             if isempty(spike_times) %#ok<PROPLC>
-                spikes_with_onset = table('VariableNames', ...
-                    {'spike_times', 'stimulus_presentation', ...
-                    'unit_id', 'time_since_stimulus_presentation_onset'});
+                spikes_with_onset = table(  'Size',[0 4], ...
+                                            'VariableTypes', ["double" "double" "uint32" "double"],...
+                                            'VariableNames', ...
+                                             {'spike_times', 'stimulus_presentation', ...
+                                             'unit_id', 'time_since_stimulus_presentation_onset'});
                 return;
             end
             
@@ -644,14 +646,15 @@ classdef ephyssession < bot.item.abstract.Session
                         (spike_counts.unit_id == found_spike_counts.unit_id(row));
                     spike_counts(spike_count_row, 'spike_count') = found_spike_counts(row, 'spike_count');
                 end
-                
-                for row = 1:size(spike_counts, 1)
-                    % - Add stimulus presentation information
-                    stimulus_row = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
-                    spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(stimulus_row);
-                    spike_counts.duration(row) = presentations.duration(stimulus_row);
-                end
             end
+                
+            for row = 1:size(spike_counts, 1)
+                % - Add stimulus presentation information
+                stimulus_row = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
+                spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(stimulus_row);
+                spike_counts.duration(row) = presentations.duration(stimulus_row);
+            end
+        
             
             if use_rates
                 spike_counts.spike_rate = spike_counts.spike_count / spike_counts.duration;
