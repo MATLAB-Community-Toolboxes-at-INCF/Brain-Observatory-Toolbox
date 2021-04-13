@@ -241,44 +241,9 @@ classdef ephyssession < bot.item.abstract.Session
     
     % USER PROPERTIES - Auxiliary File (NWB)
     methods
-        
         function stimulus_table = get.stimulus_templates(self)
             stimulus_table = self.fetch_cached('stimulus_templates', @self.zprpGetStimulusTemplates);
         end
-        
-        function stimulus_table = zprpGetStimulusTemplates(self)
-            
-            stimulus_table = self.linkedFileRespTables.("StimTemplatesGroup");
-            
-            % - Convert table variables to sensible types
-            stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
-            stimulus_table.attachable_type = string(stimulus_table.attachable_type);
-            stimulus_table.download_link = string(stimulus_table.download_link);
-            stimulus_table.id = int64(stimulus_table.id);
-            stimulus_table.path = string(stimulus_table.path);
-            stimulus_table.well_known_file_type_id = int64(stimulus_table.well_known_file_type_id);
-            
-            % - Loop over stimulus templates
-            scene_number = nan(size(stimulus_table, 1), 1);
-            movie_number = nan(size(stimulus_table, 1), 1);
-            for row_ind = 1:size(stimulus_table, 1)
-                row = stimulus_table(row_ind, :);
-                
-                if contains(row.path, 'natural_movie_')
-                    [~, str_movie_number, ~] = fileparts(row.path);
-                    movie_number(row_ind) = sscanf(str_movie_number, 'natural_movie_%d');
-                    scene_number(row_ind) = nan;
-                    
-                elseif contains(row.path, '.tiff')
-                    [~, scene_number(row_ind), ~] = fileparts(row.path);
-                    movie_number(row_ind) = nan;
-                end
-            end
-            
-            stimulus_table.scene_number = scene_number;
-            stimulus_table.movie_number = movie_number;
-        end
-        
         
         function epochs = get.stimulus_epochs(self)
             epochs = self.getStimulusEpochsByDuration();
@@ -318,6 +283,40 @@ classdef ephyssession < bot.item.abstract.Session
     
     % PROPERTY ACCESS HELPERS
     methods (Access=private)
+         
+        function stimulus_table = zprpGetStimulusTemplates(self)
+            
+            stimulus_table = self.linkedFileRespTables.("StimTemplatesGroup");
+            
+            % - Convert table variables to sensible types
+            stimulus_table.attachable_id = int64(stimulus_table.attachable_id);
+            stimulus_table.attachable_type = string(stimulus_table.attachable_type);
+            stimulus_table.download_link = string(stimulus_table.download_link);
+            stimulus_table.id = int64(stimulus_table.id);
+            stimulus_table.path = string(stimulus_table.path);
+            stimulus_table.well_known_file_type_id = int64(stimulus_table.well_known_file_type_id);
+            
+            % - Loop over stimulus templates
+            scene_number = nan(size(stimulus_table, 1), 1);
+            movie_number = nan(size(stimulus_table, 1), 1);
+            for row_ind = 1:size(stimulus_table, 1)
+                row = stimulus_table(row_ind, :);
+                
+                if contains(row.path, 'natural_movie_')
+                    [~, str_movie_number, ~] = fileparts(row.path);
+                    movie_number(row_ind) = sscanf(str_movie_number, 'natural_movie_%d');
+                    scene_number(row_ind) = nan;
+                    
+                elseif contains(row.path, '.tiff')
+                    [~, scene_number(row_ind), ~] = fileparts(row.path);
+                    movie_number(row_ind) = nan;
+                end
+            end
+            
+            stimulus_table.scene_number = scene_number;
+            stimulus_table.movie_number = movie_number;
+        end        
+        
         function zprpCacheStimulusPresentations(self)
             if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
                 % - Read stimulus presentations from NWB file
