@@ -19,7 +19,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
         initState = false;
         
         %linkedFilesInfo struct = struct('Nickname',{},'LocalFile',{},'URL',{},'FileInfo',{});
-        linkedFilesInfo table = table(  'Size',[0 4],...
+        linkedFilesInfo table = table(  'Size',[0 4],... %TODO: add a "MATLAB file info" variable that specifies fcn for checking if a file is valid (iss#94)
             'VariableTypes',["string" "logical" "string" "string"], ...
             'VariableNames',["nickname" "autoDownload" "path" "download_link" ]);
     end
