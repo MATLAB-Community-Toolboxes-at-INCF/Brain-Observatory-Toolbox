@@ -43,7 +43,7 @@ classdef ephyssession < bot.item.abstract.Session
         
         stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
         stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
-        num_stimulus_presentations;  	% Number of stimulus presentations in this session
+        %num_stimulus_presentations;  	% Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
         stimulus_templates;              % Stimulus template table
         stimulus_names;                  % Names of stimuli presented in this session
         stimulus_epochs;                % Table of stimulus presentation epochs
@@ -124,9 +124,10 @@ classdef ephyssession < bot.item.abstract.Session
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
         end
         
-        function num_stimulus_presentations = get.num_stimulus_presentations(self)
-            num_stimulus_presentations = size(self.stimulus_presentations, 1);
-        end
+        % TODO: 
+        %         function num_stimulus_presentations = get.num_stimulus_presentations(self)
+        %             num_stimulus_presentations = size(self.stimulus_presentations, 1);
+        %         end
         
         function stimulus_names = get.stimulus_names(self)
             stimulus_names = unique(self.stimulus_presentations.stimulus_name);
