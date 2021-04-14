@@ -183,43 +183,9 @@ classdef ophyssession < bot.item.abstract.Session
             val = bos.fetch_cached('max_projection',bos.fetch_max_projection);
         end
         
-        function motion_correction = get.motion_correction(bos)
-            % get.motion_correction - GETTER Return the motion correction information for this experimental session
-            %
-            % Usage: motion_correction = bos.motion_correction
-            %
-            % `motion_correction` will be a table containing x/y motion correction
-            % information applied in this experimental session.
-            
-            nwb_file = bos.nwbLocal;
-            
-            % - Try to locate the motion correction data
-            nwb_key = h5path('processing', bos.strPipelineDataset, ...
-                'MotionCorrection', '2p_image_series');
-            
-            try
-                h5info(nwb_file, h5path(nwb_key, 'xy_translation'));
-                nwb_key = h5path(nwb_key, 'xy_translation');
-            catch
-                try
-                    h5info(nwb_file, h5path(nwb_key, 'xy_translations'));
-                    nwb_key = h5path(nwb_key, 'xy_translations');
-                catch
-                    error('BOT:MotionCorrectionNotFound', ...
-                        'Could not file motion correction data.');
-                end
-            end
-            
-            % - Extract motion correction data from session
-            motion_log = h5read(nwb_file, h5path(nwb_key, 'data'));
-            motion_time = h5read(nwb_file, h5path(nwb_key, 'timestamps'));
-            motion_names = h5read(nwb_file, h5path(nwb_key, 'feature_description'));
-            
-            % - Create a motion correction table
-            motion_correction = array2table(motion_log', 'VariableNames', motion_names);
-            motion_correction.timestamp = motion_time;
+        function tbl = get.motion_correction(bos)
+            tbl = bos.fetch_cached('motion_correction',bos.fetch_motion_correction);
         end
-        
         
         function neuropil_r = get.neuropil_r(bos)
             neuropil_r = bos.fetch_cached('neuropil_r',@bos.fetch_neuropil_r);
@@ -273,78 +239,14 @@ classdef ophyssession < bot.item.abstract.Session
             tbl = bos.fetch_cached('spontaneous_activity_stimulus_table',@bos.fetch_spontaneous_activity_stimulus_table);
         end
         
-        
-        % TODO: Consider utility of making a public method here, exposing the thresholds as arguments (if so, then can keep a stimulus_epoch_table_default property using the default args)
-        function stimulus_epochs = get.stimulus_epoch_table(bos)
-            % get.stimulus_epoch_table - GETTER Return the stimulus epoch table for this experimental session
-            %
-            % Usage: stimulus_epochs = bos.stimulus_epoch_table
-            %
-            % `stimulus_epochs` will be a table containing information about all
-            % stimulus epochs in this session.
-            
-            % - Hard-coded thresholds from Allen SDK for fetch_epoch_mask_list. These
-            % set a maximum limit on the delta aqusistion frames to count as
-            % different trials (rows in the stim table).  This helps account for
-            % dropped frames, so that they dont cause the cutting of an entire
-            % experiment into too many stimulus epochs. If these thresholds are too
-            % low, the assert statment in fetch_epoch_mask_list will halt execution.
-            % In that case, make a bug report!.
-            thresholds = struct('three_session_A', 32+7,...
-                'three_session_B', 15, ...
-                'three_session_C', 7, ...
-                'three_session_C2', 7);
-            
-            % - Get needed session properties
-            stimuli = bos.stimulus_list();
-            sessionType = string(bos.session_type);
-            
-            % - Loop over stimuli to get stimulus tables
-            stimulus_epochs = table();
-            for stim_index = numel(stimuli):-1:1
-                % - Get the stimulus table for this stimulus
-                this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
-                
-                % - Set "frame" column for spontaneous stimulus
-                if isequal(stimuli{stim_index}, 'spontaneous')
-                    this_stimulus.frame = nan(size(this_stimulus, 1), 1);
-                end
-                
-                % - Get epochs for this stimulus
-                these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(sessionType));
-                these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
-                these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
-                
-                % - Append to stimulus epochs table
-                stimulus_epochs = vertcat(stimulus_epochs, these_epochs_table); %#ok<AGROW>
-            end
-            
-            % - Sort by initial frame
-            stimulus_epochs = sortrows(stimulus_epochs, 'start_frame');
-            
-            % - Rearrange columns to put 'stimulus' first
-            stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
+        function tbl = get.stimulus_epoch_table(bos)
+            tbl = bos.fetch_cached('stimulus_epoch_table',@bos.fetch_stimulus_epoch_table);
         end
         
         function stimuli = get.stimulus_list(bos)
-            % get.stimulus_list - GETTER Return the list of stimuli used in this experimental session
-            %
-            % Usage: stimuli = bos.stimulus_list
-            %
-            % `stimuli` will be a cell array of strings, indicating which
-            % individual stimulus sets were presented in this session.
-            
-            % - Get local NWB file
-            nwb_file = bos.nwbLocal;
-            
-            % - Get list of stimuli from NWB file
-            strKey = h5path('stimulus', 'presentation');
-            sKeys = h5info(nwb_file, strKey);
-            [~, stimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
-            
-            % - Remove trailing "_stimulus"
-            stimuli = cellfun(@(s)strrep(s, '_stimulus', ''), stimuli, 'UniformOutput', false);
+            stimuli = bos.fetch_cached('stimulus_list',@bos.fetch_stimulus_list);
         end
+        
         
     end
     
@@ -553,7 +455,40 @@ classdef ophyssession < bot.item.abstract.Session
         end
         
         function motion_correction = fetch_motion_correction(bos)
-            %TODO
+            % get.motion_correction - GETTER Return the motion correction information for this experimental session
+            %
+            % Usage: motion_correction = bos.motion_correction
+            %
+            % `motion_correction` will be a table containing x/y motion correction
+            % information applied in this experimental session.
+            
+            nwb_file = bos.nwbLocal;
+            
+            % - Try to locate the motion correction data
+            nwb_key = h5path('processing', bos.strPipelineDataset, ...
+                'MotionCorrection', '2p_image_series');
+            
+            try
+                h5info(nwb_file, h5path(nwb_key, 'xy_translation'));
+                nwb_key = h5path(nwb_key, 'xy_translation');
+            catch
+                try
+                    h5info(nwb_file, h5path(nwb_key, 'xy_translations'));
+                    nwb_key = h5path(nwb_key, 'xy_translations');
+                catch
+                    error('BOT:MotionCorrectionNotFound', ...
+                        'Could not file motion correction data.');
+                end
+            end
+            
+            % - Extract motion correction data from session
+            motion_log = h5read(nwb_file, h5path(nwb_key, 'data'));
+            motion_time = h5read(nwb_file, h5path(nwb_key, 'timestamps'));
+            motion_names = h5read(nwb_file, h5path(nwb_key, 'feature_description'));
+            
+            % - Create a motion correction table
+            motion_correction = array2table(motion_log', 'VariableNames', motion_names);
+            motion_correction.timestamp = motion_time;
         end
         
         
@@ -927,6 +862,73 @@ classdef ophyssession < bot.item.abstract.Session
             end
         end
         
+        function stimulus_epochs = fetch_stimulus_epoch_table(bos)
+            % get.stimulus_epoch_table - GETTER Return the stimulus epoch table for this experimental session
+            %
+            % Usage: stimulus_epochs = bos.stimulus_epoch_table
+            %
+            % `stimulus_epochs` will be a table containing information about all
+            % stimulus epochs in this session.
+            
+            % - Hard-coded thresholds from Allen SDK for fetch_epoch_mask_list. These
+            % set a maximum limit on the delta aqusistion frames to count as
+            % different trials (rows in the stim table).  This helps account for
+            % dropped frames, so that they dont cause the cutting of an entire
+            % experiment into too many stimulus epochs. If these thresholds are too
+            % low, the assert statment in fetch_epoch_mask_list will halt execution.
+            % In that case, make a bug report!.
+            thresholds = struct('three_session_A', 32+7,...
+                'three_session_B', 15, ...
+                'three_session_C', 7, ...
+                'three_session_C2', 7);
+            
+            % - Get needed session properties
+            stimuli = bos.stimulus_list();
+            sessionType = string(bos.session_type);
+            
+            % - Loop over stimuli to get stimulus tables
+            stimulus_epochs = table();
+            for stim_index = numel(stimuli):-1:1
+                % - Get the stimulus table for this stimulus
+                this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
+                
+                % - Set "frame" column for spontaneous stimulus
+                if isequal(stimuli{stim_index}, 'spontaneous')
+                    this_stimulus.frame = nan(size(this_stimulus, 1), 1);
+                end
+                
+                % - Get epochs for this stimulus
+                these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(sessionType));
+                these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
+                these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
+                
+                % - Append to stimulus epochs table
+                stimulus_epochs = vertcat(stimulus_epochs, these_epochs_table); %#ok<AGROW>
+            end
+            
+            % - Sort by initial frame
+            stimulus_epochs = sortrows(stimulus_epochs, 'start_frame');
+            
+            % - Rearrange columns to put 'stimulus' first
+            stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
+        end
+        
+        function stimuli = fetch_stimulus_list(bos)
+            % `stimuli` is currently a cell array of strings, indicating which
+            % individual stimulus sets were presented in this session.
+            % TODO: convert to string array w/ downstream updates as needed
+            
+            nwb_file = bos.nwbLocal;
+            
+            % - Get list of stimuli from NWB file
+            strKey = h5path('stimulus', 'presentation');
+            sKeys = h5info(nwb_file, strKey);
+            [~, stimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
+            
+            % - Remove trailing "_stimulus"
+            stimuli = cellfun(@(s)strrep(s, '_stimulus', ''), stimuli, 'UniformOutput', false);
+        end
+        
         
         
     end
@@ -1119,6 +1121,7 @@ classdef ophyssession < bot.item.abstract.Session
                 throw(base);
             end
         end
+        
         
     end
     
