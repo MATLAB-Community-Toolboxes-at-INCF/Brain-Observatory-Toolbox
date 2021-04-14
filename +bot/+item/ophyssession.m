@@ -156,66 +156,441 @@ classdef ophyssession < bot.item.abstract.Session
       smCachedStimulusTable = bot.internal.SimpleMap();  % Internally cached master stimulus table, for searching stimuli
    end
    
-   
-   %% - Constructor
-   methods
-      function bsObj = ophyssession(session_id)
-         % bot.item.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
-         %
-         % Usage: bsObj = bot.item.ophyssession(id)
-         %        vbsObj = bot.item.ophyssession(vids)
-         %        bsObj = bot.item.ophyssession(tSessionRow)
-         
-         if nargin == 0
-            return;
-         end
-         
-         % Load associated singleton             
-         manifest = bot.internal.ophysmanifest.instance();
-            
-         % - Handle a vector of session IDs
-         if ~istable(session_id) && numel(session_id) > 1
-            for nIndex = numel(session_id):-1:1
-               bsObj(session_id) = bot.item.ophyssession(session_id(nIndex));
-            end
-            return;
-         end
-         
-         % - Assign metadata
-         session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
-
-         % SUSPECTED CRUFT: since we've explicitly constructed an ophysmanifest, check seems unneeded. If checked, it would now use the table property.
-         %          % - Ensure that we were given an OPhys session
-         %          if session.info.type ~= "OPhys"
-         %              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
-         %          end
-
-         
-         % Superclass initialization (bot.item.abstract.LinkedFilesItem)
-         session.initSession();
-
-         session.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
-         h5Idx = find(contains(string({session.info.well_known_files.path}),"h5",'IgnoreCase',true));
-         assert(isscalar(h5Idx),"Expected to find exactly one H5 file ");
-         session.insertLinkedFileInfo("SessH5",session.info.well_known_files(h5Idx));
-         
-         session.initLinkedFiles();
-
-      end
-   end
-   
-
-   %% - Allen BO data set API. Mimics the brain_observatory_nwb_data_set class from the Allen API
-   methods
-       function loc = get.nwbLocal(self)
-           loc = self.linkedFiles{"SessNWB","LocalFile"};
-       end      
+   %% PROPERTY ACCESS METHODS
+   methods       
+       
+       function cell_specimen_ids = get.cell_specimen_ids(bos)
+           cell_specimen_ids = bos.fetch_cached('cell_specimen_ids',@bos.fetch_cell_specimen_ids);
+       end       
+       
+       function traces = get.corrected_fluorescence_traces(bos)
+           traces = bos.fetch_cached('corrected_fluorescence_traces',@bos.fetch_corrected_fluorescence_traces);
+       end
+       
+       function timestamps = get.fluorescence_timestamps(bos)
+           timestamps = bos.fetch_cached('fluorescence_timestamps',@bos.fetch_fluorescence_timestamps);
+       end
+       
+       function traces = get.fluorescence_traces(bos)
+           traces = bos.fetch_cached('fluorescence_traces',@bos.fetch_fluorescence_traces);
+       end
+       
+       function traces = get.fluorescence_traces_demixed(bos)
+           traces = bos.fetch_cached('fluorescence_traces_demixed',@bos.fetch_fluorescence_traces_demixed);
+       end
+       
+       function traces = get.fluorescence_traces_dff(bos)
+           traces = bos.fetch_cached('fluorescence_traces_dff',@bos.fetch_fluorescence_traces_dff);
+       end
+       
+       function val = get.max_projection(bos)
+           val = bos.fetch_cached('max_projection',bos.fetch_max_projection);
+       end
+       
+       function motion_correction = get.motion_correction(bos)
+           % get.motion_correction - GETTER Return the motion correction information for this experimental session
+           %
+           % Usage: motion_correction = bos.motion_correction
+           %
+           % `motion_correction` will be a table containing x/y motion correction
+           % information applied in this experimental session.
+           
+           nwb_file = bos.nwbLocal;
+           
+           % - Try to locate the motion correction data
+           nwb_key = h5path('processing', bos.strPipelineDataset, ...
+               'MotionCorrection', '2p_image_series');
+           
+           try
+               h5info(nwb_file, h5path(nwb_key, 'xy_translation'));
+               nwb_key = h5path(nwb_key, 'xy_translation');
+           catch
+               try
+                   h5info(nwb_file, h5path(nwb_key, 'xy_translations'));
+                   nwb_key = h5path(nwb_key, 'xy_translations');
+               catch
+                   error('BOT:MotionCorrectionNotFound', ...
+                       'Could not file motion correction data.');
+               end
+           end
+           
+           % - Extract motion correction data from session
+           motion_log = h5read(nwb_file, h5path(nwb_key, 'data'));
+           motion_time = h5read(nwb_file, h5path(nwb_key, 'timestamps'));
+           motion_names = h5read(nwb_file, h5path(nwb_key, 'feature_description'));
+           
+           % - Create a motion correction table
+           motion_correction = array2table(motion_log', 'VariableNames', motion_names);
+           motion_correction.timestamp = motion_time;
+       end
+       
+       
+       function neuropil_r = get.neuropil_r(bos)
+           neuropil_r = bos.fetch_cached('neuropil_r',@bos.fetch_neuropil_r);
+       end
+       
+       function traces = get.neuropil_traces(bos)
+           traces = bos.fetch_cached('neuropil_traces',@bos.fetch_neuropil_traces);
+       end
+      
        
        function nwb_metadata = get.nwb_metadata(bos)
            nwb_metadata = bos.fetch_cached('nwb_metadata',@bos.fetch_nwb_metadata);
        end
        
-      function metadata = fetch_nwb_metadata(bos)
+       function loc = get.nwbLocal(self)
+           loc = self.linkedFiles{"SessNWB","LocalFile"};
+       end
+       
+       function tt = get.pupil_location(bos)
+           tt = bos.fetch_cached('pupil_location', @bos.fetch_pupil_location);
+       end
+       
+       function tt = get.pupil_size(bos)
+           tt = bos.fetch_cached('pupil_size',@bos.fetch_pupil_size);
+       end
+       
+       function roi_ids = get.roi_ids(bos)
+           roi_ids = bos.fetch_cached('roi_ids',bos.fetch_roi_ids);
+       end
+       
+       function roi_masks = get.roi_mask(bos)
+           roi_masks = bos.fetch_cached('roi_mask',@bos.fetch_roi_mask);
+       end
+       
+       function roi_masks = get.roi_mask_array(bos)
+           roi_masks = bos.fetch_cached('roi_mask_array',@bos.fetch_roi_mask_array);
+       end
+       
+       function tt = get.running_speed(bos)
+           tt = bos.fetch_cached('running_speed',@bos.fetch_running_speed);
+       end
+       
+       function session_type = get.session_type(bos)
+           % get.session_type - GETTER Return the name for the stimulus set used in this session
+           %
+           % Usage: strSessionType = bos.session_type
+           session_type = bos.info.stimulus_name;
+       end
+       
+       % TODO: Consider utility of making a public method here, exposing the thresholds as arguments (if so, then can keep a stimulus_epoch_table_default property using the default args)
+       function stimulus_epochs = get.stimulus_epoch_table(bos)
+           % get.stimulus_epoch_table - GETTER Return the stimulus epoch table for this experimental session
+           %
+           % Usage: stimulus_epochs = bos.stimulus_epoch_table
+           %
+           % `stimulus_epochs` will be a table containing information about all
+           % stimulus epochs in this session.
+           
+           % - Hard-coded thresholds from Allen SDK for fetch_epoch_mask_list. These
+           % set a maximum limit on the delta aqusistion frames to count as
+           % different trials (rows in the stim table).  This helps account for
+           % dropped frames, so that they dont cause the cutting of an entire
+           % experiment into too many stimulus epochs. If these thresholds are too
+           % low, the assert statment in fetch_epoch_mask_list will halt execution.
+           % In that case, make a bug report!.
+           thresholds = struct('three_session_A', 32+7,...
+               'three_session_B', 15, ...
+               'three_session_C', 7, ...
+               'three_session_C2', 7);
+           
+           % - Get list of stimuli for this session
+           stimuli = bos.stimulus_list();
+           
+           % - Loop over stimuli to get stimulus tables
+           stimulus_epochs = table();
+           for stim_index = numel(stimuli):-1:1
+               % - Get the stimulus table for this stimulus
+               this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
+               
+               % - Set "frame" column for spontaneous stimulus
+               if isequal(stimuli{stim_index}, 'spontaneous')
+                   this_stimulus.frame = nan(size(this_stimulus, 1), 1);
+               end
+               
+               % - Get epochs for this stimulus
+               these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(bos.session_type));
+               these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
+               these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
+               
+               % - Append to stimulus epochs table
+               stimulus_epochs = vertcat(stimulus_epochs, these_epochs_table); %#ok<AGROW>
+           end
+           
+           % - Sort by initial frame
+           stimulus_epochs = sortrows(stimulus_epochs, 'start_frame');
+           
+           % - Rearrange columns to put 'stimulus' first
+           stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
+       end
+       
+       function stimuli = get.stimulus_list(bos)
+           % get.stimulus_list - GETTER Return the list of stimuli used in this experimental session
+           %
+           % Usage: stimuli = bos.stimulus_list
+           %
+           % `stimuli` will be a cell array of strings, indicating which
+           % individual stimulus sets were presented in this session.
+           
+           % - Get local NWB file
+           nwb_file = bos.nwbLocal;
+           
+           % - Get list of stimuli from NWB file
+           strKey = h5path('stimulus', 'presentation');
+           sKeys = h5info(nwb_file, strKey);
+           [~, stimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
+           
+           % - Remove trailing "_stimulus"
+           stimuli = cellfun(@(s)strrep(s, '_stimulus', ''), stimuli, 'UniformOutput', false);
+       end
+
+   end
+   
+   %% PROPERTY ACCESS CACHING METHODS
+   % TODO: reconsider fetch prefix for these local caching methods 
+
+   methods (Access = protected)
+   
+       function cell_specimen_ids = fetch_cell_specimen_ids(bos)
+          cell_specimen_ids = h5read(bos.nwbLocal, ...
+              h5path('processing', bos.strPipelineDataset, ...
+              'ImageSegmentation', 'cell_specimen_ids'));
+       end
+      
+       % TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
+      % TODO: Move to derived linked file property group
+      function traces = fetch_corrected_fluorescence_traces(bos, cell_specimen_ids)
+          
+         % fetch_corrected_fluorescence_traces - METHOD Return corrected fluorescence traces for the provided cell specimen IDs
+         %
+         % Usage: [timestamps, traces] = fetch_corrected_fluorescence_traces(bos <, cell_specimen_ids>)
+         %
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `timestamps`. Each column `n` contains the corrected fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+         % should be returned.
+         
+         
+         % - Pass an empty matrix to return all cell specimen IDs
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_ids = [];
+         end
+         
+         % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
+         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
+            traces = bos.fetch_demixed_traces(cell_specimen_ids);
+         else
+            traces = bos.fetch_fluorescence_traces(cell_specimen_ids);
+         end
+         
+         % - Read neuropil correction data
+         neuropil_r = bos.fetch_neuropil_r(cell_specimen_ids);
+         neuropil_traces = bos.fetch_neuropil_traces(cell_specimen_ids);
+         
+         % - Correct fluorescence traces using neuropil demixing model
+         traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
+      end
+       
+         function timestamps = fetch_fluorescence_timestamps(bos)
+         % get.fluorescence_timestamps - GETTER Return timestamps for the fluorescence traces, in seconds
+         %
+         % Usage: timestamps = bos.fluorescence_timestamps
+         %
+         % `timestamps` will be a vector of time points corresponding to
+         % fluorescence samples, in seconds.
+         
+         
+         % - Read imaging timestamps from NWB file
+         timestamps = h5read(bos.nwbLocal, ...
+            h5path('processing', bos.strPipelineDataset, ...
+            'Fluorescence', 'imaging_plane_1', 'timestamps'));
+         
+         % - Convert to 'duration'
+         timestamps = seconds(timestamps);
+         end
+      
+        %TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
+      function traces = fetch_fluorescence_traces(bos, cell_specimen_ids)
+         % fetch_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
+         %
+         % Usage: [timestamps, traces] = fetch_fluorescence_traces(bos <, cell_specimen_ids>)
+         %
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `timestamps`. Each column `n` contains the demixed fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`cell_specimen_ids` permits you specify which cell specimens
+         % should be returned.
+         
+                  
+         % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
+         %          % - Get the fluorescence timestamps
+         %          timestamps = bos.fluorescence_timestamps;
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
+         else
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
+         end
+         
+         % - Read requested fluorescence traces
+         traces = h5read(bos.nwbLocal, ...
+            h5path('processing', bos.strPipelineDataset, ...
+            'Fluorescence', 'imaging_plane_1', 'data'));
+         
+         % - Subselect traces
+         traces = traces(:, cell_specimen_indices);
+      end
+      
+      %TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
+      function traces = fetch_fluorescence_traces_demixed(bos, cell_specimen_ids)
+         % fetch_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
+         %
+         % Usage: [timestamps, traces] = fetch_demixed_traces(bos <, cell_specimen_ids>)
+         %
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `traces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `timestamps`. Each column `n` contains the demixed fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`cell_specimen_ids` permits you specify which cell specimens
+         % should be returned.
+         
+         % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
+         %          % - Get the fluorescence timestamps
+         %          timestamps = bos.fluorescence_timestamps;
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
+         else
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
+         end
+         
+         % - Read requested fluorescence traces
+         traces = h5read(bos.nwbLocal, ...
+            h5path('processing', bos.strPipelineDataset, ...
+            'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
+         
+         % - Subselect traces
+         traces = traces(:, cell_specimen_indices);
+      end
+          
+      % TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
+      function traces = fetch_fluorescence_traces_dff(bos, cell_specimen_ids)
+         % fetch_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
+         %
+         % Usage: [timestamps, dff_traces] = fetch_dff_traces(bos <, cell_specimen_ids>)
+         %
+         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
+         % point defining a sample time for the fluorescence samples. `dff_traces`
+         % will be a TxN matrix of fluorescence samples, with each row `t`
+         % contianing the data for the timestamp in the corresponding entry of
+         % `timestamps`. Each column `n` contains the delta F/F0 fluorescence
+         % data for a single cell specimen.
+         %
+         % By default, traces for all cell specimens are returned. The optional
+         % argument`cell_specimen_ids` permits you specify which cell specimens
+         % should be returned.
+         
+         % - Find cell specimen IDs, if provided
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
+         else
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
+         end
+         
+         % TODO: Consider if readout of per-property timestamp is useful for error-checking
+         % For now skip this step as it's not done with other fluorescence trace props and it's never found to differ from .fluorescence_timestamps
+         %          % Read timesamps
+         %           timestamps = h5read(bos.nwbLocal, ...
+         %               h5path('processing', bos.strPipelineDataset, ...
+         %               'DfOverF', 'imaging_plane_1', 'timestamps'));
+         %           timestamps = seconds(strc.timestamps);
+         
+         % - Read response traces            
+         traces = h5read(bos.nwbLocal, ...
+            h5path('processing', bos.strPipelineDataset, ...
+            'DfOverF', 'imaging_plane_1', 'data'));
+         
+         % - Subsample response traces to requested cell specimens
+         traces = traces(:, cell_specimen_indices);         
+         
+      end     
+      
+      function max_projection = fetch_max_projection(bos)
+          % get.max_projection - GETTER Return the maximum-intensity projection image for this experimental session
+          %
+          % Usage: max_projection = bos.max_projection
+          %
+          % `max_projection` will be an image contianing the
+          % maximum-intensity projection of the fluorescence stack obtained
+          % in this session.
+          
+          nwb_file = bos.nwbLocal;
+          
+          % - Extract the maximum projection from the session
+          nwb_key = h5path('processing', bos.strPipelineDataset, ...
+              'ImageSegmentation', 'imaging_plane_1', 'reference_images', ...
+              'maximum_intensity_projection_image', 'data');
+          max_projection = h5read(nwb_file, nwb_key);
+      end
+      
+      function motion_correction = fetch_motion_correction(bos)
+          %TODO
+      end
+          
+      
+      %TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
+      function neuropil_r = fetch_neuropil_r(bos, cell_specimen_ids)
+         % fetch_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
+         %
+         % Usage: cell_specimen_ids = fetch_neuropil_r(bos <, cell_specimen_ids>)
+         %
+         % `neuropil_r` will be a vector of neuropil correction
+         % factors for each analysed cell. The optional argument
+         % `cell_specimen_ids` can be used to determine for which cells
+         % data should be returned. By default, data for all cells is
+         % returned.
+         
+                  
+         % - Find cell specimen IDs, if provided
+         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
+         else
+            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
+         end
+         
+         % - Check pipeline version and read neuropil correction R
+         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
+            neuropil_r = h5read(bos.nwbLocal, ...
+               h5path('processing', bos.strPipelineDataset, ...
+               'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
+         else
+            neuropil_r = h5read(bos.nwbLocal, ...
+               h5path('processing', bos.strPipelineDataset, ...
+               'Fluorescence', 'imaging_plane_1', 'r'));
+         end
+         
+         % - Subsample R to requested cell specimens
+         neuropil_r = neuropil_r(cell_specimen_indices);
+      end
+     
+            function metadata = fetch_nwb_metadata(bos)
          % get.nwb_metadata - GETTER Read metadata from the NWB file
          %
          % Usage: metadata = bos.nwb_metadata
@@ -281,612 +656,10 @@ classdef ophyssession < bot.item.abstract.Session
          else
             metadata.pipeline_version = '0.9';
          end
-      end
-      
-      function timestamps = get.fluorescence_timestamps(bos)
-          timestamps = bos.fetch_cached('fluorescence_timestamps',@bos.fetch_fluorescence_timestamps);   
-      end
-      
-      function timestamps = fetch_fluorescence_timestamps(bos)
-         % get.fluorescence_timestamps - GETTER Return timestamps for the fluorescence traces, in seconds
-         %
-         % Usage: timestamps = bos.fluorescence_timestamps
-         %
-         % `timestamps` will be a vector of time points corresponding to
-         % fluorescence samples, in seconds.
-         
-         
-         % - Read imaging timestamps from NWB file
-         timestamps = h5read(bos.nwbLocal, ...
-            h5path('processing', bos.strPipelineDataset, ...
-            'Fluorescence', 'imaging_plane_1', 'timestamps'));
-         
-         % - Convert to 'duration'
-         timestamps = seconds(timestamps);
-      end
-      
-      function cell_specimen_ids = get.cell_specimen_ids(bos)
-          cell_specimen_ids = bos.fetch_cached('cell_specimen_ids',@bos.fetch_cell_specimen_ids);   
-      end
-      
-      function cell_specimen_ids = fetch_cell_specimen_ids(bos)
-          cell_specimen_ids = h5read(bos.nwbLocal, ...
-              h5path('processing', bos.strPipelineDataset, ...
-              'ImageSegmentation', 'cell_specimen_ids'));
-      end
-      
-      function cell_specimen_indices = lookup_cell_specimen_indices(bos, cell_specimen_ids)
-         % lookup_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
-         %
-         % Usage: cell_specimen_indices = lookup_cell_specimen_indices(bos, cell_specimen_ids)
-         %
-         % `cell_specimen_ids` is an Nx1 vector of valid cell specimen IDs.
-         % `cell_specimen_indices` will be an Nx1 vector with each element
-         % indicating the 1-based index of the corresponding cell specimen ID in
-         % the NWB data tables and fluorescence matrices.
-                           
-         % - Read all cell specimen IDs
-         all_cell_specimen_ids = bos.cell_specimen_ids;
-         
-         % - Find provided IDs in list
-         [vbFound, cell_specimen_indices] = ismember(cell_specimen_ids, all_cell_specimen_ids);
-         
-         % - Raise an error if specimens not found
-         assert(all(vbFound), 'BOT:NotFound', ...
-            'Provided cell specimen ID was not found in this session.');
-      end
-      
-      function traces = get.fluorescence_traces_demixed(bos)
-         traces = bos.fetch_cached('fluorescence_traces_demixed',@bos.fetch_fluorescence_traces_demixed); 
-      end
-      
-      function traces = fetch_fluorescence_traces_demixed(bos, cell_specimen_ids)
-         % fetch_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
-         %
-         % Usage: [timestamps, traces] = fetch_demixed_traces(bos <, cell_specimen_ids>)
-         %
-         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `traces`
-         % will be a TxN matrix of fluorescence samples, with each row `t`
-         % contianing the data for the timestamp in the corresponding entry of
-         % `timestamps`. Each column `n` contains the demixed fluorescence
-         % data for a single cell specimen.
-         %
-         % By default, traces for all cell specimens are returned. The optional
-         % argument`cell_specimen_ids` permits you specify which cell specimens
-         % should be returned.
-         
-         % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
-         %          % - Get the fluorescence timestamps
-         %          timestamps = bos.fluorescence_timestamps;
-         
-         % - Find cell specimen IDs, if provided
-         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
-         else
-            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
-         end
-         
-         % - Read requested fluorescence traces
-         traces = h5read(bos.nwbLocal, ...
-            h5path('processing', bos.strPipelineDataset, ...
-            'Fluorescence', 'imaging_plane_1_demixed_signal', 'data'));
-         
-         % - Subselect traces
-         traces = traces(:, cell_specimen_indices);
-      end
-      
-      function traces = get.fluorescence_traces(bos)
-         traces = bos.fetch_cached('fluorescence_traces',@bos.fetch_fluorescence_traces);
-      end
-      
-      function traces = fetch_fluorescence_traces(bos, cell_specimen_ids)
-         % fetch_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
-         %
-         % Usage: [timestamps, traces] = fetch_fluorescence_traces(bos <, cell_specimen_ids>)
-         %
-         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `traces`
-         % will be a TxN matrix of fluorescence samples, with each row `t`
-         % contianing the data for the timestamp in the corresponding entry of
-         % `timestamps`. Each column `n` contains the demixed fluorescence
-         % data for a single cell specimen.
-         %
-         % By default, traces for all cell specimens are returned. The optional
-         % argument`cell_specimen_ids` permits you specify which cell specimens
-         % should be returned.
-         
-                  
-         % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
-         %          % - Get the fluorescence timestamps
-         %          timestamps = bos.fluorescence_timestamps;
-         
-         % - Find cell specimen IDs, if provided
-         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
-         else
-            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
-         end
-         
-         % - Read requested fluorescence traces
-         traces = h5read(bos.nwbLocal, ...
-            h5path('processing', bos.strPipelineDataset, ...
-            'Fluorescence', 'imaging_plane_1', 'data'));
-         
-         % - Subselect traces
-         traces = traces(:, cell_specimen_indices);
-      end
-      
-      function neuropil_r = get.neuropil_r(bos)
-         neuropil_r = bos.fetch_cached('neuropil_r',@bos.fetch_neuropil_r);
-      end
-      
-      function neuropil_r = fetch_neuropil_r(bos, cell_specimen_ids)
-         % fetch_neuropil_r - METHOD Return the neuropil correction variance explained for the provided cell specimen IDs
-         %
-         % Usage: cell_specimen_ids = fetch_neuropil_r(bos <, cell_specimen_ids>)
-         %
-         % `neuropil_r` will be a vector of neuropil correction
-         % factors for each analysed cell. The optional argument
-         % `cell_specimen_ids` can be used to determine for which cells
-         % data should be returned. By default, data for all cells is
-         % returned.
-         
-                  
-         % - Find cell specimen IDs, if provided
-         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
-         else
-            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
-         end
-         
-         % - Check pipeline version and read neuropil correction R
-         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-            neuropil_r = h5read(bos.nwbLocal, ...
-               h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1_neuropil_response', 'r'));
-         else
-            neuropil_r = h5read(bos.nwbLocal, ...
-               h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1', 'r'));
-         end
-         
-         % - Subsample R to requested cell specimens
-         neuropil_r = neuropil_r(cell_specimen_indices);
-      end
-      
-      function traces = get.neuropil_traces(bos)
-         traces = bos.fetch_cached('neuropil_traces',@bos.fetch_neuropil_traces);
-      end
-      
-      function traces = fetch_neuropil_traces(bos, cell_specimen_ids)
-         % fetch_neuropil_traces - METHOD Return the neuropil traces for the provided cell specimen IDs
-         %
-         % Usage: [timestamps, traces] = fetch_neuropil_traces(bos <, cell_specimen_ids>)
-         %
-         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `traces`
-         % will be a TxN matrix of neuropil fluorescence samples, with each row
-         % `t` contianing the data for the timestamp in the corresponding entry
-         % of `timestamps`. Each column `n` contains the neuropil response for
-         % a single cell specimen.
-         %
-         % By default, traces for all cell specimens are returned. The optional
-         % argument`cell_specimen_ids` permits you specify which cell specimens
-         % should be returned.
-         
-         % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
-         %          % - Get the fluorescence timestamps
-         %          timestamps = bos.fluorescence_timestamps;
-         
-         % - Find cell specimen IDs, if provided
-         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
-         else
-            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
-         end
-         
-         % - Check pipeline version and read neuropil correction R
-         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-            traces = h5read(bos.nwbLocal, ...
-               h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
-         else
-            traces = h5read(bos.nwbLocal, ...
-               h5path('processing', bos.strPipelineDataset, ...
-               'Fluorescence', 'imaging_plane_1', 'neuropil_traces'));
-         end
-         
-         % - Subselect traces
-         traces = traces(:, cell_specimen_indices);
-      end
-      
-      function traces = get.corrected_fluorescence_traces(bos)
-         traces = bos.fetch_cached('corrected_fluorescence_traces',@bos.fetch_corrected_fluorescence_traces);         
-      end
-      
-      function traces = fetch_corrected_fluorescence_traces(bos, cell_specimen_ids)
-          % TODO: Move to derived linked file property group
-          
-         % fetch_corrected_fluorescence_traces - METHOD Return corrected fluorescence traces for the provided cell specimen IDs
-         %
-         % Usage: [timestamps, traces] = fetch_corrected_fluorescence_traces(bos <, cell_specimen_ids>)
-         %
-         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `traces`
-         % will be a TxN matrix of fluorescence samples, with each row `t`
-         % contianing the data for the timestamp in the corresponding entry of
-         % `timestamps`. Each column `n` contains the corrected fluorescence
-         % data for a single cell specimen.
-         %
-         % By default, traces for all cell specimens are returned. The optional
-         % argument`vnCellSpecimenIDs` permits you specify which cell specimens
-         % should be returned.
-         
-         
-         % - Pass an empty matrix to return all cell specimen IDs
-         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_ids = [];
-         end
-         
-         % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
-         if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-            traces = bos.fetch_demixed_traces(cell_specimen_ids);
-         else
-            traces = bos.fetch_fluorescence_traces(cell_specimen_ids);
-         end
-         
-         % - Read neuropil correction data
-         neuropil_r = bos.fetch_neuropil_r(cell_specimen_ids);
-         neuropil_traces = bos.fetch_neuropil_traces(cell_specimen_ids);
-         
-         % - Correct fluorescence traces using neuropil demixing model
-         traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
-      end
+      end                
 
       
-      function traces = get.fluorescence_traces_dff(bos)
-         traces = bos.fetch_cached('fluorescence_traces_dff',@bos.fetch_fluorescence_traces_dff);
-      end
-      
-      function traces = fetch_fluorescence_traces_dff(bos, cell_specimen_ids)
-         % fetch_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
-         %
-         % Usage: [timestamps, dff_traces] = fetch_dff_traces(bos <, cell_specimen_ids>)
-         %
-         % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-         % point defining a sample time for the fluorescence samples. `dff_traces`
-         % will be a TxN matrix of fluorescence samples, with each row `t`
-         % contianing the data for the timestamp in the corresponding entry of
-         % `timestamps`. Each column `n` contains the delta F/F0 fluorescence
-         % data for a single cell specimen.
-         %
-         % By default, traces for all cell specimens are returned. The optional
-         % argument`cell_specimen_ids` permits you specify which cell specimens
-         % should be returned.
-         
-         % - Find cell specimen IDs, if provided
-         if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
-            cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
-         else
-            cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
-         end
-         
-         % TODO: Consider if readout of per-property timestamp is useful for error-checking
-         % For now skip this step as it's not done with other fluorescence trace props and it's never found to differ from .fluorescence_timestamps
-         %          % Read timesamps
-         %           timestamps = h5read(bos.nwbLocal, ...
-         %               h5path('processing', bos.strPipelineDataset, ...
-         %               'DfOverF', 'imaging_plane_1', 'timestamps'));
-         %           timestamps = seconds(strc.timestamps);
-         
-         % - Read response traces            
-         traces = h5read(bos.nwbLocal, ...
-            h5path('processing', bos.strPipelineDataset, ...
-            'DfOverF', 'imaging_plane_1', 'data'));
-         
-         % - Subsample response traces to requested cell specimens
-         traces = traces(:, cell_specimen_indices);         
-         
-      end
-      
-      function stimulus_table = get.spontaneous_activity_stimulus_table(bos)
-         % get.tpontaneous_activity_stimulus_table - METHOD Return the sponaneous activity stimulus table for this experimental session
-         %
-         % Usage: stimulus_table = bos.spontaneous_activity_stimulus_table
-         %
-         % Return information about the epochs of spontaneous activity in this
-         % experimental session.
-         
-         % - Build a key for this stimulus
-         strKey = h5path('stimulus', 'presentation', 'spontaneous_stimulus');
-         
-         % - Read and convert stimulus data from the NWB file
-         try
-            % - Read data from the NWB file
-            nwb_file = bos.nwbLocal;
-            events = h5read(nwb_file, h5path(strKey, 'data'))';
-            frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'))';
-            
-            % - Locate start and stop events
-            start_inds = find(events == 1);
-            stop_inds = find(events == -1);
-            
-            % - Check spontaneous activity data
-            assert(numel(start_inds) == numel(stop_inds), ...
-               'BOT:StimulusError', 'Inconsistent start and time times in spontaneous activity stimulus table');
-            
-            % - Create a stimulus table to return
-            stim_data = int32([frame_dur(start_inds, 1) frame_dur(stop_inds, 1)]);
-            
-            % - Create a stimulus table to return
-            stimulus_table = array2table(stim_data, 'VariableNames', {'start_frame', 'end_frame'});
-            
-         catch meCause
-            meBase = MException('BOT:StimulusError', 'Could not read spontaneous stimulus from session.\nThe stimulus may not exist.');
-            meBase = meBase.addCause(meCause);
-            throw(meBase);
-         end
-      end
-      
-      function stimuli = get.stimulus_list(bos)
-         % get.stimulus_list - GETTER Return the list of stimuli used in this experimental session
-         %
-         % Usage: stimuli = bos.stimulus_list
-         %
-         % `stimuli` will be a cell array of strings, indicating which
-         % individual stimulus sets were presented in this session.
-         
-         % - Get local NWB file
-         nwb_file = bos.nwbLocal;
-         
-         % - Get list of stimuli from NWB file
-         strKey = h5path('stimulus', 'presentation');
-         sKeys = h5info(nwb_file, strKey);
-         [~, stimuli]= cellfun(@fileparts, {sKeys.Groups.Name}, 'UniformOutput', false);
-         
-         % - Remove trailing "_stimulus"
-         stimuli = cellfun(@(s)strrep(s, '_stimulus', ''), stimuli, 'UniformOutput', false);
-      end
-      
-      function session_type = get.session_type(bos)
-         % get.session_type - GETTER Return the name for the stimulus set used in this session
-         %
-         % Usage: strSessionType = bos.session_type
-         session_type = bos.info.stimulus_name;
-      end
-      
-      function stimulus_epochs = get.stimulus_epoch_table(bos)
-         % get.stimulus_epoch_table - GETTER Return the stimulus epoch table for this experimental session
-         %
-         % Usage: stimulus_epochs = bos.stimulus_epoch_table
-         %
-         % `stimulus_epochs` will be a table containing information about all
-         % stimulus epochs in this session.
-         
-         % - Hard-coded thresholds from Allen SDK for fetch_epoch_mask_list. These
-         % set a maximum limit on the delta aqusistion frames to count as
-         % different trials (rows in the stim table).  This helps account for
-         % dropped frames, so that they dont cause the cutting of an entire
-         % experiment into too many stimulus epochs. If these thresholds are too
-         % low, the assert statment in fetch_epoch_mask_list will halt execution.
-         % In that case, make a bug report!.
-         thresholds = struct('three_session_A', 32+7,...
-            'three_session_B', 15, ...
-            'three_session_C', 7, ...
-            'three_session_C2', 7);
-         
-         % - Get list of stimuli for this session
-         stimuli = bos.stimulus_list();
-         
-         % - Loop over stimuli to get stimulus tables
-         stimulus_epochs = table();
-         for stim_index = numel(stimuli):-1:1
-            % - Get the stimulus table for this stimulus
-            this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
-            
-            % - Set "frame" column for spontaneous stimulus
-            if isequal(stimuli{stim_index}, 'spontaneous')
-               this_stimulus.frame = nan(size(this_stimulus, 1), 1);
-            end
-            
-            % - Get epochs for this stimulus
-            these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(bos.session_type));
-            these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
-            these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
-            
-            % - Append to stimulus epochs table
-            stimulus_epochs = vertcat(stimulus_epochs, these_epochs_table); %#ok<AGROW>
-         end
-         
-         % - Sort by initial frame
-         stimulus_epochs = sortrows(stimulus_epochs, 'start_frame');
-         
-         % - Rearrange columns to put 'stimulus' first
-         stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
-      end
-      
-      function stimulus_table = fetch_stimulus_table(bos, stimulus_name)
-         % fetch_stimulus_table - METHOD Return the stimulus table for the provided stimulus
-         %
-         % Usage: stimulus_table = fetch_stimulus_table(bos, stimulus_name)
-         %
-         % `stimulus_name` is a string indicating for which stimulus data
-         % should be returned. `stimulus_name` must be one of the stimuli
-         % returned by bos.stimulus_list().
-         %
-         % `stimulus_table` will be a table containing information about the
-         % chosen stimulus. The individual stimulus frames can be accessed with
-         % method bos.fetch_stimulus_template().
-                           
-         % - Return a stimulus table for one of the stimulus types
-         if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
-            stimulus_table = fetch_abstract_feature_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
-            return;
-            
-         elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
-            stimulus_table = fetch_indexed_time_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
-            return;
-            
-         elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
-            stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
-            return;
-            
-         elseif isequal(stimulus_name, 'spontaneous')
-            stimulus_table = bos.spontaneous_activity_stimulus_table;
-            return;
-            
-         elseif isequal(stimulus_name, 'master')
-            % - Return a master stimulus table containing all stimuli
-            % - Loop over stimuli, collect stimulus tables
-            stimuli = {};
-            variable_names = {};
-            for strStimulus = bos.stimulus_list()
-               % - Get stimulus as a string
-               strStimulus = strStimulus{1}; %#ok<FXSET>
-               
-               % - Get stimulus table for this stimulus, annotate with stimulus name
-               stimuli{end+1} = bos.fetch_stimulus_table(strStimulus); %#ok<AGROW>
-               stimuli{end}.stimulus = repmat({strStimulus}, size(stimuli{end}, 1), 1);
-               
-               % - Collect all variable names
-               variable_names = union(variable_names, stimuli{end}.Properties.VariableNames);
-            end
-            
-            % - Loop over stimulus tables and merge
-            for nStimIndex = numel(stimuli):-1:1
-               % - Find missing variables in this stimulus
-               cstrMissingVariables = setdiff(variable_names, stimuli{nStimIndex}.Properties.VariableNames);
-               
-               % - Add missing variables to this stimulus table
-               stimuli{nStimIndex} = [stimuli{nStimIndex} array2table(nan(size(stimuli{nStimIndex}, 1), numel(cstrMissingVariables)), 'VariableNames', cstrMissingVariables)];
-            end
-            
-            % - Concatenate all stimuli and sort by start frame
-            stimulus_table = vertcat(stimuli{:});
-            stimulus_table = sortrows(stimulus_table, 'start_frame');
-            
-         else
-            % - Raise an error
-            error('BOT:Argument', 'Could not find a stimulus table named [%s].', stimulus_name);
-         end
-      end
-      
-      function val = get.max_projection(bos)
-          val = bos.fetch_cached('max_projection',bos.fetch_max_projection);
-      end
-      
-      function max_projection = fetch_max_projection(bos)
-         % get.max_projection - GETTER Return the maximum-intensity projection image for this experimental session
-         %
-         % Usage: max_projection = bos.max_projection
-         %
-         % `max_projection` will be an image contianing the
-         % maximum-intensity projection of the fluorescence stack obtained
-         % in this session.
-         
-         nwb_file = bos.nwbLocal;
-         
-         % - Extract the maximum projection from the session
-         nwb_key = h5path('processing', bos.strPipelineDataset, ...
-            'ImageSegmentation', 'imaging_plane_1', 'reference_images', ...
-            'maximum_intensity_projection_image', 'data');
-         max_projection = h5read(nwb_file, nwb_key);
-      end
-      
-      
-      function roi_ids = get.roi_ids(bos)
-          roi_ids = bos.fetch_cached('roi_ids',bos.fetch_roi_ids);
-      end    
-      
-      function roi_ids = fetch_roi_ids(bos)
-         % get.roi_ids - GETTER Return the list of ROI IDs for this experimental session
-         %
-         % Usage: roi_ids = bos.roi_ids
-         %
-         % `roi_ids` will be a vector containing all ROI IDs analysed in
-         % this session.
-         
-         nwb_file = bos.nwbLocal;
-         
-         % - Extract list of ROI IDs from NWB file
-         nwb_key = h5path('processing', bos.strPipelineDataset, ...
-            'ImageSegmentation', 'roi_ids');
-         roi_ids = cellfun(@str2num, h5read(nwb_file, nwb_key));
-      end      
-      
-      function tt = get.running_speed(bos)
-         tt = bos.fetch_cached('running_speed',@bos.fetch_running_speed);
-      end
-      
-      function tt = fetch_running_speed(bos)
-         % fetch_running_speed - METHOD Return running speed in cm/s
-         %
-         % Usage: [timestamps, running_speed] = fetch_running_speed(bos)
-         %
-         % `timestamps` will be a Tx1 vector containing times in seconds,
-         % corresponding to fluorescence timestamps. `running_speed` will be a
-         % Tx1 vector containing instantaneous running speeds at each
-         % corresponding time point, in cm/s.
-         
-         nwb_file = bos.nwbLocal;
-         
-         % - Build a base key for the running speed data
-         nwb_key = h5path('processing', bos.strPipelineDataset, ...
-            'BehavioralTimeSeries', 'running_speed');
-         running_speed_ = h5read(bos.nwbLocal, h5path(nwb_key, 'data'));
-         timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
-         
-         % - Align with imaging timestamps
-         imaging_timestamps = bos.fluorescence_timestamps;
-         
-         tt = timetable;
-         
-         [strc.running_speed, strc.running_speed_timestamps] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
-      end
-      
-      function motion_correction = get.motion_correction(bos)
-         % get.motion_correction - GETTER Return the motion correction information for this experimental session
-         %
-         % Usage: motion_correction = bos.motion_correction
-         %
-         % `motion_correction` will be a table containing x/y motion correction
-         % information applied in this experimental session.
-         
-         nwb_file = bos.nwbLocal;
-         
-         % - Try to locate the motion correction data
-         nwb_key = h5path('processing', bos.strPipelineDataset, ...
-            'MotionCorrection', '2p_image_series');
-         
-         try
-            h5info(nwb_file, h5path(nwb_key, 'xy_translation'));
-            nwb_key = h5path(nwb_key, 'xy_translation');
-         catch
-            try
-               h5info(nwb_file, h5path(nwb_key, 'xy_translations'));
-               nwb_key = h5path(nwb_key, 'xy_translations');
-            catch
-               error('BOT:MotionCorrectionNotFound', ...
-                  'Could not file motion correction data.');
-            end
-         end
-         
-         % - Extract motion correction data from session
-         motion_log = h5read(nwb_file, h5path(nwb_key, 'data'));
-         motion_time = h5read(nwb_file, h5path(nwb_key, 'timestamps'));
-         motion_names = h5read(nwb_file, h5path(nwb_key, 'feature_description'));
-         
-         % - Create a motion correction table
-         motion_correction = array2table(motion_log', 'VariableNames', motion_names);
-         motion_correction.timestamp = motion_time;
-      end
-      
-      function tt = get.pupil_location(bos)
-         tt = bos.fetch_cached('pupil_location', @bos.fetch_pupil_location);
-      end
-      
-      function [timestamps, pupil_location] = fetch_pupil_location(bos, as_spherical_coords)
+ function [timestamps, pupil_location] = fetch_pupil_location(bos, as_spherical_coords)
          % fetch_pupil_location - METHOD Return the pupil location trace for this experimental session
          %
          % Usage: [timestamps, pupil_location] = fetch_pupil_location(bos, <as_spherical_coords>)
@@ -941,9 +714,6 @@ classdef ophyssession < bot.item.abstract.Session
          end
       end
       
-      function tt = get.pupil_size(bos)
-         tt = bos.fetch_cached('pupil_size',@bos.fetch_pupil_size);
-      end
       
       function tt = fetch_pupil_size(bos)
          % fetch_pupil_size - METHOD Return the pupil area trace for this experimental session
@@ -952,7 +722,7 @@ classdef ophyssession < bot.item.abstract.Session
          %
          % `timestamps` will be a Tx1 vector of times in seconds,
          % corresponding to fluorescence timestamps. `pupil_areas` will be a
-         % Tx1 vector, each element containing the instantaneous estimated pupil
+         % Tx1 vector % corresponding to fluorescence timestamps , each element containing the instantaneous estimated pupil
          % area in pixels.
          
          % - Fail quickly if eye tracking data is known not to exist
@@ -970,7 +740,7 @@ classdef ophyssession < bot.item.abstract.Session
          try
             % - Try to read the eye tracking data from the NWB file
             pupil_areas = h5read(nwb_file, h5path(nwb_key, 'data'));
-            timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
+            timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps'))); % TODO: consider turning this into an error-checking only op; it's observed/expected to correspond to fluorescence_timestamps in initial assessment
             
             tt = timetable(timestamps,pupil_areas);
             
@@ -983,10 +753,25 @@ classdef ophyssession < bot.item.abstract.Session
          end
       end
       
-      function roi_masks = get.roi_mask_array(bos)
-         roi_masks = bos.fetch_cached('roi_mask_array',@bos.fetch_roi_mask_array);
-      end
       
+function roi_ids = fetch_roi_ids(bos)
+         % get.roi_ids - GETTER Return the list of ROI IDs for this experimental session
+         %
+         % Usage: roi_ids = bos.roi_ids
+         %
+         % `roi_ids` will be a vector containing all ROI IDs analysed in
+         % this session.
+         
+         nwb_file = bos.nwbLocal;
+         
+         % - Extract list of ROI IDs from NWB file
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
+            'ImageSegmentation', 'roi_ids');
+         roi_ids = cellfun(@str2num, h5read(nwb_file, nwb_key));
+end     
+      
+
+      % TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
       function roi_masks = fetch_roi_mask_array(bos, cell_specimen_ids)
          % fetch_roi_mask_array - METHOD Return the ROI mask for the provided cell specimen IDs
          %
@@ -1029,10 +814,7 @@ classdef ophyssession < bot.item.abstract.Session
          end
       end
       
-      function roi_masks = get.roi_mask(bos)
-         roi_masks = bos.fetch_cached('roi_mask',@bos.fetch_roi_mask);
-      end
-      
+        % TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
       function roi_masks = fetch_roi_mask(bos, cell_specimen_ids)
          % fetch_roi_mask - METHOD Return connected components structure defining requested ROIs
          %
@@ -1080,33 +862,60 @@ classdef ophyssession < bot.item.abstract.Session
          roi_masks.ImageSize = size(this_mask);
       end
       
-      function stimulus_template = fetch_stimulus_template(bos, stimulus_name)
-         % fetch_stimulus_template - METHOD Return the stimulus template for the provided stimulus
+ 
+      function tt = fetch_running_speed(bos)
+         % fetch_running_speed - METHOD Return running speed in cm/s
          %
-         % Usage: stimulus_template = fetch_stimulus_template(bos, stimulus_name)
+         % Usage: [timestamps, running_speed] = fetch_running_speed(bos)
          %
-         % `stimulus_name` is a string array, matching one of the stimuli used
-         % in this experimental session. `stimulus_template` will be an [XxYxF]
-         % tensor, each F-slice corresponds to a single stimulus frame as
-         % referenced in the stimulus tables ('frame', see method
-         % fetch_stimulus_table()).
+         % `timestamps` will be a Tx1 vector containing times in seconds,
+         % corresponding to fluorescence timestamps. `running_speed` will be a
+         % Tx1 vector containing instantaneous running speeds at each
+         % corresponding time point, in cm/s.
          
          nwb_file = bos.nwbLocal;
          
-         % - Extract stimulus template from NWB file
-         nwb_key = h5path('stimulus', 'templates', ...
-            [stimulus_name '_image_stack'], 'data');
+         % - Build a base key for the running speed data
+         nwb_key = h5path('processing', bos.strPipelineDataset, ...
+            'BehavioralTimeSeries', 'running_speed');
+         running_speed_ = h5read(bos.nwbLocal, h5path(nwb_key, 'data'));
+         timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
          
-         try
-            stimulus_template = h5read(nwb_file, nwb_key);
+         % - Align with imaging timestamps
+         imaging_timestamps = bos.fluorescence_timestamps;
+         
+         tt = timetable;
+         
+         [strc.running_speed, strc.running_speed_timestamps] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
+      end
+   
+           
+     
             
-         catch cause
-            base = MException('BOT:StimulusNotFound', ...
-               'A template for the stimulus [%s] was not found.', ...
-               stimulus_name);
-            base = base.addCause(cause);
-            throw(base);
-         end
+   end       
+   
+   %% PROPERTY ACCESS HELPERS
+   methods (Access=private)       
+      
+      function cell_specimen_indices = lookup_cell_specimen_indices(bos, cell_specimen_ids)
+         % lookup_cell_specimen_indices - METHOD Return indices corresponding to provided cell specimen IDs
+         %
+         % Usage: cell_specimen_indices = lookup_cell_specimen_indices(bos, cell_specimen_ids)
+         %
+         % `cell_specimen_ids` is an Nx1 vector of valid cell specimen IDs.
+         % `cell_specimen_indices` will be an Nx1 vector with each element
+         % indicating the 1-based index of the corresponding cell specimen ID in
+         % the NWB data tables and fluorescence matrices.
+                           
+         % - Read all cell specimen IDs
+         all_cell_specimen_ids = bos.cell_specimen_ids;
+         
+         % - Find provided IDs in list
+         [vbFound, cell_specimen_indices] = ismember(cell_specimen_ids, all_cell_specimen_ids);
+         
+         % - Raise an error if specimens not found
+         assert(all(vbFound), 'BOT:NotFound', ...
+            'Provided cell specimen ID was not found in this session.');
       end
       
       function [stimulus_template, off_screen_mask] = fetch_locally_sparse_noise_stimulus_template(bos, stimulus_name, mask_off_screen)
@@ -1176,120 +985,270 @@ classdef ophyssession < bot.item.abstract.Session
          end
       end
       
-      function [stimulus_info, is_valid_frame, stimulus_frame] = fetch_stimulus(bos, frame_indices)
-         % fetch_stimulus - METHOD Return stimulus information for selected frame indices
+      
+      % TODO: consider if this should be a user property and/or a user method
+      function stimulus_table = fetch_stimulus_table(bos, stimulus_name)
+         % fetch_stimulus_table - METHOD Return the stimulus table for the provided stimulus
          %
-         % Usage: [stimulus_info, is_valid_frame, stimulus_frame] = fetch_stimulus(bos, frame_indices)
+         % Usage: stimulus_table = fetch_stimulus_table(bos, stimulus_name)
          %
-         % `frame_indices` is a vector of fluorescence frame indices
-         % (1-based). This method finds the stimuli that correspond to
-         % these frame indices. `stimulus_info` will be a table with each
-         % row corresponding to a valid frame index. `is_valid_frame` is a
-         % boolean vector indicating which frames in `frame_indices` are
-         % valid stimulus frames. If a frame falls outside a registered
-         % stimulus epoch, it is considered not valid.
+         % `stimulus_name` is a string indicating for which stimulus data
+         % should be returned. `stimulus_name` must be one of the stimuli
+         % returned by bos.stimulus_list().
          %
-         % Each row in `stimulus_info` indicates the full stimulus
-         % information associated with the corresponding valid frame in
-         % `frame_indices`. For stimuli with a corresponding stimulus
-         % template (see method fetch_stimulus_template()), the column
-         % 'frame' contains an index indicating which stimulus frame was
-         % presented at that point in time.
-         %
-         % Note: The tensor `stimulus_frame` can optionally be used to
-         % return the stimulus template frames associated with each valid
-         % frame index. This is not recommended, since it can use a large
-         % amount of redundant memory storage. Stimulus templates can only
-         % be returned for stimuli that use them (i.e. locally sparse
-         % noise, natural movies, etc.)
-         
-                  
-         % - Obtain and cache the master stimulus table for this session
-         %   Also handles to accelerated search functions
-         if isempty(bos.smCachedStimulusTable)
-            epoch_stimulus_table = bos.stimulus_epoch_table;
-            master_stimulus_table = bos.fetch_stimulus_table('master');
-            bos.smCachedStimulusTable(1) = epoch_stimulus_table;
-            bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
-            bos.smCachedStimulusTable(3) = master_stimulus_table;
-            bos.smCachedStimulusTable(4) = int32(master_stimulus_table{:, {'start_frame', 'end_frame'}});
-            [bos.smCachedStimulusTable(5), bos.smCachedStimulusTable(6)] = bot.internal.fetch_mex_handles();
-         end
-         
-         % - Get the matrix of start and end frames
-         epoch_start_end_frames = bos.smCachedStimulusTable(2);
-         master_stimulus_table = bos.smCachedStimulusTable(3);
-         stimulus_start_end_frames = bos.smCachedStimulusTable(4);
-         fhBSSL_int32 = bos.smCachedStimulusTable(6);
-         
-         % - Ensure that `frame_indices` is sorted
-         if ~issorted(frame_indices)
-            frame_indices = sort(frame_indices);
-         end
-         
-         % - Ensure that the frame index is a column vector
-         frame_indices = reshape(frame_indices, [], 1);
-         
-         % - Identify search frames that are outside registered epochs
-         is_valid_frame = frame_indices >= epoch_start_end_frames(1, 1) & frame_indices <= epoch_start_end_frames(end, 2);
-         
-         % - Were any frames found?
-         if ~any(is_valid_frame)
-            stimulus_info = master_stimulus_table([], :);
-            stimulus_frame = [];
+         % `stimulus_table` will be a table containing information about the
+         % chosen stimulus. The individual stimulus frames can be accessed with
+         % method bos.fetch_stimulus_template().
+                           
+         % - Return a stimulus table for one of the stimulus types
+         if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
+            stimulus_table = fetch_abstract_feature_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
             return;
-         end
-         
-         % - Find matching stimulus epochs
-         start_epoch_index = fhBSSL_int32(epoch_start_end_frames(:, 1), int32(frame_indices(is_valid_frame)));
-         end_epoch_index = fhBSSL_int32([epoch_start_end_frames(1, 1); epoch_start_end_frames(:, 2)], int32(frame_indices(is_valid_frame)));
-         
-         % - Valid frames must fall within a registered stimulus epoch
-         is_valid_frame(is_valid_frame) = is_valid_frame(is_valid_frame) & (start_epoch_index == end_epoch_index);
-         
-         % - Were any frames found?
-         if ~any(is_valid_frame)
-            stimulus_info = master_stimulus_table([], :);
-            stimulus_frame = [];
+            
+         elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
+            stimulus_table = fetch_indexed_time_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
             return;
-         end
-         
-         % - Find matching stimulus frames
-         found_frame_index = fhBSSL_int32(stimulus_start_end_frames(:, 1), int32(frame_indices(is_valid_frame)));
-         
-         % - Extract an excerpt from the master stimulus table corresponding to these frames
-         stimulus_info = master_stimulus_table(found_frame_index, :);
-         
-         % - Try to extract stimulus frames
-         if nargout > 2
-            % - Is there more than one stimulus template?
-            if numel(unique(stimulus_info.stimulus)) > 1
-               warning('BOT:MultipleStimulusTypes', ...
-                  'Warning: Cannot extract stimulus templates for multiple stimulus types simultaneously');
-               stimulus_frame = [];
+            
+         elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
+            stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
+            return;
+            
+         elseif isequal(stimulus_name, 'spontaneous')
+            stimulus_table = bos.spontaneous_activity_stimulus_table;
+            return;
+            
+         elseif isequal(stimulus_name, 'master')
+            % - Return a master stimulus table containing all stimuli
+            % - Loop over stimuli, collect stimulus tables
+            stimuli = {};
+            variable_names = {};
+            for strStimulus = bos.stimulus_list()
+               % - Get stimulus as a string
+               strStimulus = strStimulus{1}; %#ok<FXSET>
                
-            else
-               % - Get the name of this stimulus
-               stimulus_name = stimulus_info{1, 'stimulus'};
-               stimulus_name = stimulus_name{1};
+               % - Get stimulus table for this stimulus, annotate with stimulus name
+               stimuli{end+1} = bos.fetch_stimulus_table(strStimulus); %#ok<AGROW>
+               stimuli{end}.stimulus = repmat({strStimulus}, size(stimuli{end}, 1), 1);
                
-               % - Extract the corresponding stimulus template
-               try
-                  stimulus_template = bos.fetch_stimulus_template(stimulus_name);
-                  stimulus_frame = stimulus_template(:, :, stimulus_info.frame);
-                  
-               catch
-                  % - Could not find the appropriate template, so return empty
-                  stimulus_frame = [];
-               end
+               % - Collect all variable names
+               variable_names = union(variable_names, stimuli{end}.Properties.VariableNames);
             end
+            
+            % - Loop over stimulus tables and merge
+            for nStimIndex = numel(stimuli):-1:1
+               % - Find missing variables in this stimulus
+               cstrMissingVariables = setdiff(variable_names, stimuli{nStimIndex}.Properties.VariableNames);
+               
+               % - Add missing variables to this stimulus table
+               stimuli{nStimIndex} = [stimuli{nStimIndex} array2table(nan(size(stimuli{nStimIndex}, 1), numel(cstrMissingVariables)), 'VariableNames', cstrMissingVariables)];
+            end
+            
+            % - Concatenate all stimuli and sort by start frame
+            stimulus_table = vertcat(stimuli{:});
+            stimulus_table = sortrows(stimulus_table, 'start_frame');
+            
+         else
+            % - Raise an error
+            error('BOT:Argument', 'Could not find a stimulus table named [%s].', stimulus_name);
          end
-      end
-   end    
+      end               
+      
+      % TODO: consider if this should be a user property and/or a user method
+      function stimulus_template = fetch_stimulus_template(bos, stimulus_name)
+         % fetch_stimulus_template - METHOD Return the stimulus template for the provided stimulus
+         %
+         % Usage: stimulus_template = fetch_stimulus_template(bos, stimulus_name)
+         %
+         % `stimulus_name` is a string array, matching one of the stimuli used
+         % in this experimental session. `stimulus_template` will be an [XxYxF]
+         % tensor, each F-slice corresponds to a single stimulus frame as
+         % referenced in the stimulus tables ('frame', see method
+         % fetch_stimulus_table()).
+         
+         nwb_file = bos.nwbLocal;
+         
+         % - Extract stimulus template from NWB file
+         nwb_key = h5path('stimulus', 'templates', ...
+            [stimulus_name '_image_stack'], 'data');
+         
+         try
+            stimulus_template = h5read(nwb_file, nwb_key);
+            
+         catch cause
+            base = MException('BOT:StimulusNotFound', ...
+               'A template for the stimulus [%s] was not found.', ...
+               stimulus_name);
+            base = base.addCause(cause);
+            throw(base);
+         end
+      end    
    
-end
+   end
+   
+   %% METHODS - USER
+   
+   methods 
+       function [stimulus_info, is_valid_frame, stimulus_frame] = getStimulusByFrame(bos, frame_indices)
+           % fetch_stimulus - METHOD Return stimulus information for selected frame indices
+           %
+           % Usage: [stimulus_info, is_valid_frame, stimulus_frame] = fetch_stimulus(bos, frame_indices)
+           %
+           % `frame_indices` is a vector of fluorescence frame indices
+           % (1-based). This method finds the stimuli that correspond to
+           % these frame indices. `stimulus_info` will be a table with each
+           % row corresponding to a valid frame index. `is_valid_frame` is a
+           % boolean vector indicating which frames in `frame_indices` are
+           % valid stimulus frames. If a frame falls outside a registered
+           % stimulus epoch, it is considered not valid.
+           %
+           % Each row in `stimulus_info` indicates the full stimulus
+           % information associated with the corresponding valid frame in
+           % `frame_indices`. For stimuli with a corresponding stimulus
+           % template (see method fetch_stimulus_template()), the column
+           % 'frame' contains an index indicating which stimulus frame was
+           % presented at that point in time.
+           %
+           % Note: The tensor `stimulus_frame` can optionally be used to
+           % return the stimulus template frames associated with each valid
+           % frame index. This is not recommended, since it can use a large
+           % amount of redundant memory storage. Stimulus templates can only
+           % be returned for stimuli that use them (i.e. locally sparse
+           % noise, natural movies, etc.)
+           
+           
+           % - Obtain and cache the master stimulus table for this session
+           %   Also handles to accelerated search functions
+           if isempty(bos.smCachedStimulusTable)
+               epoch_stimulus_table = bos.stimulus_epoch_table;
+               master_stimulus_table = bos.fetch_stimulus_table('master');
+               bos.smCachedStimulusTable(1) = epoch_stimulus_table;
+               bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
+               bos.smCachedStimulusTable(3) = master_stimulus_table;
+               bos.smCachedStimulusTable(4) = int32(master_stimulus_table{:, {'start_frame', 'end_frame'}});
+               [bos.smCachedStimulusTable(5), bos.smCachedStimulusTable(6)] = bot.internal.fetch_mex_handles();
+           end
+           
+           % - Get the matrix of start and end frames
+           epoch_start_end_frames = bos.smCachedStimulusTable(2);
+           master_stimulus_table = bos.smCachedStimulusTable(3);
+           stimulus_start_end_frames = bos.smCachedStimulusTable(4);
+           fhBSSL_int32 = bos.smCachedStimulusTable(6);
+           
+           % - Ensure that `frame_indices` is sorted
+           if ~issorted(frame_indices)
+               frame_indices = sort(frame_indices);
+           end
+           
+           % - Ensure that the frame index is a column vector
+           frame_indices = reshape(frame_indices, [], 1);
+           
+           % - Identify search frames that are outside registered epochs
+           is_valid_frame = frame_indices >= epoch_start_end_frames(1, 1) & frame_indices <= epoch_start_end_frames(end, 2);
+           
+           % - Were any frames found?
+           if ~any(is_valid_frame)
+               stimulus_info = master_stimulus_table([], :);
+               stimulus_frame = [];
+               return;
+           end
+           
+           % - Find matching stimulus epochs
+           start_epoch_index = fhBSSL_int32(epoch_start_end_frames(:, 1), int32(frame_indices(is_valid_frame)));
+           end_epoch_index = fhBSSL_int32([epoch_start_end_frames(1, 1); epoch_start_end_frames(:, 2)], int32(frame_indices(is_valid_frame)));
+           
+           % - Valid frames must fall within a registered stimulus epoch
+           is_valid_frame(is_valid_frame) = is_valid_frame(is_valid_frame) & (start_epoch_index == end_epoch_index);
+           
+           % - Were any frames found?
+           if ~any(is_valid_frame)
+               stimulus_info = master_stimulus_table([], :);
+               stimulus_frame = [];
+               return;
+           end
+           
+           % - Find matching stimulus frames
+           found_frame_index = fhBSSL_int32(stimulus_start_end_frames(:, 1), int32(frame_indices(is_valid_frame)));
+           
+           % - Extract an excerpt from the master stimulus table corresponding to these frames
+           stimulus_info = master_stimulus_table(found_frame_index, :);
+           
+           % - Try to extract stimulus frames
+           if nargout > 2
+               % - Is there more than one stimulus template?
+               if numel(unique(stimulus_info.stimulus)) > 1
+                   warning('BOT:MultipleStimulusTypes', ...
+                       'Warning: Cannot extract stimulus templates for multiple stimulus types simultaneously');
+                   stimulus_frame = [];
+                   
+               else
+                   % - Get the name of this stimulus
+                   stimulus_name = stimulus_info{1, 'stimulus'};
+                   stimulus_name = stimulus_name{1};
+                   
+                   % - Extract the corresponding stimulus template
+                   try
+                       stimulus_template = bos.fetch_stimulus_template(stimulus_name);
+                       stimulus_frame = stimulus_template(:, :, stimulus_info.frame);
+                       
+                   catch
+                       % - Could not find the appropriate template, so return empty
+                       stimulus_frame = [];
+                   end
+               end
+           end
+       end
+   end
+   
+%% CONSTRUCTOR
+   methods
+       function bsObj = ophyssession(session_id)
+           % bot.item.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
+           %
+           % Usage: bsObj = bot.item.ophyssession(id)
+           %        vbsObj = bot.item.ophyssession(vids)
+           %        bsObj = bot.item.ophyssession(tSessionRow)
+           
+           if nargin == 0
+               return;
+           end
+           
+           % Load associated singleton
+           manifest = bot.internal.ophysmanifest.instance();
+           
+           % - Handle a vector of session IDs
+           if ~istable(session_id) && numel(session_id) > 1
+               for nIndex = numel(session_id):-1:1
+                   bsObj(session_id) = bot.item.ophyssession(session_id(nIndex));
+               end
+               return;
+           end
+           
+           % - Assign metadata
+           session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
+           
+           % SUSPECTED CRUFT: since we've explicitly constructed an ophysmanifest, check seems unneeded. If checked, it would now use the table property.
+           %          % - Ensure that we were given an OPhys session
+           %          if session.info.type ~= "OPhys"
+           %              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
+           %          end
+           
+           
+           % Superclass initialization (bot.item.abstract.LinkedFilesItem)
+           session.initSession();
+           
+           session.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
+           h5Idx = find(contains(string({session.info.well_known_files.path}),"h5",'IgnoreCase',true));
+           assert(isscalar(h5Idx),"Expected to find exactly one H5 file ");
+           session.insertLinkedFileInfo("SessH5",session.info.well_known_files(h5Idx));
+           
+           session.initLinkedFiles();
+           
+       end                 
+      
+   end  
+end   
 
-%% - Local utility functions
+%% LOCAL FUNCTIONS 
 
 function stimulus_table = fetch_abstract_feature_series_stimulus_table(nwb_file, stimulus_name)
 % fetch_abstract_feature_series_stimulus_table - FUNCTION Return a stimlus table for an abstract feature series stimulus
