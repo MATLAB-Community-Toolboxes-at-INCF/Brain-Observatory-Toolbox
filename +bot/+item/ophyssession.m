@@ -273,6 +273,11 @@ classdef ophyssession < bot.item.abstract.Session
            session_type = bos.info.stimulus_name;
        end
        
+       function tbl = get.spontaneous_activity_stimulus_table(bos)
+           tbl = bos.fetch_cached('spontaneous_activity_stimulus_table',@bos.fetch_spontaneous_activity_stimulus_table);
+       end        
+      
+       
        % TODO: Consider utility of making a public method here, exposing the thresholds as arguments (if so, then can keep a stimulus_epoch_table_default property using the default args)
        function stimulus_epochs = get.stimulus_epoch_table(bos)
            % get.stimulus_epoch_table - GETTER Return the stimulus epoch table for this experimental session
@@ -294,8 +299,9 @@ classdef ophyssession < bot.item.abstract.Session
                'three_session_C', 7, ...
                'three_session_C2', 7);
            
-           % - Get list of stimuli for this session
+           % - Get needed session properties
            stimuli = bos.stimulus_list();
+           sessionType = string(bos.session_type);
            
            % - Loop over stimuli to get stimulus tables
            stimulus_epochs = table();
@@ -309,7 +315,7 @@ classdef ophyssession < bot.item.abstract.Session
                end
                
                % - Get epochs for this stimulus
-               these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(bos.session_type));
+               these_epochs = fetch_epoch_mask_list(this_stimulus, thresholds.(sessionType));
                these_epochs_table = array2table(int32(vertcat(these_epochs{:})), 'VariableNames', {'start_frame', 'end_frame'});
                these_epochs_table.stimulus = repmat(stimuli(stim_index), numel(these_epochs), 1);
                
@@ -888,7 +894,42 @@ end
          
          [strc.running_speed, strc.running_speed_timestamps] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
       end
-   
+      
+      function tbl = fetch_spontaneous_activity_stimulus_table(bos)
+          % Return information about the epochs of spontaneous activity in this
+         % experimental session.
+         
+         % - Build a key for this stimulus
+         strKey = h5path('stimulus', 'presentation', 'spontaneous_stimulus');
+         
+         % - Read and convert stimulus data from the NWB file
+         try
+            % - Read data from the NWB file
+            
+            nwb_file = bos.nwbLocal;
+            events = h5read(nwb_file, h5path(strKey, 'data'))';
+            frame_dur = h5read(nwb_file, h5path(strKey, 'frame_duration'))';
+            
+            % - Locate start and stop events
+            start_inds = find(events == 1);
+            stop_inds = find(events == -1);
+            
+            % - Check spontaneous activity data
+            assert(numel(start_inds) == numel(stop_inds), ...
+               'BOT:StimulusError', 'Inconsistent start and time times in spontaneous activity stimulus table');
+            
+            % - Create a stimulus table to return
+            stim_data = int32([frame_dur(start_inds, 1) frame_dur(stop_inds, 1)]);
+            
+            % - Create a stimulus table to return
+            tbl = array2table(stim_data, 'VariableNames', {'start_frame', 'end_frame'});
+            
+         catch meCause
+            meBase = MException('BOT:StimulusError', 'Could not read spontaneous stimulus from session.\nThe stimulus may not exist.');
+            meBase = meBase.addCause(meCause);
+            throw(meBase);
+         end
+      end   
            
      
             
