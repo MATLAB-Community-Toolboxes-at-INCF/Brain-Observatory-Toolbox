@@ -1022,46 +1022,48 @@ classdef ophyssession < bot.item.abstract.Session
                 stimulus_template(~off_screen_mask(:), :) = 64;
                 stimulus_template = reshape(stimulus_template, stim_template_size);
             end
-        end
+        end               
+                       
         
+    end
+    
+    %% METHODS - USER
+    
+    methods
         
-        % TODO: consider if this should be a user property and/or a user method
-        function stimulus_table = fetch_stimulus_table(bos, stimulus_name)
-            % fetch_stimulus_table - METHOD Return the stimulus table for the provided stimulus
-            %
-            % Usage: stimulus_table = fetch_stimulus_table(bos, stimulus_name)
-            %
-            % `stimulus_name` is a string indicating for which stimulus data
-            % should be returned. `stimulus_name` must be one of the stimuli
-            % returned by bos.stimulus_list().
-            %
-            % `stimulus_table` will be a table containing information about the
-            % chosen stimulus. The individual stimulus frames can be accessed with
-            % method bos.fetch_stimulus_template().
+        function stimulus_table = getStimulusTable(obj, stimulusName)
+            % fetch_stimulus_table - METHOD Return the stimulus table for the provided stimulus name
+            % Note individual stimulus frames can be accessed with the method .getStimulusTemplate()
+            
+            arguments
+                obj
+                stimulusName (1,1) string % String specifying which stimulus table data to return. Must be one of the stimuli in .stimulus_list
+            end
+            
             
             % - Return a stimulus table for one of the stimulus types
-            if ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.abstract_feature_series)
-                stimulus_table = fetch_abstract_feature_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
+            if ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.abstract_feature_series)
+                stimulus_table = fetch_abstract_feature_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
                 return;
                 
-            elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.indexed_time_series)
-                stimulus_table = fetch_indexed_time_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
+            elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.indexed_time_series)
+                stimulus_table = fetch_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
                 return;
                 
-            elseif ismember(stimulus_name, bos.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
-                stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(bos.nwbLocal, [stimulus_name '_stimulus']);
+            elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
+                stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
                 return;
                 
-            elseif isequal(stimulus_name, 'spontaneous')
-                stimulus_table = bos.spontaneous_activity_stimulus_table;
+            elseif isequal(stimulusName, 'spontaneous')
+                stimulus_table = obj.spontaneous_activity_stimulus_table;
                 return;
                 
-            elseif isequal(stimulus_name, 'master')
+            elseif isequal(stimulusName, 'master')
                 % - Return a master stimulus table containing all stimuli
                 % - Loop over stimuli, collect stimulus tables
                 stimuli = {};
                 variable_names = {};
-                for strStimulus = bos.stimulus_list()
+                for strStimulus = obj.stimulus_list()
                     % - Get stimulus as a string
                     strStimulus = strStimulus{1}; %#ok<FXSET>
                     
@@ -1088,27 +1090,27 @@ classdef ophyssession < bot.item.abstract.Session
                 
             else
                 % - Raise an error
-                error('BOT:Argument', 'Could not find a stimulus table named [%s].', stimulus_name);
+                error('BOT:Argument', 'Could not find a stimulus table named [%s].', stimulusName);
             end
         end
         
-        % TODO: consider if this should be a user property and/or a user method
-        function stimulus_template = fetch_stimulus_template(bos, stimulus_name)
+                % TODO: consider if this should be a user property and/or a user method
+        function stimulus_template = getStimulusTemplate(obj, stimulusName)
             % fetch_stimulus_template - METHOD Return the stimulus template for the provided stimulus
-            %
-            % Usage: stimulus_template = fetch_stimulus_template(bos, stimulus_name)
-            %
-            % `stimulus_name` is a string array, matching one of the stimuli used
-            % in this experimental session. `stimulus_template` will be an [XxYxF]
-            % tensor, each F-slice corresponds to a single stimulus frame as
-            % referenced in the stimulus tables ('frame', see method
-            % fetch_stimulus_table()).
+            % `stimulus_template` will be an [XxYxF] tensor, each F-slice
+            % corresponds to a single stimulus frame as referenced in the
+            % stimulus tables ('frame', see method .getStimulusTable)
             
-            nwb_file = bos.nwbLocal;
+            arguments
+                obj
+                stimulusName (1,1) string % String specifying which stimulus template to return. Must be one of the stimuli in .stimulus_list
+            end            
+                        
+            nwb_file = obj.nwbLocal;
             
             % - Extract stimulus template from NWB file
             nwb_key = h5path('stimulus', 'templates', ...
-                [stimulus_name '_image_stack'], 'data');
+                [stimulusName '_image_stack'], 'data');
             
             try
                 stimulus_template = h5read(nwb_file, nwb_key);
@@ -1116,18 +1118,13 @@ classdef ophyssession < bot.item.abstract.Session
             catch cause
                 base = MException('BOT:StimulusNotFound', ...
                     'A template for the stimulus [%s] was not found.', ...
-                    stimulus_name);
+                    stimulusName);
                 base = base.addCause(cause);
                 throw(base);
             end
         end
         
         
-    end
-    
-    %% METHODS - USER
-    
-    methods
         function [stimulus_info, is_valid_frame, stimulus_frame] = getStimulusByFrame(bos, frame_indices)
             % fetch_stimulus - METHOD Return stimulus information for selected frame indices
             %
