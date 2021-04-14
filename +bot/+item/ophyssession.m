@@ -1040,6 +1040,8 @@ classdef ophyssession < bot.item.abstract.Session
                 stimulusName (1,1) string % String specifying which stimulus table data to return. Must be one of the stimuli in .stimulus_list
             end
             
+            % TODO: handle prop with string type
+            stimulusName = char(stimulusName); 
             
             % - Return a stimulus table for one of the stimulus types
             if ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.abstract_feature_series)
@@ -1104,7 +1106,10 @@ classdef ophyssession < bot.item.abstract.Session
             arguments
                 obj
                 stimulusName (1,1) string % String specifying which stimulus template to return. Must be one of the stimuli in .stimulus_list
-            end            
+            end        
+            
+            % TODO: apply string processing method
+            stimulusName = char(stimulusName);
                         
             nwb_file = obj.nwbLocal;
             
