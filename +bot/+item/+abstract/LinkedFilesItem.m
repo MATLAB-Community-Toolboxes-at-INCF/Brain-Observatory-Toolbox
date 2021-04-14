@@ -106,6 +106,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
                             end
                         end
                         
+                        % TODO: break this up into two groups for direct and derived values (most likely separated by a newline gap, rather than additional group headings)
                         groups(end+1) = matlab.mixin.util.PropertyGroup(propListing, "Linked File Values ('" + nickname + "')"); %#ok<AGROW>
                     end
                 end
