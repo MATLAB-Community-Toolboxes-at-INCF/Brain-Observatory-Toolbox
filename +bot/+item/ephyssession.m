@@ -43,7 +43,7 @@ classdef ephyssession < bot.item.abstract.Session
         
         stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
         stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
-        num_stimulus_presentations;  	% Number of stimulus presentations in this session
+        %num_stimulus_presentations;  	% Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
         stimulus_templates;              % Stimulus template table
         stimulus_names;                  % Names of stimuli presented in this session
         stimulus_epochs;                % Table of stimulus presentation epochs
@@ -124,9 +124,10 @@ classdef ephyssession < bot.item.abstract.Session
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
         end
         
-        function num_stimulus_presentations = get.num_stimulus_presentations(self)
-            num_stimulus_presentations = size(self.stimulus_presentations, 1);
-        end
+        % TODO: 
+        %         function num_stimulus_presentations = get.num_stimulus_presentations(self)
+        %             num_stimulus_presentations = size(self.stimulus_presentations, 1);
+        %         end
         
         function stimulus_names = get.stimulus_names(self)
             stimulus_names = unique(self.stimulus_presentations.stimulus_name);
@@ -826,19 +827,7 @@ classdef ephyssession < bot.item.abstract.Session
                 self;
                 tags string;
             end
-            
-            % """
-            % Parameters
-            % ----------
-            % invalid_times: pd.DataFrame
-            %    of invalid times
-            % tags: list
-            %    of tags
-            %
-            % Returns
-            % -------
-            % pd.DataFrame of invalid times having tags
-            
+                       
             invalid_times = self.invalid_times;
             
             if isequal(invalid_times, bot.item.internal.OnDemandState.Unavailable)
@@ -854,21 +843,7 @@ classdef ephyssession < bot.item.abstract.Session
                 self;
                 stimulus_presentations table;
             end
-            % """Mask invalid stimulus presentations
-            %
-            % Find stimulus presentations overlapping with invalid times
-            % Mask stimulus names with "invalid_presentation", keep "start_time" and "stop_time", mask remaining data with np.nan
-            %
-            % Parameters
-            % ----------
-            % stimulus_presentations : pd.DataFrame
-            %    table including all stimulus presentations
-            %
-            % Returns
-            % -------
-            % pd.DataFrame :
-            %     table with masked invalid presentations
-            
+                    
             fail_tags = "stimulus";
             invalid_times_filt = self.filter_invalid_times_by_tags(fail_tags);
             
@@ -1017,27 +992,6 @@ for unit_index = 1:numel(unit_ids)
     end
 end
 
-%     time_domain = np.array(time_domain)
-%     unit_ids = np.array(unit_ids)
-%
-%     tiled_data = np.zeros(
-%         (time_domain.shape[0], time_domain.shape[1] - 1, unit_ids.size),
-%         dtype=(np.uint8 if binarize else np.uint16) if dtype is None else dtype
-%     )
-%
-%     starts = time_domain[:, :-1]
-%     ends = time_domain[:, 1:]
-%
-%     for ii, unit_id in enumerate(unit_ids):
-%         data = np.array(spike_times[unit_id])
-%
-%         start_positions = np.searchsorted(data, starts.flat)
-%         end_positions = np.searchsorted(data, ends.flat, side="right")
-%         counts = (end_positions - start_positions)
-%
-%         tiled_data[:, :, ii].flat = counts > 0 if binarize else counts
-%
-%     return tiled_data
 end
 
 function indices = zlclSearchSorted(sorted_array, values, right_side)
