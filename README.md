@@ -14,6 +14,8 @@ The BOT interface provides:
 * Useful methods to assist in analysing neural responses and behavioural data 
 * Caching of retrieved directories and data, for best possible initial and repeat performance
 
+![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTdataSchematic.png?raw=true)
+
 ## Installation
 
 1. Download the latest release as a `.zip` file.
