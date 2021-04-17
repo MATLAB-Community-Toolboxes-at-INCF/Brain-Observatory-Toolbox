@@ -1,4 +1,10 @@
 classdef ephysprobe < bot.item.abstract.LinkedFilesItem
+%
+% Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] probe item.
+%
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% 
+    
     
     %% PROPERTIES - USER
     

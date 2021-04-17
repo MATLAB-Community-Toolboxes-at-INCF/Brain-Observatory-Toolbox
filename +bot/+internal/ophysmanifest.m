@@ -1,7 +1,8 @@
 %% CLASS bot.internal.ophysmanifest
 %
-% This class can be used to obtain a raw list of available experimental
-% sessions from the Allen Brain Observatory dataset [1, 2].
+% This class can be used to obtain a list of available experimental
+% sessions from the Visual Coding 2P dataset [1] obtained with the Allen
+% Brain Observatory platform [2].
 %
 % Construction:
 % >> bom = bot.internal.manifest('ophys')
@@ -30,8 +31,8 @@
 %
 % (See documentation for the `bot.item.ophyssession` class for more information)
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
-% [2] Copyright 2015 Allen Brain Atlas API. Allen Brain Observatory. Available from: brain-map.org/api/index.html
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
 %
 
 %% Class definition

@@ -1,4 +1,9 @@
 classdef ephyschannel < bot.item.abstract.Item
+%
+% Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] channel item.
+%
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% 
    
     %% USER INTERFACE 
     properties (SetAccess = private)

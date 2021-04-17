@@ -1,4 +1,8 @@
-%% CLASS bot.item.ephyssession - Encapsulate and provide data access to an EPhys session dataset from the Allen Brain Observatory
+%
+% Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] experimental session. 
+%
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+%
 
 classdef ephyssession < bot.item.abstract.Session
     

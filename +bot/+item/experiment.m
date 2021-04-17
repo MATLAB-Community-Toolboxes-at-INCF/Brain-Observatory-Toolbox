@@ -1,4 +1,9 @@
 %% experiment - CLASS Represent an experiment container
+%
+% This class represents direct, linked, and derived data for a Visual Coding 2P dataset [1] experiment container. 
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+%
 
 classdef experiment < handle
    properties (SetAccess = private)

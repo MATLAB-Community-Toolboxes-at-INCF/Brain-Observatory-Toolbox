@@ -1,67 +1,8 @@
-%% bot.item.ophyssession - CLASS Represent an experimental container from the Allen Brain Observatory
 %
-% This is the main interface to access data from an Allen Brain Observatory
-% experimental session. Use the `bot.cache` or `bot.sessionfilter` classes to
-% identify an experimental session of interest. Then use `bot.session` to access
-% data associated with that session id.
+% Represent direct, linked, and derived data for a Visual Coding 2P dataset [1] experimental session. 
 %
-% Construction:
-% >> bos = bot.session(id);
-% >> bos = bot.internal.opyssession(id);
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
 %
-% Get session metadata:
-% >> bos.nwb_metadata
-% ans =
-%                         age: '73 days'
-%                         sex: 'female'
-%               imaging_depth: '375 microns'
-%          targeted_structure: 'VISl'
-%         ophys_experiment_id: 511458874
-%     experiment_container_id: 511511089
-%        ...
-%
-% Find cells analysed in this session:
-% >> vnAllCellIDs = bos.cell_specimen_ids;
-%
-% Maximum intensity projection:
-% >> imagesc(bos.max_projection);
-%
-% Obtain fluorescence traces:
-% >> [vtTimestamps, mfTraces] = bos.fetch_fluorescence_traces();
-% >> [vtTimestamps, mfTraces] = bos.fetch_dff_traces();
-% >> [vtTimestamps, mfTraces] = bos.fetch_demixed_traces();
-% >> [vtTimestamps, mfTraces] = bos.fetch_corrected_fluorescence_traces();
-% >> [vtTimestamps, mfTraces] = bos.fetch_neuropil_traces();
-%
-% Get ROIs:
-% >> sROIStructure = bos.roi_mask;
-% >> tbROIMask = bos.fetch_roi_mask_array();
-%
-% Obtain behavioural data:
-% >> [vtTimestamps, vfPupilLocation] = bos.fetch_pupil_location();
-% >> [vtTimestamps, vfPupilAreas] = bos.fetch_pupil_size();
-% >> [vtTimestamps, vfRunningSpeed] = fetch_running_speed();
-%
-% Obtain stimulus information:
-% >> bos.stimulus_epoch_table
-% ans =
-%          stimulus          start_frame    end_frame
-%     ___________________    ___________    _________
-%     'static_gratings'        745           15191
-%     'natural_scenes'       16095           30542
-%        ...
-%
-% >> bos.fetch_stimulus(vnFrameNumbers)
-% ans =
-%     frame    start_frame    end_frame    repeat        stimulus         ...
-%     _____    ___________    _________    ______    _________________    ...
-%     0        797            804          NaN       'static_gratings'    ...
-%        ...
-%
-% See method documentation for further information.
-%
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
-
 
 classdef ophyssession < bot.item.abstract.Session
     
