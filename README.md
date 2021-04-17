@@ -1,7 +1,7 @@
 # Brain-Observatory-Toolbox
 A MATLAB toolbox for accessing and working with the Allen Brain Observatory \[1\] neural recording datasets
 
-The Allen Brain Observatory resource  comprises extensive public datasets of neural activity in the mouse visual cortex during visual stimulus presentation. These datasets are based on cellular-scale experimental neural recordings conducted at the Allen Institute for Brain Science: 
+The Allen Brain Observatory resource comprises extensive public datasets of neural activity in the mouse visual cortex during visual stimulus presentation. These datasets are based on cellular-scale experimental neural recordings conducted at the Allen Institute for Brain Science: 
 * the Visual Coding – 2P dataset \[2\], based on two-photon calcium imaging
 * the Visual Coding – Neuropixels dataset \[3\], based on large-scale electrophysiological probes
 
@@ -63,9 +63,9 @@ See the Ephys Quick Start Example and the Ephys Demo for examples of how to acce
 
 [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
-[2] Copyright 2016 Allen Institute for Brain Science. Visual Coding - 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
+[2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
 
-[3] Copyright 2020 Allen Institute for Brain Science. Visual Coding – Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
+[3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
 
 #### Acknowledgements
 
