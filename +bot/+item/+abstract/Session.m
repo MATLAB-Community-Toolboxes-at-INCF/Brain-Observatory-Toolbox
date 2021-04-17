@@ -1,10 +1,7 @@
-%% bot.item.session_base — CLASS Base class for experimental sessionss
-
 classdef Session < handle & bot.item.abstract.LinkedFilesItem
  
 
-    %% PROPERTIES - HIDDEN                 
-    
+    %% PROPERTIES - HIDDEN                     
     
     % SUBCLASS INTERFACE    
     properties (Abstract, Constant, Hidden)
@@ -18,8 +15,7 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
     properties (SetAccess = protected, Hidden)
         LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true);
-    end
-    
+    end    
     
     % SUSPECTED CRUFT
     %     properties (Access = private)
