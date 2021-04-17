@@ -1,10 +1,15 @@
-% fetchChannels - FUNCTION Return the table of recorded channels
+% Retrieve table of Neuropixels probes information for an Allen Brain Observatory dataset
 %
-% Usage: channels = fetchChannels()
+% Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
 %
-% `channels` will be the manifest table of EPhys channels.
-
-function channels = fetchChannels(~)
+% Web data accessed via the Allen Brain Atlas API [3]. 
+%
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
+% [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
+%
+%% function channelsTable = fetchChannels()
+function channelsTable = fetchChannels()
    manifest = bot.internal.manifest.instance('ephys');
-   channels = manifest.ephys_channels;
+   channelsTable = manifest.ephys_channels;
 end
