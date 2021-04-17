@@ -1,4 +1,3 @@
-%% experiment - CLASS Represent an experiment container
 %
 % This class represents direct, linked, and derived data for a Visual Coding 2P dataset [1] experiment container. 
 %

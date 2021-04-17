@@ -1,16 +1,28 @@
-% unit — Return a unit object from the Allen Brain Observatory EPhys data set
+% Obtain object array representing identified unit item(s) from an Allen Brain Observatory dataset
+% 
+% Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
 %
-% Usage: new_unit = unit(unit_id)
+% Specify item(s) by unique numeric IDs for item. These can be obtained via:
+%   * table returned by bot.fetchUnits() 
+%   * tables contained by other item objects (sessions, channels, probes)
 %
-% `unit_id` is a unit ID from the Allen Brain Observatory EPhys data
-% set.  A lightweight unit ojbect `new_unit` is returned, containing
-% metadata about the data recorded from the corresponding unit in the
-% experiment.
+% Can also specify item(s) by supplying an information table of the format
+% returned by bot.fetchUnits. This is often useful when such a table has
+% been "filtered" to one or a few rows of interest via table indexing
+% operations.   
+%
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
+% 
+%% function unitObj = unit(unitIDSpec)
+function unitObj = unit(unitIDSpec)
 
-function new_unit = unit(unit_id)
+arguments
+    unitIDSpec {bot.item.internal.mustBeItemIDSpec}
+end
 
 % - Get a bot ephys manifest
 ephys_manifest = bot.internal.manifest.instance('ephys');
 
 % - Return the unit object
-new_unit = bot.item.ephysunit(unit_id, ephys_manifest);
+unitObj = bot.item.ephysunit(unitIDSpec, ephys_manifest);

@@ -1,16 +1,28 @@
-% channel — Return a channel object from the Allen Brain Observatory EPhys data set
+% Obtain object array representing identified channel item(s) from an Allen Brain Observatory dataset
+% 
+% Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
 %
-% Usage: new_channel = channel(channel_id)
+% Specify item(s) by unique numeric IDs for item. These can be obtained via:
+%   * table returned by bot.fetchChannels() 
+%   * tables contained by other item objects (sessions, probes, units)   
 %
-% `channel_id` is a channel ID from the Allen Brain Observatory EPhys data
-% set.  A lightweight channel ojbect `new_channel` is returned, containing
-% metadata about the data recorded from the corresponding channel in the
-% experiment.
+% Can also specify item(s) by supplying an information table of the format
+% returned by bot.fetchChannels. This is often useful when such a table has
+% been "filtered" to one or a few rows of interest via table indexing
+% operations.
+%
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
+% 
+%% function channelObj = channel(channelIDSpec)
+function channelObj = channel(channelIDSpec)
 
-function new_channel = channel(channel_id)
+arguments
+    channelIDSpec {bot.item.internal.mustBeItemIDSpec}
+end
 
 % - Get a bot ephys manifest
 ephys_manifest = bot.internal.manifest.instance('ephys');
 
 % - Return the channel object
-new_channel = bot.item.ephyschannel(channel_id, ephys_manifest);
+channelObj = bot.item.ephyschannel(channelIDSpec, ephys_manifest);

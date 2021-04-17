@@ -1,15 +1,28 @@
-% probe — Return a probe object from the Allen Brain Observatory EPhys data set
+% Obtain object array representing identified probe item(s) from an Allen Brain Observatory dataset
+% 
+% Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
 %
-% Usage: new_probe = probe(probe_id)
+% Specify item(s) by unique numeric IDs for item. These can be obtained via:
+%   * table returned by bot.fetchProbes() 
+%   * tables contained by other item objects (sessions, channels, units)
+%   
+% Can also specify item(s) by supplying an information table of the format
+% returned by bot.fetchProbes. This is often useful when such a table has
+% been "filtered" to one or a few rows of interest via table indexing
+% operations.
 %
-% `probe_id` is a probe ID from the Allen Brain Observatory EPhys data set.
-% A lightweight probe ojbect `new_probe` is returned, containing
-% metadata about the experiment probe data.
+% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
+% 
+%% function probeObj = probe(probeIDSpec)
+function probeObj = probe(probeIDSpec)
 
-function new_probe = probe(probe_id)
+arguments
+    probeIDSpec {bot.item.internal.mustBeItemIDSpec}
+end
 
 % - Get a bot ephys manifest
 ephys_manifest = bot.internal.manifest.instance('ephys');
 
 % - Return the probe object
-new_probe = bot.item.ephysprobe(probe_id, ephys_manifest);
+probeObj = bot.item.ephysprobe(probeIDSpec, ephys_manifest);
