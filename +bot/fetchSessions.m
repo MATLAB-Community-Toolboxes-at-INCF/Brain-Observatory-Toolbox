@@ -1,26 +1,31 @@
-% fetchSessions - FUNCTION Return the table of experiment sessions (either OPhys or EPhys)
+% Retrieve table of experiment sessions information for an Allen Brain Observatory dataset 
+% 
+% Can return experiment sessions from either of the Allen Brain Observatory [1] datasets:
+%   * Visual Coding 2P [2] ("ophys")
+%   * Visual Coding Neuropixels [3] ("ephys") 
 %
-% Usage: sessions = fetchSessions(experiment_type)
+% Web data accessed via the Allen Brain Atlas API [4]. 
 %
-% `experiment_type` is one of {'ophys', 'ephys'}. `sessions` will be the
-% manifest table of OPhys or EPhys sessions.
+% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
+% [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
+% [3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
+% [4] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
+%
+%% function sessionsTable = fetchSessions(dataset)
+function sessionsTable = fetchSessions(dataset)
 
-function sessions = fetchSessions(experiment_type)
-   if ~exist('experiment_type', 'var') || isempty(experiment_type)
-      error('BOT:Usage', '`experiment_type` must be one of {''ophys'', ''ephys''}');
-   end
+arguments
+    dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys"])}    
+end
    
-   switch lower(experiment_type)
-      case {'ephys', 'e'}
+   switch lower(dataset)
+      case 'ephys'
          manifest = bot.internal.manifest.instance('ephys');
-         sessions = manifest.ephys_sessions;
+         sessionsTable = manifest.ephys_sessions;
          
-      case {'ophys', 'o'}
+      case 'ophys'
          manifest = bot.internal.manifest.instance('ophys');
-         sessions = manifest.ophys_sessions;
-
-      otherwise
-         error('BOT:Usage', '`experiment_type` must be one of {''ophys'', ''ephys''}');
+         sessionsTable = manifest.ophys_sessions;
    end
 
 end
