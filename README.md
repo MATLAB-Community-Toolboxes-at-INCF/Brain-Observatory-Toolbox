@@ -13,7 +13,7 @@ A MATLAB toolbox for accessing and using the neural recording public dataset rel
 | Visual Coding Neuropixels \[2\] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
 | Visual Coding 2P \[3\] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
-The Visual Coding datasets are both collected from the living mouse brain during exposure to varying visual stimulus presentation. Technical white papers (see Details for each dataset) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
+The Visual Coding datasets are both collected from the living mouse brain during presentation of varying visual stimuli. Technical white papers (see Details for each dataset) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
 
 ## About the Brain Observatory Toolbox (BOT) 
  
