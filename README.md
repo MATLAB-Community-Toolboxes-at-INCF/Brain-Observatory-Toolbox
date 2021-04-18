@@ -25,7 +25,7 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 
 **Key Points:**
 * Supported dataset items: experimental sessions (for both 2P and Neuropixels) as well as probes, channels, and units (for Neuropixels). 
-* Tabular indexing or unique item identifiers allow specific item selection from item tables for downstream inspection and analysis as item objects.
+* Tabular indexing or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects.
 * Item object [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item. 
 * Values for item object properties involving extensive compute or file reading are computed "on demand". 
 * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) allow computations of values determined with additional user-specified arguments. 
