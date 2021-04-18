@@ -24,22 +24,24 @@ The BOT interface provides a tabular representation of available dataset items a
 * Supported dataset items include experimental sessions (both 2P and Neuroxels datasets) as well as probes, channels, and units (for the Neuropixels dataset). 
 * Tabular indexing or unique item identifiers can be used to select specific item(s) of interest from available items tables for item object creation. 
 * Item object properties allow inspection and computation of direct, derived, and file-linked values associated to an item. 
+* Values for item object properties involving extensive compute or file reading are computed "on demand". 
 * Item object methods allow computations of values determined with additional user-specified arguments. 
-* The BOT provides local caching of retrieved item information, object representations, and file contents, to provide the fastest possible initial and repeat performance.
+* The BOT provides local caching of retrieved item information, object representations, and file contents, to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
 
 To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FEphysDemo.mlx&embed=web) and/or the [Ophys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FOphysDemo.mlx&embed=web).
 
 ## Installation Instructions
 
-1. Download the latest release, either by
-   1. Downloading the `.zip` file from GitHub and unzipping via preferred system tool
-   1. Cloning the GitHub `master` branch<sup>1</sup>
-1. Add the root directory of the unzipped contents to the MATLAB path, either by:
-   1. Navigating to root directory in the _Current Folder_ browser and selecting _Add to Path_<sup>2</sup> in the right-click context menu
-   1. Selecting root directory in the Set Path dialog from the _Environment_ section of the _Home_ tab
+1. Download the latest release, in one of two ways:
+   1. Download the `.zip` file from GitHub and unzipping via preferred system tool
+   1. Clone the GitHub `master` branch<sup>1</sup>
+1. Add the root directory of the unzipped contents to the MATLAB path, in one of three ways: 
+   1. Navigate to root directory in the _Current Folder_ browser and select Add to Path from the right-click context menu<sup>2</sup>
+   1. Select the root directory from the  Set Path dialog from the Environment section of the Home tab in the MATLAB Desktop
    1. Calling `addpath(<root directory>)` in the _Command Window_
+   
 <sup>1. This branch will be renamed soon to remove abhorrent associations 
-<sup>2. Note it is unnecessary to add subdirectories to the MATLAB path; all contents of the `+bot` package are made available by adding the base directory</sup>
+<sup>2. Use the Selected Folders option. The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). It is necessary and sufficient to add the package parent folder to the path. </sup>
 
 #### Required products
 * MATLAB (R2021a)
@@ -53,8 +55,10 @@ Four MATLAB live scripts are provided to help get started:
 
 Or to get a fast first look yourself, enter the following commands in MATLAB: 
 ```
-sessions = bot.fetchSessions('ephys'); 
-head(sessions)
+>> sessions = bot.fetchSessions('ephys'); % or can use 'ophys' for the Visual Coding 2P dataset
+>> head(sessions) % displays the first rows of the available sessions information table
+>> session = bot.session(sessions(1,:)) % displays accessible stored and on-demand properties for the first session item
+>> methods(session) % displays callable methods for the first session item
 ```
 ----
 #### References
