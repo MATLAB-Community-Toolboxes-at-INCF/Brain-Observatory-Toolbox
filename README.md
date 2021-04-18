@@ -1,5 +1,5 @@
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory \[1\]. 
+A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory\[1\]. 
 
 **NOTE**: Releases for the current version (0.9) are a *working prototype* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
 
@@ -20,11 +20,12 @@ The Visual Coding datasets are both collected from the living mouse brain during
 The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use these Visual Coding neural datasets. 
 
 The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
+
 ![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
 
 **Key Points:**
 * Supported dataset items: experimental sessions (for both 2P and Neuropixels) as well as probes, channels, and units (for Neuropixels). 
-* Tabular indexing or unique item identifiers allow selection of specific item(s) from tables, to allow inspection and further analysis as item objects.
+* Tabular indexing or unique item identifiers allow selection of specific items from item tables allowing inspection and analysis as item objects.
 * Item object [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item. 
 * Values for item object properties involving extensive compute or file reading are computed "on demand". 
 * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) allow computations of values determined with additional user-specified arguments. 
