@@ -53,7 +53,8 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             %assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}),"File has already been downloaded");
             
             try
-                disp("Downloading URL: [" + url + "]...");
+                disp(   "Downloading URL: [" + url + "]" + newline + ...
+                        "to cache location: " + fileInfo.path + "...");
                 lclFilename = boc.CacheFile(url, fileInfo.path);
                 disp("Download complete.");
             catch ME
