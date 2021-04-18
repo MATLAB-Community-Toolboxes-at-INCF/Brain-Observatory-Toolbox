@@ -1,5 +1,5 @@
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory\[1\]. 
+A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory[\[1\]](#references). 
 
 **NOTE**: Releases for the current version (0.9) are *working prototypes* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
 
@@ -10,8 +10,8 @@ A MATLAB toolbox for accessing and using the neural recording public dataset rel
 
 | Dataset | Recording Type | Nickname | Details |
 | --- | --- | --- | --- |
-| Visual Coding Neuropixels \[2\] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
-| Visual Coding 2P \[3\] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
+| Visual Coding Neuropixels [\[2\]](#references) | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| Visual Coding 2P [\[3\]](#references) | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
 The Visual Coding datasets are both collected from the living mouse brain during presentation of varying visual stimuli. Technical white papers (see Details for each dataset) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
 
