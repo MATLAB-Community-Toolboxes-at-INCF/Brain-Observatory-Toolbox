@@ -1,15 +1,18 @@
-# Brain-Observatory-Toolbox
+# Brain Observatory Toolbox
 A MATLAB toolbox for accessing and working with the neural recording public dataset releases from the Allen Brain Observatory resource \[1\]. 
 
-**NOTE**: Releases for the current version (0.9) represent a *working prototype* intended for evaluation. Feedback is encouraged and welcomed (one or more channels to be established soon). 
+**NOTE**: Releases for the current version (0.9) are a *working prototype* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>
+
+<sup>1. One or more channels to be established soon</sup>
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recorded from the mouse visual cortex during visual stimulus presentation:  
 
 | Dataset | Recording Type | Nickname | Details |
 | --- | --- | --- | --- |
-| Visual Coding 2P \[2\] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
-| Visual Coding Neuropixels \[3\] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| Visual Coding Neuropixels \[2\] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| Visual Coding 2P \[3\] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
+
 
 Technical white papers available for each dataset (see Details) provide detailed information describing the experiments, recordings, and computational pipelines. 
 
@@ -32,16 +35,15 @@ To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com
 
 ## Installation Instructions
 
-1. Download the latest release, in one of two ways:
-   1. Download the `.zip` file from GitHub and unzipping via preferred system tool
-   1. Clone the GitHub `master` branch<sup>1</sup>
-1. Add the root directory of the unzipped contents to the MATLAB path, in one of three ways: 
-   1. Navigate to root directory in the _Current Folder_ browser and select Add to Path from the right-click context menu<sup>2</sup>
-   1. Select the root directory from the  Set Path dialog from the Environment section of the Home tab in the MATLAB Desktop
-   1. Calling `addpath(<root directory>)` in the _Command Window_
+1. Download the `.zip` file from the latest GitHub release
+2. Unzip via preferred system tool to desired local folder location
+3. Open MATLAB 
+4. Add root directory of the unzipped folder contents to the MATLAB path, in one of three ways: 
+   1. Navigate to root directory in the *Current Folder* browser and select "Add to Path" from the right-click context menu<sup>1</sup>
+   1. Open the *Set Path* dialog from the Environment section of the Home tab
+   1. Call `addpath(<root directory location>)` in the Command Window
    
-<sup>1. This branch will be renamed soon to remove abhorrent associations 
-<sup>2. Use the Selected Folders option. The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). It is necessary and sufficient to add the package parent folder to the path. </sup>
+<sup>1. Use the "Selected Folders" option. The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). It is necessary and sufficient to add the package's parent folder to the path. </sup>
 
 #### Required products
 * MATLAB (R2021a)
@@ -50,24 +52,26 @@ To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com
 ## Getting started
 Four MATLAB live scripts are provided to help get started: 
 
-* `EphysDemo.mlx` and `OphysDemo.mlx` demonstrate simple representative neuroscientific analysis using the BOT with the Visual Coding Neuropixels and Visual Coding 2P datasets, respectively
-* `EphysTutorial.mlx` and `OphysTutorial.mlx` provide more step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets 
-
+| Live Script(s) | About |
+| --- | --- |
+| `EphysDemo.mlx` and `OphysDemo.mlx` | Demonstrate simple representative neuroscientific analysis using the BOT | 
+| `EphysTutorial.mlx` and  `OphysTutorial.mlx` | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
+ 
 Or to get a fast first look yourself, enter the following commands in MATLAB: 
 ```
->> sessions = bot.fetchSessions('ephys'); % or can use 'ophys' for the Visual Coding 2P dataset
->> head(sessions) % displays the first rows of the available sessions information table
->> session = bot.session(sessions(1,:)) % displays accessible stored and on-demand properties for the first session item
->> methods(session) % displays callable methods for the first session item
+>> sessions = bot.fetchSessions('ephys'); 
+>> head(sessions) 
+>> session = bot.session(sessions(1,:))
+>> methods(session) 
 ```
 ----
 #### References
 
 [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
-[2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
+[2] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
 
-[3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
+[3] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
 
 #### Acknowledgements
 
