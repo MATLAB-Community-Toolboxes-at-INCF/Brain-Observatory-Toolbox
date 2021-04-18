@@ -1,7 +1,7 @@
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory\[1\]. 
+A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory \[1\]. 
 
-**NOTE**: Releases for the current version (0.9) are a *working prototype* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>
+**NOTE**: Releases for the current version (0.9) are a *working prototype* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
 
 <sup>1. One or more feedback channels to be established soon</sup>
 
@@ -11,14 +11,13 @@ A MATLAB toolbox for accessing and using the neural recording public dataset rel
 | Dataset | Recording Type | Nickname | Details |
 | --- | --- | --- | --- |
 | Visual Coding Neuropixels \[2\] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
-| | | |
 | Visual Coding 2P \[3\] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
-The Visual Coding datasets are both collected from the living mouse brain during exposure to varying visual stimulus presentation. Technical white papers available for each dataset (see Details) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
+The Visual Coding datasets are both collected from the living mouse brain during exposure to varying visual stimulus presentation. Technical white papers (see Details for each dataset) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
 
 ## About the Brain Observatory Toolbox (BOT) 
  
-The Brain Observatory Toolbox (BOT) provides a uniform interface for users to conveniently access and work with these Visual Coding neural datasets. 
+The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use these Visual Coding neural datasets. 
 
 The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
 ![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
@@ -29,7 +28,9 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 * Item object [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item. 
 * Values for item object properties involving extensive compute or file reading are computed "on demand". 
 * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) allow computations of values determined with additional user-specified arguments. 
-* The BOT provides local caching of retrieved item information, object representations, and file contents, to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
+* The BOT provides local caching<sup>1</sup> to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
+
+<sup>1. For retrieved item information, object representations, and file contents</sup>
 
 To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FEphysDemo.mlx&embed=web) and/or the [Ophys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FOphysDemo.mlx&embed=web).
 
@@ -55,9 +56,7 @@ Four MATLAB live scripts are provided to help get started:
 | Live Script(s) | About |
 | --- | --- |
 | `EphysDemo.mlx`<br>`OphysDemo.mlx` | Demonstrate simple representative neuroscientific analysis using the BOT | 
-| | |
 | `EphysTutorial.mlx`<br>`OphysTutorial.mlx` | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
- 
  
  
 Or to get a fast first look yourself, enter the following commands in MATLAB: 
