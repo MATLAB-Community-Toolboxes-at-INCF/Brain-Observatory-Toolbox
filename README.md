@@ -1,45 +1,51 @@
-# Brain-Observatory-Toolbox
-A MATLAB toolbox for accessing and working with the public neural recording datasets obtained with the Allen Brain Observatory platform \[1\]. 
+# Brain Observatory Toolbox
+A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory\[1\]. 
 
-*NOTE*: Releases for the current version (0.9) represent a working prototype intended for evaluation, including functioning demos & tutorials. Feedback is encouraged and welcomed (one or more channels to be established soon). 
+**NOTE**: Releases for the current version (0.9) are a *working prototype* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
+
+<sup>1. One or more feedback channels to be established soon</sup>
 
 ## About the Allen Brain Observatory datasets
-[Data releases|https://portal.brain-map.org/latest-data-release] from the Allen Brain Observatory include two datasets of neural activity recorded from the mouse visual cortex during visual stimulus presentation, including:  
+[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
 
-| Dataset | Recording Type | Nickname |
-| --- | --- | --- |
-| Visual Coding 2P \[2\] | Two-photon calcium imaging | "ophys" (optical physiology) |
-| Visual Coding Neuropixels \[3\] | Large-scale neural probe recordings | "ephys" (electrophysiology) |
+| Dataset | Recording Type | Nickname | Details |
+| --- | --- | --- | --- |
+| Visual Coding Neuropixels \[2\] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| Visual Coding 2P \[3\] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
-Technical white papers for each dataset provide information describing the experiments, recordings, and computational pipelines. 
+The Visual Coding datasets are both collected from the living mouse brain during exposure to varying visual stimulus presentation. Technical white papers (see Details for each dataset) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
 
 ## About the Brain Observatory Toolbox (BOT) 
  
-The Brain Observatory Toolbox (BOT) provides a uniform interface allowing users to conveniently access and work with these Visual Coding neural datasets. 
+The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use these Visual Coding neural datasets. 
 
-The BOT interface provides a tabular representation of available dataset items and an object representation of specific dataset items: 
+The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
+
 ![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
 
-*Key points:*
-* Supported dataset items include experimental sessions (both 2P and Neuroxels datasets) as well as probes, channels, and units (for the Neuropixels dataset). 
-* Tabular indexing or unique item identifiers can be used to select specific item(s) of interest from available items tables for item object creation. 
-* Item object properties allow inspection and computation of direct, derived, and file-linked values associated to an item. 
-* Item object methods allow computations of values determined with additional user-specified arguments. 
-* The BOT provides local caching of retrieved item information, object representations, and file contents, to provide the fastest possible initial and repeat performance.
+**Key Points:**
+* Supported dataset items: experimental sessions (for both 2P and Neuropixels) as well as probes, channels, and units (for Neuropixels). 
+* Tabular indexing or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects.
+* Item object [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item. 
+* Values for item object properties involving extensive compute or file reading are computed "on demand". 
+* Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) allow computations of values determined with additional user-specified arguments. 
+* The BOT provides local caching<sup>1</sup> to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
 
-To preview the BOT in use, you can view the [Ephys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FEphysDemo.mlx&embed=web) for the Visual Coding Neuropixels dataset and the [Ophys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FOphysDemo.mlx&embed=web) for the Visual Coding 2P dataset. 
+<sup>1. For retrieved item information, object representations, and file contents</sup>
+
+To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FEphysDemo.mlx&embed=web) and/or the [Ophys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FOphysDemo.mlx&embed=web).
 
 ## Installation Instructions
 
-1. Download the latest release, either by
-   1. Downloading the `.zip` file from GitHub and unzipping via preferred system tool
-   1. Cloning the GitHub `master` branch<sup>1</sup>
-1. Add the root directory of the unzipped contents to the MATLAB path, either by:
-   1. Navigating to root directory in the _Current Folder_ browser and selecting _Add to Path_<sup>2</sup> in the right-click context menu
-   1. Selecting root directory in the Set Path dialog from the _Environment_ section of the _Home_ tab
-   1. Calling `addpath(<root directory>)' in the _Command Window_
-<sup>1. This branch will be renamed soon to remove abhorrent associations 
-<sup>2. Note it is unnecessary to add subdirectories to the MATLAB path; all contents of the `+bot` package are made available by adding the base directory</sup>
+1. Download the `.zip` file from the latest GitHub release
+2. Unzip via preferred system tool to desired local folder location
+3. Open MATLAB 
+4. Add root directory of the unzipped folder contents to the MATLAB path, in one of three ways: 
+   1. Navigate to root directory in the *Current Folder* browser and select "Add to Path" from the right-click context menu<sup>1</sup>
+   1. Open the *Set Path* dialog from the Environment section of the Home tab
+   1. Call `addpath(<root directory location>)` in the Command Window
+   
+<sup>1. Use the "Selected Folders" option. The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). It is necessary and sufficient to add the package's parent folder to the path. </sup>
 
 #### Required products
 * MATLAB (R2021a)
@@ -48,22 +54,27 @@ To preview the BOT in use, you can view the [Ephys Demo](https://viewer.mathwork
 ## Getting started
 Four MATLAB live scripts are provided to help get started: 
 
-* `EphysDemo.mlx` and `OphysDemo.mlx` demonstrate simple representative neuroscientific analysis using the BOT with the Visual Coding Neuropixels and Visual Coding 2P datasets, respectively
-* `EphysTutorial.mlx` and `OphysTutorial.mlx` provide more step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets 
-
+| Live Script(s) | About |
+| --- | --- |
+| `EphysDemo.mlx`<br>`OphysDemo.mlx` | Demonstrate simple representative neuroscientific analysis using the BOT | 
+| `EphysTutorial.mlx`<br>`OphysTutorial.mlx` | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
+ 
+ 
 Or to get a fast first look yourself, enter the following commands in MATLAB: 
 ```
-sessions = bot.fetchSessions('ephys'); 
-head(sessions)
+>> sessions = bot.fetchSessions('ephys'); 
+>> head(sessions) 
+>> session = bot.session(sessions(1,:))
+>> methods(session) 
 ```
 ----
 #### References
 
 [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
-[2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
+[2] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
 
-[3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
+[3] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
 
 #### Acknowledgements
 
