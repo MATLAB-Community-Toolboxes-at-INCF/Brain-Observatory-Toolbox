@@ -1,7 +1,7 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory\[1\]. 
 
-**NOTE**: Releases for the current version (0.9) are a *working prototype* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
+**NOTE**: Releases for the current version (0.9) are *working prototypes* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
 
 <sup>1. One or more feedback channels to be established soon</sup>
 
