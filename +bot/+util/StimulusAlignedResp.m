@@ -11,10 +11,10 @@ function mfAlignedResp = StimulusAlignedResp(tStimulus, mfResp, fhMetric, vnFluo
 % `mfResp` is a matrix [TxN], each column of which contains the response
 % over time for a single ROI (N ROIs and T time bins in total). `tStimulus`
 % is a table as returned by the
-% `bot.internal.ophyssession.fetch_stimulus_table()` method, with stimulus
+% `bot.item.ophyssession.fetch_stimulus_table()` method, with stimulus
 % presentation periods defined by columns 'start_frame' and 'end_frame'.
 % These indices refer to fluorescence frame indices, as returned in the
-% `bot.internal.ophyssession.fluorescence_timestamps` property.
+% `bot.item.ophyssession.fluorescence_timestamps` property.
 %
 % The response frames corresponding to a single stimulus presentation are
 % collated, and processed with the function `fhMetric`. By default

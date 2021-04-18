@@ -1,10 +1,10 @@
-%% CLASS bot.util.ophyssessionfilter - Utility operations for filtering OPhys experimental sessions
+%% CLASS bot.util.ophyssessionfilter - Utility operations for filtering Visual Coding 2P dataset experimental sessions
 %
-% This class is deprecated. Use `bot.fetch...()` to obtain manifests for
-% OPhys and EPhys data, and filter the tables directly.
+% This class is deprecated. Use `bot.fetchSessions('ophys') to obtain the manifest for
+% the Visual Coding 2P dataset [1], and filter the tables directly.
 %
 % This class implements a mechanism for searching the optical physiology
-% experimental datasets within the Allen Brain Observatory [1].
+% experimental sessions within the Visual Coding 2P dataset. 
 %
 % Note: `bot.sessionfilter` is a handle class, which means that copies
 % of an object point to the same object. This means you should create new
@@ -46,8 +46,8 @@
 % Clear filters and start again:
 % >> bosf.clear_filters();
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
-
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+%
 
 %% Class definition
 classdef ophyssessionfilter < handle
@@ -260,7 +260,7 @@ classdef ophyssessionfilter < handle
          % Usage: vbsSessions = get_filtered_sessions(bosf)
          
          % - Get the current table of filtered sessions, construct objects
-         vbsSessions = bot.util.ophyssession(bosf.filtered_session_table.id);
+         vbsSessions = bot.session(bosf.filtered_session_table.id);
       end
       
       %% -- Getter methods for dependent filtered sessions properties

@@ -29,7 +29,7 @@ function tTable = table_from_datasets(strFile, strNWBKey, cstrIgnoreKeys, cstrSe
 
 
 if nargin < 2
-   help bot.nwb.table_from_datasets;
+   help bot.internal.nwb.table_from_datasets;
    error('BOT:Usage', 'Incorrect usage.');
 end
 

@@ -89,7 +89,7 @@ classdef nwb_ephys < handle
          cell_epoch_tables = {};
          cell_stimulus_conditions = {};
          for epoch_name = all_epoch_names
-            cell_epoch_tables{end+1} = bot.nwb.table_from_datasets(self.strFile, ...
+            cell_epoch_tables{end+1} = bot.internal.nwb.table_from_datasets(self.strFile, ...
                epoch_name, cstrIgnoreKeys);
             
             % - Identify unique stimulus conditions
@@ -162,7 +162,7 @@ classdef nwb_ephys < handle
          
          % - Read the attributes for each probe
          for nIndex = numel(cstrElectrodePaths):-1:1
-            s = bot.nwb.struct_from_attributes(self.strFile, cstrElectrodePaths{nIndex});
+            s = bot.internal.nwb.struct_from_attributes(self.strFile, cstrElectrodePaths{nIndex});
             probes(nIndex) = struct(...
                'id', vnIDs(nIndex), ...
                'description', s.description, ...
@@ -175,7 +175,7 @@ classdef nwb_ephys < handle
       
       function channels = fetch_channels(self)
          % - Retrieve the electrodes from the NWB file
-         channels = bot.nwb.table_from_datasets(self.strFile, '/general/extracellular_ephys/electrodes', 'group');
+         channels = bot.internal.nwb.table_from_datasets(self.strFile, '/general/extracellular_ephys/electrodes', 'group');
          
          % - Rename columns
          channels = rename_variables(channels, ...
@@ -246,8 +246,8 @@ classdef nwb_ephys < handle
          strEpochsKey2 = '/processing/running/running_speed_end_times';
          
          % - Read from the cached NWB file, return as a table
-         running_speed_raw = bot.nwb.table_from_datasets(self.strFile, strEpochsKey);         
-         running_speed_end = bot.nwb.table_from_datasets(self.strFile, strEpochsKey2);
+         running_speed_raw = bot.internal.nwb.table_from_datasets(self.strFile, strEpochsKey);         
+         running_speed_end = bot.internal.nwb.table_from_datasets(self.strFile, strEpochsKey2);
          
          % - Construct return table
          start_time = running_speed_raw.timestamps;
@@ -262,9 +262,9 @@ classdef nwb_ephys < handle
       
       function raw_running_data = fetch_raw_running_data(self)
          % - Read from the cached NWB file, return as a table
-         rotation_series = bot.nwb.table_from_datasets(self.strFile, '/acquisition/raw_running_wheel_rotation');
-         signal_voltage_series = bot.nwb.table_from_datasets(self.strFile, '/acquisition/running_wheel_signal_voltage');
-         supply_voltage_series = bot.nwb.table_from_datasets(self.strFile, '/acquisition/running_wheel_supply_voltage');
+         rotation_series = bot.internal.nwb.table_from_datasets(self.strFile, '/acquisition/raw_running_wheel_rotation');
+         signal_voltage_series = bot.internal.nwb.table_from_datasets(self.strFile, '/acquisition/running_wheel_signal_voltage');
+         supply_voltage_series = bot.internal.nwb.table_from_datasets(self.strFile, '/acquisition/running_wheel_supply_voltage');
          
          % - Return the data as a table
          raw_running_data = table(rotation_series.timestamps, rotation_series.data, signal_voltage_series.data, supply_voltage_series.data, ...
@@ -272,11 +272,11 @@ classdef nwb_ephys < handle
       end
       
       function rig_metadata = fetch_rig_metadata(self)
-         if ~bot.nwb.has_path(self.strFile, '/processing/eye_tracking_rig_metadata')
+         if ~bot.internal.nwb.has_path(self.strFile, '/processing/eye_tracking_rig_metadata')
             error('BOT:DataNotPresent', 'This session has no rig geometry data.');
          end
          
-         rig_metadata.rig_geometry_data = bot.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking_rig_metadata/rig_geometry_data');
+         rig_metadata.rig_geometry_data = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking_rig_metadata/rig_geometry_data');
          rig_metadata.rig_equipment = h5readatt(self.strFile, '/processing/eye_tracking_rig_metadata/eye_tracking_rig_metadata', 'equipment');
       end
       
@@ -286,25 +286,25 @@ classdef nwb_ephys < handle
             suppress_pupil_data logical = true;
          end
          
-         if ~bot.nwb.has_path(self.strFile, '/processing/eye_tracking') || ...
-            ~bot.nwb.has_path(self.strFile, '/processing/raw_gaze_mapping') || ...
-            ~bot.nwb.has_path(self.strFile, '/processing/filtered_gaze_mapping')
+         if ~bot.internal.nwb.has_path(self.strFile, '/processing/eye_tracking') || ...
+            ~bot.internal.nwb.has_path(self.strFile, '/processing/raw_gaze_mapping') || ...
+            ~bot.internal.nwb.has_path(self.strFile, '/processing/filtered_gaze_mapping')
             error('BOT:DataNotPresent', 'This session has no pupil data.');
          end
          
-         raw_eye_area_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/eye_area');
-         raw_pupil_area_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/pupil_area');
-         raw_screen_coordinates_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/screen_coordinates');
-         raw_screen_coordinates_spherical_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/screen_coordinates_spherical');
+         raw_eye_area_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/eye_area');
+         raw_pupil_area_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/pupil_area');
+         raw_screen_coordinates_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/screen_coordinates');
+         raw_screen_coordinates_spherical_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/raw_gaze_mapping/screen_coordinates_spherical');
          
-         filtered_eye_area_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/eye_area');
-         filtered_pupil_area_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/pupil_area');
-         filtered_screen_coordinates_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/screen_coordinates');
-         filtered_screen_coordinates_spherical_ts = bot.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/screen_coordinates_spherical');
+         filtered_eye_area_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/eye_area');
+         filtered_pupil_area_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/pupil_area');
+         filtered_screen_coordinates_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/screen_coordinates');
+         filtered_screen_coordinates_spherical_ts = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/filtered_gaze_mapping/screen_coordinates_spherical');
          
-         cr_ellipse_fits = bot.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/cr_ellipse_fits');
-         eye_ellipse_fits = bot.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/eye_ellipse_fits');
-         pupil_ellipse_fits = bot.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/pupil_ellipse_fits');
+         cr_ellipse_fits = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/cr_ellipse_fits');
+         eye_ellipse_fits = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/eye_ellipse_fits');
+         pupil_ellipse_fits = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking/pupil_ellipse_fits');
          
          cVariableNames = ["timestamps", ...
             "corneal_reflection_center_x", "corneal_reflection_center_y", ...
@@ -354,23 +354,23 @@ classdef nwb_ephys < handle
       
       function tos = fetch_optogenetic_stimulation(self)
          % - Read table from NWB file
-         tos = bot.nwb.table_from_datasets(self.strFile, '/processing/optotagging/optogenetic_stimuluation', ...
+         tos = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/optotagging/optogenetic_stimuluation', ...
             {'tags', 'tags_index', 'timeseries', 'timeseries_index'});
       end
       
       function units = fetch_full_units_table(self)
          % - Read base units table
-         units = bot.nwb.table_from_datasets(self.strFile, '/units', ...
+         units = bot.internal.nwb.table_from_datasets(self.strFile, '/units', ...
             {'spike_amplitudes', 'spike_amplitudes_index', ...
             'waveform_mean', 'waveform_mean_index',  ...
             'spike_times', 'spike_times_index'});
          
          % - Read additional wrapped data entries
-         units.spike_amplitudes = bot.nwb.deindex_table_from_datasets(self.strFile, ...
+         units.spike_amplitudes = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/units/spike_amplitudes', '/units/spike_amplitudes_index');
-         units.waveform_mean = bot.nwb.deindex_table_from_datasets(self.strFile, ...
+         units.waveform_mean = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/units/waveform_mean', '/units/waveform_mean_index');
-         units.spike_times = bot.nwb.deindex_table_from_datasets(self.strFile, ...
+         units.spike_times = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/units/spike_times', '/units/spike_times_index');
          
          % - Filter units
@@ -407,16 +407,16 @@ classdef nwb_ephys < handle
       end
       
       function metadata = fetch_nwb_metadata(self)
-         if ~bot.nwb.has_path(self.strFile, '/general/metadata')
+         if ~bot.internal.nwb.has_path(self.strFile, '/general/metadata')
             error('BOT:DataNotPresent', 'This NWB file has no metadata.');
          end
          
-         metadata = bot.nwb.struct_from_attributes(self.strFile, '/general/metadata');
+         metadata = bot.internal.nwb.struct_from_attributes(self.strFile, '/general/metadata');
       end
       
       function invalid_times = fetch_invalid_times(self)
-         invalid_times = bot.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
-         invalid_times.tags = bot.nwb.deindex_table_from_datasets(self.strFile, ...
+         invalid_times = bot.internal.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
+         invalid_times.tags = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/intervals/invalid_times/tags', '/intervals/invalid_times/tags_index');
       end
       

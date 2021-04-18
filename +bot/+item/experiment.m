@@ -1,4 +1,8 @@
-%% experiment - CLASS Represent an experiment container
+%
+% This class represents direct, linked, and derived data for a Visual Coding 2P dataset [1] experiment container. 
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+%
 
 classdef experiment < handle
    properties (SetAccess = private)
@@ -9,7 +13,7 @@ classdef experiment < handle
    end
    
    properties (Hidden = true, GetAccess = private, SetAccess = private)
-      manifest = bot.internal.manifest('ophys');
+      manifest = bot.internal.manifest.instance('ophys');
    end
    
    methods
@@ -24,14 +28,14 @@ classdef experiment < handle
          % - Handle a vector of session IDs
          if ~istable(id) && numel(id) > 1
             for nIndex = numel(id):-1:1
-               exp(id) = bot.internal.experiment(id(nIndex));
+               exp(id) = bot.item.experiment(id(nIndex));
             end
             return;
          end
          
          % - Assign experiment container information
-         exp.metadata = table2struct(exp.find_manifest_row(id));
-         exp.id = exp.metadata.id;
+         exp.info = table2struct(exp.find_manifest_row(id));
+         exp.id = exp.info.id;
          
          % - Extarct matching sessions
          matching_sessions = exp.manifest.ophys_sessions.experiment_container_id == exp.id;
@@ -63,7 +67,7 @@ classdef experiment < handle
          end
          
          % - Find these sessions in the experiment manifest
-         manifest = bot.internal.manifest('ophys');
+         manifest = bot.internal.manifest.instance('ophys');
          matching_ophys_container = manifest.ophys_containers.id == id;
          
          % - Extract the appropriate table row from the manifest

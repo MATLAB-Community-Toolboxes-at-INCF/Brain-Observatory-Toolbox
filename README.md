@@ -1,70 +1,81 @@
-# Brain-Observatory-Toolbox
-A MATLAB toolbox for accessing and working with the Allen Brain Observatory \[1\] neural recording datasets
+# Brain Observatory Toolbox
+A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory[\[1\]](#references). 
 
-The Allen Brain Observatory resource  comprises extensive public datasets of neural activity in the mouse visual cortex during visual stimulus presentation. These datasets are based on cellular-scale experimental neural recordings conducted at the Allen Institute for Brain Science: 
-* the Visual Coding – 2P dataset \[2\], based on two-photon calcium imaging
-* the Visual Coding – Neuropixels dataset \[3\], based on large-scale electrophysiological probes
+**NOTE**: Releases for the current version (0.9) are *working prototypes* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
 
-The Brain Observatory Toolbox (BOT) provides a uniform interface allowing users to conveniently access and work with these two experimental neural datasets.
+<sup>1. One or more feedback channels to be established soon</sup>
 
-The BOT interface provides:
-* Retrieval of public Visual Coding dataset directories describing contents and metadata
-* Tabular data operations to inspect and select dataset items
-* Object interfaces to inspect individual dataset items and retrieve underlying experimental data
-* Useful methods to assist in analysing neural responses and behavioural data 
-* Caching of retrieved directories and data, for best possible initial and repeat performance
+## About the Allen Brain Observatory datasets
+[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
 
-## Installation
+| Dataset | Recording Type | Nickname | Details |
+| --- | --- | --- | --- |
+| Visual Coding Neuropixels [\[2\]](#references) | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| Visual Coding 2P [\[3\]](#references) | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
-1. Download the latest release as a `.zip` file.
-1. Unzip using preferred system tool. 
-1. Add the base directory of unzipped contents to the MATLAB path.  
-<sup>Note it is unnecessary to add subdirectories to the MATLAB path; all contents of the `+bot` package are made available by adding the base directory</sup>
+The Visual Coding datasets are both collected from the living mouse brain during presentation of varying visual stimuli. Technical white papers (see Details for each dataset) provide detailed information about the experimental protocols, recording technicalities, and computational pipelines. 
 
-#### Optional requirements
+## About the Brain Observatory Toolbox (BOT) 
+ 
+The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use these Visual Coding neural datasets. 
 
-Some aspects of the toolbox can make use of accelerated `.mex` files, which require a `mex` compiler to be configured in MATLAB. These files will be compiled automatically when needed. If a `mex` compiler is not configured, then MATLAB native versions will be used.
+The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
+
+![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
+
+**Key Points:**
+* Supported dataset items: experimental sessions (for both 2P and Neuropixels) as well as probes, channels, and units (for Neuropixels). 
+* Tabular indexing or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects.
+* Item object [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item. 
+* Values for item object properties involving extensive compute or file reading are computed "on demand". 
+* Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) allow computations of values determined with additional user-specified arguments. 
+* The BOT provides local caching<sup>1</sup> to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
+
+<sup>1. For retrieved item information, object representations, and file contents</sup>
+
+To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FEphysDemo.mlx&embed=web) and/or the [Ophys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FOphysDemo.mlx&embed=web).
+
+## Installation Instructions
+
+1. Download the `.zip` file from the latest GitHub release
+2. Unzip via preferred system tool to desired local folder location
+3. Open MATLAB 
+4. Add root directory of the unzipped folder contents to the MATLAB path, in one of three ways: 
+   1. Navigate to root directory in the *Current Folder* browser and select "Add to Path" from the right-click context menu<sup>1</sup>
+   1. Open the *Set Path* dialog from the Environment section of the Home tab
+   1. Call `addpath(<root directory location>)` in the Command Window
+   
+<sup>1. Use the "Selected Folders" option. The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). It is necessary and sufficient to add the package's parent folder to the path. </sup>
+
+#### Required products
+* MATLAB (R2021a)
+* Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
 
 ## Getting started
+Four MATLAB live scripts are provided to help get started: 
 
-### Toolbox interface
-
-The toolbox classes are contained within the `bot` namespace. Once the toolbox is added to the MATLAB path, you can access the data via the main factory functions:
-
-`bot.fetchSessions()` — Retrieve a table of available EPhys or OPhys experimental sessions.
-
-`bot.fetchExperiments()` — Retrieve a table of available OPhys experiments.
-
-`bot.fetchProbes()` — Retrieve a table of individual probes used in the EPhys experiments.
-
-`bot.fetchUnits()` — Retrieve a table of individual units (putative neurons) recorded in the EPhys experiments.
-
-Analogous factory functions are used to obtain individual experiments or units, which can be manipulated to obtain experimental data:
-
-`bot.session(session_id)` — Retrieve a single experimental session.
-
-`bot.experiment(experiment_id)` — Retrieve a single experiment.
-
-`bot.probe(probe_id)` — Retrieve a single experimental probe.
-
-`bot.unit(unit_id)` — Retrieve a single experimental unit.
-
-The toolbox manages downloading and caching of experimental data, in a "lazy access" fashion — only the minimal required data is downloaded.
-
-### Example usage
-See the [Ophys Quick Start Example](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Ff8904f7a-8904-2deb-4404-99caae194d40%2Ffiles%2FOphysQuickStart.mlx&embed=web) for an illustration of how these toolbox classes enable retrieving, filtering, and acccessing the Visual Coding – 2P dataset [2] from the Allen Brain Observatory. See also the Ophys demo for a more detailed dive into analysis of the 2P dataset.
-
-See the Ephys Quick Start Example and the Ephys Demo for examples of how to access, filter and analyse the electrophysiology data from the Visual Coding – Neuropixels dataset [3].
-
+| Live Script(s) | About |
+| --- | --- |
+| `EphysDemo.mlx`<br>`OphysDemo.mlx` | Demonstrate simple representative neuroscientific analysis using the BOT | 
+| `EphysTutorial.mlx`<br>`OphysTutorial.mlx` | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
+ 
+ 
+Or to get a fast first look yourself, enter the following commands in MATLAB: 
+```
+>> sessions = bot.fetchSessions('ephys'); 
+>> head(sessions) 
+>> session = bot.session(sessions(1,:))
+>> methods(session) 
+```
 ----
 #### References
 
 [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
-[2] Copyright 2016 Allen Institute for Brain Science. Visual Coding - 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
+[2] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
 
-[3] Copyright 2020 Allen Institute for Brain Science. Visual Coding – Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
+[3] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
 
 #### Acknowledgements
 
-Core engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. 
+Initial engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. 

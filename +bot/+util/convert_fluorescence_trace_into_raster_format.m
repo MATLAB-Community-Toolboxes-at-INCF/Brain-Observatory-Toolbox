@@ -12,7 +12,7 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 % `fluorescence_trace_type` is one of {'raw', 'demixed', 'neuropil_corrected',
 % 'DfOverF'}.
 %
-% `session_id` is a valid session ID from an Allen Brain Observatory dataset[1].
+% `session_id` is a valid session ID from the Visual Coding 2P dataset [1]
 %
 % `stimulus` is one of {'static_gratings', 'drifting_gratings',
 % 'locally_sparse_noise_4deg', 'locally_sparse_noise_8deg', 'natural_scenes',
@@ -21,7 +21,8 @@ function convert_fluorescence_trace_into_raster_format(fluorescence_trace_type, 
 % `raster_dir_name` is a path under which to store the raster format .mat files.
 % It will be created if it does not already exist.
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: portal.brain-map.org/explore/circuits
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+%
 
 
 % - Permitted arguments
@@ -134,7 +135,7 @@ function raster_data = generate_raster_data(i, fluorescenece_trace, parameters_f
 
 % - Ensure data is cached locally
 bos.EnsureCached();
-nwb_name = bos.local_nwb_file_location;
+nwb_name = bos.nwbLocalFile;
 
 if isequal(bos.sSessionInfo.stimulus_name, 'three_session_C') && isequal(stimulus, 'locally_sparse_noise_4deg')
    

@@ -10,7 +10,7 @@ classdef test < matlab.unittest.TestCase
       
       function testOphysTables(testCase)
          %% Test retrieving all OPhys manifest tables
-         bom = bot.internal.manifest('ophys');
+         bom = bot.internal.manifest.instance('ophys');
          bom = bot.internal.ophysmanifest.instance();
          bom.ophys_sessions;                   % Table of all OPhys experimental sessions
          bom.ophys_containers;                 % Table of all OPhys experimental containers
@@ -18,7 +18,7 @@ classdef test < matlab.unittest.TestCase
       
       function testEphysTables(testCase)
          %% Test retrieving EPhys manifest tables
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
          bom = bot.internal.ephysmanifest.instance();
          bom.ephys_sessions;                 % Table of all EPhys experimental sessions
          bom.ephys_channels;                 % Table of all EPhys channels
@@ -110,25 +110,25 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
          
-         % - Create some bot.internal.ophyssession objects
-         bot.internal.ophyssession(vIDs(1));
+         % - Create some bot.item.ophyssession objects
+         bot.item.ophyssession(vIDs(1));
          bot.session(vIDs(1:2));
-         bot.internal.ophyssession(bosf.valid_session_table(1, :));
+         bot.item.ophyssession(bosf.valid_session_table(1, :));
       end
       
       function testCacheSessionObject(testCase)
          %% Test obtaining an OPhys session object data from the cache
-         % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(704298735);
+         % - Create a bot.item.ophyssession object
+         s = bot.item.ophyssession(704298735);
          
          % - Ensure the data is in the cache
          s.EnsureCached();
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.internal.ophyssession class for OPhys data
-         % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(496934409);
+         %% Test data access methods of the bot.item.ophyssession class for OPhys data
+         % - Create a bot.item.ophyssession object
+         s = bot.item.ophyssession(496934409);
 
          % - Test summary methods
          vnCellIDs = s.cell_specimen_ids;
@@ -157,8 +157,8 @@ classdef test < matlab.unittest.TestCase
       
       function testStimulusExtraction(testCase)
          %% Test OPhys session stimulus extraction methods
-         % - Create a bot.internal.ophyssession object
-         s = bot.internal.ophyssession(528402271);
+         % - Create a bot.item.ophyssession object
+         s = bot.item.ophyssession(528402271);
 
          % - Get a vector of fluorescence frame IDs
          vnFrameIDs = 1:numel(s.fluorescence_timestamps);
@@ -185,7 +185,7 @@ classdef test < matlab.unittest.TestCase
          s.spontaneous_activity_stimulus_table;
          
          % - Get an OPhys session with sparse noise
-         s = bot.internal.ophyssession(566752133);
+         s = bot.item.ophyssession(566752133);
          
          % - Get the sparse noise stimulus template
          s.fetch_stimulus_template('locally_sparse_noise_4deg');
@@ -196,13 +196,13 @@ classdef test < matlab.unittest.TestCase
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
          bom = bot.internal.ephysmanifest.instance();
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
       end
       
       function test_ephys_sessions(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
          
          % - Get a session
          s = bot.session(bom.ephys_sessions{1, 'id'});
@@ -212,7 +212,7 @@ classdef test < matlab.unittest.TestCase
       function test_ephys_probes(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
 
          % - Get a probe, by ID and by table
          p = bot.probe(bom.ephys_probes{1, 'id'});
@@ -223,7 +223,7 @@ classdef test < matlab.unittest.TestCase
       function test_ephys_channels(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
 
          % - Get channels, by ID and by table
          c = bot.channel(bom.ephys_channels{1, 'id'});
@@ -234,7 +234,7 @@ classdef test < matlab.unittest.TestCase
       function test_ephys_units(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
 
          % - Get units, by ID and by table
          u = bot.unit(bom.ephys_units{1, 'id'});
@@ -245,7 +245,7 @@ classdef test < matlab.unittest.TestCase
       function testLFPCSDExtraction(testCase)
          %% Test LFP and CSD extraction
          % - Get the EPhys manifest
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
 
          % - Get a probe
          p = bot.probe(bom.ephys_probes{1, 'id'});
@@ -259,7 +259,7 @@ classdef test < matlab.unittest.TestCase
       
       function test_lazy_attributes(testCase)
          %% Test reading lazy attributes
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
          
          s.mean_waveforms;
@@ -289,7 +289,7 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_session_methods(testCase)
          %% Test session data access methods
-         bom = bot.internal.manifest('ephys');
+         bom = bot.internal.manifest.instance('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
 
          s.fetch_stimulus_table();

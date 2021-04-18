@@ -11,7 +11,7 @@ function cmfData = deindex_table_from_datasets(strFile, strDataKey, strIndexKey)
 % `cmfData` will be a MATLAB cell array, with one de-indexed data entry per element
 
 if nargin < 2
-   help bot.nwb.table_from_datasets;
+   help bot.internal.nwb.table_from_datasets;
    error('BOT:Usage', 'Incorrect usage.');
 end
 
