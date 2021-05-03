@@ -4,16 +4,16 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
     %% PROPERTIES - HIDDEN                     
     
     % SUBCLASS INTERFACE    
-    properties (Abstract, Constant, Hidden)
+    properties (Abstract, Hidden, Constant)
         NWB_WELL_KNOWN_FILE_PREFIX (1,1) string
     end
     
-    properties (Abstract, Dependent, Access=protected)
+    properties (Abstract, Hidden,Dependent, Access=protected)
         nwbLocal; % NWB file access prop, useful for some property access fcns TODO: eliminate or at least harmonize output type across session subclasses (currently variable)
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
-    properties (SetAccess = protected, Hidden)
+    properties (Hidden, SetAccess = protected)
         LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true);
     end    
     
@@ -24,8 +24,9 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
     %         ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
     %     end
     
-   %% CONSTRUCTOR       
+   %% LIFECYCLE        
    
+   % CONSTRUCTOR
    methods
       function obj = Session()                      
           
@@ -33,6 +34,7 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
       
    end    
    
+   % INITIALIZER
    methods (Access=protected)
        function initSession(obj)
            % Superclass initialization (bot.item.abstract.LinkedFilesItem)

@@ -6,7 +6,7 @@ classdef ephysprobe < bot.item.abstract.LinkedFilesItem
 % 
     
     
-    %% PROPERTIES - USER
+    %% PROPERTIES - VISIBLE
     
     % Linked Items
     properties (SetAccess = private)
@@ -25,13 +25,13 @@ classdef ephysprobe < bot.item.abstract.LinkedFilesItem
     %% PROPERTIES - HIDDEN
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-    properties (Access = protected)
+    properties (Hidden, Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end
 
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)    
-    properties (SetAccess = protected, Hidden)
+    properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = struct("LFPNWB",["lfpData" "csdData"]);
         LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB",false);
     end
@@ -39,7 +39,7 @@ classdef ephysprobe < bot.item.abstract.LinkedFilesItem
     
     %% PROPERTY ACCESS METHODS
     
-    % USER PROPERTIES
+    % VISIBLE PROPERTIES
     methods
         function lfpData = get.lfpData(self)
             % zprpGetLFP - METHOD Return local field potential data for this probe

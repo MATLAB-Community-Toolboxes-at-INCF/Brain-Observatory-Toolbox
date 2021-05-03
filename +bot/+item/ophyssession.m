@@ -6,7 +6,7 @@
 
 classdef ophyssession < bot.item.abstract.Session
     
-    %% PROPERTIES - USER
+    %% PROPERTIES - VISIBLE
     
     % Direct Item Values
     properties (SetAccess = private)
@@ -42,11 +42,11 @@ classdef ophyssession < bot.item.abstract.Session
     
     %% PROPERTIES - HIDDEN
     
-    properties (Dependent, Access=protected)
+    properties (Hidden, Dependent, Access=protected)
         nwbLocal;
     end
     
-    properties (Hidden = true, SetAccess = private, Transient = true)
+    properties (Hidden, SetAccess = private, Transient = true)
         strSupportedPipelineVersion = '2.0';               % Pipeline version supported by this class
         strPipelineDataset = 'brain_observatory_pipeline'; % Key in NWB file containing the analysed data
         
@@ -77,18 +77,18 @@ classdef ophyssession < bot.item.abstract.Session
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Session)
-    properties (Constant, Hidden)
+    properties (Hidden, Constant)
         NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-    properties (Access = protected)
+    properties (Hidden, Access = protected)
         CORE_PROPERTIES_EXTENDED = "session_type";
         LINKED_ITEM_PROPERTIES = [];
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
-    properties (SetAccess = protected, Hidden)
+    properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
     
@@ -968,7 +968,7 @@ classdef ophyssession < bot.item.abstract.Session
         
     end
     
-    %% METHODS - USER
+    %% METHODS - VISIBLE
     
     methods
         

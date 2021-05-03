@@ -1,7 +1,7 @@
 classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     %LINKEDFILES Handles linked files for this BOT Item
     
-    %% PROPERTIES - USER
+    %% PROPERTIES - VISIBLE
     properties (SetAccess = private)
         linkedFiles table = table('Size',[0 1],'VariableTypes',"string",'VariableNames',"LocalFile");
     end

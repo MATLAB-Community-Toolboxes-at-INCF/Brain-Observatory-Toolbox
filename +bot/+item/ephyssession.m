@@ -7,7 +7,7 @@
 classdef ephyssession < bot.item.abstract.Session
     
     
-    %% PROPERTIES - USER
+    %% PROPERTIES - VISIBLE
     
     % Info Item Values
     properties (Dependent)
@@ -96,33 +96,33 @@ classdef ephyssession < bot.item.abstract.Session
 
     
     % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
-    properties (Constant, Hidden)
+    properties (Hidden, Constant)
         NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-    properties (Hidden = true, Access = protected)
+    properties (Hidden, Access = protected)
         CORE_PROPERTIES_EXTENDED = zlclInitDirectProps();
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
-    properties (SetAccess = protected, Hidden)
+    properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
     
-    properties (Dependent, Access=protected)
+    properties (Hidden, Dependent, Access=protected)
         nwbLocal;
     end
     
-    properties (Access=private)
+    properties (Hidden, Access=private)
         nwbLocal_;
     end
     
     
     %% PROPERTY ACCESS METHODS
     
-    % USER PROPERTIES - from Item info
+    % VISIBLE PROPERTIES - from Item info
     methods
         function inter_presentation_intervals = get.inter_presentation_intervals(self)
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
@@ -183,7 +183,7 @@ classdef ephyssession < bot.item.abstract.Session
         
     end
     
-    % USER PROPERTIES - from Primary File (NWB)
+    % VISIBLE PROPERTIES - from Primary File (NWB)
     methods
         
         function optogenetic_stimulation_epochs = get.optogenetic_stimulation_epochs(self)
@@ -244,7 +244,7 @@ classdef ephyssession < bot.item.abstract.Session
     end
     
     
-    % USER PROPERTIES - Auxiliary File (NWB)
+    % VISIBLE PROPERTIES - Auxiliary File (NWB)
     methods
         function stimulus_table = get.stimulus_templates(self)
             stimulus_table = self.fetch_cached('stimulus_templates', @self.zprpGetStimulusTemplates);
@@ -423,7 +423,7 @@ classdef ephyssession < bot.item.abstract.Session
         end
     end
     
-    %% METHODS - USER
+    %% METHODS - VISIBLE
     
     methods
         

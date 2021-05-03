@@ -1,30 +1,25 @@
 classdef Item < handle & matlab.mixin.CustomDisplay
     
-   %% PUBLIC INTERFACE
+   %% PROPERTIES - VISIBLE
    properties (SetAccess = protected)
       info;         % Struct containing info about this item
       id;               % ID of this item
    end   
    
-   %% SUBCLASS INTERFACE
+   %% PROPERTIES - HIDDEN 
    
-   % Properties for matlab.mixin.CustomDisplay superclass implementation 
-   properties (Abstract, Access = protected)
+   % SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
+   properties (Abstract, Hidden, Access = protected)
        CORE_PROPERTIES_EXTENDED (1,:) string 
        LINKED_ITEM_PROPERTIES (1,:) string        
    end
    
-   properties (SetAccess=protected, GetAccess = protected)
+   properties (Hidden, SetAccess=protected, GetAccess = protected)
        ITEM_INFO_VALUE_PROPERTIES (1,:) string = string.empty();
        LINKED_ITEM_VALUE_PROPERTIES (1,:) string = string.empty();
    end   
    
-   %% SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
-   
-   properties (Constant, GetAccess = protected)
-       CORE_PROPERTIES = ["info" "id"];                     
-   end    
-   
+   %% METHODS - HIDDEN - SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)      
    methods (Access = protected)
           function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
@@ -50,12 +45,10 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         end
        
    end   
-
    
-   %% METHODS - HIDDEN 
-           
+   %% METHODS - HIDDEN
    
-   methods (Access = protected)
+   methods (Hidden, Access = protected)
        
        % TODO: Explore moving this logic to Item constructor
        function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)

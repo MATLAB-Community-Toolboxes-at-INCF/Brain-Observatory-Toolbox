@@ -5,21 +5,24 @@ classdef ephyschannel < bot.item.abstract.Item
 % [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
 % 
    
-    %% USER INTERFACE 
+    %% PROPERTIES - VISIBLE 
     properties (SetAccess = private)
       units;
       session;
       probe;
     end
    
-    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
-
-    properties (Access = protected)
+    %% PROPERTIES - HIDDEN 
+        
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
         LINKED_ITEM_PROPERTIES = ["session" "probe" "units"];
     end
    
-    % constructor
+    %% LIFECYCLE
+    
+    % CONSTRUCTOR
     methods
         function channel = ephyschannel(channel_id, oManifest)
             % - Handle "no arguments" usage

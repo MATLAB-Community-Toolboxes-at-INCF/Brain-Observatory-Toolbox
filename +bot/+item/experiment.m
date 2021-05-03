@@ -5,6 +5,8 @@
 %
 
 classdef experiment < handle
+    
+   %% PROPERTIES - VISIBLE   
    properties (SetAccess = private)
       metadata;   % Metadata associated with this experiment container
       id;         % Experiment container ID
@@ -12,10 +14,14 @@ classdef experiment < handle
       sessions;   % Table of sessions in this experiment container
    end
    
-   properties (Hidden = true, GetAccess = private, SetAccess = private)
+   %% PROPERTIES - HIDDEN
+   properties (Hidden, GetAccess = private, SetAccess = private)
       manifest = bot.internal.manifest.instance('ophys');
    end
    
+   %% LIFECYCLE 
+   
+   % CONSTRUCTOR
    methods
       function exp = experiment(id)
          % experiment - CLASS Encapsulate an experiment container
@@ -43,7 +49,9 @@ classdef experiment < handle
       end
    end
    
-   methods (Static = true, Hidden = true)
+   %% STATIC METHODS
+   
+   methods (Static, Hidden)
       function manifest_row = find_manifest_row(id)
          % - Were we provided a table?
          if istable(id)

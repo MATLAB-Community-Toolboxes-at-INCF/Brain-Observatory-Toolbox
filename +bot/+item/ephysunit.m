@@ -5,7 +5,7 @@ classdef ephysunit < bot.item.abstract.Item
 % [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
 % 
     
-    %% UESR INTERFACE
+    %% PROPERTIS - VISIBLE
     properties (SetAccess = private)
         session;
         channel;
@@ -13,16 +13,18 @@ classdef ephysunit < bot.item.abstract.Item
     end
         
     
-    %% SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    %% PROPERTIES - HIDDEN
 
-    properties (Access = protected)
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected)
         CORE_PROPERTIES_EXTENDED = [];
         LINKED_ITEM_PROPERTIES = ["session" "channel" "probe"];
     end
     
-    methods                
-                
-        % Constructor
+    %% LIFECYCLE 
+    
+    % CONSTRUCTOR
+    methods                                       
         function unit = ephysunit(unit_id, oManifest)
             % - Handle "no arguments" usage
             if nargin == 0
