@@ -238,22 +238,13 @@ classdef ephyssession < bot.item.abstract.Session
             n = self.nwbLocal;
             mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
         end
-    end
     
-    
-    % via stimulus_conditions_raw
-    methods
         function stimulus_conditions = get.stimulus_conditions(self)
-            self.zprpCacheStimulusPresentations();
-            stimulus_conditions = self.property_cache.stimulus_conditions_raw;
+            stimulus_conditions = self.fetch_cached('stimulus_conditions',@self.zprpGetStimulusConditions);
         end
         
         function stimulus_presentations = get.stimulus_presentations(self)
-            % - Generate and cache stimulus presentations table
-            self.zprpCacheStimulusPresentations();
-            
-            % - Clean and return stimulus presentations table
-            stimulus_presentations = self.remove_detailed_stimulus_parameters(self.property_cache.stimulus_presentations_raw);
+            stimulus_presentations = self.fetch_cached('stimulus_presentations',@self.zprpGetStimulusPresentations);
         end
     end
     
@@ -303,7 +294,21 @@ classdef ephyssession < bot.item.abstract.Session
     
     % PROPERTY ACCESS HELPERS
     methods (Access=private)
+        
+        function stimulus_presentations = zprpGetStimulusPresentations(self)
+            % - Generate and cache stimulus presentations table
+            self.zprpCacheStimulusPresentations();
+            
+            % - Clean and return stimulus presentations table
+            stimulus_presentations = self.remove_detailed_stimulus_parameters(self.property_cache.stimulus_presentations_raw);
+        end
+        
+        function stimulus_conditions = zprpGetStimulusConditions(self)
+            self.zprpCacheStimulusPresentations();
+            stimulus_conditions = self.property_cache.stimulus_conditions_raw;
+        end
          
+        
         function stimulus_table = zprpGetStimulusTemplates(self)
             
             stimulus_table = self.linkedFileRespTables.("StimTemplatesGroup");
@@ -390,9 +395,7 @@ classdef ephyssession < bot.item.abstract.Session
             
             if nargin == 0
                 return;
-            end
-            
-            
+            end                        
             
             % Load associated singleton
             if ~exist('manifest', 'var') || isempty(manifest)
