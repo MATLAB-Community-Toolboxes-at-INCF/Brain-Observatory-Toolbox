@@ -11,7 +11,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     % Info Item Values
     properties (Dependent)
-        structure_acronyms;              % EPhys structures recorded across all channels in this session
+        structure_acronyms;             % EPhys structures recorded across all channels in this session
     end
     
     % Linked Items
@@ -23,47 +23,47 @@ classdef ephyssession < bot.item.abstract.Session
     
     % Linked Item Values
     properties (SetAccess = private)
-        channel_structure_intervals;     % Table of channel intervals crossing a particular brain structure for this session
-        structurewise_unit_counts;       % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
+        channel_structure_intervals;    % Table of channel intervals crossing a particular brain structure for this session
+        structurewise_unit_counts;      % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
     end
     
     % Linked File Values (SessNWB file)
-    properties (Dependent, Transient) % Transient used as a "tag" for file-bound properties
+    properties (Dependent, Transient) % Transient used here as "tag" for linked file properties
         
         % Physiology data
-        mean_waveforms;                  % Table mapping unit ids to matrices containing mean spike waveforms for that unit
-        spike_amplitudes;                % Table of extracted spike amplitudes for all units
-        spike_times;                     % Maps integer unit ids to arrays of spike times (float) for those units
+        mean_waveforms;                 % Table mapping unit ids to matrices containing mean spike waveforms for that unit
+        spike_amplitudes;               % Table of extracted spike amplitudes for all units
+        spike_times;                    % Maps integer unit ids to arrays of spike times (float) for those units
         
         % Behavior data
-        running_speed;                   % [Tx2] array of running speeds, where each row is [timestamp running_speed]
-        pupil_data;                      % Table of pupil data captured via eye tracking during session
-        pupil_data_detailed;             % Table of pupil data captured via eye tracking during session, including detailed gaze tracking information
+        running_speed;                  % [Tx2] array of running speeds, where each row is [timestamp running_speed]
+        pupil_data;                     % Table of pupil data captured via eye tracking during session
+        pupil_data_detailed;            % Table of pupil data captured via eye tracking during session, including detailed gaze tracking information
         
         % Metadata
-        inter_presentation_intervals;    % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
-        session_start_time;              % Timestamp of start of session
-        invalid_times;                   % Table indicating invalid recording times
+        inter_presentation_intervals;   % The elapsed time between each immediately sequential pair of stimulus presentations. This is a dataframe with a two-level multiindex (levels are 'from_presentation_id' and 'to_presentation_id'). It has a single column, 'interval', which reports the elapsed time between the two presentations in seconds on the experiment's master clock
+        session_start_time;             % Timestamp of start of session
+        invalid_times;                  % Table indicating invalid recording times
         
-        stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
-        stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
-        %num_stimulus_presentations;  	% Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
-        stimulus_names;                  % Names of stimuli presented in this session
+        stimulus_presentations;         % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
+        stimulus_conditions;            % Table indicating unique stimulus presentations presented in this experiment
+        %num_stimulus_presentations     % Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
+        stimulus_names;                 % Names of stimuli presented in this session
         stimulus_epochs;                % Table of stimulus presentation epochs
-        optogenetic_stimulation_epochs;  % Table of optogenetic stimulation epochs for this experimental session (if present)
+        optogenetic_stimulation_epochs; % Table of optogenetic stimulation epochs for this experimental session (if present)
         
         rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)
     end
     
     % Linked File Values (StimTemplatesGroup files)
-    properties (Dependent, Transient)
-        stimulus_templates;              % Stimulus template table 
+    properties (Dependent, Transient) % Transient used here as "tag" for linked file properties 
+        stimulus_templates;             % Stimulus template table 
     end
     
     %%  PROPERTIES - HIDDEN
     
     properties (Hidden = true, Access = public, Transient = true)
-        nwb_metadata;
+        nwb_metadata;  % TODO: consider to generalize this in the Session object superclass
         
         
         NON_STIMULUS_PARAMETERS = [
@@ -95,6 +95,16 @@ classdef ephyssession < bot.item.abstract.Session
             "dotSize", ...
             "dotLife", ...
             "color_triplet"]
+        
+         FIRST_STIMULUS_PARAMETERS = [
+             "stimulus_presentation_id" ...
+             "stimulus_condition_id" ...
+             "stimulus_block_id" ...
+             "stimulus_block_condition_id" ...
+             "stimulus_name" ...
+             "start_time" ...
+             "stop_time"];
+             
     end
     
 
@@ -337,6 +347,9 @@ classdef ephyssession < bot.item.abstract.Session
                 
                 % - Mask invalid presentations
                 stimulus_presentations_raw = self.mask_invalid_stimulus_presentations(stimulus_presentations_raw);
+                
+                % Order ID and time variables leftmost in table
+                stimulus_presentations_raw = movevars(stimulus_presentations_raw, self.FIRST_STIMULUS_PARAMETERS, 'Before', 1);
                 
                 % - Insert into cache
                 self.property_cache.stimulus_presentations_raw = stimulus_presentations_raw;
