@@ -644,7 +644,7 @@ classdef ephyssession < bot.item.abstract.Session
             end
             
             select_presentations = ismember(self.stimulus_presentations.stimulus_presentation_id, stimulus_presentation_ids);
-            presentations = self.stimulus_presentations(select_presentations, {'stimulus_presentation_id', 'stimulus_condition_id', 'duration'});
+            presentations = self.stimulus_presentations(select_presentations, {'stimulus_presentation_id', 'stimulus_condition_id', 'start_time' 'stop_time'});
             
             spikes = self.getPresentationwiseSpikeTimes(stimulus_presentation_ids, unit_ids);
             
@@ -675,7 +675,7 @@ classdef ephyssession < bot.item.abstract.Session
                 % - Add stimulus presentation information
                 stimulus_row = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
                 spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(stimulus_row);
-                spike_counts.duration(row) = presentations.duration(stimulus_row);
+                spike_counts.duration(row) = presentations.stop_time(stimulus_row) - presentations.start_time(stimulus_row);
             end
         
             
@@ -905,12 +905,11 @@ classdef ephyssession < bot.item.abstract.Session
         function [stimulus_presentations, stimulus_conditions] = build_stimulus_presentations(~, stimulus_presentations)
             stimulus_presentations = removevars(stimulus_presentations, {'stimulus_index'});
             
-            % - Add a "duration" variable
-            stimulus_presentations.duration = stimulus_presentations.stop_time - stimulus_presentations.start_time;
+            % - Fill in missing values for numeric variables            
             stimulus_presentations_filled = fillmissing(stimulus_presentations, 'constant', inf, 'DataVariables', @isnumeric);
             
             % - Identify unique stimulus conditions
-            params_only = zlclRemoveVarsIfPresent(stimulus_presentations_filled, ["start_time", "stop_time", "duration", "stimulus_block", "stimulus_presentation_id", "stimulus_block_id", "id", "stimulus_condition_id"]);
+            params_only = zlclRemoveVarsIfPresent(stimulus_presentations_filled, ["start_time", "stop_time", "stimulus_block", "stimulus_presentation_id", "stimulus_block_id", "id", "stimulus_condition_id"]);
             [stimulus_conditions, stimulus_condition_id_unique, stimulus_condition_id] = unique(params_only, 'rows', 'stable');
             stimulus_presentations.stimulus_condition_id = stimulus_condition_id - 1;
             stimulus_conditions.stimulus_condition_id = stimulus_condition_id_unique - 1;
