@@ -54,7 +54,7 @@ end
 if isequal(sessionType,"OPhys")
     ophys_manifest = bot.internal.manifest.instance('ophys');
     rowIdxs = ophys_manifest.ophys_sessions.id == sessionIDs;
-elseif isequal(sessionType,"Ephys")
+elseif isequal(sessionType,"EPhys")
     ephys_manifest = bot.internal.manifest.instance('ephys');
     rowIdxs = ephys_manifest.ephys_sessions.id == sessionIDs;
 else
@@ -62,15 +62,15 @@ else
     ephys_manifest = bot.internal.manifest.instance('ephys');
     
     rowIdxs = ophys_manifest.ophys_sessions.id == sessionIDs;
-    if isempty(rowIdxs)
-        sessionType = categorical("Ophys");
+    if any(rowIdxs)
+        sessionType = categorical("OPhys");
     else
-        sessionType = categorical("Ephys");
+        sessionType = categorical("EPhys");
         rowIdxs = ephys_manifest.ephys_sessions.id == sessionIDs;
     end    
 end  
 
-if isempty(rowIdxs)
+if ~any(rowIdxs)
   error('BOT:InvalidSessionID', ...
                'The provided session ID [%d] was not found in the Allen Brain Observatory manifest.', ...
                sessionIDs);
@@ -80,7 +80,7 @@ switch sessionType
     case "OPhys"
         manifest_rows = ophys_manifest.ophys_sessions(rowIdxs,:);
         sessionObj = bot.item.ophyssession(manifest_rows);
-    case "Ephys"
+    case "EPhys"
         manifest_rows = ephys_manifest.ephys_sessions(rowIdxs,:);
         sessionObj = bot.item.ephyssession(manifest_rows);
     otherwise
