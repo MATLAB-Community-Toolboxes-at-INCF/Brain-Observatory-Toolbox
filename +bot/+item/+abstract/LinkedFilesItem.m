@@ -42,7 +42,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     %% METHODS - HIDDEN
     
     % SUBCLASS API
-    methods (Access = protected)
+    methods (Hidden, Access = protected)
         function downloadLinkedFile(obj,fileNickname)
             
             fileInfo = obj.linkedFilesInfo(fileNickname,:); %table row
@@ -87,7 +87,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     end
     
     % SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
-    methods (Access = protected)
+    methods (Hidden, Access = protected)
         function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
@@ -144,7 +144,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     
     % SUBCLASS CONSTRUCTOR API
     % Methods to populate linkedFileInfo table
-    methods (Access = protected)
+    methods (Hidden, Access = protected)
         
         % Call API to fetch linkedFileInfo
         function apiRespTbl = fetchLinkedFileInfo(obj,nickname,apiReqStr,storeRespTbl)
@@ -197,7 +197,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
     
     % SUBCLASS INITIALIZER
     % Mandatory initialization step prior to object use
-    methods  (Access = protected)
+    methods  (Hidden, Access = protected)
         
         function initLinkedFiles(obj)           
 

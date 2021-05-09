@@ -54,7 +54,7 @@ classdef (Abstract) OnDemandProps < handle
         end
     end
     
-    methods (Access = protected)
+    methods (Hidden, Access = protected)
     
         
         function [propListing,onDemandPropList] = getOnDemandPropListing(obj,propSet)
