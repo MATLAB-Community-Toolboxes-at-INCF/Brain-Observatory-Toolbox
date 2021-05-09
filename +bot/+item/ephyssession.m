@@ -467,7 +467,7 @@ classdef ephyssession < bot.item.abstract.Session
                 unit_ids;  % Filter to these units
                 binarize logical = false; % If true, all counts greater than 0 will be treated as 1. This results in lower storage overhead, but is only reasonable if bin sizes are fine (<= 1 millisecond).
                 large_bin_size_threshold = 0.001;  % If binarize is True and the largest bin width is greater than this value, a warning will be emitted.
-                time_domain_callback function_handle = str2func('@(x)x'); % Optional Callback function applied to the time domain before counting spikes. Returns numeric array whose values are trial-aligned bin edges (each row is aligned to a different trial).
+                time_domain_callback function_handle = @(x)x; % Optional Callback function applied to the time domain before counting spikes. Returns numeric array whose values are trial-aligned bin edges (each row is aligned to a different trial).
             end
             
             % - Filter stimulus_presentations table
@@ -1013,10 +1013,11 @@ end
     end
 
     function insert_idx = find_left(v)
-        %       insert_idx = find(sorted_array > v, 1, 'first');
-        insert_idx = builtin('ismembc2', false, sorted_array > v) + 1;
-        %       [~, insert_idx] = builtin('_ismemberhelper', true, sorted_array > v);
-        if isempty(insert_idx)
+        %insert_idx = find(sorted_array > v, 1, 'first');
+        %insert_idx = builtin('ismembc2', false, sorted_array > v) + 1;
+        %[found, insert_idx] = builtin('_ismemberhelper', true, sorted_array > v);
+        [found, insert_idx] = matlab.internal.math.ismemberhelper(true, sorted_array > v);        
+        if ~found % isempty(insert_idx) 
             insert_idx = numel(sorted_array) + 1;
         end
     end
@@ -1036,7 +1037,7 @@ function domain = zlclBuildTimeWindowWomain(bin_edges, offsets, callback)
 arguments
     bin_edges;
     offsets;
-    callback function_handle = str2func('@(x)x');
+    callback function_handle = @(x)x;
 end
 
 [domain, offsets] = ndgrid(bin_edges(:), offsets(:));
