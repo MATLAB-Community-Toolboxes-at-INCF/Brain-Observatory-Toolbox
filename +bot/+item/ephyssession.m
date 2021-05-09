@@ -27,7 +27,7 @@ classdef ephyssession < bot.item.abstract.Session
         structurewise_unit_counts;       % Numbers of units (putative neurons) recorded in each of the EPhys structures recorded in this session
     end
     
-    % NWB-bound Properties
+    % Linked File Values (SessNWB file)
     properties (Dependent, Transient) % Transient used as a "tag" for file-bound properties
         
         % Physiology data
@@ -48,12 +48,16 @@ classdef ephyssession < bot.item.abstract.Session
         stimulus_presentations;          % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
         stimulus_conditions;             % Table indicating unique stimulus presentations presented in this experiment
         %num_stimulus_presentations;  	% Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
-        stimulus_templates;              % Stimulus template table
         stimulus_names;                  % Names of stimuli presented in this session
         stimulus_epochs;                % Table of stimulus presentation epochs
         optogenetic_stimulation_epochs;  % Table of optogenetic stimulation epochs for this experimental session (if present)
         
         rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)
+    end
+    
+    % Linked File Values (StimTemplatesGroup files)
+    properties (Dependent, Transient)
+        stimulus_templates;              % Stimulus template table 
     end
     
     %%  PROPERTIES - HIDDEN
@@ -1180,8 +1184,10 @@ function s = zlclInitLinkedFilePropBindings()
 
 s = struct();
 
+% identify properties associated to stimulus templates group of linked files 
 s.StimTemplatesGroup = "stimulus_templates";
 
+% remainder of file-linked properties (Dependent, Transient) are associated to session NWB linked file
 mc = meta.class.fromName(mfilename('class'));
 propNames = string({findobj(mc.PropertyList,'GetAccess','public','-and','Dependent',1,'-and','Transient',1).Name});
 
