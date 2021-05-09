@@ -16,7 +16,7 @@ classdef ephyschannel < bot.item.abstract.Item
         
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
     properties (Hidden, Access = protected)
-        CORE_PROPERTIES_EXTENDED = [];
+        CORE_PROPERTIES = string.empty(1,0);
         LINKED_ITEM_PROPERTIES = ["session" "probe" "units"];
     end
    

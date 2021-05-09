@@ -102,7 +102,7 @@ classdef ephyssession < bot.item.abstract.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
     properties (Hidden, Access = protected)
-        CORE_PROPERTIES_EXTENDED = zlclInitDirectProps();
+        CORE_PROPERTIES = zlclInitDirectProps();
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
     end
     
@@ -405,7 +405,7 @@ classdef ephyssession < bot.item.abstract.Session
             % Identify property display groups
             session.ITEM_INFO_VALUE_PROPERTIES = ["structure_acronyms"];
             session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
-            session.CORE_PROPERTIES_EXTENDED = setdiff(session.CORE_PROPERTIES_EXTENDED,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
+            session.CORE_PROPERTIES = setdiff(session.CORE_PROPERTIES,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
             
             
             % Superclass initialization (bot.item.abstract.LinkedFilesItem)

@@ -137,7 +137,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
             
             
             % Include linkedFile prop in Item core props
-            obj.CORE_PROPERTIES_EXTENDED = [obj.CORE_PROPERTIES_EXTENDED "linkedFiles"];
+            obj.CORE_PROPERTIES = [obj.CORE_PROPERTIES "linkedFiles"];
         end
         
     end

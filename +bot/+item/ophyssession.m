@@ -83,7 +83,7 @@ classdef ophyssession < bot.item.abstract.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
     properties (Hidden, Access = protected)
-        CORE_PROPERTIES_EXTENDED = "session_type";
+        CORE_PROPERTIES = "session_type";
         LINKED_ITEM_PROPERTIES = [];
     end
     
