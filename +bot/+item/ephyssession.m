@@ -348,9 +348,12 @@ classdef ephyssession < bot.item.abstract.Session
                 % - Mask invalid presentations
                 stimulus_presentations_raw = self.mask_invalid_stimulus_presentations(stimulus_presentations_raw);
                 
-                % Order ID and time variables leftmost in table
+                % Order ID and time variables leftmost in stimulus tables
                 stimulus_presentations_raw = movevars(stimulus_presentations_raw, self.FIRST_STIMULUS_PARAMETERS, 'Before', 1);
                 
+                condFirstStimParams = self.FIRST_STIMULUS_PARAMETERS(ismember(self.FIRST_STIMULUS_PARAMETERS, string(stimulus_conditions_raw.Properties.VariableNames)));
+                stimulus_conditions_raw = movevars(stimulus_conditions_raw, condFirstStimParams, 'Before', 1);
+
                 % - Insert into cache
                 self.property_cache.stimulus_presentations_raw = stimulus_presentations_raw;
                 self.property_cache.stimulus_conditions_raw = stimulus_conditions_raw;
