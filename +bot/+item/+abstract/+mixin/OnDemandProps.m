@@ -1,5 +1,5 @@
 classdef (Abstract) OnDemandProps < handle
-    %ONDEMANDPROPS Implements an on-demand property cache, allowing deferral of potentially expensive property access operations
+    %ONDEMANDPROPS A mixin class implementing an on-demand property cache, allowing deferral of potentially expensive property access operations
     
     %% PROPERTIES - HIDDEN
     properties (Hidden)

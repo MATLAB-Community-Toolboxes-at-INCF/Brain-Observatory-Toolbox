@@ -1,4 +1,4 @@
-classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.mixin.OnDemandProps
+classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.abstract.mixin.OnDemandProps
     %LINKEDFILES Handles linked files for this BOT Item
     
     %% PROPERTIES - VISIBLE
