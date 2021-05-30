@@ -21,8 +21,5 @@ arguments
     probeIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
-% - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest.instance('ephys');
-
 % - Return the probe object
-probeObj = bot.item.ephysprobe(probeIDSpec, ephys_manifest);
+probeObj = bot.item.ephysprobe(probeIDSpec);

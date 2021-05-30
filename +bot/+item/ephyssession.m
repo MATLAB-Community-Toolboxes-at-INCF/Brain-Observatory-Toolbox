@@ -107,7 +107,6 @@ classdef ephyssession < bot.item.abstract.Session
              
     end
     
-
     
     % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
     properties (Hidden, Constant)
@@ -115,6 +114,11 @@ classdef ephyssession < bot.item.abstract.Session
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected, Constant)
+        MANIFEST_NAME = "ephys";
+        MANIFEST_TABLE_NAME = "sessions"; % TODO: eliminate and implement via introspection
+    end
+    
     properties (Hidden, Access = protected)
         CORE_PROPERTIES = zlclInitDirectProps();
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
@@ -380,68 +384,32 @@ classdef ephyssession < bot.item.abstract.Session
     %% CONSTRUCTOR
     
     methods
-        function session = ephyssession(session_id, manifest)
-            % bot.item.ephyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
-            %
-            % Usage: bsObj = bot.item.ephyssession(id, manifest)
-            %        vbsObj = bot.item.ephyssession(ids, manifest)
-            %        bsObj = bot.item.ephyssession(session_table_row, manifest)
-            %
-            % `manifest` is the EPhys manifest object. `id` is the session ID
-            % of an EPhys experimental session. Optionally, a vector `ids` of
-            % multiple session IDs may be provided to return a vector of
-            % session objects. A table row of the EPhys sessions manifest
-            % table may also be provided as `session_table_row`.
-            
-            if nargin == 0
-                return;
-            end                        
-            
-            % Load associated singleton
-            if ~exist('manifest', 'var') || isempty(manifest)
-                manifest = bot.internal.ephysmanifest.instance();
-            end
-            
-            % - Handle a vector of session IDs
-            if ~istable(session_id) && numel(session_id) > 1
-                for index = numel(session_id):-1:1
-                    session(session_id) = bot.item.ephyssession(session_id(index), manifest);
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            session = session.check_and_assign_metadata(session_id, manifest.ephys_sessions, 'session');
-            session_id = session.id;
-            
-            % SUSPECTED CRUFT: since we've constructed an ephysmanifest, check seems unneeded. If checked, it would now use the table property.
-            %             % - Ensure that we were given an EPhys session
-            %             if session.info.type ~= "EPhys"
-            %                 error('BOT:Usage', '`bot.item.ephyssession` objects may only refer to EPhys experimental sessions.');
-            %             end
+        function obj = ephyssession(itemIDSpec)            
+           
+            % Superclass construction
+            obj = obj@bot.item.abstract.Session(itemIDSpec);
             
             % - Assign associated table rows
-            session.probes = manifest.ephys_probes(manifest.ephys_probes.ephys_session_id == session_id, :);
-            session.channels = manifest.ephys_channels(manifest.ephys_channels.ephys_session_id == session_id, :);
-            session.units = manifest.ephys_units(manifest.ephys_units.ephys_session_id == session_id, :);
+            obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
+            obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);
+            obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_session_id == obj.id, :);
             
             % Identify property display groups
-            session.ITEM_INFO_VALUE_PROPERTIES = ["structure_acronyms"];
-            session.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
-            session.CORE_PROPERTIES = setdiff(session.CORE_PROPERTIES,[session.ITEM_INFO_VALUE_PROPERTIES session.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
-            
-            
+            obj.ITEM_INFO_VALUE_PROPERTIES = ["structure_acronyms"];
+            obj.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
+            obj.CORE_PROPERTIES = setdiff(obj.CORE_PROPERTIES,[obj.ITEM_INFO_VALUE_PROPERTIES obj.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
+                        
             % Superclass initialization (bot.item.abstract.LinkedFilesItem)
-            session.initSession();
+            obj.initSession();
             
-            session.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
+            obj.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
             ecephys_product_id = 714914585;
-            session.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
+            obj.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
             
-            session.initLinkedFiles();
+            obj.initLinkedFiles();
             
-            % Linked file prop initializations
-            session.nwbLocal_ = bot.internal.nwb.nwb_ephys(session.linkedFiles{"SessNWB","LocalFile"});
+            % Local prop initializations
+            obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
             
         end
     end

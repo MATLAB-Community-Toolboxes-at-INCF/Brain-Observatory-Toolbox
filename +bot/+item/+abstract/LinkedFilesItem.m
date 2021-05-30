@@ -119,8 +119,12 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.abstract.mixin.OnDe
     %% CONSTRUCTOR/INITIALIZER
     
     methods
-        function obj = LinkedFilesItem()                
-
+        function obj = LinkedFilesItem(itemIDSpec)                
+            
+            % Superclass Construction
+            obj = obj@bot.item.abstract.Item(itemIDSpec);
+            
+            % On-demand property identification
             obj.prop2LinkedFileMap = containers.Map;
 
             for fileNickname = string(fieldnames(obj.LINKED_FILE_PROP_BINDINGS))'
@@ -136,7 +140,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.abstract.mixin.OnDe
             end
             
             
-            % Include linkedFile prop in Item core props
+            % Add linkedFile prop to Item core property display
             obj.CORE_PROPERTIES = [obj.CORE_PROPERTIES "linkedFiles"];
         end
         

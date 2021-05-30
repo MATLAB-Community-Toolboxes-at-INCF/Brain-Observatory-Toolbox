@@ -16,6 +16,11 @@ classdef ephysunit < bot.item.abstract.Item
     %% PROPERTIES - HIDDEN
 
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected, Constant)
+        MANIFEST_NAME = "ephys";
+        MANIFEST_TABLE_NAME = "units";
+    end    
+    
     properties (Hidden, Access = protected)
         CORE_PROPERTIES = string.empty();
         LINKED_ITEM_PROPERTIES = ["session" "channel" "probe"];
@@ -25,27 +30,15 @@ classdef ephysunit < bot.item.abstract.Item
     
     % CONSTRUCTOR
     methods                                       
-        function unit = ephysunit(unit_id, oManifest)
-            % - Handle "no arguments" usage
-            if nargin == 0
-                return;
-            end
+        function obj = ephysunit(itemIDSpec)
+   
+            % Superclass construction
+            obj = obj@bot.item.abstract.Item(itemIDSpec);
             
-            % - Handle a vector of unit IDs
-            if ~istable(unit_id) && (numel(unit_id) > 1)
-                for nIndex = numel(unit_id):-1:1
-                    unit(nIndex) = bot.item.ephysunit(unit_id(nIndex), oManifest);
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            unit = unit.check_and_assign_metadata(unit_id, oManifest.ephys_units, 'unit');
-            
-            % - Get a handle to the corresponding experimental session
-            unit.session = bot.session(unit.info.ephys_session_id);
-            unit.channel = bot.channel(unit.info.ephys_channel_id);
-            unit.probe = bot.probe(unit.info.ephys_probe_id);
+            % Assign linked Item objects 
+            obj.session = bot.session(obj.info.ephys_session_id);
+            obj.channel = bot.channel(obj.info.ephys_channel_id);
+            obj.probe = bot.probe(obj.info.ephys_probe_id);
         end
     end
 end

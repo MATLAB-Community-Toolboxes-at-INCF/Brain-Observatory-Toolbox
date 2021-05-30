@@ -1,16 +1,25 @@
 classdef Item < handle & matlab.mixin.CustomDisplay
     
-    %% PROPERTIES - VISIBLE
+    %% PROPERTIES
     properties (SetAccess = protected)
         info;         % Struct containing info about this item
         id;               % ID of this item
     end
     
-    %% PROPERTIES - HIDDEN
+    %% HIDDEN PROPERTIES
+    
+    properties (Hidden, Access = protected)
+        manifest; % Handle to pertinent manifest containing all available Items of this class
+    end
+    
+    properties (Abstract, Hidden, Access = protected, Constant)
+        MANIFEST_NAME (1,:) string {mustBeMember(MANIFEST_NAME,["ephys" "ophys"])};                
+        MANIFEST_TABLE_NAME (1,:) string;
+    end
     
     properties (Abstract, Hidden, Access = protected)
-        CORE_PROPERTIES (1,:) string
-        LINKED_ITEM_PROPERTIES (1,:) string
+        CORE_PROPERTIES (1,:) string;
+        LINKED_ITEM_PROPERTIES (1,:) string;
     end
     
     properties (Hidden, SetAccess=protected, GetAccess = protected)
@@ -18,9 +27,67 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         LINKED_ITEM_VALUE_PROPERTIES (1,:) string = string.empty(1,0);
     end
     
+    %% CONSTRUCTOR
     
-    %% METHODS - HIDDEN - SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
-    methods (Access = protected)
+    methods
+        
+        function obj = Item(itemIDSpec)
+            
+            arguments
+                itemIDSpec {bot.item.abstract.Item.mustBeItemIDSpec};                
+            end
+            
+            % No Input Argument Constructor Requirement
+            if nargin == 0 
+                return;
+            end
+            
+            % Handle case of ID array
+            if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
+                for idx = numel(itemIDSpec):-1:1
+                    obj(itemIDSpec) = bot.item.Item(itemIDSpec(idx));
+                end
+                return;
+            end
+            
+            % Identify associated manifest containing all Items of this class
+            switch obj.MANIFEST_NAME
+                case "ephys"
+                    obj.manifest = bot.internal.ephysmanifest.instance();
+                case "ophys"
+                    obj.manifest = bot.internal.ophysmanifest.instance();
+                otherwise
+                    assert(false);
+            end                       
+            
+            
+            % Identify the manifest table row(s) associated to itemIDSpec
+            if istable(itemIDSpec)                
+                manifestTableRow = itemIDSpec;
+            elseif isnumeric(itemIDSpec)
+                itemIDSpec = uint32(round(itemIDSpec));
+                
+                manifestTable = obj.manifest.([obj.MANIFEST_NAME + "_" + obj.MANIFEST_TABLE_NAME]);                 %#ok<NBRAK>
+                                               
+                matchingRow = manifestTable.id == itemIDSpec;
+                manifestTableRow = manifestTable(matchingRow, :);                          
+            else
+                assert(false);
+            end
+            
+            % - Assign the table data to the metadata structure
+            obj.info = table2struct(manifestTableRow);
+            obj.id = obj.info.id;                                              
+            
+        end
+        
+        
+    end
+    
+    
+    
+    %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
+    methods (Hidden, Access = protected)
         function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
@@ -49,39 +116,11 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         
     end
     
-    %% METHODS - HIDDEN
+
     
-    methods (Hidden, Access = protected)
-        
-        % TODO: Explore moving this logic to Item constructor
-        function item = check_and_assign_metadata(item, id, manifest_table, type, varargin)
-            % - Check usage
-            if istable(id)
-                assert(size(id, 1) == 1, 'BOT:Usage', 'Only a single table row may be provided.')
-                table_row = id;
-            else
-                assert(isnumeric(id), 'BOT:Usage', '`nID` must be an integer ID.');
-                id = uint32(round(id));
-                
-                % - Locate an ID in the manifest table
-                matching_row = manifest_table.id == id;
-                if ~any(matching_row)
-                    error('BOT:Usage', 'Item not found in %s manifest.', type);
-                end
-                
-                table_row = manifest_table(matching_row, :);
-            end
-            
-            % - Assign the table data to the metadata structure
-            item.info = table2struct(table_row);
-            item.id = item.info.id;
-        end
-        
-    end
+    %% HIDDEN METHODS - STATIC
     
-    %% METHODS - STATIC
-    
-    methods (Static)        
+    methods (Hidden, Static)        
         function  mustBeItemIDSpec(val)
             %MUSTBEITEMIDSPEC Validation function for items specified to BOT item factory functions for item object array construction
                         
@@ -90,10 +129,17 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             msgType = "";
             
             if istable(val)
+                
+                eidTypeSuffix = "invalidItemTable";
+                
                 if ~ismember(val.Properties.VariableNames, 'id')
-                    eidTypeSuffix = "invalidItemTable";
                     msgType = "Table supplied not recognized as a valid BOT Item information table";
                 end
+                
+                if height(val) ~= 1
+                    msgType = "Table supplied must have one and only one row";
+                end                                               
+                
             elseif ~isnumeric(val) || ~isvector(val) || ~all(isfinite(val)) || any(val<=0)
                 eidTypeSuffix = "invalidItemIDs";
                 msgType = "Must specify BOT item object(s) to create with either a numeric vector of valid ID values or a valid Item information table";

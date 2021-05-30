@@ -15,6 +15,11 @@ classdef ephyschannel < bot.item.abstract.Item
     %% PROPERTIES - HIDDEN 
         
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected, Constant)
+        MANIFEST_NAME = "ephys";
+        MANIFEST_TABLE_NAME = "channels";
+    end        
+    
     properties (Hidden, Access = protected)
         CORE_PROPERTIES = string.empty(1,0);
         LINKED_ITEM_PROPERTIES = ["session" "probe" "units"];
@@ -24,30 +29,17 @@ classdef ephyschannel < bot.item.abstract.Item
     
     % CONSTRUCTOR
     methods
-        function channel = ephyschannel(channel_id, oManifest)
-            % - Handle "no arguments" usage
-            if nargin == 0
-                return;
-            end
+        function obj = ephyschannel(itemIDSpec)
+   
+            % Superclass construction
+            obj = obj@bot.item.abstract.Item(itemIDSpec);
             
-            % - Handle a vector of channel IDs
-            if ~istable(channel_id) && (numel(channel_id) > 1)
-                for nIndex = numel(channel_id):-1:1
-                    channel(nIndex) = bot.item.ephyschannel(channel_id(nIndex), oManifest);
-                end
-                return;
-            end
+            % Assign linked Item tables (downstream) 
+            obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_channel_id == obj.id, :);            
             
-            % - Assign metadata
-            channel = channel.check_and_assign_metadata(channel_id, oManifest.ephys_channels, 'channel');
-            if istable(channel_id)
-                channel_id = channel.info.id;
-            end
-            
-            % - Assign associated table rows
-            channel.units = oManifest.ephys_units(oManifest.ephys_units.ephys_channel_id == channel_id, :);            
-            channel.probe = bot.probe(channel.info.ephys_probe_id);
-            channel.session = bot.session(channel.info.ephys_session_id);
+            % Assign linked Item objects (upstream)
+            obj.probe = bot.probe(obj.info.ephys_probe_id);                        
+            obj.session = bot.session(obj.info.ephys_session_id);
         end
     end
 end

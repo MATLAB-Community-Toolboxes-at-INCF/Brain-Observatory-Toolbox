@@ -21,8 +21,5 @@ arguments
     unitIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
-% - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest.instance('ephys');
-
 % - Return the unit object
-unitObj = bot.item.ephysunit(unitIDSpec, ephys_manifest);
+unitObj = bot.item.ephysunit(unitIDSpec);

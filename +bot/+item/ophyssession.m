@@ -82,6 +82,11 @@ classdef ophyssession < bot.item.abstract.Session
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected, Constant)
+        MANIFEST_NAME = "ophys";
+        MANIFEST_TABLE_NAME = "sessions";
+    end
+    
     properties (Hidden, Access = protected)
         CORE_PROPERTIES = "session_type";
         LINKED_ITEM_PROPERTIES = [];
@@ -1184,47 +1189,25 @@ classdef ophyssession < bot.item.abstract.Session
     
     %% CONSTRUCTOR
     methods
-        function bsObj = ophyssession(session_id)
+        function obj = ophyssession(itemIDSpec)
             % bot.item.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
             %
             % Usage: bsObj = bot.item.ophyssession(id)
             %        vbsObj = bot.item.ophyssession(vids)
             %        bsObj = bot.item.ophyssession(tSessionRow)
             
-            if nargin == 0
-                return;
-            end
-            
-            % Load associated singleton
-            manifest = bot.internal.ophysmanifest.instance();
-            
-            % - Handle a vector of session IDs
-            if ~istable(session_id) && numel(session_id) > 1
-                for nIndex = numel(session_id):-1:1
-                    bsObj(session_id) = bot.item.ophyssession(session_id(nIndex));
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            session = bsObj.check_and_assign_metadata(session_id, manifest.ophys_sessions, 'session');
-            
-            % SUSPECTED CRUFT: since we've explicitly constructed an ophysmanifest, check seems unneeded. If checked, it would now use the table property.
-            %          % - Ensure that we were given an OPhys session
-            %          if session.info.type ~= "OPhys"
-            %              error('BOT:Usage', '`bot.item.OPhys` objects may only refer to OPhys experimental sessions.');
-            %          end
-            
+            % Superclass construction
+            obj = obj@bot.item.abstract.Session(itemIDSpec);                        
             
             % Superclass initialization (bot.item.abstract.LinkedFilesItem)
-            session.initSession();
+            obj.initSession();
             
-            session.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
-            h5Idx = find(contains(string({session.info.well_known_files.path}),"h5",'IgnoreCase',true));
+            obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
+            h5Idx = find(contains(string({obj.info.well_known_files.path}),"h5",'IgnoreCase',true));
             assert(isscalar(h5Idx),"Expected to find exactly one H5 file ");
-            session.insertLinkedFileInfo("SessH5",session.info.well_known_files(h5Idx));
+            obj.insertLinkedFileInfo("SessH5",obj.info.well_known_files(h5Idx));
             
-            session.initLinkedFiles();
+            obj.initLinkedFiles();
             
         end
         

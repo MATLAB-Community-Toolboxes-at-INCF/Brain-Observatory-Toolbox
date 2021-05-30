@@ -21,8 +21,5 @@ arguments
     channelIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
-% - Get a bot ephys manifest
-ephys_manifest = bot.internal.manifest.instance('ephys');
-
 % - Return the channel object
-channelObj = bot.item.ephyschannel(channelIDSpec, ephys_manifest);
+channelObj = bot.item.ephyschannel(channelIDSpec);

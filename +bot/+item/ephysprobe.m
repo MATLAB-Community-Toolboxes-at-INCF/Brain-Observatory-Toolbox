@@ -25,6 +25,11 @@ classdef ephysprobe < bot.item.abstract.LinkedFilesItem
     %% PROPERTIES - HIDDEN
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected, Constant)
+        MANIFEST_NAME = "ephys";
+        MANIFEST_TABLE_NAME = "probes";
+    end    
+    
     properties (Hidden, Access = protected)
         CORE_PROPERTIES = string.empty(1,0);
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
@@ -133,39 +138,21 @@ classdef ephysprobe < bot.item.abstract.LinkedFilesItem
     
     %% CONSTRUCTOR
     methods
-        function probe = ephysprobe(probe_id, oManifest)
-            % - Handle "no arguments" usage
-            if nargin == 0
-                return;
-            end
+        function obj = ephysprobe(itemIDSpec)
+              
+            % Superclass construction
+            obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);
             
-            % - Handle a vector of probe IDs
-            if ~istable(probe_id) && (numel(probe_id) > 1)
-                for nIndex = numel(probe_id):-1:1
-                    probe(nIndex) = bot.item.ephysprobe(probe_id(nIndex), oManifest);
-                end
-                return;
-            end
-            
-            % - Assign metadata
-            probe.check_and_assign_metadata(probe_id, oManifest.ephys_probes, 'probe');
-            if istable(probe_id)
-                probe_id = probe.info.id;
-            end
-            
-            % - Assign associated table rows
-            probe.channels = oManifest.ephys_channels(oManifest.ephys_channels.ephys_probe_id == probe_id, :);
-            probe.units = oManifest.ephys_units(oManifest.ephys_units.ephys_probe_id == probe_id, :);
-            
-            % - Get a handle to the corresponding experimental session
-            probe.session = bot.session(probe.info.ephys_session_id);
+            % Assign linked Item tables (downstream) 
+            obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_probe_id == obj.id, :);
+            obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);
+                        
+            % Assign linked Item objects (upstream) 
+            obj.session = bot.session(obj.info.ephys_session_id);
             
             % Superclass initialization (bot.item.abstract.LinkedFilesItem)
-            probe.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', probe.id));
-            probe.initLinkedFiles();
-            
-            
-            return;            
+            obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));
+            obj.initLinkedFiles();                      
 
         end
         

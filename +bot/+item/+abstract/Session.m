@@ -28,10 +28,9 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
    
    % CONSTRUCTOR
    methods
-      function obj = Session()                      
-          
-      end           
-      
+      function obj = Session(itemIDSpec)                                
+          obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);          
+      end                 
    end    
    
    % INITIALIZER
