@@ -4,7 +4,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
 %
 
-classdef ophyssession < bot.item.abstract.Session
+classdef ophyssession < bot.item.Session
     
     %% PROPERTIES - VISIBLE
     
@@ -76,15 +76,15 @@ classdef ophyssession < bot.item.abstract.Session
         smCachedStimulusTable = bot.internal.SimpleMap();  % Internally cached master stimulus table, for searching stimuli
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Session)
+    % SUPERCLASS IMPLEMENTATION (bot.item.Session)
     properties (Hidden, Constant)
+        %DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
         NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_NAME = "ophys";
-        MANIFEST_TABLE_NAME = "sessions";
     end
     
     properties (Hidden, Access = protected)
@@ -1197,7 +1197,7 @@ classdef ophyssession < bot.item.abstract.Session
             %        bsObj = bot.item.ophyssession(tSessionRow)
             
             % Superclass construction
-            obj = obj@bot.item.abstract.Session(itemIDSpec);                        
+            obj = obj@bot.item.Session(itemIDSpec);                        
             
             % Superclass initialization (bot.item.abstract.LinkedFilesItem)
             obj.initSession();

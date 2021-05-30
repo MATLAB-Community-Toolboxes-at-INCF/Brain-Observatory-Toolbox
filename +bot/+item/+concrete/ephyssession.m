@@ -4,10 +4,10 @@
 % [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
 %
 
-classdef ephyssession < bot.item.abstract.Session
+classdef ephyssession < bot.item.Session
     
     
-    %% PROPERTIES - VISIBLE
+    %% PROPERTIES         
     
     % Info Item Values
     properties (Dependent)
@@ -107,16 +107,15 @@ classdef ephyssession < bot.item.abstract.Session
              
     end
     
-    
-    % SUPERCLASS IMPLEMENTATION (bot.item.session_base)
+    % SUPERCLASS IMPLEMENTATION (bot.item.Session)
     properties (Hidden, Constant)
+        %DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;    
         NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_NAME = "ephys";
-        MANIFEST_TABLE_NAME = "sessions"; % TODO: eliminate and implement via introspection
     end
     
     properties (Hidden, Access = protected)
@@ -387,7 +386,7 @@ classdef ephyssession < bot.item.abstract.Session
         function obj = ephyssession(itemIDSpec)            
            
             % Superclass construction
-            obj = obj@bot.item.abstract.Session(itemIDSpec);
+            obj = obj@bot.item.Session(itemIDSpec);
             
             % - Assign associated table rows
             obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);

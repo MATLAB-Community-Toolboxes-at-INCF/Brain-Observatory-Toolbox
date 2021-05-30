@@ -1,17 +1,26 @@
 classdef Session < handle & bot.item.abstract.LinkedFilesItem
- 
-
-    %% PROPERTIES - HIDDEN                     
+    % Abstract class for Session objects of all types defined in bot.item.internal.enum.SessionType
+        
     
-    % SUBCLASS INTERFACE    
+    %% PROPERTIES - HIDDEN                     
+            
+    % SUBCLASS INTERFACE        
     properties (Abstract, Hidden, Constant)
-        NWB_WELL_KNOWN_FILE_PREFIX (1,1) string
+        %DATASET_TYPE(1,1) bot.item.internal.enum.DatasetType; 
+        NWB_WELL_KNOWN_FILE_PREFIX(1,1) string
     end
     
-    properties (Abstract, Hidden,Dependent, Access=protected)
+    properties (Abstract, Hidden, Dependent, Access=protected)
         nwbLocal; % NWB file access prop, useful for some property access fcns TODO: eliminate or at least harmonize output type across session subclasses (currently variable)
     end
     
+    
+    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    properties (Hidden, Access = protected, Constant)
+        MANIFEST_TABLE_NAME = lower(string(mfilename())) + "s"; 
+    end
+
+
     % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true);
@@ -24,12 +33,16 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
     %         ephys_manifest = bot.internal.ephysmanifest.instance();              % Private handle to the EPhys data manifest
     %     end
     
-   %% LIFECYCLE        
+
+    
+    %% LIFECYCLE
    
    % CONSTRUCTOR
    methods
-      function obj = Session(itemIDSpec)                                
-          obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);          
+      function obj = Session(itemIDSpec)                
+          
+          obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);                                                            
+
       end                 
    end    
    

@@ -21,7 +21,10 @@
 function sessionObj = session(sessionIDSpec,sessionType)
 
 arguments
+    % Required arguments
     sessionIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
+    
+    % Optional arguments
     sessionType (1,:) string {mustBeMember(sessionType,["ephys" "ophys" ""])} = string.empty(1,0);
 end
 
@@ -38,7 +41,7 @@ if isempty(sessionType)
         sessionObj = [];
                 
         try
-            sessionObj = bot.item.ophyssession(sessionIDSpec);
+            sessionObj = bot.item.concrete.ophyssession(sessionIDSpec);
         catch ME
             if ~isequal(ME.identifier,"BOT:Item:idNotFound")
                 ME.rethrow();
@@ -46,7 +49,7 @@ if isempty(sessionType)
         end
         
         if isempty(sessionObj)
-            sessionObj = bot.item.ephyssession(sessionIDSpec);
+            sessionObj = bot.item.concrete.ephyssession(sessionIDSpec);
         end
         
         return
@@ -55,9 +58,9 @@ end
 
 switch sessionType
     case "ophys"
-        sessionObj = bot.item.ophyssession(sessionIDSpec);
+        sessionObj = bot.item.concrete.ophyssession(sessionIDSpec);
     case "ephys"
-        sessionObj = bot.item.ephyssession(sessionIDSpec);
+        sessionObj = bot.item.concrete.ephyssession(sessionIDSpec);
     otherwise
         assert(false);
 end
