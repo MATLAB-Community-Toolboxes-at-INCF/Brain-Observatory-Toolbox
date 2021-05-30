@@ -18,7 +18,7 @@
 function channelObj = channel(channelIDSpec)
 
 arguments
-    channelIDSpec {bot.item.internal.mustBeItemIDSpec}
+    channelIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Get a bot ephys manifest

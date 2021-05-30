@@ -21,7 +21,7 @@
 function sessionObj = session(sessionIDSpec)
 
 arguments
-    sessionIDSpec {bot.item.internal.mustBeItemIDSpec}
+    sessionIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Is we were given a table, extract the IDs

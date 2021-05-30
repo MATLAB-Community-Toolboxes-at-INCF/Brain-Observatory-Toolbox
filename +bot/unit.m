@@ -18,7 +18,7 @@
 function unitObj = unit(unitIDSpec)
 
 arguments
-    unitIDSpec {bot.item.internal.mustBeItemIDSpec}
+    unitIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Get a bot ephys manifest

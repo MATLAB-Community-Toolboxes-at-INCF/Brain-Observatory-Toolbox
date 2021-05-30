@@ -21,7 +21,7 @@
 function experimentObj = experiment(experimentIDSpec)
 
 arguments
-    experimentIDSpec {bot.item.internal.mustBeItemIDSpec}
+    experimentIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Return the experiment object
