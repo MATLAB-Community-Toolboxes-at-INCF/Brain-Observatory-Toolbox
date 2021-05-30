@@ -75,6 +75,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 assert(false);
             end
             
+            assert(~isempty(manifestTableRow),"BOT:Item:idNotFound","Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
+            
             % - Assign the table data to the metadata structure
             obj.info = table2struct(manifestTableRow);
             obj.id = obj.info.id;                                              
