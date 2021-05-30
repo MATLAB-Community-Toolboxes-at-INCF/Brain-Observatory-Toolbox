@@ -18,7 +18,7 @@
 function probeObj = probe(probeIDSpec)
 
 arguments
-    probeIDSpec {bot.item.internal.mustBeItemIDSpec}
+    probeIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Get a bot ephys manifest
