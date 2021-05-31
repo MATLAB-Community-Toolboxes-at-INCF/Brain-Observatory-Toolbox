@@ -1,4 +1,4 @@
-classdef Probe < bot.item.abstract.LinkedFilesItem
+classdef Probe < bot.item.internal.abstract.LinkedFilesItem
 %
 % Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] probe item.
 %
@@ -24,7 +24,7 @@ classdef Probe < bot.item.abstract.LinkedFilesItem
     
     %% PROPERTIES - HIDDEN
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_NAME = "ephys";
         MANIFEST_TABLE_NAME = "probes";
@@ -35,7 +35,7 @@ classdef Probe < bot.item.abstract.LinkedFilesItem
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)    
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)    
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = struct("LFPNWB",["lfpData" "csdData"]);
         LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB",false);
@@ -141,7 +141,7 @@ classdef Probe < bot.item.abstract.LinkedFilesItem
         function obj = Probe(itemIDSpec)
               
             % Superclass construction
-            obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);
+            obj = obj@bot.item.internal.abstract.LinkedFilesItem(itemIDSpec);
             
             % Assign linked Item tables (downstream) 
             obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_probe_id == obj.id, :);
@@ -150,7 +150,7 @@ classdef Probe < bot.item.abstract.LinkedFilesItem
             % Assign linked Item objects (upstream) 
             obj.session = bot.session(obj.info.ephys_session_id);
             
-            % Superclass initialization (bot.item.abstract.LinkedFilesItem)
+            % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
             obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));
             obj.initLinkedFiles();                      
 

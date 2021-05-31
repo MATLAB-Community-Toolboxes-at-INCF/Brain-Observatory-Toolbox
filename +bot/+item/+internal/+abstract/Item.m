@@ -34,7 +34,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         function obj = Item(itemIDSpec)
             
             arguments
-                itemIDSpec {bot.item.abstract.Item.mustBeItemIDSpec};                
+                itemIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec};                
             end
             
             % No Input Argument Constructor Requirement

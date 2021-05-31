@@ -113,7 +113,7 @@ classdef EphysSession < bot.item.Session
         NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_NAME = "ephys";
     end
@@ -123,7 +123,7 @@ classdef EphysSession < bot.item.Session
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
@@ -398,7 +398,7 @@ classdef EphysSession < bot.item.Session
             obj.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
             obj.CORE_PROPERTIES = setdiff(obj.CORE_PROPERTIES,[obj.ITEM_INFO_VALUE_PROPERTIES obj.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
                         
-            % Superclass initialization (bot.item.abstract.LinkedFilesItem)
+            % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
             obj.initSession();
             
             obj.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
@@ -824,7 +824,7 @@ classdef EphysSession < bot.item.Session
                        
             invalid_times = self.invalid_times;
             
-            if isequal(invalid_times, bot.item.internal.OnDemandState.Unavailable)
+            if isequal(invalid_times, bot.item.internal.enum.OnDemandState.Unavailable)
                 invalid_times = [];                                
             elseif  ~isempty(invalid_times)
                 mask = cellfun(@(c)any(ismember(string(c), string(tags))), invalid_times.tags);

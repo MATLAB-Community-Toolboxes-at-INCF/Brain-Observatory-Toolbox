@@ -1,4 +1,4 @@
-classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.abstract.mixin.OnDemandProps
+classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.mixin.OnDemandProps
     %LINKEDFILES Handles linked files for this BOT Item
     
     %% PROPERTIES - VISIBLE
@@ -92,7 +92,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.abstract.mixin.OnDe
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
             else
-                groups = getPropertyGroups@bot.item.abstract.Item(obj);
+                groups = getPropertyGroups@bot.item.internal.abstract.Item(obj);
                 
                 
                 for nickname = string(obj.linkedFiles.Row)'
@@ -122,7 +122,7 @@ classdef LinkedFilesItem < bot.item.abstract.Item & bot.item.abstract.mixin.OnDe
         function obj = LinkedFilesItem(itemIDSpec)                
             
             % Superclass Construction
-            obj = obj@bot.item.abstract.Item(itemIDSpec);
+            obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
             
             % On-demand property identification
             obj.prop2LinkedFileMap = containers.Map;

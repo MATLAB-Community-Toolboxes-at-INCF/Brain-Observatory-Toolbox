@@ -18,7 +18,7 @@
 function channelObj = channel(channelIDSpec)
 
 arguments
-    channelIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
+    channelIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Return the channel object

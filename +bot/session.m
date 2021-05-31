@@ -22,7 +22,7 @@ function sessionObj = session(sessionIDSpec,sessionType)
 
 arguments
     % Required arguments
-    sessionIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
+    sessionIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
     
     % Optional arguments
     sessionType (1,:) string {mustBeMember(sessionType,["ephys" "ophys" ""])} = string.empty(1,0);

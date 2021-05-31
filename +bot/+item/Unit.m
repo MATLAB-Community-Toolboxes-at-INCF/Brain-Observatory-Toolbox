@@ -1,4 +1,4 @@
-classdef Unit < bot.item.abstract.Item
+classdef Unit < bot.item.internal.abstract.Item
 %
 % Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] unit item.
 %
@@ -15,7 +15,7 @@ classdef Unit < bot.item.abstract.Item
     
     %% PROPERTIES - HIDDEN
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_NAME = "ephys";
         MANIFEST_TABLE_NAME = "units";
@@ -33,7 +33,7 @@ classdef Unit < bot.item.abstract.Item
         function obj = Unit(itemIDSpec)
    
             % Superclass construction
-            obj = obj@bot.item.abstract.Item(itemIDSpec);
+            obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
             
             % Assign linked Item objects 
             obj.session = bot.session(obj.info.ephys_session_id);

@@ -1,4 +1,4 @@
-classdef Channel < bot.item.abstract.Item
+classdef Channel < bot.item.internal.abstract.Item
 %
 % Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] channel item.
 %
@@ -14,7 +14,7 @@ classdef Channel < bot.item.abstract.Item
    
     %% PROPERTIES - HIDDEN 
         
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_NAME = "ephys";
         MANIFEST_TABLE_NAME = "channels";
@@ -32,7 +32,7 @@ classdef Channel < bot.item.abstract.Item
         function obj = Channel(itemIDSpec)
    
             % Superclass construction
-            obj = obj@bot.item.abstract.Item(itemIDSpec);
+            obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
             
             % Assign linked Item tables (downstream) 
             obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_channel_id == obj.id, :);            

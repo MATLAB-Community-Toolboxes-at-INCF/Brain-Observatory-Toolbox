@@ -18,7 +18,7 @@
 function probeObj = probe(probeIDSpec)
 
 arguments
-    probeIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
+    probeIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Return the probe object

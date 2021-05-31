@@ -92,7 +92,7 @@ classdef OphysSession < bot.item.Session
         LINKED_ITEM_PROPERTIES = [];
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
@@ -1199,7 +1199,7 @@ classdef OphysSession < bot.item.Session
             % Superclass construction
             obj = obj@bot.item.Session(itemIDSpec);                        
             
-            % Superclass initialization (bot.item.abstract.LinkedFilesItem)
+            % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
             obj.initSession();
             
             obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;

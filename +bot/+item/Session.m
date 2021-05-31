@@ -1,4 +1,4 @@
-classdef Session < handle & bot.item.abstract.LinkedFilesItem
+classdef Session < handle & bot.item.internal.abstract.LinkedFilesItem
     % Abstract class for Session objects of all dataset types
         
     
@@ -15,13 +15,13 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
     end
     
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
         MANIFEST_TABLE_NAME = lower(string(mfilename())) + "s"; 
     end
 
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.LinkedFilesItem)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB",true);
     end    
@@ -41,7 +41,7 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
    methods
       function obj = Session(itemIDSpec)                
           
-          obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);                                                            
+          obj = obj@bot.item.internal.abstract.LinkedFilesItem(itemIDSpec);                                                            
 
       end                 
    end    
@@ -49,7 +49,7 @@ classdef Session < handle & bot.item.abstract.LinkedFilesItem
    % INITIALIZER
    methods (Access=protected)
        function initSession(obj)
-           % Superclass initialization (bot.item.abstract.LinkedFilesItem)
+           % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
            nwbIdx = find(contains(string({obj.info.well_known_files.path}),"nwb",'IgnoreCase',true));
            assert(isscalar(nwbIdx),"Expected to find exactly one NWB file ");
            obj.insertLinkedFileInfo("SessNWB",obj.info.well_known_files(nwbIdx));

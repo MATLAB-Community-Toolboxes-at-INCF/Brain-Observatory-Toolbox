@@ -18,7 +18,7 @@
 function unitObj = unit(unitIDSpec)
 
 arguments
-    unitIDSpec {bot.item.abstract.Item.mustBeItemIDSpec}
+    unitIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
 end
 
 % - Return the unit object

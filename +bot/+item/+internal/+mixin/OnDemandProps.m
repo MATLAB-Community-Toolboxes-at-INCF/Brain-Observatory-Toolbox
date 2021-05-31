@@ -34,7 +34,7 @@ classdef (Abstract) OnDemandProps < handle
                 try 
                     self.property_cache.(property) = fun_access();
                 catch 
-                    self.property_cache.(property) = bot.item.internal.OnDemandState.Unavailable;
+                    self.property_cache.(property) = bot.item.internal.enum.OnDemandState.Unavailable;
                 end
             end
             
@@ -78,9 +78,9 @@ classdef (Abstract) OnDemandProps < handle
                 if ~obj.in_cache(prop)
                     propListing.(prop) = '[on demand]';
                     onDemandPropList(end+1) = prop; %#ok<AGROW>
-                elseif isa(obj.property_cache.(prop),'bot.item.internal.OnDemandState')
+                elseif isa(obj.property_cache.(prop),'bot.item.internal.enum.OnDemandState')
                     %Decode the state
-                    if isequal(obj.property_cache.(prop),bot.item.internal.OnDemandState.Unavailable)
+                    if isequal(obj.property_cache.(prop),bot.item.internal.enum.OnDemandState.Unavailable)
                        propListing.(prop) = '[unavailable]'; 
                     end
                 else                    
