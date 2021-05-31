@@ -13,8 +13,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     end
     
     properties (Abstract, Hidden, Access = protected, Constant)
-        MANIFEST_NAME (1,:) string {mustBeMember(MANIFEST_NAME,["ephys" "ophys"])};                
-        MANIFEST_TABLE_NAME (1,:) string;
+        DATASET_TYPE(1,1) bot.item.internal.enum.DatasetType
+        ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
     end
     
     properties (Abstract, Hidden, Access = protected)
@@ -51,10 +51,10 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             end
             
             % Identify associated manifest containing all Items of this class
-            switch obj.MANIFEST_NAME
-                case "ephys"
+            switch obj.DATASET_TYPE
+                case "Ephys"
                     obj.manifest = bot.internal.ephysmanifest.instance();
-                case "ophys"
+                case "Ophys"
                     obj.manifest = bot.internal.ophysmanifest.instance();
                 otherwise
                     assert(false);
@@ -67,7 +67,10 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             elseif isnumeric(itemIDSpec)
                 itemIDSpec = uint32(round(itemIDSpec));
                 
-                manifestTable = obj.manifest.([obj.MANIFEST_NAME + "_" + obj.MANIFEST_TABLE_NAME]);                 %#ok<NBRAK>
+                manifestTablePrefix = lower(string(obj.DATASET_TYPE));
+                manifestTableSuffix = lower(string(obj.ITEM_TYPE)) + "s"; 
+                
+                manifestTable = obj.manifest.([manifestTablePrefix + "_" + manifestTableSuffix]); %#ok<NBRAK>
                                                
                 matchingRow = manifestTable.id == itemIDSpec;
                 manifestTableRow = manifestTable(matchingRow, :);                          

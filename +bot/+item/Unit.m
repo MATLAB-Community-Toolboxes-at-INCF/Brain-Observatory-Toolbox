@@ -17,8 +17,8 @@ classdef Unit < bot.item.internal.abstract.Item
 
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        MANIFEST_NAME = "ephys";
-        MANIFEST_TABLE_NAME = "units";
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        ITEM_TYPE = bot.item.internal.enum.ItemType.Unit;
     end    
     
     properties (Hidden, Access = protected)

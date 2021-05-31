@@ -78,13 +78,12 @@ classdef OphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.Session)
     properties (Hidden, Constant)
-        %DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
         NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.abstract.Item)
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        MANIFEST_NAME = "ophys";
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
     end
     
     properties (Hidden, Access = protected)

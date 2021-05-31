@@ -16,8 +16,8 @@ classdef Channel < bot.item.internal.abstract.Item
         
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        MANIFEST_NAME = "ephys";
-        MANIFEST_TABLE_NAME = "channels";
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        ITEM_TYPE= bot.item.internal.enum.ItemType.Channel;
     end        
     
     properties (Hidden, Access = protected)

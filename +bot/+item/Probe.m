@@ -26,8 +26,8 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        MANIFEST_NAME = "ephys";
-        MANIFEST_TABLE_NAME = "probes";
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        ITEM_TYPE= bot.item.internal.enum.ItemType.Probe;
     end    
     
     properties (Hidden, Access = protected)

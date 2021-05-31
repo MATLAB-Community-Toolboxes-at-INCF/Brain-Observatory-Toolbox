@@ -109,13 +109,13 @@ classdef EphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.Session)
     properties (Hidden, Constant)
-        %DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;    
+        
         NWB_WELL_KNOWN_FILE_PREFIX = "EcephysNwb";
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        MANIFEST_NAME = "ephys";
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;            
     end
     
     properties (Hidden, Access = protected)
