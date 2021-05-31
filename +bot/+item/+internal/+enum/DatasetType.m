@@ -16,5 +16,19 @@ classdef DatasetType
         Ephys; % Visual Coding Neuropixels dataset
         Ophys; % Visual Coding 2P dataset
     end
+    
+    %     methods
+    %         function prefix = getNWBWellKnownFilePrefix(obj)
+    %             switch obj
+    %                 case Ephys
+    %                     prefix = "EcephysNwb";
+    %                 case Ophys
+    %                     prefix = "NWBOphys";
+    %                 otherwise
+    %                     assert(false);
+    %             end
+    %         end
+    %     end
+
 
 end

@@ -76,10 +76,6 @@ classdef OphysSession < bot.item.Session
         smCachedStimulusTable = bot.internal.SimpleMap();  % Internally cached master stimulus table, for searching stimuli
     end
     
-    % SUPERCLASS IMPLEMENTATION (bot.item.Session)
-    properties (Hidden, Constant)
-        NWB_WELL_KNOWN_FILE_PREFIX = "NWBOphys";
-    end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)

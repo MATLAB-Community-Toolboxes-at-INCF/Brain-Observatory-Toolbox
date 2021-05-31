@@ -5,9 +5,6 @@ classdef Session < handle & bot.item.internal.abstract.LinkedFilesItem
     %% PROPERTIES - HIDDEN                     
             
     % SUBCLASS INTERFACE        
-    properties (Abstract, Hidden, Constant)
-        NWB_WELL_KNOWN_FILE_PREFIX(1,1) string % TODO: seek to deprecate by inferring from DATASET_TYPE
-    end
     
     properties (Abstract, Hidden, Dependent, Access=protected)
         nwbLocal; % NWB file access prop, useful for some property access fcns TODO: eliminate or at least harmonize output type across session subclasses (currently variable)
