@@ -4,7 +4,7 @@
 % [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
 %
 
-classdef ephyssession < bot.item.Session
+classdef EphysSession < bot.item.Session
     
     
     %% PROPERTIES         
@@ -383,7 +383,7 @@ classdef ephyssession < bot.item.Session
     %% CONSTRUCTOR
     
     methods
-        function obj = ephyssession(itemIDSpec)            
+        function obj = EphysSession(itemIDSpec)            
            
             % Superclass construction
             obj = obj@bot.item.Session(itemIDSpec);

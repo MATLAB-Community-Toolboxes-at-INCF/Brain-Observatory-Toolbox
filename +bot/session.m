@@ -34,14 +34,14 @@ if isempty(sessionType)
     
     if istable(sessionIDSpec)  
         sessionType = lower(string(sessionIDSpec.Properties.UserData.type));
-
+        
     else    
-        % No hint available: now must call both constructors sequentially to try matching against both manifests
+        % No hint available --> must call both constructors sequentially to try matching against both manifests
         
         sessionObj = [];
                 
         try
-            sessionObj = bot.item.concrete.ophyssession(sessionIDSpec);
+            sessionObj = bot.item.concrete.OphysSession(sessionIDSpec);
         catch ME
             if ~isequal(ME.identifier,"BOT:Item:idNotFound")
                 ME.rethrow();
@@ -49,7 +49,7 @@ if isempty(sessionType)
         end
         
         if isempty(sessionObj)
-            sessionObj = bot.item.concrete.ephyssession(sessionIDSpec);
+            sessionObj = bot.item.concrete.EphysSession(sessionIDSpec);
         end
         
         return
@@ -58,9 +58,9 @@ end
 
 switch sessionType
     case "ophys"
-        sessionObj = bot.item.concrete.ophyssession(sessionIDSpec);
+        sessionObj = bot.item.concrete.OphysSession(sessionIDSpec);
     case "ephys"
-        sessionObj = bot.item.concrete.ephyssession(sessionIDSpec);
+        sessionObj = bot.item.concrete.EphysSession(sessionIDSpec);
     otherwise
         assert(false);
 end

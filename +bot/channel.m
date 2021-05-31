@@ -22,4 +22,4 @@ arguments
 end
 
 % - Return the channel object
-channelObj = bot.item.ephyschannel(channelIDSpec);
+channelObj = bot.item.Channel(channelIDSpec);

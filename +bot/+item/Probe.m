@@ -1,4 +1,4 @@
-classdef ephysprobe < bot.item.abstract.LinkedFilesItem
+classdef Probe < bot.item.abstract.LinkedFilesItem
 %
 % Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] probe item.
 %
@@ -138,7 +138,7 @@ classdef ephysprobe < bot.item.abstract.LinkedFilesItem
     
     %% CONSTRUCTOR
     methods
-        function obj = ephysprobe(itemIDSpec)
+        function obj = Probe(itemIDSpec)
               
             % Superclass construction
             obj = obj@bot.item.abstract.LinkedFilesItem(itemIDSpec);

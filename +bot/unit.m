@@ -22,4 +22,4 @@ arguments
 end
 
 % - Return the unit object
-unitObj = bot.item.ephysunit(unitIDSpec);
+unitObj = bot.item.Unit(unitIDSpec);

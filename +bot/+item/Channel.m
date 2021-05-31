@@ -1,4 +1,4 @@
-classdef ephyschannel < bot.item.abstract.Item
+classdef Channel < bot.item.abstract.Item
 %
 % Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] channel item.
 %
@@ -29,7 +29,7 @@ classdef ephyschannel < bot.item.abstract.Item
     
     % CONSTRUCTOR
     methods
-        function obj = ephyschannel(itemIDSpec)
+        function obj = Channel(itemIDSpec)
    
             % Superclass construction
             obj = obj@bot.item.abstract.Item(itemIDSpec);

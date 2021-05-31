@@ -25,4 +25,4 @@ arguments
 end
 
 % - Return the experiment object
-experimentObj = bot.item.experiment(experimentIDSpec);
+experimentObj = bot.item.Experiment(experimentIDSpec);

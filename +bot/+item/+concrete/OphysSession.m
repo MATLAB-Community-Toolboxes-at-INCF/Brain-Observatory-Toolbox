@@ -4,7 +4,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
 %
 
-classdef ophyssession < bot.item.Session
+classdef OphysSession < bot.item.Session
     
     %% PROPERTIES - VISIBLE
     
@@ -1189,7 +1189,7 @@ classdef ophyssession < bot.item.Session
     
     %% CONSTRUCTOR
     methods
-        function obj = ophyssession(itemIDSpec)
+        function obj = OphysSession(itemIDSpec)
             % bot.item.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
             %
             % Usage: bsObj = bot.item.ophyssession(id)

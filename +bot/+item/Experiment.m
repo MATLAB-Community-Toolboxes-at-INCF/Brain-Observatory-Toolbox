@@ -4,7 +4,7 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
 %
 
-classdef experiment < handle
+classdef Experiment < handle
     
    %% PROPERTIES - VISIBLE   
    properties (SetAccess = private)
@@ -23,7 +23,7 @@ classdef experiment < handle
    
    % CONSTRUCTOR
    methods
-      function exp = experiment(id)
+      function exp = Experiment(id)
          % experiment - CLASS Encapsulate an experiment container
          
          % - Handle no-argument calling case

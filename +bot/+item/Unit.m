@@ -1,4 +1,4 @@
-classdef ephysunit < bot.item.abstract.Item
+classdef Unit < bot.item.abstract.Item
 %
 % Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] unit item.
 %
@@ -30,7 +30,7 @@ classdef ephysunit < bot.item.abstract.Item
     
     % CONSTRUCTOR
     methods                                       
-        function obj = ephysunit(itemIDSpec)
+        function obj = Unit(itemIDSpec)
    
             % Superclass construction
             obj = obj@bot.item.abstract.Item(itemIDSpec);

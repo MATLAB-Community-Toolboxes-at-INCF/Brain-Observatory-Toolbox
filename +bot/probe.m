@@ -22,4 +22,4 @@ arguments
 end
 
 % - Return the probe object
-probeObj = bot.item.ephysprobe(probeIDSpec);
+probeObj = bot.item.Probe(probeIDSpec);

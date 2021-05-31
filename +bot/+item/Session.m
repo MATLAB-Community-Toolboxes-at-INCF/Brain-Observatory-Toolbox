@@ -1,5 +1,5 @@
 classdef Session < handle & bot.item.abstract.LinkedFilesItem
-    % Abstract class for Session objects of all types defined in bot.item.internal.enum.SessionType
+    % Abstract class for Session objects of all dataset types
         
     
     %% PROPERTIES - HIDDEN                     
