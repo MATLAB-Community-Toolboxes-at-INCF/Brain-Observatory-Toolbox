@@ -1,7 +1,7 @@
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory[\[1\]](#references). 
+A MATLAB toolbox for accessing and using the neural recording public datasets from the Allen Brain Observatory[\[1\]](#references). 
 
-**NOTE**: The project is in an alpha stage. The current version (0.9) is intended for evaluation and interface/compatibility changes may occur at each release (0.9.x). Feedback is encouraged and welcomed at TBD. 
+**NOTE**: This is an early-stage toolbox. Your feedback is encouraged and appreciated at TBD. During the current version (v0.9), some interface changes may occur at each release (v0.9.x). These would be representational changes only, with no impact on the underlying Allen Brain Observatory dataset records, files, and source-computed derived values browsed and accessed via this toolbox. 
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
