@@ -1,9 +1,7 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public dataset releases from the Allen Brain Observatory[\[1\]](#references). 
 
-**NOTE**: Releases for the current version (0.9) are *working prototypes* intended for evaluation. Feedback is encouraged and welcomed<sup>1</sup>.
-
-<sup>1. One or more feedback channels to be established soon</sup>
+**NOTE**: The project is in an alpha stage. The current version (0.9) is intended for evaluation and interface/compatibility changes may occur at each release (0.9.x). Feedback is encouraged and welcomed at TBD. 
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
@@ -56,7 +54,7 @@ Four MATLAB live scripts are provided to help get started:
 
 | Live Script(s) | About |
 | --- | --- |
-| `EphysDemo.mlx`<br>`OphysDemo.mlx` | Demonstrate simple representative neuroscientific analysis using the BOT | 
+| `EphysDemo.mlx`<br>`OphysDemo.mlx` | Demonstrations of illustrative neurophysiological analyses using the BOT and the datasets| 
 | `EphysTutorial.mlx`<br>`OphysTutorial.mlx` | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
  
  
@@ -78,4 +76,5 @@ Or to get a fast first look yourself, enter the following commands in MATLAB:
 
 #### Acknowledgements
 
-Initial engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College. 
+Initial engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College and hosted by the [Center for Brains, Minds, and Machines](https://cbmm.mit.edu/) at the Massachusetts Institute of Technology. 
+
