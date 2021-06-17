@@ -30,8 +30,8 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 * **Dataset items** supported include experimental *sessions* (for both 2P and Neuropixels) as well as *probes*, *channels*, and *units* (for Neuropixels) 
   * [Tabular indexing](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects
 * **Item object** [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item 
-  * *"On demand"* properties defer value retrieval, for item object properties involving extensive compute or file reading 
-  * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) are used to compute values with additional user-specified arguments 
+  * *"On demand"* properties defer value retrieval, for those item object properties involving extensive compute or file reading 
+  * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) are used to compute values requiring additional user-specified arguments 
 * **Local caching**<sup>1</sup> is implemented, to provide the fastest possible initial and repeat performance within and across MATLAB sessions
 
 <sup>1. For retrieved item information, object representations, and file contents</sup>
