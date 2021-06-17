@@ -5,7 +5,7 @@ A MATLAB toolbox for **accessing and using** the neural recording public dataset
 
 :construction: The Brain Observatory Toolbox is at an early stage (v0.9), meaning two things:
 * Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**)
-* Some interface compatibility changes may occur at each release (v0.9.x)
+* Some interface compatibility changes may occur at each early-stage release (v0.9.x)
   * The Allen Brain Observatory dataset records, files, and values browsed and accessed by this toolbox would not be impacted. 
 
 ## About the Allen Brain Observatory datasets
