@@ -13,8 +13,8 @@ A MATLAB toolbox for **accessing and using** the neural recording public dataset
 
 | Dataset | Recording Type | Nickname | Details |
 | --- | --- | --- | --- |
-| Visual Coding Neuropixels [\[2\]](#references) | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
-| Visual Coding 2P [\[3\]](#references) | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
+| **Visual Coding Neuropixels** [\[2\]](#references) | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| **Visual Coding 2P** [\[3\]](#references) | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
 The Visual Coding datasets are both collected from the living mouse brain during presentation of varying visual stimuli. Technical white papers (see Details for each dataset) provide detailed information about the experimental technicalities and computational pipelines. 
 
@@ -27,16 +27,14 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 ![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
 
 **Key Points:**
-* Supported dataset items: experimental sessions (for both 2P and Neuropixels) as well as probes, channels, and units (for Neuropixels). 
-* Tabular indexing or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects.
-* Item object [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item. 
-* Values for item object properties involving extensive compute or file reading are computed "on demand". 
-* Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) allow computations of values determined with additional user-specified arguments. 
-* The BOT provides local caching<sup>1</sup> to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
+* **Dataset items** supported include experimental *sessions* (for both 2P and Neuropixels) as well as *probes*, *channels*, and *units* (for Neuropixels) 
+  * [Tabular indexing](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects
+* **Item object** [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item 
+  * *"On demand"* properties defer value retrieval, for item object properties involving extensive compute or file reading 
+  * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) are used to compute values with additional user-specified arguments 
+* **Local caching**<sup>1</sup> is implemented, to provide the fastest possible initial and repeat performance within and across MATLAB sessions
 
 <sup>1. For retrieved item information, object representations, and file contents</sup>
-
-To preview the BOT in action: view the [Ephys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FEphysDemo.mlx&embed=web) and/or the [Ophys Demo](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F6aee4c33-d05e-4715-82ab-748f121adcad%2Fd61de411-5e28-4eba-8c36-c8b1df0435fc%2Ffiles%2FOphysDemo.mlx&embed=web).
 
 ## Installation Instructions
 
@@ -59,8 +57,8 @@ Four MATLAB live scripts are provided to help get started:
 
 | Live Script(s) | About |
 | --- | --- |
-| `EphysDemo.mlx`<br>`OphysDemo.mlx` | Demonstrations of illustrative neurophysiological analyses using the BOT and the datasets| 
-| `EphysTutorial.mlx`<br>`OphysTutorial.mlx` | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
+| [`EphysDemo.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FEphysDemo.mlx&embed=web)<br>[`OphysDemo.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FOphysDemo.mlx&embed=web) | Demonstrations of illustrative neurophysiological analyses using the BOT and the datasets| 
+| [`EphysTutorial.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FEphysTutorial.mlx&embed=web)<br>[`OphysTutorial.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FOphysTutorial.mlx&embed=web) | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
  
  
 Or to get a fast first look yourself, enter the following commands in MATLAB: 
