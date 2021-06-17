@@ -1,7 +1,12 @@
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public datasets from the Allen Brain Observatory[\[1\]](#references). 
+A MATLAB toolbox for **accessing and using** the neural recording public datasets from the **Allen Brain Observatory**[\[1\]](#references). 
 
-**NOTE**: This is an early-stage toolbox. Your feedback is encouraged and appreciated at TBD. During the current version (v0.9), some interface changes may occur at each release (v0.9.x). These would be representational changes only, with no impact on the underlying Allen Brain Observatory dataset records, files, and source-computed derived values browsed and accessed via this toolbox. 
+:eyes: See the **Brain Observatory Toolbox** in action, with the [**EphysDemo**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FEphysDemo.mlx&embed=web) and the [**OphysDemo**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FOphysDemo.mlx&embed=web) demonstration live scripts.
+
+:construction: The Brain Observatory Toolbox is at an early stage (v0.9), meaning two things:
+* Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**)
+* Some interface compatibility changes may occur at each release (v0.9.x)
+  * The Allen Brain Observatory dataset records, files, and values browsed and accessed by this toolbox would not be impacted. 
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
