@@ -1,3 +1,5 @@
+[![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)
+
 # Brain Observatory Toolbox
 A MATLAB toolbox for **accessing and using** the neural recording public datasets from the **Allen Brain Observatory**[\[1\]](#references). 
 
