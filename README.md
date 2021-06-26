@@ -40,7 +40,7 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 
 ## Installation Instructions
 
-1. Download the `.zip` file from the latest GitHub release
+1. Download the `.zip` file from the [**latest GitHub release**](https://github.com/emeyers/Brain-Observatory-Toolbox/releases)
 2. Unzip via preferred system tool to desired local folder location
 3. Open MATLAB 
 4. Add root directory of the unzipped folder contents to the MATLAB path, in one of three ways: 
