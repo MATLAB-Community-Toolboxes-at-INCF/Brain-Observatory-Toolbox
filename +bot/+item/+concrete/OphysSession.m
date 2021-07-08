@@ -1,5 +1,5 @@
 %
-% Represent direct, linked, and derived data for a Visual Coding 2P dataset [1] experimental session. 
+% Represent direct, linked, and derived data for a Visual Coding 2P dataset [1] experimental session.
 %
 % [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
 %
@@ -963,8 +963,8 @@ classdef OphysSession < bot.item.Session
                 stimulus_template(~off_screen_mask(:), :) = 64;
                 stimulus_template = reshape(stimulus_template, stim_template_size);
             end
-        end               
-                       
+        end
+        
         
     end
     
@@ -982,7 +982,7 @@ classdef OphysSession < bot.item.Session
             end
             
             % TODO: handle prop with string type
-            stimulusName = char(stimulusName); 
+            stimulusName = char(stimulusName);
             
             % - Return a stimulus table for one of the stimulus types
             if ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.abstract_feature_series)
@@ -1037,7 +1037,7 @@ classdef OphysSession < bot.item.Session
             end
         end
         
-                % TODO: consider if this should be a user property and/or a user method
+        % TODO: consider if this should be a user property and/or a user method
         function stimulus_template = getStimulusTemplate(obj, stimulusName)
             % fetch_stimulus_template - METHOD Return the stimulus template for the provided stimulus
             % `stimulus_template` will be an [XxYxF] tensor, each F-slice
@@ -1047,11 +1047,11 @@ classdef OphysSession < bot.item.Session
             arguments
                 obj
                 stimulusName (1,1) string % String specifying which stimulus template to return. Must be one of the stimuli in .stimulus_list
-            end        
+            end
             
             % TODO: apply string processing method
             stimulusName = char(stimulusName);
-                        
+            
             nwb_file = obj.nwbLocal;
             
             % - Extract stimulus template from NWB file
@@ -1192,18 +1192,20 @@ classdef OphysSession < bot.item.Session
             %        bsObj = bot.item.ophyssession(tSessionRow)
             
             % Superclass construction
-            obj = obj@bot.item.Session(itemIDSpec);                        
+            obj = obj@bot.item.Session(itemIDSpec);
             
-            % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
-            obj.initSession();
-            
-            obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
-            h5Idx = find(contains(string({obj.info.well_known_files.path}),"h5",'IgnoreCase',true));
-            assert(isscalar(h5Idx),"Expected to find exactly one H5 file ");
-            obj.insertLinkedFileInfo("SessH5",obj.info.well_known_files(h5Idx));
-            
-            obj.initLinkedFiles();
-            
+            % Only process attributes if we are constructing a scalar object
+            if ~istable(itemIDSpec) && numel(itemIDSpec) == 1
+                % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+                obj.initSession();
+                
+                obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
+                h5Idx = find(contains(string({obj.info.well_known_files.path}),"h5",'IgnoreCase',true));
+                assert(isscalar(h5Idx),"Expected to find exactly one H5 file ");
+                obj.insertLinkedFileInfo("SessH5",obj.info.well_known_files(h5Idx));
+                
+                obj.initLinkedFiles();
+            end
         end
         
     end
