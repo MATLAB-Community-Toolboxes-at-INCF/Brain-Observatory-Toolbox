@@ -143,7 +143,7 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
             obj = obj@bot.item.internal.abstract.LinkedFilesItem(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if ~istable(itemIDSpec) && numel(itemIDSpec) == 1
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
                 % Assign linked Item tables (downstream)
                 obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_probe_id == obj.id, :);
                 obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);

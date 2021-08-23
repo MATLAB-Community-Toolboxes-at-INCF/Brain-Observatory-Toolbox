@@ -35,7 +35,7 @@ classdef Unit < bot.item.internal.abstract.Item
             obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if ~istable(itemIDSpec) && numel(itemIDSpec) == 1
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
                 % Assign linked Item objects
                 obj.session = bot.session(obj.info.ephys_session_id);
                 obj.channel = bot.channel(obj.info.ephys_channel_id);

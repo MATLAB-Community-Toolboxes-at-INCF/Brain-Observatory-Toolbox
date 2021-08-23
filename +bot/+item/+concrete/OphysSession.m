@@ -831,7 +831,7 @@ classdef OphysSession < bot.item.Session
             stimulus_epochs = table();
             for stim_index = numel(stimuli):-1:1
                 % - Get the stimulus table for this stimulus
-                this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
+                this_stimulus = bos.getStimulusTable(stimuli{stim_index});
                 
                 % - Set "frame" column for spontaneous stimulus
                 if isequal(stimuli{stim_index}, 'spontaneous')
@@ -852,6 +852,11 @@ classdef OphysSession < bot.item.Session
             
             % - Rearrange columns to put 'stimulus' first
             stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
+            
+            % - Add times
+            frame_times = bos.fluorescence_timestamps;
+            stimulus_epochs.start_time = frame_times(stimulus_epochs.start_frame);
+            stimulus_epochs.end_time = frame_times(stimulus_epochs.end_frame);
         end
         
         function stimuli = fetch_stimulus_list(bos)
@@ -984,21 +989,36 @@ classdef OphysSession < bot.item.Session
             % TODO: handle prop with string type
             stimulusName = char(stimulusName);
             
+            % - Get flourescence frame timestamps
+            frame_timestamps = obj.fluorescence_timestamps();
+            
             % - Return a stimulus table for one of the stimulus types
             if ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.abstract_feature_series)
                 stimulus_table = fetch_abstract_feature_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
                 return;
                 
             elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.indexed_time_series)
                 stimulus_table = fetch_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
                 return;
                 
             elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
                 stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
                 return;
                 
             elseif isequal(stimulusName, 'spontaneous')
                 stimulus_table = obj.spontaneous_activity_stimulus_table;
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
                 return;
                 
             elseif isequal(stimulusName, 'master')
@@ -1011,7 +1031,7 @@ classdef OphysSession < bot.item.Session
                     strStimulus = strStimulus{1}; %#ok<FXSET>
                     
                     % - Get stimulus table for this stimulus, annotate with stimulus name
-                    stimuli{end+1} = bos.fetch_stimulus_table(strStimulus); %#ok<AGROW>
+                    stimuli{end+1} = obj.getStimulusTable(strStimulus); %#ok<AGROW>
                     stimuli{end}.stimulus = repmat({strStimulus}, size(stimuli{end}, 1), 1);
                     
                     % - Collect all variable names
@@ -1229,7 +1249,7 @@ try
     % - Create a stimulus table to return
     stimulus_table = array2table(stim_data', 'VariableNames', features);
     
-    % - Add start and finish frame times
+    % - Add start and finish frames
     stimulus_table.start_frame = int32(frame_dur(1, :)');
     stimulus_table.end_frame = int32(frame_dur(2, :)');
     
