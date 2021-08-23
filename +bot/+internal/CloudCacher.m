@@ -71,8 +71,6 @@ classdef CloudCacher < handle
                strCacheFilename = ccObj.CachedFileForURL(strURL);
                
             else
-               % - No, so we need to download and cache it
-               
                % - Get a filename for the cache
                if isempty(strRelativeFilename)
                   [~, strRelativeFilename] = fileparts(tempname());
@@ -89,11 +87,11 @@ classdef CloudCacher < handle
                
                % - Check if the filename exists and warn
                if exist(strCacheFilename, 'file')
-                  warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
+                  warning('CloudCacher:FileExists', 'The specified file already exists; using existing file.');
+               else
+                   % - Download data from the provided URL and save
+                   strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
                end
-               
-               % - Download data from the provided URL and save
-               strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
                
                % - Add URL to cache and save manifest
                ccObj.mapCachedData(strURL) = strRelativeFilename;
