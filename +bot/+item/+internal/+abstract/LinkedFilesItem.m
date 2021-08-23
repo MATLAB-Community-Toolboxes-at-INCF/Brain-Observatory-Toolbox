@@ -125,7 +125,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
          
          % Only process attributes if we are constructing a scalar object
-         if ~istable(itemIDSpec) && numel(itemIDSpec) == 1
+         if numel(itemIDSpec) == 1 || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
             % On-demand property identification
             obj.prop2LinkedFileMap = containers.Map;
             
