@@ -1,5 +1,5 @@
 %
-% Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] experimental session. 
+% Represent direct, linked, and derived data for a Visual Coding Neuropixels dataset [1] experimental session.
 %
 % [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
 %
@@ -7,7 +7,7 @@
 classdef EphysSession < bot.item.Session
     
     
-    %% PROPERTIES         
+    %% PROPERTIES
     
     % Info Item Values
     properties (Dependent)
@@ -56,8 +56,8 @@ classdef EphysSession < bot.item.Session
     end
     
     % Linked File Values (StimTemplatesGroup files)
-    properties (Dependent, Transient) % Transient used here as "tag" for linked file properties 
-        stimulus_templates;             % Stimulus template table 
+    properties (Dependent, Transient) % Transient used here as "tag" for linked file properties
+        stimulus_templates;             % Stimulus template table
     end
     
     %%  PROPERTIES - HIDDEN
@@ -96,20 +96,20 @@ classdef EphysSession < bot.item.Session
             "dotLife", ...
             "color_triplet"]
         
-         FIRST_STIMULUS_PARAMETERS = [
-             "stimulus_presentation_id" ...
-             "stimulus_condition_id" ...
-             "stimulus_block_id" ...
-             "stimulus_block_condition_id" ...
-             "stimulus_name" ...
-             "start_time" ...
-             "stop_time"];
-             
-    end
+        FIRST_STIMULUS_PARAMETERS = [
+            "stimulus_presentation_id" ...
+            "stimulus_condition_id" ...
+            "stimulus_block_id" ...
+            "stimulus_block_condition_id" ...
+            "stimulus_name" ...
+            "start_time" ...
+            "stop_time"];
         
+    end
+    
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;            
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
     end
     
     properties (Hidden, Access = protected)
@@ -139,7 +139,7 @@ classdef EphysSession < bot.item.Session
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
         end
         
-        % TODO: 
+        % TODO:
         %         function num_stimulus_presentations = get.num_stimulus_presentations(self)
         %             num_stimulus_presentations = size(self.stimulus_presentations, 1);
         %         end
@@ -235,7 +235,7 @@ classdef EphysSession < bot.item.Session
             n = self.nwbLocal;
             mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
         end
-    
+        
         function stimulus_conditions = get.stimulus_conditions(self)
             stimulus_conditions = self.fetch_cached('stimulus_conditions',@self.zprpGetStimulusConditions);
         end
@@ -273,8 +273,8 @@ classdef EphysSession < bot.item.Session
             
             n = self.nwbLocal;
             spike_times = self.fetch_cached('spike_times', @n.fetch_spike_times);
-
-            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case                 
+            
+            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case
             %             if ~self.in_cache('spike_times')
             %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
             %             end
@@ -304,7 +304,7 @@ classdef EphysSession < bot.item.Session
             self.zprpCacheStimulusPresentations();
             stimulus_conditions = self.property_cache.stimulus_conditions_raw;
         end
-         
+        
         
         function stimulus_table = zprpGetStimulusTemplates(self)
             
@@ -337,7 +337,7 @@ classdef EphysSession < bot.item.Session
             
             stimulus_table.scene_number = scene_number;
             stimulus_table.movie_number = movie_number;
-        end        
+        end
         
         function zprpCacheStimulusPresentations(self)
             if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
@@ -355,7 +355,7 @@ classdef EphysSession < bot.item.Session
                 
                 condFirstStimParams = self.FIRST_STIMULUS_PARAMETERS(ismember(self.FIRST_STIMULUS_PARAMETERS, string(stimulus_conditions_raw.Properties.VariableNames)));
                 stimulus_conditions_raw = movevars(stimulus_conditions_raw, condFirstStimParams, 'Before', 1);
-
+                
                 % - Insert into cache
                 self.property_cache.stimulus_presentations_raw = stimulus_presentations_raw;
                 self.property_cache.stimulus_conditions_raw = stimulus_conditions_raw;
@@ -377,33 +377,35 @@ classdef EphysSession < bot.item.Session
     %% CONSTRUCTOR
     
     methods
-        function obj = EphysSession(itemIDSpec)            
-           
+        function obj = EphysSession(itemIDSpec)
+            
             % Superclass construction
             obj = obj@bot.item.Session(itemIDSpec);
             
-            % - Assign associated table rows
-            obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
-            obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);
-            obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_session_id == obj.id, :);
-            
-            % Identify property display groups
-            obj.ITEM_INFO_VALUE_PROPERTIES = ["structure_acronyms"];
-            obj.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
-            obj.CORE_PROPERTIES = setdiff(obj.CORE_PROPERTIES,[obj.ITEM_INFO_VALUE_PROPERTIES obj.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
-                        
-            % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
-            obj.initSession();
-            
-            obj.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
-            ecephys_product_id = 714914585;
-            obj.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
-            
-            obj.initLinkedFiles();
-            
-            % Local prop initializations
-            obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
-            
+            % Only process attributes if we are constructing a scalar object
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
+                % - Assign associated table rows
+                obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
+                obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);
+                obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_session_id == obj.id, :);
+                
+                % Identify property display groups
+                obj.ITEM_INFO_VALUE_PROPERTIES = "structure_acronyms";
+                obj.LINKED_ITEM_VALUE_PROPERTIES = ["channel_structure_intervals" "structurewise_unit_counts"];
+                obj.CORE_PROPERTIES = setdiff(obj.CORE_PROPERTIES,[obj.ITEM_INFO_VALUE_PROPERTIES obj.LINKED_ITEM_VALUE_PROPERTIES]); % remove from introspection-derived property list
+                
+                % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+                obj.initSession();
+                
+                obj.LINKED_FILE_AUTO_DOWNLOAD.StimTemplatesGroup = false;
+                ecephys_product_id = 714914585;
+                obj.fetchLinkedFileInfo("StimTemplatesGroup", sprintf("rma::criteria,well_known_file_type[name$eq\'Stimulus\'][attachable_type$eq\'Product\'][attachable_id$eq%d]", ecephys_product_id),true);
+                
+                obj.initLinkedFiles();
+                
+                % Local prop initializations
+                obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+            end
         end
     end
     
@@ -572,10 +574,10 @@ classdef EphysSession < bot.item.Session
             % - Handle the case when no spikes occurred
             if isempty(spike_times) %#ok<PROPLC>
                 spikes_with_onset = table(  'Size',[0 4], ...
-                                            'VariableTypes', ["double" "double" "uint32" "double"],...
-                                            'VariableNames', ...
-                                             {'spike_times', 'stimulus_presentation', ...
-                                             'unit_id', 'time_since_stimulus_presentation_onset'});
+                    'VariableTypes', ["double" "double" "uint32" "double"],...
+                    'VariableNames', ...
+                    {'spike_times', 'stimulus_presentation', ...
+                    'unit_id', 'time_since_stimulus_presentation_onset'});
                 return;
             end
             
@@ -637,14 +639,14 @@ classdef EphysSession < bot.item.Session
                     spike_counts(spike_count_row, 'spike_count') = found_spike_counts(row, 'spike_count');
                 end
             end
-                
+            
             for row = 1:size(spike_counts, 1)
                 % - Add stimulus presentation information
                 stimulus_row = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
                 spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(stimulus_row);
                 spike_counts.duration(row) = presentations.stop_time(stimulus_row) - presentations.start_time(stimulus_row);
             end
-        
+            
             
             if use_rates
                 spike_counts.spike_rate = spike_counts.spike_count / spike_counts.duration;
@@ -815,11 +817,11 @@ classdef EphysSession < bot.item.Session
                 self;
                 tags string;
             end
-                       
+            
             invalid_times = self.invalid_times;
             
             if isequal(invalid_times, bot.item.internal.enum.OnDemandState.Unavailable)
-                invalid_times = [];                                
+                invalid_times = [];
             elseif  ~isempty(invalid_times)
                 mask = cellfun(@(c)any(ismember(string(c), string(tags))), invalid_times.tags);
                 invalid_times = invalid_times(mask, :);
@@ -831,7 +833,7 @@ classdef EphysSession < bot.item.Session
                 self;
                 stimulus_presentations table;
             end
-                    
+            
             fail_tags = "stimulus";
             invalid_times_filt = self.filter_invalid_times_by_tags(fail_tags);
             
@@ -872,7 +874,7 @@ classdef EphysSession < bot.item.Session
         function [stimulus_presentations, stimulus_conditions] = build_stimulus_presentations(~, stimulus_presentations)
             stimulus_presentations = removevars(stimulus_presentations, {'stimulus_index'});
             
-            % - Fill in missing values for numeric variables            
+            % - Fill in missing values for numeric variables
             stimulus_presentations_filled = fillmissing(stimulus_presentations, 'constant', inf, 'DataVariables', @isnumeric);
             
             % - Identify unique stimulus conditions
@@ -999,8 +1001,8 @@ end
         %insert_idx = find(sorted_array > v, 1, 'first');
         %insert_idx = builtin('ismembc2', false, sorted_array > v) + 1;
         %[found, insert_idx] = builtin('_ismemberhelper', true, sorted_array > v);
-        [found, insert_idx] = matlab.internal.math.ismemberhelper(true, sorted_array > v);        
-        if ~found % isempty(insert_idx) 
+        [found, insert_idx] = matlab.internal.math.ismemberhelper(true, sorted_array > v);
+        if ~found % isempty(insert_idx)
             insert_idx = numel(sorted_array) + 1;
         end
     end
@@ -1163,7 +1165,7 @@ function s = zlclInitLinkedFilePropBindings()
 
 s = struct();
 
-% identify properties associated to stimulus templates group of linked files 
+% identify properties associated to stimulus templates group of linked files
 s.StimTemplatesGroup = "stimulus_templates";
 
 % remainder of file-linked properties (Dependent, Transient) are associated to session NWB linked file

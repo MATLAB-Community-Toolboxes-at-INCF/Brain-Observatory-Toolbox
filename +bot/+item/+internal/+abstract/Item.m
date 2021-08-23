@@ -48,6 +48,11 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                    obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx));
                 end
                 return;
+            elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
+                for idx = size(itemIDSpec, 1):-1:1
+                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx, :));
+                end
+                return;                
             end
             
             % Identify associated manifest containing all Items of this class
@@ -83,10 +88,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             % - Assign the table data to the metadata structure
             obj.info = table2struct(manifestTableRow);
             obj.id = obj.info.id;                                              
-            
         end
-        
-        
     end
     
     
@@ -141,9 +143,9 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                     msgType = "Table supplied not recognized as a valid BOT Item information table";
                 end
                 
-                if height(val) ~= 1
-                    msgType = "Table supplied must have one and only one row";
-                end                                               
+%                 if height(val) ~= 1
+%                     msgType = "Table supplied must have one and only one row";
+%                 end                                               
                 
             elseif ~isnumeric(val) || ~isvector(val) || ~all(isfinite(val)) || any(val<=0)
                 eidTypeSuffix = "invalidItemIDs";
