@@ -1195,7 +1195,7 @@ classdef OphysSession < bot.item.Session
             obj = obj@bot.item.Session(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if ~istable(itemIDSpec) && numel(itemIDSpec) == 1
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
                 % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
                 obj.initSession();
                 
