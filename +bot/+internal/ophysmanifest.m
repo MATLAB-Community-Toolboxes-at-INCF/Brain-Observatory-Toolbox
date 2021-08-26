@@ -46,6 +46,7 @@ classdef ophysmanifest < handle
     properties (SetAccess = private, Dependent = true)
         ophys_sessions;                   % Table of all OPhys experimental sessions
         ophys_experiments;                % Table of all OPhys experiments
+        ophys_cells;                      % Table of all OPhys cells
     end
     
     %% Constructor
@@ -104,6 +105,13 @@ classdef ophysmanifest < handle
             
             % Apply standardized table display logic
             ophys_experiments = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_experiment_manifest); 
+        end
+        
+        function ophys_cells = get.ophys_cells(oManifest)
+            ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
+           
+            % Apply standardized table display logic
+            ophys_cells = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_cells_manifest); 
         end
     end
     
@@ -206,6 +214,9 @@ classdef ophysmanifest < handle
             
             options = weboptions('ContentType', 'table', 'TimeOut', 60);
             ophys_manifests.cell_id_mapping = manifest.cache.ccCache.webread(cell_id_mapping_url, [], options);
+            
+            %% - Fetch cell speciments manifest
+            ophys_manifests.ophys_cells_manifest = manifest.cache.CachedAPICall('q=model::ApiCamCellMetric', [], [], [], [], [], [], "cell_specimen_id");
         end
         
         function ophys_manifests = fetch_cached_ophys_manifests(manifest)
