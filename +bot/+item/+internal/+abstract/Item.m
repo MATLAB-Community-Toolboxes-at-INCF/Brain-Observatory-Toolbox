@@ -43,14 +43,16 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             end
             
             % Handle case of ID array
+            item_type = obj(1).ITEM_TYPE;
+            
             if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
-                for idx = numel(itemIDSpec):-1:1
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx));
+                for idx = 1:numel(itemIDSpec)
+                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx)); %#ok<AGROW>
                 end
                 return;
             elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
-                for idx = size(itemIDSpec, 1):-1:1
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx, :));
+                for idx = 1:size(itemIDSpec, 1)
+                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx, :)); %#ok<AGROW>
                 end
                 return;                
             end
