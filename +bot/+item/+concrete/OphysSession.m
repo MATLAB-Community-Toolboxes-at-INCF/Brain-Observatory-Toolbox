@@ -856,7 +856,9 @@ classdef OphysSession < bot.item.Session
             % - Add times
             frame_times = bos.fluorescence_timestamps;
             stimulus_epochs.start_time = frame_times(stimulus_epochs.start_frame);
-            stimulus_epochs.end_time = frame_times(stimulus_epochs.end_frame);
+            stimulus_epochs.duration = frame_times(stimulus_epochs.end_frame) - stimulus_epochs.start_time;
+            
+            stimulus_epochs = table2timetable(stimulus_epochs);
         end
         
         function stimuli = fetch_stimulus_list(bos)
@@ -997,28 +999,32 @@ classdef OphysSession < bot.item.Session
                 stimulus_table = fetch_abstract_feature_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
                 
                 stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
-                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.indexed_time_series)
                 stimulus_table = fetch_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
                 
                 stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
-                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
                 stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
                 
                 stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
-                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif isequal(stimulusName, 'spontaneous')
                 stimulus_table = obj.spontaneous_activity_stimulus_table;
                 
                 stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
-                stimulus_table.end_time = frame_timestamps(stimulus_table.end_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif isequal(stimulusName, 'master')
