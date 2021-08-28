@@ -13,7 +13,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.internal.manifest.instance('ophys');
          bom = bot.internal.ophysmanifest.instance();
          bom.ophys_sessions;                   % Table of all OPhys experimental sessions
-         bom.ophys_containers;                 % Table of all OPhys experimental containers
+         bom.ophys_experiments;                 % Table of all OPhys experimental containers
          bom.ophys_cells;                      % Table of all OPhys cells
       end
       
@@ -75,7 +75,7 @@ classdef test < matlab.unittest.TestCase
          bosf.filter_session_by_eye_tracking(true);
          
          % Container ID
-         containers = bom.ophys_containers;
+         containers = bom.ophys_experiments;
          bosf.clear_filters();
          bosf.filter_sessions_by_container_id(containers{1, 'id'});
          
@@ -111,7 +111,7 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
          
-         % - Create some bot.item.ophyssession objects
+         % - Create some bot.session objects
          bot.session(vIDs(1));
          bot.session(vIDs(1:3));
          bot.session(bosf.valid_session_table(1, :));
@@ -120,17 +120,17 @@ classdef test < matlab.unittest.TestCase
       
       function testCacheSessionObject(testCase)
          %% Test obtaining an OPhys session object data from the cache
-         % - Create a bot.item.ophyssession object
-         s = bot.item.ophyssession(704298735);
+         % - Create a bot.session object
+         s = bot.session(704298735);
          
          % - Ensure the data is in the cache
          s.EnsureCached();
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.item.ophyssession class for OPhys data
-         % - Create a bot.item.ophyssession object
-         s = bot.item.ophyssession(496934409);
+         %% Test data access methods of the bot.session class for OPhys data
+         % - Create a bot.session object
+         s = bot.session(496934409);
 
          % - Test summary methods
          vnCellIDs = s.cell_specimen_ids;
@@ -159,8 +159,8 @@ classdef test < matlab.unittest.TestCase
       
       function testStimulusExtraction(testCase)
          %% Test OPhys session stimulus extraction methods
-         % - Create a bot.item.ophyssession object
-         s = bot.item.ophyssession(528402271);
+         % - Create a bot.session object
+         s = bot.session(528402271);
 
          % - Get a vector of fluorescence frame IDs
          vnFrameIDs = 1:numel(s.fluorescence_timestamps);
@@ -187,7 +187,7 @@ classdef test < matlab.unittest.TestCase
          s.spontaneous_activity_stimulus_table;
          
          % - Get an OPhys session with sparse noise
-         s = bot.item.ophyssession(566752133);
+         s = bot.session(566752133);
          
          % - Get the sparse noise stimulus template
          s.fetch_stimulus_template('locally_sparse_noise_4deg');
