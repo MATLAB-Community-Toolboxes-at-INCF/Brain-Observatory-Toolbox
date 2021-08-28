@@ -11,6 +11,8 @@ classdef OphysSession < bot.item.Session
     % Direct Item Values
     properties (SetAccess = private)
         session_type;                 % Type of experimental session (i.e. set of stimuli)
+        experiment;                   % Experiment object containing this session
+        cells;                        % Table of cells in this session        
     end
     
     % Linked File Values
@@ -84,7 +86,7 @@ classdef OphysSession < bot.item.Session
     
     properties (Hidden, Access = protected)
         CORE_PROPERTIES = "session_type";
-        LINKED_ITEM_PROPERTIES = [];
+        LINKED_ITEM_PROPERTIES = ["experiment" "cells"];
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
@@ -1231,6 +1233,9 @@ classdef OphysSession < bot.item.Session
                 obj.insertLinkedFileInfo("SessH5",obj.info.well_known_files(h5Idx));
                 
                 obj.initLinkedFiles();
+                
+                obj.experiment = bot.experiment(obj.info.experiment_container_id);
+                obj.cells = obj.experiment.cells;
             end
         end
         

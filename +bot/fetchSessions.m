@@ -15,7 +15,7 @@
 function sessionsTable = fetchSessions(dataset)
 
 arguments
-    dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys"])}    
+    dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys", "EPhys", "OPhys"])}    
 end
    
    switch lower(dataset)
