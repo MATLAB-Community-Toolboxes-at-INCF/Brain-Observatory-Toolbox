@@ -112,9 +112,10 @@ classdef test < matlab.unittest.TestCase
          vIDs = bosf.valid_session_table{:, 'id'};
          
          % - Create some bot.item.ophyssession objects
-         bot.item.ophyssession(vIDs(1));
-         bot.session(vIDs(1:2));
-         bot.item.ophyssession(bosf.valid_session_table(1, :));
+         bot.session(vIDs(1));
+         bot.session(vIDs(1:3));
+         bot.session(bosf.valid_session_table(1, :));
+         bot.session(bosf.valid_session_table(1:3, :));
       end
       
       function testCacheSessionObject(testCase)
@@ -198,6 +199,8 @@ classdef test < matlab.unittest.TestCase
           exp_table = bot.fetchExperiments();
           exp = bot.experiment(exp_table.id(1));
           exp = bot.experiment(exp_table(1, :));
+          exps = bot.experiment(exp_table.id(1:3));
+          exps = bot.experiment(exp_table(1:3, :));
       end
       
       function testOPhysCell(testCase)
@@ -205,6 +208,8 @@ classdef test < matlab.unittest.TestCase
           cell_table = bot.fetchCells();
           cell = bot.cell(cell_table.id(1));
           cell = bot.cell(cell_table(1, :));
+          cells = bot.cell(cell_table(1:3, :));
+          cells = bot.cell(cell_table.id(1:3));
       end
       
       function testEPhysManifest(testCase)
@@ -222,6 +227,8 @@ classdef test < matlab.unittest.TestCase
          % - Get a session
          s = bot.session(bom.ephys_sessions{1, 'id'});
          s = bot.session(bom.ephys_sessions(1, :));
+         s = bot.session(bom.ephys_sessions{1:3, 'id'});
+         s = bot.session(bom.ephys_sessions(1:3, :));
       end
 
       function test_ephys_probes(testCase)
@@ -232,7 +239,8 @@ classdef test < matlab.unittest.TestCase
          % - Get a probe, by ID and by table
          p = bot.probe(bom.ephys_probes{1, 'id'});
          p = bot.probe(bom.ephys_probes(1, :));
-         p = bot.probe(bom.ephys_probes{[1, 2], 'id'});
+         p = bot.probe(bom.ephys_probes{1:3, 'id'});
+         p = bot.probe(bom.ephys_probes(1:3, :));
       end
 
       function test_ephys_channels(testCase)
@@ -243,7 +251,8 @@ classdef test < matlab.unittest.TestCase
          % - Get channels, by ID and by table
          c = bot.channel(bom.ephys_channels{1, 'id'});
          c = bot.channel(bom.ephys_channels(1, :));
-         c = bot.channel(bom.ephys_channels{[1, 2], 'id'});
+         c = bot.channel(bom.ephys_channels{1:3, 'id'});
+         c = bot.channel(bom.ephys_channels(1:3, :));
       end
 
       function test_ephys_units(testCase)
@@ -254,20 +263,10 @@ classdef test < matlab.unittest.TestCase
          % - Get units, by ID and by table
          u = bot.unit(bom.ephys_units{1, 'id'});
          u = bot.unit(bom.ephys_units(1, :));
-         u = bot.unit(bom.ephys_units{[1, 2], 'id'});
+         u = bot.unit(bom.ephys_units{1:3, 'id'});
+         u = bot.unit(bom.ephys_units(1:3, :));
       end
       
-      function test_ophys_experiments(testcase)
-         %% Test obtaining OPhys experiments
-         % - Get the OPhys manifest
-         bom = bot.internal.manifest.instance('ophys');
-         
-         % - Get experiments, by ID and by table
-         e = bot.experiment(bom.ophys_experiments{1, 'id'});
-         e = bot.experiment(bom.ophys_experiments(1, :));
-         e = bot.experiment(bom.ophys_experiments{[1, 2], 'id'});
-      end
-
       function testLFPCSDExtraction(testCase)
          %% Test LFP and CSD extraction
          % - Get the EPhys manifest
@@ -335,6 +334,7 @@ classdef test < matlab.unittest.TestCase
          units = bot.fetchUnits();
          probes = bot.fetchProbes();
          channels = bot.fetchChannels();
+         cells = bot.fetchCells();
          
          % - Test "get object" factory functions
          bot.session(sess_ephys{1, 'id'});
@@ -343,6 +343,7 @@ classdef test < matlab.unittest.TestCase
          bot.unit(units{1, 'id'});
          bot.probe(probes{1, 'id'});
          bot.channel(channels{1, 'id'});
+         bot.cell(cells{1, 'id'});
       end
    end
 end
