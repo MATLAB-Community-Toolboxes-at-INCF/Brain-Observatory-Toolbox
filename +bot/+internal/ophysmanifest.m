@@ -216,7 +216,44 @@ classdef ophysmanifest < handle
             ophys_manifests.cell_id_mapping = manifest.cache.ccCache.webread(cell_id_mapping_url, [], options);
             
             %% - Fetch cell speciments manifest
-            ophys_manifests.ophys_cells_manifest = manifest.cache.CachedAPICall('q=model::ApiCamCellMetric', [], [], [], [], [], [], "cell_specimen_id");
+            ophys_cells_manifest = manifest.cache.CachedAPICall('q=model::ApiCamCellMetric', [], [], [], [], [], [], "cell_specimen_id");
+            
+            ophys_cells_manifest.experiment_container_id = uint32(ophys_cells_manifest.experiment_container_id);
+            ophys_cells_manifest.id = uint32(ophys_cells_manifest.cell_specimen_id);
+            ophys_cells_manifest = removevars(ophys_cells_manifest, 'cell_specimen_id');
+            ophys_cells_manifest.specimen_id = uint32(ophys_cells_manifest.specimen_id);
+            
+            ophys_cells_manifest.tlr1_id = uint32(ophys_cells_manifest.tlr1_id);
+            ophys_cells_manifest.tld1_id = uint32(ophys_cells_manifest.tld1_id);            
+            
+            function table = convert_metric_vars(table, varnames)
+
+                function metric = convert_cell_metric(metric)
+                    metric(cellfun(@isempty, metric)) = {nan};
+                    metric = [metric{:}]';
+                end
+                
+                for var = varnames
+                    table.(var{1}) = convert_cell_metric(table.(var{1}));
+                end
+            end
+            
+            metric_varnames = {'reliability_dg', 'reliability_nm1_a', 'reliability_nm1_b', ...
+                'reliability_nm2', 'reliability_nm3', 'reliability_ns', 'reliability_sg', ...
+                'dsi_dg', 'g_dsi_dg', 'g_osi_dg', 'g_osi_sg', 'image_sel_ns', 'osi_dg', ...
+                'osi_sg', 'p_dg', 'p_ns', 'p_run_mod_dg', 'p_run_mod_ns', 'p_run_mod_sg', ...
+                'p_sg', 'peak_dff_dg', 'peak_dff_ns', 'peak_dff_sg', 'pref_dir_dg', 'pref_image_ns', ...
+                'pref_ori_sg', 'pref_phase_sg', 'pref_sf_sg', 'pref_tf_dg', 'rf_area_off_lsn', ...
+                'rf_area_on_lsn', 'rf_center_off_x_lsn', 'rf_center_off_y_lsn', 'rf_center_on_x_lsn', ...
+                'rf_center_on_y_lsn', 'rf_chi2_lsn', 'rf_distance_lsn', 'rf_overlap_index_lsn', ...
+                'run_mod_dg', 'run_mod_ns', 'run_mod_sg', 'sfdi_sg', 'tfdi_dg', 'time_to_peak_ns', ...
+                'time_to_peak_sg', 'tld2_id', 'reliability_nm1_c'};
+                
+            ophys_cells_manifest = convert_metric_vars(ophys_cells_manifest, metric_varnames);  
+            
+            ophys_cells_manifest.tld2_id = uint32(ophys_cells_manifest.tld2_id);
+            
+            ophys_manifests.ophys_cells_manifest = ophys_cells_manifest;
         end
         
         function ophys_manifests = fetch_cached_ophys_manifests(manifest)
