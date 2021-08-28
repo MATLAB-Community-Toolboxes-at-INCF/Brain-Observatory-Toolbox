@@ -14,6 +14,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.internal.ophysmanifest.instance();
          bom.ophys_sessions;                   % Table of all OPhys experimental sessions
          bom.ophys_containers;                 % Table of all OPhys experimental containers
+         bom.ophys_cells;                      % Table of all OPhys cells
       end
       
       function testEphysTables(testCase)
@@ -191,6 +192,20 @@ classdef test < matlab.unittest.TestCase
          s.fetch_stimulus_template('locally_sparse_noise_4deg');
          s.fetch_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
       end      
+      
+      function testOPhysExperiment(testCase)
+          %% Test obtaining OPhys experiment object
+          exp_table = bot.fetchExperiments();
+          exp = bot.experiment(exp_table.id(1));
+          exp = bot.experiment(exp_table(1, :));
+      end
+      
+      function testOPhysCell(testCase)
+          %% Test obtaining OPhys cell object
+          cell_table = bot.fetchCells();
+          cell = bot.cell(cell_table.id(1));
+          cell = bot.cell(cell_table(1, :));
+      end
       
       function testEPhysManifest(testCase)
          %% Test obtaining EPhys objects
