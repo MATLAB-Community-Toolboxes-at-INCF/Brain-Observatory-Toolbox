@@ -273,7 +273,16 @@ classdef CloudCacher < handle
          % This method does NOT indicate whether or not the URL exists in
          % the cache. Use `.IsInCache()` for that.
          
-         strFile = fullfile(ccObj.strCacheDir, ccObj.mapCachedData(strURL));
+         relFileLocation =  ccObj.mapCachedData(strURL);
+         
+         % Determine folder location for this cached file         
+         if isunix && isfolder("~/s3-allen") && contains(relFileLocation,"/external") % for BOT in cloud, data files are stored in local S3 file mount rather than local cache
+             folderLocation = "~/s3-allen";
+         else
+             folderLocation = ccObj.strCacheDir;
+         end
+         
+         strFile = fullfile(folderLocation, relFileLocation);
       end
       
       function SaveManifest(ccObj)
