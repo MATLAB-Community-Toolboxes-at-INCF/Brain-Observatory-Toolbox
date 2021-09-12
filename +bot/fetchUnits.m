@@ -10,6 +10,6 @@
 %
 %% function units = fetchUnits()
 function unitsTable = fetchUnits()
-   manifest = bot.internal.manifest.instance('ephys');
+   manifest = bot.item.internal.Manifest.instance('ephys');
    unitsTable = manifest.ephys_units;
 end

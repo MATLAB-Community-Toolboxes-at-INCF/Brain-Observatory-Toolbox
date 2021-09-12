@@ -16,7 +16,7 @@ classdef Experiment < handle
    
    %% PROPERTIES - HIDDEN
    properties (Hidden, GetAccess = private, SetAccess = private)
-      manifest = bot.internal.manifest.instance('ophys');
+      manifest = bot.item.internal.Manifest.instance('ophys');
    end
    
    %% LIFECYCLE 
@@ -75,7 +75,7 @@ classdef Experiment < handle
          end
          
          % - Find these sessions in the experiment manifest
-         manifest = bot.internal.manifest.instance('ophys');
+         manifest = bot.item.internal.Manifest.instance('ophys');
          matching_ophys_container = manifest.ophys_containers.id == id;
          
          % - Extract the appropriate table row from the manifest

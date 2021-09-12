@@ -1,6 +1,6 @@
-% manifest — Create or download a manifest from the Allen Brain Observatory
+% Manifest — Create or download a manifest from the Allen Brain Observatory
 
-classdef manifest < handle 
+classdef Manifest < handle 
 
     
     %% STATIC METHODS - PUBLIC
@@ -14,10 +14,10 @@ classdef manifest < handle
             
             switch(lower(type))
                 case 'ophys'
-                    manifest = bot.internal.ophysmanifest.instance();
+                    manifest = bot.item.internal.OphysManifest.instance();
                     
                 case 'ephys'
-                    manifest = bot.internal.ephysmanifest.instance();
+                    manifest = bot.item.internal.EphysManifest.instance();
                     
                 otherwise
                     error('`manifest_type` must be one of {''ophys'', ''ephys''}');

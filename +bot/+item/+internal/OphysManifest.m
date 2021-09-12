@@ -1,12 +1,12 @@
-%% CLASS bot.internal.ophysmanifest
+%% CLASS OphysManifest
 %
 % This class can be used to obtain a list of available experimental
 % sessions from the Visual Coding 2P dataset [1] obtained with the Allen
 % Brain Observatory platform [2].
 %
 % Construction:
-% >> bom = bot.internal.manifest('ophys')
-% >> bom = bot.internal.ophysmanifest.instance()
+% >> bom = bot.item.internal.Manifest('ophys')
+% >> bom = bot.item.internal.OphysManifest.instance()
 %
 % Get information about all OPhys experimental sessions:
 % >> bom.ophys_sessions
@@ -37,7 +37,7 @@
 
 %% Class definition
 
-classdef ophysmanifest < handle
+classdef OphysManifest < handle
     properties (Access = private, Transient = true)
         cache = bot.internal.cache;        % BOT Cache object
         api_access;                         % Function handles for low-level API access
@@ -50,7 +50,7 @@ classdef ophysmanifest < handle
     
     %% Constructor
     methods (Access = private)
-        function oManifest = ophysmanifest()
+        function oManifest = OphysManifest()
             % Memoize manifest getter
             oManifest.api_access.fetch_cached_ophys_manifests = memoize(@oManifest.fetch_cached_ophys_manifests);
         end
@@ -76,7 +76,7 @@ classdef ophysmanifest < handle
             
             % - Construct the manifest if single instance is not present
             if isempty(ophysmanifest)
-                ophysmanifest = bot.internal.ophysmanifest();
+                ophysmanifest = bot.item.internal.OphysManifest();
             end
             
             % - Return the instance
@@ -96,14 +96,14 @@ classdef ophysmanifest < handle
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
             
             % Apply standardized table display logic
-            ophys_sessions = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_session_manifest); 
+            ophys_sessions = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_session_manifest); 
         end
         
         function ophys_containers = get.ophys_containers(oManifest)
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
             
             % Apply standardized table display logic
-            ophys_containers = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_container_manifest); 
+            ophys_containers = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_experiment_manifest); 
         end
     end
     
@@ -112,7 +112,7 @@ classdef ophysmanifest < handle
         function UpdateManifests(manifest,clearMemoOnly)
             
             arguments
-                manifest (1,1) bot.internal.ophysmanifest
+                manifest (1,1) bot.item.internal.OphysManifest
                 clearMemoOnly (1,1) logical = true
             end
             
@@ -131,7 +131,7 @@ classdef ophysmanifest < handle
             end
             
             % - Reset singleton instance
-            bot.internal.ophysmanifest.instance(true);
+            bot.item.internal.OphysManifest.instance(true);
         end
     end
     

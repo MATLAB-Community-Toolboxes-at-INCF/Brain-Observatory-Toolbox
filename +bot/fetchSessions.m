@@ -20,11 +20,11 @@ end
    
    switch lower(dataset)
       case 'ephys'
-         manifest = bot.internal.manifest.instance('ephys');
+         manifest = bot.item.internal.Manifest.instance('ephys');
          sessionsTable = manifest.ephys_sessions;
          
       case 'ophys'
-         manifest = bot.internal.manifest.instance('ophys');
+         manifest = bot.item.internal.Manifest.instance('ophys');
          sessionsTable = manifest.ophys_sessions;
    end
 
