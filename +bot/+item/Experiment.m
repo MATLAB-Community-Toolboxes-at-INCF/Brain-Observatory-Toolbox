@@ -17,7 +17,7 @@ classdef Experiment < bot.item.internal.abstract.Item
         ITEM_TYPE = bot.item.internal.enum.ItemType.Experiment;
     end        
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = string.empty(1,0);
         LINKED_ITEM_PROPERTIES = ["sessions" "cells"];
     end

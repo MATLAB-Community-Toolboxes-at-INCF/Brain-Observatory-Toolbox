@@ -1,9 +1,9 @@
 classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% PROPERTIES
-    properties (SetAccess = protected)
+    properties (SetAccess = public)
         info;         % Struct containing info about this item
-        id;               % ID of this item
+        id;           % ID of this item
     end
     
     %% HIDDEN PROPERTIES
@@ -17,7 +17,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
     end
     
-    properties (Abstract, Hidden, Access = protected)
+    properties (Abstract, Hidden)
         CORE_PROPERTIES (1,:) string;
         LINKED_ITEM_PROPERTIES (1,:) string;
     end

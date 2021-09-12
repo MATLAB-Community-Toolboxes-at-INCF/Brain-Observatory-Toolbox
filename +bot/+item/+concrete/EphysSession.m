@@ -112,7 +112,7 @@ classdef EphysSession < bot.item.Session
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
     end
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = zlclInitDirectProps();
         LINKED_ITEM_PROPERTIES = ["probes", "channels", "units"];
     end
@@ -184,7 +184,7 @@ classdef EphysSession < bot.item.Session
             
             unique_probes = unique(self.channels.ephys_probe_id);
             if numel(unique_probes) > 1
-                warning("Calculating structure boundaries across channels from multiple probes.")
+                warning('BOT:MultipleProbes', "Calculating structure boundaries across channels from multiple probes.")
             end
             
             tbl = table;

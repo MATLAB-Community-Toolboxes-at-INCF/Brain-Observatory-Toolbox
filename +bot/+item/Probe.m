@@ -30,7 +30,7 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
         ITEM_TYPE= bot.item.internal.enum.ItemType.Probe;
     end
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = string.empty(1,0);
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end

@@ -84,7 +84,7 @@ classdef OphysSession < bot.item.Session
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
     end
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = "session_type";
         LINKED_ITEM_PROPERTIES = ["experiment" "cells"];
     end
@@ -1131,7 +1131,7 @@ classdef OphysSession < bot.item.Session
             %   Also handles to accelerated search functions
             if isempty(bos.smCachedStimulusTable)
                 epoch_stimulus_table = bos.stimulus_epoch_table;
-                master_stimulus_table = bos.fetch_stimulus_table('master');
+                master_stimulus_table = bos.getStimulusTable('master');
                 bos.smCachedStimulusTable(1) = epoch_stimulus_table;
                 bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
                 bos.smCachedStimulusTable(3) = master_stimulus_table;
@@ -1224,7 +1224,7 @@ classdef OphysSession < bot.item.Session
             
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
-                % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+                % Superclass initialization (bot.item.internal.abstract.bot.sessionItem)
                 obj.initSession();
                 
                 obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
