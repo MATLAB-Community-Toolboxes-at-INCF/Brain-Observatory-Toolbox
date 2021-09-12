@@ -277,7 +277,7 @@ classdef test < matlab.unittest.TestCase
          p.csdData;
       end
       
-      function test_lazy_attributes(testCase)
+      function test_ephys_lazy_attributes(testCase)
          %% Test reading lazy attributes
          bom = bot.internal.manifest.instance('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
@@ -309,16 +309,16 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_session_methods(testCase)
          %% Test session data access methods
-         bom = bot.internal.manifest.instance('ephys');
-         s = bot.session(bom.ephys_sessions{1, 'id'});
+         sess = bot.fetchSessions('ephys');
+         s = bot.session(sess(1, :));
 
          s.fetch_stimulus_table();
-         s.fetch_parameter_values_for_stimulus("flashes");
-         s.fetch_stimulus_parameter_values();
-         
+         s.getStimulusEpochsByDuration();
          uid = s.units{1, 'id'};
-         s.presentationwise_spike_counts([0 1], 1, uid);
-         s.presentationwise_spike_times(0, uid);
+         s.getPresentationwiseSpikeCounts([0 1], 1, uid);
+         s.getPresentationwiseSpikeTimes(0, uid);
+         s.getConditionwiseSpikeStatistics(0, uid);
+         s.getConditionsByStimulusName("spontaneous");
       end
       
       function test_factory_functions(testCase)
@@ -327,9 +327,11 @@ classdef test < matlab.unittest.TestCase
          sess_ephys = bot.fetchSessions('ephys');
          sess_ophys = bot.fetchSessions('ophys');
          units = bot.fetchUnits();
+         units = bot.fetchUnits(true);
          probes = bot.fetchProbes();
          channels = bot.fetchChannels();
          cells = bot.fetchCells();
+         cells = bot.fetchCells(true);
          
          % - Test "get object" factory functions
          bot.session(sess_ephys{1, 'id'});
