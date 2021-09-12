@@ -1,3 +1,5 @@
+[![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)
+
 # Brain Observatory Toolbox
 A MATLAB toolbox for **accessing and using** the neural recording public datasets from the **Allen Brain Observatory**[\[1\]](#references). 
 
@@ -32,21 +34,21 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 * **Item object** [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item 
   * *"On demand"* properties defer value retrieval, for those item object properties involving extensive compute or file reading 
   * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) are used to compute values requiring additional user-specified arguments 
-* **Local caching**<sup>1</sup> is implemented, to provide the fastest possible initial and repeat performance within and across MATLAB sessions
+* **Local caching** is implemented\*, to provide the fastest possible initial and repeat performance within and across MATLAB sessions
 
-<sup>1. For retrieved item information, object representations, and file contents</sup>
+<small>*For retrieved item information, object representations, and file contents</small>
 
 ## Installation Instructions
 
-1. Download the `.zip` file from the latest GitHub release
+1. Download the `.zip` file from the [**latest GitHub release**](https://github.com/emeyers/Brain-Observatory-Toolbox/releases)
 2. Unzip via preferred system tool to desired local folder location
 3. Open MATLAB 
 4. Add root directory of the unzipped folder contents to the MATLAB path, in one of three ways: 
-   1. Navigate to root directory in the *Current Folder* browser and select "Add to Path" from the right-click context menu<sup>1</sup>
+   1. Navigate to root directory in the *Current Folder* browser and select "Add to Path" from the right-click context menu,  using the "Selected Folder" option\*
    1. Open the *Set Path* dialog from the Environment section of the Home tab
    1. Call `addpath(<root directory location>)` in the Command Window
    
-<sup>1. Use the "Selected Folders" option. The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). It is necessary and sufficient to add the package's parent folder to the path. </sup>
+<small>*The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). For package folders, adding the parent folder is sufficient to include all package contents.</small>
 
 #### Required products
 * MATLAB (R2021a)
