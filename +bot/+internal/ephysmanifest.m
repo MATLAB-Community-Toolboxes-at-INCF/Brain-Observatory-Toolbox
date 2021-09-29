@@ -7,7 +7,7 @@
 
 %% Class definition
 
-classdef EphysManifest < handle
+classdef ephysmanifest < handle
     properties (Access = private, Transient = true)
         cache = bot.internal.cache;        % BOT Cache object
         api_access;                         % Function handles for low-level API access
@@ -22,7 +22,7 @@ classdef EphysManifest < handle
     
     %% Constructor
     methods (Access = private)
-        function manifest = EphysManifest()
+        function manifest = ephysmanifest()
             % - Initialise internal manifest cache
             manifest.api_access.ephys_sessions = [];
             manifest.api_access.ephys_channels = [];
