@@ -1,4 +1,4 @@
-%% CLASS ephysmanifest
+%% CLASS EphysManifest
 
 % Notes regarding various item fetchers
 %  fetch_ephys_XXX: retrieves raw item table from cloud cache. Pre-memoized.
@@ -7,7 +7,7 @@
 
 %% Class definition
 
-classdef ephysmanifest < handle
+classdef EphysManifest < handle
     properties (Access = private, Transient = true)
         cache = bot.internal.cache;        % BOT Cache object
         api_access;                         % Function handles for low-level API access
@@ -22,7 +22,7 @@ classdef ephysmanifest < handle
     
     %% Constructor
     methods (Access = private)
-        function manifest = ephysmanifest()
+        function manifest = EphysManifest()
             % - Initialise internal manifest cache
             manifest.api_access.ephys_sessions = [];
             manifest.api_access.ephys_channels = [];

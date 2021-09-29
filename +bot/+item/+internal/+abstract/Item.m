@@ -98,33 +98,42 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
     methods (Hidden, Access = protected)
         function groups = getPropertyGroups(obj)
-            if ~isscalar(obj)
-                groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
-            else
-                
-                % Core properties
-                mc = metaclass(obj);
-                dcs = [mc.PropertyList.DefiningClass];
-                corePropsLocal = findobj(mc.PropertyList(string({dcs.Name}) == mfilename('class')),'GetAccess','public','-and','Hidden',false);
-                groups(1) = matlab.mixin.util.PropertyGroup([corePropsLocal.Name obj.CORE_PROPERTIES]);
-                
-                % Derived properties from Info
-                if ~isempty(obj.ITEM_INFO_VALUE_PROPERTIES)
-                    groups(end+1) = matlab.mixin.util.PropertyGroup(obj.ITEM_INFO_VALUE_PROPERTIES, 'Info Derived Values');
-                end
-                
-                % Linked item tables
-                groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');
-                
-                % Derived properties from Linked Item Tables
-                if ~isempty(obj.LINKED_ITEM_VALUE_PROPERTIES)
-                    groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_VALUE_PROPERTIES, 'Linked Item Derived Values');
-                end
+            % Core properties
+            mc = metaclass(obj);
+            dcs = [mc.PropertyList.DefiningClass];
+            corePropsLocal = findobj(mc.PropertyList(string({dcs.Name}) == mfilename('class')),'GetAccess','public','-and','Hidden',false);
+            groups(1) = matlab.mixin.util.PropertyGroup([corePropsLocal.Name obj.CORE_PROPERTIES]);
+            
+            % Derived properties from Info
+            if ~isempty(obj.ITEM_INFO_VALUE_PROPERTIES)
+                groups(end+1) = matlab.mixin.util.PropertyGroup(obj.ITEM_INFO_VALUE_PROPERTIES, 'Info Derived Values');
+            end
+            
+            % Linked item tables
+            groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');
+            
+            % Derived properties from Linked Item Tables
+            if ~isempty(obj.LINKED_ITEM_VALUE_PROPERTIES)
+                groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_VALUE_PROPERTIES, 'Linked Item Derived Values');
             end
         end
         
+        function displayNonScalarObject(obj)
+            % - Only display limited data
+            arr_size = size(obj);
+            size_str = sprintf("%d×", arr_size(1:end-1)) + sprintf("%d", arr_size(end));
+
+            class_name = strsplit(class(obj), '.');
+            class_name = class_name{end};
+            class_name_part = sprintf('<a href="matlab:helpPopup %s">%s</a>', class(obj), class_name);
+
+            fprintf("   %s %s array\n", size_str, class_name_part);
+            
+            ids_part = "[" + sprintf('%d, ', [obj(1:end-1).id]) + sprintf('%d]', obj(end).id);
+
+            fprintf('     ids: %s\n', ids_part);
+        end
     end
-    
 
     
     %% HIDDEN METHODS - STATIC

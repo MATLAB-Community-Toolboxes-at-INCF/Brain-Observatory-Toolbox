@@ -82,8 +82,7 @@ classdef ophyssessionfilter < handle
          clear_filters(bosf);
       end
       
-   end
-   
+
    %% Session table filtering properties and methods
    
    methods
