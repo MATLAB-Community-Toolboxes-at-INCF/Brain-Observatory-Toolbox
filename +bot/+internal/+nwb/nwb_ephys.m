@@ -38,12 +38,12 @@ classdef nwb_ephys < handle
             return;
          end
          
-         try
-            % - Attempt to access the file
+%          try
+%             % - Attempt to access the file
             h5info(strFile);
-         catch
-            error('BOT:AccessNotPossible', 'Cannot access NWB file [%s]', strFile);
-         end
+%          catch
+%             error('BOT:AccessNotPossible', 'Cannot access NWB file [%s]', strFile);
+%          end
          
          % - Record file location
          self.strFile = strFile;

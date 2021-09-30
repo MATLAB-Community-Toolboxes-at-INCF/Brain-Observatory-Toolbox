@@ -619,49 +619,54 @@ classdef EphysSession < bot.item.Session
                 unit_ids = unique(spikes.unit_id, 'stable');
             end
             
-            % - Set up spike counts table
+            % Initialize presentation-wise spike counts table 
             [stimulus_presentation_id, unit_id] = ndgrid(stimulus_presentation_ids, unit_ids);
             stimulus_presentation_id = stimulus_presentation_id(:);
             unit_id = unit_id(:);
             spike_count = zeros(size(stimulus_presentation_id));
             spike_counts = table(stimulus_presentation_id, unit_id, spike_count);
             
+            % Fill in presentation-wise spike counts table
             if ~isempty(spikes)
-                [found_spike_counts, ~, u_indices] = unique(spikes(:, {'stimulus_presentation_id', 'unit_id'}), 'rows');
-                found_spike_counts.spike_count = accumarray(u_indices, 1);
+                %[found_spike_counts, ~, u_indices] = unique(spikes(:, {'stimulus_presentation_id', 'unit_id'}), 'rows');
+                %found_spike_counts.spike_count = accumarray(u_indices, 1);
                 
-                for row = 1:size(found_spike_counts, 1)
+                found_spike_counts = groupsummary(spikes,["stimulus_presentation_id" "unit_id"]);
+                
+                for row = 1:height(found_spike_counts)
                     % - Fill in spike counts
                     spike_count_row = (spike_counts.stimulus_presentation_id == found_spike_counts.stimulus_presentation_id(row)) & ...
                         (spike_counts.unit_id == found_spike_counts.unit_id(row));
-                    spike_counts(spike_count_row, 'spike_count') = found_spike_counts(row, 'spike_count');
+                    spike_counts(spike_count_row, 'spike_count') = found_spike_counts(row, "GroupCount");
                 end
             end
                 
+            % Add stimulus condition & duration variables
             for row = 1:size(spike_counts, 1)
-                % - Add stimulus presentation information
                 stimulus_row = presentations.stimulus_presentation_id == spike_counts.stimulus_presentation_id(row);
                 spike_counts.stimulus_condition_id(row) = presentations.stimulus_condition_id(stimulus_row);
                 spike_counts.duration(row) = presentations.stop_time(stimulus_row) - presentations.start_time(stimulus_row);
             end
         
             
-            if use_rates
+            if use_rates % TODO: update rate case to use groupsummary
                 spike_counts.spike_rate = spike_counts.spike_count / spike_counts.duration;
                 spike_counts = removevars(spike_counts, 'spike_count');
                 extractor = @zlclExtractSummaryRateStatistics;
             else
                 spike_counts = removevars(spike_counts, 'duration');
-                extractor = @zlclExtractSummaryCountStatistics;
+                %extractor = @zlclExtractSummaryCountStatistics;
             end
             
-            [unique_sp, u_indices, sp_indices] = unique(spike_counts(:, {'stimulus_condition_id', 'unit_id'}), 'rows', 'stable');
+            summary = groupsummary(spike_counts,["stimulus_condition_id" "unit_id"],["nnz" "mean" "std"],"spike_count");
+          
+            summary.spike_count = round(summary.GroupCount .* summary.mean_spike_count);
             
-            summary = table();
-            for index = 1:numel(u_indices)
-                group = spike_counts(sp_indices == u_indices(index), :);
-                summary = [summary; extractor(unique_sp(index, :), group)]; %#ok<AGROW>
-            end
+            summary = movevars(summary,"spike_count",'After',"unit_id");
+            summary = movevars(summary,"GroupCount",'After',"spike_count");
+
+            summary = renamevars(summary,"GroupCount","stimulus_presentation_count");
+            
         end
         
         function conditions = getConditionsByStimulusName(self, stimulus_name, drop_nulls)
