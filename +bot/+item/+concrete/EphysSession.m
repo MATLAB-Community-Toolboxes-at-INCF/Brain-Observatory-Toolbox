@@ -383,7 +383,7 @@ classdef EphysSession < bot.item.Session
             obj = obj@bot.item.Session(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
                 % - Assign associated table rows
                 obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
                 obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);

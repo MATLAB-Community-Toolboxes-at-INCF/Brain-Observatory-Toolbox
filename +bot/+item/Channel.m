@@ -34,7 +34,7 @@ classdef Channel < bot.item.internal.abstract.Item
             obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
                 % Assign linked Item tables (downstream)
                 obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_channel_id == obj.id, :);
                 
