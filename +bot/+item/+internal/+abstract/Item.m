@@ -119,6 +119,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         end
         
         function displayNonScalarObject(obj)
+            %TODO: Refactor to use String, if keeping this nonscalar display format
+            
             % - Only display limited data
             arr_size = size(obj);
             size_str = sprintf("%d×", arr_size(1:end-1)) + sprintf("%d", arr_size(end));
