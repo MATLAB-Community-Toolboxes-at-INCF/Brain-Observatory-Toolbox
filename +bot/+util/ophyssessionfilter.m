@@ -89,7 +89,7 @@ classdef ophyssessionfilter < handle
    methods
       function clear_filters(bosf)
          % clear_filters - METHOD Clear all session table filters
-         failed_container_id = bosf.ophys_manifest.ophys_containers((bosf.ophys_manifest.ophys_containers.failed == 1), :).id;
+         failed_container_id = bosf.ophys_manifest.ophys_experiments((bosf.ophys_manifest.ophys_experiments.failed == 1), :).id;
          bosf.valid_session_table = bosf.ophys_manifest.ophys_sessions(~ismember(bosf.ophys_manifest.ophys_sessions.experiment_container_id, failed_container_id), :);
          bosf.filtered_session_table = bosf.valid_session_table;
       end

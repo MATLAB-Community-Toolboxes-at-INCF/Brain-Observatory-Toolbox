@@ -1,9 +1,9 @@
 classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% PROPERTIES
-    properties (SetAccess = protected)
+    properties (SetAccess = public)
         info;         % Struct containing info about this item
-        id;               % ID of this item
+        id;           % ID of this item
     end
     
     %% HIDDEN PROPERTIES
@@ -17,7 +17,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
     end
     
-    properties (Abstract, Hidden, Access = protected)
+    properties (Abstract, Hidden)
         CORE_PROPERTIES (1,:) string;
         LINKED_ITEM_PROPERTIES (1,:) string;
     end
@@ -44,10 +44,15 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             
             % Handle case of ID array
             if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
-                for idx = numel(itemIDSpec):-1:1
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx));
+                for idx = 1:numel(itemIDSpec)
+                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx)); %#ok<AGROW>
                 end
                 return;
+            elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
+                for idx = 1:size(itemIDSpec, 1)
+                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx, :)); %#ok<AGROW>
+                end
+                return;                
             end
             
             % Identify associated manifest containing all Items of this class
@@ -83,10 +88,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             % - Assign the table data to the metadata structure
             obj.info = table2struct(manifestTableRow);
             obj.id = obj.info.id;                                              
-            
         end
-        
-        
     end
     
     
@@ -141,9 +143,9 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                     msgType = "Table supplied not recognized as a valid BOT Item information table";
                 end
                 
-                if height(val) ~= 1
-                    msgType = "Table supplied must have one and only one row";
-                end                                               
+%                 if height(val) ~= 1
+%                     msgType = "Table supplied must have one and only one row";
+%                 end                                               
                 
             elseif ~isnumeric(val) || ~isvector(val) || ~all(isfinite(val)) || any(val<=0)
                 eidTypeSuffix = "invalidItemIDs";
