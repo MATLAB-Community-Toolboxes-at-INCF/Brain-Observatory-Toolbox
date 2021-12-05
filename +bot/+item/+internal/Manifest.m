@@ -1,6 +1,6 @@
-% manifest — Create or download a manifest from the Allen Brain Observatory
+% Manifest — Create or download a manifest from the Allen Brain Observatory
 
-classdef manifest < handle 
+classdef Manifest < handle 
 
     
     %% STATIC METHODS - PUBLIC
@@ -14,10 +14,10 @@ classdef manifest < handle
             
             switch(lower(type))
                 case 'ophys'
-                    manifest = bot.internal.ophysmanifest.instance();
+                    manifest = bot.item.internal.OphysManifest.instance();
                     
                 case 'ephys'
-                    manifest = bot.internal.ephysmanifest.instance();
+                    manifest = bot.item.internal.EphysManifest.instance();
                     
                 otherwise
                     error('`manifest_type` must be one of {''ophys'', ''ephys''}');
@@ -68,6 +68,29 @@ classdef manifest < handle
             %% Convert ephys_structure_acronym from cell types to string/cateorical type
             % TODO: refactor to generalize this for all cell2str convers (some of which is currently implemented in ephysmanifest)
             varIdx = find(varNames.contains("structure_acronym"));
+            if varIdx
+                var = tbl.(varNames(varIdx));
+                
+                if iscell(var)
+                    if iscell(var{1}) % case of: cell string array with empty last value (ephys session case)
+                        
+                        % convert to cell string array
+                        assert(all(cellfun(@(x)isempty(x{end}),var))); % all the cell string arrays end with an empty double array, for reason TBD
+                        tbl.(varNames(varIdx)) = cellfun(@(x)join(string(x(1:end-1))',"; "),var); % convert each cell element to string, skipping the ending empty double array
+                        
+                    else % case of: 'almost' cell string arrays, w/ empty values represented as numerics
+                        assert(all(cellfun(@isempty,var(cellfun(@(x)~ischar(x),var)))));
+                        
+                        var2 = var;
+                        [var2{cellfun(@(x)~ischar(x), var)}] = deal('');
+                        tbl.(varNames(varIdx)) = categorical(string(var2)); % strings are scalars in this case --> convert to categorical
+                    end
+                end
+            end   
+            
+            %% Convert ophys area from cell types to string/cateorical type
+            % TODO: refactor to generalize this for all cell2str convers (some of which is currently implemented in ephysmanifest)
+            varIdx = find(varNames == "area");
             if varIdx
                 var = tbl.(varNames(varIdx));
                 

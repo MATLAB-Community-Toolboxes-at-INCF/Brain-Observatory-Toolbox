@@ -11,6 +11,8 @@ classdef OphysSession < bot.item.Session
     % Direct Item Values
     properties (SetAccess = private)
         session_type;                 % Type of experimental session (i.e. set of stimuli)
+        experiment;                   % Experiment object containing this session
+        cells;                        % Table of cells in this session        
     end
     
     % Linked File Values
@@ -82,9 +84,9 @@ classdef OphysSession < bot.item.Session
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
     end
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = "session_type";
-        LINKED_ITEM_PROPERTIES = [];
+        LINKED_ITEM_PROPERTIES = ["experiment" "cells"];
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
@@ -239,7 +241,7 @@ classdef OphysSession < bot.item.Session
             neuropil_traces = bos.fetch_neuropil_traces(cell_specimen_ids);
             
             % - Correct fluorescence traces using neuropil demixing model
-            traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
+            traces = traces - neuropil_traces * reshape(neuropil_r, 1, []);
         end
         
         function timestamps = fetch_fluorescence_timestamps(bos)
@@ -831,7 +833,7 @@ classdef OphysSession < bot.item.Session
             stimulus_epochs = table();
             for stim_index = numel(stimuli):-1:1
                 % - Get the stimulus table for this stimulus
-                this_stimulus = bos.fetch_stimulus_table(stimuli{stim_index});
+                this_stimulus = bos.getStimulusTable(stimuli{stim_index});
                 
                 % - Set "frame" column for spontaneous stimulus
                 if isequal(stimuli{stim_index}, 'spontaneous')
@@ -852,6 +854,13 @@ classdef OphysSession < bot.item.Session
             
             % - Rearrange columns to put 'stimulus' first
             stimulus_epochs = [stimulus_epochs(:, 3) stimulus_epochs(:, 1:2)];
+            
+            % - Add times
+            frame_times = bos.fluorescence_timestamps;
+            stimulus_epochs.start_time = frame_times(stimulus_epochs.start_frame);
+            stimulus_epochs.duration = frame_times(stimulus_epochs.end_frame) - stimulus_epochs.start_time;
+            
+            stimulus_epochs = table2timetable(stimulus_epochs);
         end
         
         function stimuli = fetch_stimulus_list(bos)
@@ -984,21 +993,40 @@ classdef OphysSession < bot.item.Session
             % TODO: handle prop with string type
             stimulusName = char(stimulusName);
             
+            % - Get flourescence frame timestamps
+            frame_timestamps = obj.fluorescence_timestamps();
+            
             % - Return a stimulus table for one of the stimulus types
             if ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.abstract_feature_series)
                 stimulus_table = fetch_abstract_feature_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.indexed_time_series)
                 stimulus_table = fetch_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif ismember(stimulusName, obj.STIMULUS_TABLE_TYPES.repeated_indexed_time_series)
                 stimulus_table = fetch_repeated_indexed_time_series_stimulus_table(obj.nwbLocal, [stimulusName '_stimulus']);
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif isequal(stimulusName, 'spontaneous')
                 stimulus_table = obj.spontaneous_activity_stimulus_table;
+                
+                stimulus_table.start_time = frame_timestamps(stimulus_table.start_frame);
+                stimulus_table.duration = frame_timestamps(stimulus_table.end_frame) - stimulus_table.start_time;
+                stimulus_table = table2timetable(stimulus_table);
                 return;
                 
             elseif isequal(stimulusName, 'master')
@@ -1011,7 +1039,7 @@ classdef OphysSession < bot.item.Session
                     strStimulus = strStimulus{1}; %#ok<FXSET>
                     
                     % - Get stimulus table for this stimulus, annotate with stimulus name
-                    stimuli{end+1} = bos.fetch_stimulus_table(strStimulus); %#ok<AGROW>
+                    stimuli{end+1} = obj.getStimulusTable(strStimulus); %#ok<AGROW>
                     stimuli{end}.stimulus = repmat({strStimulus}, size(stimuli{end}, 1), 1);
                     
                     % - Collect all variable names
@@ -1103,7 +1131,7 @@ classdef OphysSession < bot.item.Session
             %   Also handles to accelerated search functions
             if isempty(bos.smCachedStimulusTable)
                 epoch_stimulus_table = bos.stimulus_epoch_table;
-                master_stimulus_table = bos.fetch_stimulus_table('master');
+                master_stimulus_table = bos.getStimulusTable('master');
                 bos.smCachedStimulusTable(1) = epoch_stimulus_table;
                 bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
                 bos.smCachedStimulusTable(3) = master_stimulus_table;
@@ -1195,8 +1223,8 @@ classdef OphysSession < bot.item.Session
             obj = obj@bot.item.Session(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
-                % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
+                % Superclass initialization (bot.item.internal.abstract.bot.sessionItem)
                 obj.initSession();
                 
                 obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
@@ -1205,6 +1233,9 @@ classdef OphysSession < bot.item.Session
                 obj.insertLinkedFileInfo("SessH5",obj.info.well_known_files(h5Idx));
                 
                 obj.initLinkedFiles();
+                
+                obj.experiment = bot.experiment(obj.info.experiment_container_id);
+                obj.cells = obj.experiment.cells;
             end
         end
     end
@@ -1245,7 +1276,7 @@ try
     % - Create a stimulus table to return
     stimulus_table = array2table(stim_data', 'VariableNames', features);
     
-    % - Add start and finish frame times
+    % - Add start and finish frames
     stimulus_table.start_frame = int32(frame_dur(1, :)');
     stimulus_table.end_frame = int32(frame_dur(2, :)');
     
@@ -1411,7 +1442,7 @@ if ~exist('eyepoint', 'var') || isempty(eyepoint)
 end
 
 % - Convert from pixels (-1920/2 -> 1920/2) to stimulus space (-0.5 -> 0.5)
-vertices = bsxfun(@rdivide, vertices, mon_res);
+vertices = vertices ./ mon_res;
 
 x = (vertices(:, 1) + .5) * mon_width_cm;
 y = (vertices(:, 2) + .5) * mon_height_cm;
@@ -1451,7 +1482,7 @@ v_coords = ty ./ mon_height_cm;
 texture_coords = [u_coords v_coords];
 
 % - Convert back to pixels
-texture_coords = bsxfun(@times, texture_coords, mon_res);
+texture_coords = texture_coords * mon_res;
 end
 
 function mask = make_display_mask(display_shape)
@@ -1474,7 +1505,7 @@ display_coords = [X(:) Y(:)];
 warped_coords = warp_stimulus_coords(display_coords);
 
 % - Determine which stimulus pixels are on-screen after warping
-off_warped_coords = round(bsxfun(@plus, warped_coords, display_shape ./ 2));
+off_warped_coords = round(warped_coords + display_shape ./ 2);
 mask = false(display_shape);
 mask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
 end
@@ -1495,7 +1526,7 @@ end
 
 % - Find valid indices for the template, and masked pixels
 template_display_coords = reshape(template_display_coords, [], 2) + 1;
-valid_indices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
+valid_indices = all(template_display_coords >= 1, 2) & all(template_display_coords <= template_shape, 2);
 valid_mask_indices = display_mask(:) & valid_indices;
 
 % - Determine which template units are on the screen above the threshold

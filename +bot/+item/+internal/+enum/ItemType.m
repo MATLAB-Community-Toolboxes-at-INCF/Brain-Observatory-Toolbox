@@ -12,6 +12,7 @@ classdef ItemType
         Probe;
         Session;
         Unit; 
+        Cell;
     end    
 
 

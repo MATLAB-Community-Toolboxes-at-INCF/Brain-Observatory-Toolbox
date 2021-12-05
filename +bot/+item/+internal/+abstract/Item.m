@@ -1,9 +1,9 @@
 classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% PROPERTIES
-    properties (SetAccess = protected)
+    properties (SetAccess = public)
         info;         % Struct containing info about this item
-        id;               % ID of this item
+        id;           % ID of this item
     end
     
     %% HIDDEN PROPERTIES
@@ -17,7 +17,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
     end
     
-    properties (Abstract, Hidden, Access = protected)
+    properties (Abstract, Hidden)
         CORE_PROPERTIES (1,:) string;
         LINKED_ITEM_PROPERTIES (1,:) string;
     end
@@ -60,9 +60,9 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             % Identify associated manifest containing all Items of this class
             switch obj.DATASET_TYPE
                 case "Ephys"
-                    obj.manifest = bot.internal.ephysmanifest.instance();
+                    obj.manifest = bot.item.internal.EphysManifest.instance();
                 case "Ophys"
-                    obj.manifest = bot.internal.ophysmanifest.instance();
+                    obj.manifest = bot.item.internal.OphysManifest.instance();
                 otherwise
                     assert(false);
             end                       
@@ -98,23 +98,28 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
     methods (Hidden, Access = protected)
         function groups = getPropertyGroups(obj)
-            % Core properties
-            mc = metaclass(obj);
-            dcs = [mc.PropertyList.DefiningClass];
-            corePropsLocal = findobj(mc.PropertyList(string({dcs.Name}) == mfilename('class')),'GetAccess','public','-and','Hidden',false);
-            groups(1) = matlab.mixin.util.PropertyGroup([corePropsLocal.Name obj.CORE_PROPERTIES]);
-            
-            % Derived properties from Info
-            if ~isempty(obj.ITEM_INFO_VALUE_PROPERTIES)
-                groups(end+1) = matlab.mixin.util.PropertyGroup(obj.ITEM_INFO_VALUE_PROPERTIES, 'Info Derived Values');
-            end
-            
-            % Linked item tables
-            groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');
-            
-            % Derived properties from Linked Item Tables
-            if ~isempty(obj.LINKED_ITEM_VALUE_PROPERTIES)
-                groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_VALUE_PROPERTIES, 'Linked Item Derived Values');
+            if ~isscalar(obj)
+                groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+            else
+                
+                % Core properties
+                mc = metaclass(obj);
+                dcs = [mc.PropertyList.DefiningClass];
+                corePropsLocal = findobj(mc.PropertyList(string({dcs.Name}) == mfilename('class')),'GetAccess','public','-and','Hidden',false);
+                groups(1) = matlab.mixin.util.PropertyGroup([corePropsLocal.Name obj.CORE_PROPERTIES]);
+                
+                % Derived properties from Info
+                if ~isempty(obj.ITEM_INFO_VALUE_PROPERTIES)
+                    groups(end+1) = matlab.mixin.util.PropertyGroup(obj.ITEM_INFO_VALUE_PROPERTIES, 'Info Derived Values');
+                end
+                
+                % Linked item tables
+                groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_PROPERTIES, 'Linked Items');
+                
+                % Derived properties from Linked Item Tables
+                if ~isempty(obj.LINKED_ITEM_VALUE_PROPERTIES)
+                    groups(end+1) = matlab.mixin.util.PropertyGroup(obj.LINKED_ITEM_VALUE_PROPERTIES, 'Linked Item Derived Values');
+                end
             end
         end
         

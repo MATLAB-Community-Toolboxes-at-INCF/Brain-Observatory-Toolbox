@@ -29,8 +29,8 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
         ITEM_TYPE= bot.item.internal.enum.ItemType.Probe;
     end
-
-    properties (Hidden, Access = protected)
+    
+    properties (Hidden)
         CORE_PROPERTIES = string.empty(1,0);
         LINKED_ITEM_PROPERTIES = ["session" "channels" "units"];
     end

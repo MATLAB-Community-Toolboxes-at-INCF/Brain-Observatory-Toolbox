@@ -1,12 +1,12 @@
-%% CLASS bot.internal.ophysmanifest
+%% CLASS OphysManifest
 %
 % This class can be used to obtain a list of available experimental
 % sessions from the Visual Coding 2P dataset [1] obtained with the Allen
 % Brain Observatory platform [2].
 %
 % Construction:
-% >> bom = bot.internal.manifest('ophys')
-% >> bom = bot.internal.ophysmanifest.instance()
+% >> bom = bot.item.internal.Manifest('ophys')
+% >> bom = bot.item.internal.OphysManifest.instance()
 %
 % Get information about all OPhys experimental sessions:
 % >> bom.ophys_sessions
@@ -37,7 +37,7 @@
 
 %% Class definition
 
-classdef ophysmanifest < handle
+classdef OphysManifest < handle
     properties (Access = private, Transient = true)
         cache = bot.internal.cache;        % BOT Cache object
         api_access;                         % Function handles for low-level API access
@@ -46,11 +46,12 @@ classdef ophysmanifest < handle
     properties (SetAccess = private, Dependent = true)
         ophys_sessions;                   % Table of all OPhys experimental sessions
         ophys_experiments;                % Table of all OPhys experiments
+        ophys_cells;                      % Table of all OPhys cells
     end
     
     %% Constructor
     methods (Access = private)
-        function oManifest = ophysmanifest()
+        function oManifest = OphysManifest()
             % Memoize manifest getter
             oManifest.api_access.fetch_cached_ophys_manifests = memoize(@oManifest.fetch_cached_ophys_manifests);
         end
@@ -76,7 +77,7 @@ classdef ophysmanifest < handle
             
             % - Construct the manifest if single instance is not present
             if isempty(ophysmanifest)
-                ophysmanifest = bot.internal.ophysmanifest();
+                ophysmanifest = bot.item.internal.OphysManifest();
             end
             
             % - Return the instance
@@ -96,14 +97,21 @@ classdef ophysmanifest < handle
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
             
             % Apply standardized table display logic
-            ophys_sessions = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_session_manifest); 
+            ophys_sessions = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_session_manifest); 
         end
         
         function ophys_experiments = get.ophys_experiments(oManifest)
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
             
             % Apply standardized table display logic
-            ophys_experiments = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_experiment_manifest); 
+            ophys_experiments = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_experiment_manifest); 
+        end
+        
+        function ophys_cells = get.ophys_cells(oManifest)
+            ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
+           
+            % Apply standardized table display logic
+            ophys_cells = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_cells_manifest); 
         end
     end
     
@@ -112,7 +120,7 @@ classdef ophysmanifest < handle
         function UpdateManifests(manifest,clearMemoOnly)
             
             arguments
-                manifest (1,1) bot.internal.ophysmanifest
+                manifest (1,1) bot.item.internal.OphysManifest
                 clearMemoOnly (1,1) logical = true
             end
             
@@ -131,7 +139,7 @@ classdef ophysmanifest < handle
             end
             
             % - Reset singleton instance
-            bot.internal.ophysmanifest.instance(true);
+            bot.item.internal.OphysManifest.instance(true);
         end
     end
     
@@ -206,6 +214,46 @@ classdef ophysmanifest < handle
             
             options = weboptions('ContentType', 'table', 'TimeOut', 60);
             ophys_manifests.cell_id_mapping = manifest.cache.ccCache.webread(cell_id_mapping_url, [], options);
+            
+            %% - Fetch cell speciments manifest
+            ophys_cells_manifest = manifest.cache.CachedAPICall('q=model::ApiCamCellMetric', [], [], [], [], [], [], "cell_specimen_id");
+            
+            ophys_cells_manifest.experiment_container_id = uint32(ophys_cells_manifest.experiment_container_id);
+            ophys_cells_manifest.id = uint32(ophys_cells_manifest.cell_specimen_id);
+            ophys_cells_manifest = removevars(ophys_cells_manifest, 'cell_specimen_id');
+            ophys_cells_manifest.specimen_id = uint32(ophys_cells_manifest.specimen_id);
+            
+            ophys_cells_manifest.tlr1_id = uint32(ophys_cells_manifest.tlr1_id);
+            ophys_cells_manifest.tld1_id = uint32(ophys_cells_manifest.tld1_id);            
+            
+            function table = convert_metric_vars(table, varnames)
+
+                function metric = convert_cell_metric(metric)
+                    metric(cellfun(@isempty, metric)) = {nan};
+                    metric = [metric{:}]';
+                end
+                
+                for var = varnames
+                    table.(var{1}) = convert_cell_metric(table.(var{1}));
+                end
+            end
+            
+            metric_varnames = {'reliability_dg', 'reliability_nm1_a', 'reliability_nm1_b', ...
+                'reliability_nm2', 'reliability_nm3', 'reliability_ns', 'reliability_sg', ...
+                'dsi_dg', 'g_dsi_dg', 'g_osi_dg', 'g_osi_sg', 'image_sel_ns', 'osi_dg', ...
+                'osi_sg', 'p_dg', 'p_ns', 'p_run_mod_dg', 'p_run_mod_ns', 'p_run_mod_sg', ...
+                'p_sg', 'peak_dff_dg', 'peak_dff_ns', 'peak_dff_sg', 'pref_dir_dg', 'pref_image_ns', ...
+                'pref_ori_sg', 'pref_phase_sg', 'pref_sf_sg', 'pref_tf_dg', 'rf_area_off_lsn', ...
+                'rf_area_on_lsn', 'rf_center_off_x_lsn', 'rf_center_off_y_lsn', 'rf_center_on_x_lsn', ...
+                'rf_center_on_y_lsn', 'rf_chi2_lsn', 'rf_distance_lsn', 'rf_overlap_index_lsn', ...
+                'run_mod_dg', 'run_mod_ns', 'run_mod_sg', 'sfdi_sg', 'tfdi_dg', 'time_to_peak_ns', ...
+                'time_to_peak_sg', 'tld2_id', 'reliability_nm1_c'};
+                
+            ophys_cells_manifest = convert_metric_vars(ophys_cells_manifest, metric_varnames);  
+            
+            ophys_cells_manifest.tld2_id = uint32(ophys_cells_manifest.tld2_id);
+            
+            ophys_manifests.ophys_cells_manifest = ophys_cells_manifest;
         end
         
         function ophys_manifests = fetch_cached_ophys_manifests(manifest)
