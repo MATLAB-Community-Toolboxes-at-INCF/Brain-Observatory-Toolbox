@@ -43,7 +43,7 @@ if isempty(sessionType)
         try
             sessionObj = bot.item.concrete.OphysSession(sessionIDSpec);
         catch ME
-            if ~isequal(ME.identifier,"BOT:Item:idNotFound")
+            if ~isequal(ME.identifier,"BOT:Item:idNotFound") && ~isequal(ME.identifier, "MATLAB:UnableToConvert")
                 ME.rethrow();
             end
         end

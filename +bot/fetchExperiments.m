@@ -11,5 +11,5 @@
 %% function experimentsTable = fetchExperiments()
 function experimentsTable = fetchExperiments()
    manifest = bot.item.internal.Manifest.instance('ophys');
-   experimentsTable = manifest.ophys_containers;
+   experimentsTable = manifest.ophys_experiments;
 end
