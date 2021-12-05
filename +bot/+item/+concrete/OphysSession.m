@@ -1238,7 +1238,23 @@ classdef OphysSession < bot.item.Session
                 obj.cells = obj.experiment.cells;
             end
         end
-        
+    end
+
+    methods (Access = protected)
+        function displayNonScalarObject(obj)
+            displayNonScalarObject@bot.item.internal.abstract.Item(obj)
+
+            % - Get unique experiment container IDs
+            infos = [obj.info];
+            exp_ids = unique([infos.experiment_container_id]);
+
+            if numel(exp_ids) == 1
+                fprintf('     All sessions from experiment id: %d\n\n', exp_ids);
+            else
+                exp_ids_part = "[" + sprintf('%d, ', exp_ids(1:end-1)) + sprintf('%d]', exp_ids(end));
+                fprintf('     From experiment ids: %s\n\n', exp_ids_part)
+            end
+        end
     end
 end
 

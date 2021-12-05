@@ -383,7 +383,7 @@ classdef EphysSession < bot.item.Session
             obj = obj@bot.item.Session(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
+            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
                 % - Assign associated table rows
                 obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
                 obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);
@@ -768,7 +768,9 @@ classdef EphysSession < bot.item.Session
                 stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
             end
             
-            stimulus_presentations = removevars(stimulus_presentations, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC>
+            % - Determine variables to remove, and remove them
+            vars_to_remove = intersect(stimulus_presentations.Properties.VariableNames, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC> 
+            stimulus_presentations = removevars(stimulus_presentations, vars_to_remove); %#ok<PROPLC>
             stimulus_presentations = zlclRemoveUnusedStimulusPresentationColumns(stimulus_presentations); %#ok<PROPLC>
             
             parameters = struct();

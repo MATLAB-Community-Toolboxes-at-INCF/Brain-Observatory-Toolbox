@@ -43,14 +43,16 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             end
             
             % Handle case of ID array
+            item_type = obj(1).ITEM_TYPE;
+            
             if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
                 for idx = 1:numel(itemIDSpec)
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx)); %#ok<AGROW>
+                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx)); %#ok<AGROW>
                 end
                 return;
             elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
                 for idx = 1:size(itemIDSpec, 1)
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx, :)); %#ok<AGROW>
+                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx, :)); %#ok<AGROW>
                 end
                 return;                
             end
@@ -121,8 +123,24 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             end
         end
         
+        function displayNonScalarObject(obj)
+            %TODO: Refactor to use String, if keeping this nonscalar display format
+            
+            % - Only display limited data
+            arr_size = size(obj);
+            size_str = sprintf("%d×", arr_size(1:end-1)) + sprintf("%d", arr_size(end));
+
+            class_name = strsplit(class(obj), '.');
+            class_name = class_name{end};
+            class_name_part = sprintf('<a href="matlab:helpPopup %s">%s</a>', class(obj), class_name);
+
+            fprintf("   %s %s array\n", size_str, class_name_part);
+            
+            ids_part = "[" + sprintf('%d, ', [obj(1:end-1).id]) + sprintf('%d]', obj(end).id);
+
+            fprintf('     ids: %s\n', ids_part);
+        end
     end
-    
 
     
     %% HIDDEN METHODS - STATIC
