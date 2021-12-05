@@ -81,7 +81,7 @@ classdef ophyssessionfilter < handle
          % - Get the unfiltered session table, clear all filters
          clear_filters(bosf);
       end
-      
+   end
 
    %% Session table filtering properties and methods
    

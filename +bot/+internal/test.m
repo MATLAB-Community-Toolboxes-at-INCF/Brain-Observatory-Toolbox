@@ -26,96 +26,23 @@ classdef test < matlab.unittest.TestCase
          bom.ephys_probes;                   % Table of all EPhys probes
          bom.ephys_units;                    % Table of all EPhys units
       end
-      
-      function testGetOPhysSessionFilter(testCase)
-         %% Test creating a session filter object
-         bosf = bot.util.ophyssessionfilter;
-         bosf.clear_filters();
-      end
-      
-      function testOphysSessionFilterGetAllMethods(testCase)
-         %% Test the "get all" methods for the OPhys session filter class
-         bosf = bot.util.ophyssessionfilter;
-         
-         bosf.get_all_cre_lines();
-         bosf.get_all_imaging_depths();
-         bosf.get_all_session_types();
-         bosf.get_all_stimuli();
-         bosf.get_all_targeted_structures();
-      end
-      
-      function testOPhysSessionFilterGetSummaryMethods(testCase)
-         %% Test the "get summary" methods for the OPhys session filter class
-         bosf = bot.util.ophyssessionfilter;
-         
-         bosf.get_summary_of_containers_along_depths_and_structures();
-         bosf.get_summary_of_containers_along_imaging_depths();
-         bosf.get_summary_of_containers_along_targeted_structures();
-         bosf.get_targeted_structure_acronyms();
-         bosf.get_total_num_of_containers();
-      end
-      
-      function testOPhysSessionFilterMethods(testCase)
-         %% Test using the OPhys session filter filtering methods
-         bom = bot.item.internal.OphysManifest.instance();
-         bosf = bot.util.ophyssessionfilter;
-         
-         % CRE lines
-         cre_lines = bosf.get_all_cre_lines();
-         bosf.clear_filters();
-         bosf.filter_session_by_cre_line(cre_lines{1});
 
-         % Imaging depth
-         im_depths = bosf.get_all_imaging_depths();
-         bosf.clear_filters();
-         bosf.filter_sessions_by_imaging_depth(im_depths(1));
-         
-         % Eye tracking
-         bosf.clear_filters();
-         bosf.filter_session_by_eye_tracking(true);
-         
-         % Container ID
-         containers = bom.ophys_experiments;
-         bosf.clear_filters();
-         bosf.filter_sessions_by_container_id(containers{1, 'id'});
-         
-         % Session ID
-         sessions_ = bom.ophys_sessions;
-         bosf.clear_filters();
-         bosf.filter_sessions_by_session_id(sessions_{1, 'id'});
-         
-         % Session type
-         session_types = bosf.get_all_session_types();
-         bosf.clear_filters();
-         bosf.filter_sessions_by_session_type(session_types{1});
-         
-         % Stimuli
-         stimuli = bosf.get_all_stimuli();
-         bosf.clear_filters();
-         bosf.filter_sessions_by_stimuli(stimuli{1});
-         
-         % Targeted structures
-         structures = bosf.get_all_targeted_structures();
-         bosf.clear_filters();
-         bosf.filter_sessions_by_targeted_structure(structures{1});
-         
-         % Get filtered session table
-         bosf.filter_sessions_by_targeted_structure(structures{1});
-         t = bosf.filtered_session_table;
-      end
-      
       function testObtainSessionObject(testCase)
          %% Test creation of an OPhys session object
-         bosf = bot.util.ophyssessionfilter();
+         sess = bot.fetchSessions('ophys');
          
          % - Get session IDs
-         vIDs = bosf.valid_session_table{:, 'id'};
+         vIDs = sess.id;
          
          % - Create some bot.session objects
          bot.session(vIDs(1));
          bot.session(vIDs(1:3));
-         bot.session(bosf.valid_session_table(1, :));
-         bot.session(bosf.valid_session_table(1:3, :));
+         bot.session(sess(1, :));
+         bot.session(sess(1:3, :));
+
+         % - Fetch all sessions from one experiment
+         exps = bot.fetchExperiments();
+         s = bot.session(sess(sess.experiment_container_id == exps.id(1), :));
       end
       
       function testSessionDataAccess(testCase)
@@ -124,7 +51,6 @@ classdef test < matlab.unittest.TestCase
          s = bot.session(496934409);
 
          % - Test summary methods
-         vnCellIDs = s.cell_specimen_ids;
          s.nwb_metadata;
          s.session_type;
          s.roi_ids;
@@ -207,10 +133,18 @@ classdef test < matlab.unittest.TestCase
       function testEPhysManifest(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.item.internal.ephysmanifest.instance();
+         bom = bot.item.internal.EphysManifest.instance();
          bom = bot.item.internal.Manifest.instance('ephys');
       end
       
+      function test_ophys_cells(testCase)
+          %% Tect obtaining OPhys cells
+          cells = bot.fetchCells();
+          c = bot.cell(cells(1, :));
+          c = bot.cell(cells.id(1));
+          c = bot.cell(cells(1:3, :));
+      end
+
       function test_ephys_sessions(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest

@@ -768,7 +768,9 @@ classdef EphysSession < bot.item.Session
                 stimulus_presentations = stimulus_presentations(select_stimuli, :); %#ok<PROPLC>
             end
             
-            stimulus_presentations = removevars(stimulus_presentations, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC>
+            % - Determine variables to remove, and remove them
+            vars_to_remove = intersect(stimulus_presentations.Properties.VariableNames, ['stimulus_name' 'stimulus_presentation_id' self.NON_STIMULUS_PARAMETERS]); %#ok<PROPLC> 
+            stimulus_presentations = removevars(stimulus_presentations, vars_to_remove); %#ok<PROPLC>
             stimulus_presentations = zlclRemoveUnusedStimulusPresentationColumns(stimulus_presentations); %#ok<PROPLC>
             
             parameters = struct();
