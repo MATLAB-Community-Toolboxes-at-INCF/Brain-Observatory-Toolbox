@@ -104,14 +104,14 @@ classdef OphysManifest < handle
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
             
             % Apply standardized table display logic
-            ophys_experiments = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_experiment_manifest); 
+            ophys_experiments = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_experiment_manifest); 
         end
         
         function ophys_cells = get.ophys_cells(oManifest)
             ophys_manifests = oManifest.api_access.fetch_cached_ophys_manifests();
            
             % Apply standardized table display logic
-            ophys_cells = bot.internal.manifest.applyUserDisplayLogic(ophys_manifests.ophys_cells_manifest); 
+            ophys_cells = bot.item.internal.Manifest.applyUserDisplayLogic(ophys_manifests.ophys_cells_manifest); 
         end
     end
     
