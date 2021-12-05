@@ -1,9 +1,9 @@
 classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% PROPERTIES
-    properties (SetAccess = protected)
+    properties (SetAccess = public)
         info;         % Struct containing info about this item
-        id;               % ID of this item
+        id;           % ID of this item
     end
     
     %% HIDDEN PROPERTIES
@@ -17,7 +17,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
     end
     
-    properties (Abstract, Hidden, Access = protected)
+    properties (Abstract, Hidden)
         CORE_PROPERTIES (1,:) string;
         LINKED_ITEM_PROPERTIES (1,:) string;
     end
@@ -44,13 +44,13 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             
             % Handle case of ID array
             if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
-                for idx = numel(itemIDSpec):-1:1
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx));
+                for idx = 1:numel(itemIDSpec)
+                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx)); %#ok<AGROW>
                 end
                 return;
             elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
-                for idx = size(itemIDSpec, 1):-1:1
-                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx, :));
+                for idx = 1:size(itemIDSpec, 1)
+                   obj(idx) = bot.(lower(string(obj(1).ITEM_TYPE)))(itemIDSpec(idx, :)); %#ok<AGROW>
                 end
                 return;                
             end

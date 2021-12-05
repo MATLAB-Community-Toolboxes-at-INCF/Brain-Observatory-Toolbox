@@ -13,7 +13,8 @@ classdef test < matlab.unittest.TestCase
          bom = bot.internal.manifest.instance('ophys');
          bom = bot.internal.ophysmanifest.instance();
          bom.ophys_sessions;                   % Table of all OPhys experimental sessions
-         bom.ophys_containers;                 % Table of all OPhys experimental containers
+         bom.ophys_experiments;                 % Table of all OPhys experimental containers
+         bom.ophys_cells;                      % Table of all OPhys cells
       end
       
       function testEphysTables(testCase)
@@ -74,7 +75,7 @@ classdef test < matlab.unittest.TestCase
          bosf.filter_session_by_eye_tracking(true);
          
          % Container ID
-         containers = bom.ophys_containers;
+         containers = bom.ophys_experiments;
          bosf.clear_filters();
          bosf.filter_sessions_by_container_id(containers{1, 'id'});
          
@@ -110,29 +111,20 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = bosf.valid_session_table{:, 'id'};
          
-         % - Create some bot.item.ophyssession objects
-         bot.item.ophyssession(vIDs(1));
-         bot.session(vIDs(1:2));
-         bot.item.ophyssession(bosf.valid_session_table(1, :));
-      end
-      
-      function testCacheSessionObject(testCase)
-         %% Test obtaining an OPhys session object data from the cache
-         % - Create a bot.item.ophyssession object
-         s = bot.item.ophyssession(704298735);
-         
-         % - Ensure the data is in the cache
-         s.EnsureCached();
+         % - Create some bot.session objects
+         bot.session(vIDs(1));
+         bot.session(vIDs(1:3));
+         bot.session(bosf.valid_session_table(1, :));
+         bot.session(bosf.valid_session_table(1:3, :));
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.item.ophyssession class for OPhys data
-         % - Create a bot.item.ophyssession object
-         s = bot.item.ophyssession(496934409);
+         %% Test data access methods of the bot.session class for OPhys data
+         % - Create a bot.session object
+         s = bot.session(496934409);
 
          % - Test summary methods
          vnCellIDs = s.cell_specimen_ids;
-         s.lookup_cell_specimen_indices(vnCellIDs);
          s.nwb_metadata;
          s.session_type;
          s.roi_ids;
@@ -141,9 +133,9 @@ classdef test < matlab.unittest.TestCase
          % - Test data access methods
          s.fluorescence_timestamps;
          s.fluorescence_traces;
-         s.demixed_traces;
+         s.fluorescence_traces_demixed;
+         s.fluorescence_traces_dff;
          s.corrected_fluorescence_traces;
-         s.dff_traces;
          s.max_projection;
          s.motion_correction;
          s.neuropil_r;
@@ -157,14 +149,14 @@ classdef test < matlab.unittest.TestCase
       
       function testStimulusExtraction(testCase)
          %% Test OPhys session stimulus extraction methods
-         % - Create a bot.item.ophyssession object
-         s = bot.item.ophyssession(528402271);
+         % - Create a bot.session object
+         s = bot.session(528402271);
 
          % - Get a vector of fluorescence frame IDs
          vnFrameIDs = 1:numel(s.fluorescence_timestamps);
          
          % - Obtain per-frame stimulus table
-         s.fetch_stimulus(vnFrameIDs);
+         s.getStimulusByFrame(vnFrameIDs);
          
          % - Obtain stimulus summary table
          s.stimulus_epoch_table;
@@ -174,23 +166,43 @@ classdef test < matlab.unittest.TestCase
          
          % - Get a stimulus table for each stimulus
          for cThisStim = cStimuli
-            s.fetch_stimulus_table(cThisStim{1});
+            s.getStimulusTable(cThisStim{1});
          end
          
          % - Get a natural movie stimulus template
-         s.fetch_stimulus_template('natural_movie_one');
-         s.fetch_stimulus_table('natural_movie_one');
+         s.getStimulusTemplate('natural_movie_one');
+         s.getStimulusTable('natural_movie_one');
          
          % - Get a spontantaneous activity stimulus table
          s.spontaneous_activity_stimulus_table;
          
          % - Get an OPhys session with sparse noise
-         s = bot.item.ophyssession(566752133);
+         s = bot.session(566752133);
          
          % - Get the sparse noise stimulus template
-         s.fetch_stimulus_template('locally_sparse_noise_4deg');
-         s.fetch_locally_sparse_noise_stimulus_template('locally_sparse_noise_4deg');
+         s.getStimulusTemplate('locally_sparse_noise_4deg');
       end      
+      
+      function testOPhysExperiment(testCase)
+          %% Test obtaining OPhys experiment object
+          exp_table = bot.fetchExperiments();
+          exp = bot.experiment(exp_table.id(1));
+          exp = bot.experiment(exp_table(1, :));
+          exps = bot.experiment(exp_table.id(1:3));
+          exps = bot.experiment(exp_table(1:3, :));
+      end
+      
+      function testOPhysCell(testCase)
+          %% Test obtaining OPhys cell object
+          cell_table = bot.fetchCells(true);
+          cell_table = bot.fetchCells(false);
+          cell = bot.cell(cell_table.id(1));
+          cell = bot.cell(cell_table(1, :));
+          cells = bot.cell(cell_table(1:3, :));
+          cells = bot.cell(cell_table.id(1:3));
+
+          assert(~isempty(fieldnames(cells(1).metrics)), '`metrics` property structure was not set properly')
+      end
       
       function testEPhysManifest(testCase)
          %% Test obtaining EPhys objects
@@ -201,58 +213,55 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_sessions(testCase)
          %% Test obtaining EPhys objects
-         % - Get the EPhys manifest
-         bom = bot.internal.manifest.instance('ephys');
+         % - Get the EPhys sessionts
+         sessions = bot.fetchSessions('ephys');
          
          % - Get a session
-         s = bot.session(bom.ephys_sessions{1, 'id'});
-         s = bot.session(bom.ephys_sessions(1, :));
+         s = bot.session(sessions{1, 'id'});
+         s = bot.session(sessions(1, :));
+         s = bot.session(sessions{1:3, 'id'});
+         s = bot.session(sessions(1:3, :));
       end
 
       function test_ephys_probes(testCase)
          %% Test obtaining EPhys objects
-         % - Get the EPhys manifest
-         bom = bot.internal.manifest.instance('ephys');
+         % - Get the probes table
+         probes = bot.fetchProbes();
 
          % - Get a probe, by ID and by table
-         p = bot.probe(bom.ephys_probes{1, 'id'});
-         p = bot.probe(bom.ephys_probes(1, :));
-         p = bot.probe(bom.ephys_probes{[1, 2], 'id'});
+         p = bot.probe(probes{1, 'id'});
+         p = bot.probe(probes(1, :));
+         p = bot.probe(probes{1:3, 'id'});
+         p = bot.probe(probes(1:3, :));
       end
 
       function test_ephys_channels(testCase)
          %% Test obtaining EPhys objects
-         % - Get the EPhys manifest
-         bom = bot.internal.manifest.instance('ephys');
+         % - Get the channels table
+         channels = bot.fetchChannels();
 
          % - Get channels, by ID and by table
-         c = bot.channel(bom.ephys_channels{1, 'id'});
-         c = bot.channel(bom.ephys_channels(1, :));
-         c = bot.channel(bom.ephys_channels{[1, 2], 'id'});
+         c = bot.channel(channels{1, 'id'});
+         c = bot.channel(channels(1, :));
+         c = bot.channel(channels{1:3, 'id'});
+         c = bot.channel(channels(1:3, :));
       end
 
       function test_ephys_units(testCase)
          %% Test obtaining EPhys units objects
-         % - Get the EPhys manifest
-         bom = bot.internal.manifest.instance('ephys');
+         % - Get the units table
+         units = bot.fetchUnits(true);
+         units = bot.fetchUnits(false);
 
          % - Get units, by ID and by table
-         u = bot.unit(bom.ephys_units{1, 'id'});
-         u = bot.unit(bom.ephys_units(1, :));
-         u = bot.unit(bom.ephys_units{[1, 2], 'id'});
+         u = bot.unit(units{1, 'id'});
+         u = bot.unit(units(1, :));
+         u = bot.unit(units{1:3, 'id'});
+         u = bot.unit(units(1:3, :));
+         
+         assert(~isempty(fieldnames(u(1).metrics)), '`metrics` property structure was not set properly')
       end
       
-      function test_ophys_experiments(testcase)
-         %% Test obtaining OPhys experiments
-         % - Get the OPhys manifest
-         bom = bot.internal.manifest.instance('ophys');
-         
-         % - Get experiments, by ID and by table
-         e = bot.experiment(bom.ophys_experiments{1, 'id'});
-         e = bot.experiment(bom.ophys_experiments(1, :));
-         e = bot.experiment(bom.ophys_experiments{[1, 2], 'id'});
-      end
-
       function testLFPCSDExtraction(testCase)
          %% Test LFP and CSD extraction
          % - Get the EPhys manifest
@@ -262,13 +271,13 @@ classdef test < matlab.unittest.TestCase
          p = bot.probe(bom.ephys_probes{1, 'id'});
          
          % - Access LFP data
-         p.fetch_lfp();
+         p.lfpData;
          
          % - Access CSD data
-         p.fetch_current_source_density();
+         p.csdData;
       end
       
-      function test_lazy_attributes(testCase)
+      function test_ephys_lazy_attributes(testCase)
          %% Test reading lazy attributes
          bom = bot.internal.manifest.instance('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
@@ -284,7 +293,7 @@ classdef test < matlab.unittest.TestCase
          s.spike_amplitudes;
          s.invalid_times;
       
-         s.num_stimulus_presentations;
+         % s.num_stimulus_presentations; % Not currently implemented, since it requires access to full stimulus table
          s.stimulus_names;
          s.structure_acronyms;
          s.structurewise_unit_counts;
@@ -300,16 +309,16 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_session_methods(testCase)
          %% Test session data access methods
-         bom = bot.internal.manifest.instance('ephys');
-         s = bot.session(bom.ephys_sessions{1, 'id'});
+         sess = bot.fetchSessions('ephys');
+         s = bot.session(sess(1, :));
 
          s.fetch_stimulus_table();
-         s.fetch_parameter_values_for_stimulus("flashes");
-         s.fetch_stimulus_parameter_values();
-         
+         s.getStimulusEpochsByDuration();
          uid = s.units{1, 'id'};
-         s.presentationwise_spike_counts([0 1], 1, uid);
-         s.presentationwise_spike_times(0, uid);
+         s.getPresentationwiseSpikeCounts([0 1], 1, uid);
+         s.getPresentationwiseSpikeTimes(0, uid);
+         s.getConditionwiseSpikeStatistics(0, uid);
+         s.getConditionsByStimulusName("spontaneous");
       end
       
       function test_factory_functions(testCase)
@@ -318,8 +327,11 @@ classdef test < matlab.unittest.TestCase
          sess_ephys = bot.fetchSessions('ephys');
          sess_ophys = bot.fetchSessions('ophys');
          units = bot.fetchUnits();
+         units = bot.fetchUnits(true);
          probes = bot.fetchProbes();
          channels = bot.fetchChannels();
+         cells = bot.fetchCells();
+         cells = bot.fetchCells(true);
          
          % - Test "get object" factory functions
          bot.session(sess_ephys{1, 'id'});
@@ -328,6 +340,7 @@ classdef test < matlab.unittest.TestCase
          bot.unit(units{1, 'id'});
          bot.probe(probes{1, 'id'});
          bot.channel(channels{1, 'id'});
+         bot.cell(cells{1, 'id'});
       end
    end
 end

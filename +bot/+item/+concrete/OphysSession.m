@@ -11,6 +11,8 @@ classdef OphysSession < bot.item.Session
     % Direct Item Values
     properties (SetAccess = private)
         session_type;                 % Type of experimental session (i.e. set of stimuli)
+        experiment;                   % Experiment object containing this session
+        cells;                        % Table of cells in this session        
     end
     
     % Linked File Values
@@ -82,9 +84,9 @@ classdef OphysSession < bot.item.Session
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
     end
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = "session_type";
-        LINKED_ITEM_PROPERTIES = [];
+        LINKED_ITEM_PROPERTIES = ["experiment" "cells"];
     end
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
@@ -239,7 +241,7 @@ classdef OphysSession < bot.item.Session
             neuropil_traces = bos.fetch_neuropil_traces(cell_specimen_ids);
             
             % - Correct fluorescence traces using neuropil demixing model
-            traces = traces - bsxfun(@times, neuropil_traces, reshape(neuropil_r, 1, []));
+            traces = traces - neuropil_traces * reshape(neuropil_r, 1, []);
         end
         
         function timestamps = fetch_fluorescence_timestamps(bos)
@@ -1129,7 +1131,7 @@ classdef OphysSession < bot.item.Session
             %   Also handles to accelerated search functions
             if isempty(bos.smCachedStimulusTable)
                 epoch_stimulus_table = bos.stimulus_epoch_table;
-                master_stimulus_table = bos.fetch_stimulus_table('master');
+                master_stimulus_table = bos.getStimulusTable('master');
                 bos.smCachedStimulusTable(1) = epoch_stimulus_table;
                 bos.smCachedStimulusTable(2) = int32(epoch_stimulus_table{:, {'start_frame', 'end_frame'}});
                 bos.smCachedStimulusTable(3) = master_stimulus_table;
@@ -1222,7 +1224,7 @@ classdef OphysSession < bot.item.Session
             
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
-                % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+                % Superclass initialization (bot.item.internal.abstract.bot.sessionItem)
                 obj.initSession();
                 
                 obj.LINKED_FILE_AUTO_DOWNLOAD.SessH5 = false;
@@ -1231,6 +1233,9 @@ classdef OphysSession < bot.item.Session
                 obj.insertLinkedFileInfo("SessH5",obj.info.well_known_files(h5Idx));
                 
                 obj.initLinkedFiles();
+                
+                obj.experiment = bot.experiment(obj.info.experiment_container_id);
+                obj.cells = obj.experiment.cells;
             end
         end
         
@@ -1421,7 +1426,7 @@ if ~exist('eyepoint', 'var') || isempty(eyepoint)
 end
 
 % - Convert from pixels (-1920/2 -> 1920/2) to stimulus space (-0.5 -> 0.5)
-vertices = bsxfun(@rdivide, vertices, mon_res);
+vertices = vertices ./ mon_res;
 
 x = (vertices(:, 1) + .5) * mon_width_cm;
 y = (vertices(:, 2) + .5) * mon_height_cm;
@@ -1461,7 +1466,7 @@ v_coords = ty ./ mon_height_cm;
 texture_coords = [u_coords v_coords];
 
 % - Convert back to pixels
-texture_coords = bsxfun(@times, texture_coords, mon_res);
+texture_coords = texture_coords * mon_res;
 end
 
 function mask = make_display_mask(display_shape)
@@ -1484,7 +1489,7 @@ display_coords = [X(:) Y(:)];
 warped_coords = warp_stimulus_coords(display_coords);
 
 % - Determine which stimulus pixels are on-screen after warping
-off_warped_coords = round(bsxfun(@plus, warped_coords, display_shape ./ 2));
+off_warped_coords = round(warped_coords + display_shape ./ 2);
 mask = false(display_shape);
 mask(sub2ind(display_shape, off_warped_coords(:, 1), off_warped_coords(:, 2))) = true;
 end
@@ -1505,7 +1510,7 @@ end
 
 % - Find valid indices for the template, and masked pixels
 template_display_coords = reshape(template_display_coords, [], 2) + 1;
-valid_indices = all(template_display_coords >= 1, 2) & all(bsxfun(@le, template_display_coords, template_shape), 2);
+valid_indices = all(template_display_coords >= 1, 2) & all(template_display_coords <= template_shape, 2);
 valid_mask_indices = display_mask(:) & valid_indices;
 
 % - Determine which template units are on the screen above the threshold

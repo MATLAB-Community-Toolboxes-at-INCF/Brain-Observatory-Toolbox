@@ -8,8 +8,18 @@
 % [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
 % [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
-%% function units = fetchUnits()
-function unitsTable = fetchUnits()
+%% function units = fetchUnits(include_metrics)
+function unitsTable = fetchUnits(include_metrics)
+arguments
+    include_metrics logical = false;
+end
+
    manifest = bot.internal.manifest.instance('ephys');
    unitsTable = manifest.ephys_units;
+   
+   % - Trim metrics from table
+   if ~include_metrics
+       unitsTable = removevars(unitsTable, bot.item.Unit.METRIC_PROPERTIES);
+   end
 end
+
