@@ -10,8 +10,8 @@ classdef test < matlab.unittest.TestCase
       
       function testOphysTables(testCase)
          %% Test retrieving all OPhys manifest tables
-         bom = bot.internal.manifest.instance('ophys');
-         bom = bot.internal.ophysmanifest.instance();
+         bom = bot.item.internal.Manifest.instance('ophys');
+         bom = bot.item.internal.OphysManifest.instance();
          bom.ophys_sessions;                   % Table of all OPhys experimental sessions
          bom.ophys_experiments;                 % Table of all OPhys experimental containers
          bom.ophys_cells;                      % Table of all OPhys cells
@@ -19,8 +19,8 @@ classdef test < matlab.unittest.TestCase
       
       function testEphysTables(testCase)
          %% Test retrieving EPhys manifest tables
-         bom = bot.internal.manifest.instance('ephys');
-         bom = bot.internal.ephysmanifest.instance();
+         bom = bot.item.internal.Manifest.instance('ephys');
+         bom = bot.item.internal.EphysManifest.instance();
          bom.ephys_sessions;                 % Table of all EPhys experimental sessions
          bom.ephys_channels;                 % Table of all EPhys channels
          bom.ephys_probes;                   % Table of all EPhys probes
@@ -57,7 +57,7 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysSessionFilterMethods(testCase)
          %% Test using the OPhys session filter filtering methods
-         bom = bot.internal.ophysmanifest.instance();
+         bom = bot.item.internal.OphysManifest.instance();
          bosf = bot.util.ophyssessionfilter;
          
          % CRE lines
@@ -207,12 +207,15 @@ classdef test < matlab.unittest.TestCase
       function testEPhysManifest(testCase)
          %% Test obtaining EPhys objects
          % - Get the EPhys manifest
-         bom = bot.internal.ephysmanifest.instance();
-         bom = bot.internal.manifest.instance('ephys');
+         bom = bot.item.internal.ephysmanifest.instance();
+         bom = bot.item.internal.Manifest.instance('ephys');
       end
       
       function test_ephys_sessions(testCase)
          %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
+         bom = bot.item.internal.Manifest.instance('ephys');
+
          % - Get the EPhys sessionts
          sessions = bot.fetchSessions('ephys');
          
@@ -225,6 +228,9 @@ classdef test < matlab.unittest.TestCase
 
       function test_ephys_probes(testCase)
          %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
+         bom = bot.item.internal.Manifest.instance('ephys');
+
          % - Get the probes table
          probes = bot.fetchProbes();
 
@@ -237,6 +243,9 @@ classdef test < matlab.unittest.TestCase
 
       function test_ephys_channels(testCase)
          %% Test obtaining EPhys objects
+         % - Get the EPhys manifest
+         bom = bot.item.internal.Manifest.instance('ephys');
+
          % - Get the channels table
          channels = bot.fetchChannels();
 
@@ -249,6 +258,9 @@ classdef test < matlab.unittest.TestCase
 
       function test_ephys_units(testCase)
          %% Test obtaining EPhys units objects
+         % - Get the EPhys manifest
+         bom = bot.item.internal.Manifest.instance('ephys');
+
          % - Get the units table
          units = bot.fetchUnits(true);
          units = bot.fetchUnits(false);
@@ -265,7 +277,7 @@ classdef test < matlab.unittest.TestCase
       function testLFPCSDExtraction(testCase)
          %% Test LFP and CSD extraction
          % - Get the EPhys manifest
-         bom = bot.internal.manifest.instance('ephys');
+         bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get a probe
          p = bot.probe(bom.ephys_probes{1, 'id'});
@@ -279,7 +291,7 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_lazy_attributes(testCase)
          %% Test reading lazy attributes
-         bom = bot.internal.manifest.instance('ephys');
+         bom = bot.item.internal.Manifest.instance('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
          
          s.mean_waveforms;
@@ -309,6 +321,9 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_session_methods(testCase)
          %% Test session data access methods
+         bom = bot.item.internal.Manifest.instance('ephys');
+         s = bot.session(bom.ephys_sessions{1, 'id'});
+
          sess = bot.fetchSessions('ephys');
          s = bot.session(sess(1, :));
 

@@ -14,7 +14,7 @@ arguments
     include_metrics logical = false;
 end
 
-   manifest = bot.internal.manifest.instance('ephys');
+manifest = bot.item.internal.Manifest.instance('ephys');
    unitsTable = manifest.ephys_units;
    
    % - Trim metrics from table

@@ -11,7 +11,7 @@ function cellsTable = fetchCells(include_metrics)
 arguments
     include_metrics logical = false;
 end
-     manifest = bot.internal.manifest.instance('ophys');
+     manifest = bot.item.internal.Manifest.instance('ophys');
      cellsTable = manifest.ophys_cells;
      
      if ~include_metrics

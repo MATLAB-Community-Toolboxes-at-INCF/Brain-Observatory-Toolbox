@@ -10,6 +10,6 @@
 %
 %% function probesTable = fetchProbes()
 function probesTable = fetchProbes()
-   manifest = bot.internal.manifest.instance('ephys');
+   manifest = bot.item.internal.Manifest.instance('ephys');
    probesTable = manifest.ephys_probes;
 end

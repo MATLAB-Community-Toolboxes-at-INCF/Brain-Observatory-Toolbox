@@ -58,9 +58,9 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             % Identify associated manifest containing all Items of this class
             switch obj.DATASET_TYPE
                 case "Ephys"
-                    obj.manifest = bot.internal.ephysmanifest.instance();
+                    obj.manifest = bot.item.internal.EphysManifest.instance();
                 case "Ophys"
-                    obj.manifest = bot.internal.ophysmanifest.instance();
+                    obj.manifest = bot.item.internal.OphysManifest.instance();
                 otherwise
                     assert(false);
             end                       
