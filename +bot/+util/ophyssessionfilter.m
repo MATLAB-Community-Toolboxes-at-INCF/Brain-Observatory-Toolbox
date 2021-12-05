@@ -68,7 +68,7 @@ classdef ophyssessionfilter < handle
    
    %% - Private properties
    properties (Hidden = true, SetAccess = private, Transient = true)
-      ophys_manifest = bot.internal.ophysmanifest.instance();
+      ophys_manifest = bot.item.internal.OphysManifest.instance();
    end
    
    %% Constructor
@@ -81,15 +81,14 @@ classdef ophyssessionfilter < handle
          % - Get the unfiltered session table, clear all filters
          clear_filters(bosf);
       end
-      
    end
-   
+
    %% Session table filtering properties and methods
    
    methods
       function clear_filters(bosf)
          % clear_filters - METHOD Clear all session table filters
-         failed_container_id = bosf.ophys_manifest.ophys_containers((bosf.ophys_manifest.ophys_containers.failed == 1), :).id;
+         failed_container_id = bosf.ophys_manifest.ophys_experiments((bosf.ophys_manifest.ophys_experiments.failed == 1), :).id;
          bosf.valid_session_table = bosf.ophys_manifest.ophys_sessions(~ismember(bosf.ophys_manifest.ophys_sessions.experiment_container_id, failed_container_id), :);
          bosf.filtered_session_table = bosf.valid_session_table;
       end

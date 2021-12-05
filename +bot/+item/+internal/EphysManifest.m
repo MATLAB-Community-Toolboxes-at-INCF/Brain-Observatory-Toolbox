@@ -1,4 +1,4 @@
-%% CLASS ephysmanifest
+%% CLASS EphysManifest
 
 % Notes regarding various item fetchers
 %  fetch_ephys_XXX: retrieves raw item table from cloud cache. Pre-memoized.
@@ -7,7 +7,7 @@
 
 %% Class definition
 
-classdef ephysmanifest < handle
+classdef EphysManifest < handle
     properties (Access = private, Transient = true)
         cache = bot.internal.cache;        % BOT Cache object
         api_access;                         % Function handles for low-level API access
@@ -22,7 +22,7 @@ classdef ephysmanifest < handle
     
     %% Constructor
     methods (Access = private)
-        function manifest = ephysmanifest()
+        function manifest = EphysManifest()
             % - Initialise internal manifest cache
             manifest.api_access.ephys_sessions = [];
             manifest.api_access.ephys_channels = [];
@@ -60,7 +60,7 @@ classdef ephysmanifest < handle
             
             % - Construct the manifest if single instance is not present
             if isempty(ephysmanifest)
-                ephysmanifest = bot.internal.ephysmanifest();
+                ephysmanifest = bot.item.internal.EphysManifest();
             end
             
             % - Return the instance
@@ -95,7 +95,7 @@ classdef ephysmanifest < handle
                 end
                 
                 % Apply standardized display logic
-                ephys_sessions = bot.internal.manifest.applyUserDisplayLogic(ephys_sessions);
+                ephys_sessions = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_sessions);
                 
                 % - Store table in memory cache
                 manifest.api_access.ephys_sessions = ephys_sessions;
@@ -121,7 +121,7 @@ classdef ephysmanifest < handle
                 end
                 
                 % Apply standardized display logic
-                ephys_channels = bot.internal.manifest.applyUserDisplayLogic(ephys_channels);
+                ephys_channels = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_channels);
                 
                 % - Store table in memory cache
                 manifest.api_access.ephys_channels = ephys_channels;
@@ -147,7 +147,7 @@ classdef ephysmanifest < handle
                 end
                 
                 % Apply standardized display logic
-                ephys_probes = bot.internal.manifest.applyUserDisplayLogic(ephys_probes);
+                ephys_probes = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_probes);
                 
                 % - Store table in memory cache
                 manifest.api_access.ephys_probes = ephys_probes;
@@ -173,7 +173,7 @@ classdef ephysmanifest < handle
                 end
                 
                 % Apply standardized display logic
-                ephys_units = bot.internal.manifest.applyUserDisplayLogic(ephys_units);
+                ephys_units = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_units);
                 
                 % - Store table in memory cache
                 manifest.api_access.ephys_units = ephys_units;
@@ -186,7 +186,7 @@ classdef ephysmanifest < handle
         function UpdateManifests(oManifest,clearMemoOnly)
             
             arguments
-                oManifest (1,1) bot.internal.ephysmanifest
+                oManifest (1,1) bot.item.internal.EphysManifest
                 clearMemoOnly (1,1) logical = true
             end
             
@@ -212,7 +212,7 @@ classdef ephysmanifest < handle
             end
             
             % - Reset singleton instance
-            bot.internal.ephysmanifest.instance(true);
+            bot.item.internal.EphysManifest.instance(true);
         end
     end
     

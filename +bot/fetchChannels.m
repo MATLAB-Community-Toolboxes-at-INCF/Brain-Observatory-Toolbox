@@ -10,6 +10,6 @@
 %
 %% function channelsTable = fetchChannels()
 function channelsTable = fetchChannels()
-   manifest = bot.internal.manifest.instance('ephys');
+   manifest = bot.item.internal.Manifest.instance('ephys');
    channelsTable = manifest.ephys_channels;
 end

@@ -7,6 +7,7 @@ classdef Experiment < bot.item.internal.abstract.Item
     %% PROPERTIES - VISIBLE 
     properties (SetAccess = private)
       sessions;
+      cells;
     end
    
    %% PROPERTIES - HIDDEN
@@ -16,9 +17,9 @@ classdef Experiment < bot.item.internal.abstract.Item
         ITEM_TYPE = bot.item.internal.enum.ItemType.Experiment;
     end        
     
-    properties (Hidden, Access = protected)
+    properties (Hidden)
         CORE_PROPERTIES = string.empty(1,0);
-        LINKED_ITEM_PROPERTIES = ["sessions"];
+        LINKED_ITEM_PROPERTIES = ["sessions" "cells"];
     end
    
    %% LIFECYCLE 
@@ -30,9 +31,10 @@ classdef Experiment < bot.item.internal.abstract.Item
          obj = obj@bot.item.internal.abstract.Item(itemIDSpec);
 
          % Only process attributes if we are constructing a scalar object
-         if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
+         if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec)==1)
             % Assign linked Item tables (downstream)
             obj.sessions = obj.manifest.ophys_sessions(obj.manifest.ophys_sessions.experiment_container_id == obj.info.id, :);
+            obj.cells = obj.manifest.ophys_cells(obj.manifest.ophys_sessions.experiment_container_id == obj.info.id, :);
          end
       end
    end   

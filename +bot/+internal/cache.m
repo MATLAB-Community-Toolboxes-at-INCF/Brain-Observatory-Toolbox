@@ -153,17 +153,18 @@ classdef cache < handle
             bIsURLInCache = oCache.ccCache.IsInCache(strURL);
         end
         
-        function tResponse = CachedAPICall(oCache, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme)
+        function tResponse = CachedAPICall(oCache, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme, strID)
             % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Atlas API call
             %
             % Usage: tResponse = CachedAPICall(oCache, strModel, strQueryString, ...)
-            %        tResponse = CachedAPICall(..., <nPageSize>, <strFormat>, <strRMAPrefix>, <strHost>, <strScheme>)
+            %        tResponse = CachedAPICall(..., <nPageSize>, <strFormat>, <strRMAPrefix>, <strHost>, <strScheme>, <strID>)
             
             DEF_strScheme = "http";
             DEF_strHost = "api.brain-map.org";
             DEF_strRMAPrefix = "api/v2/data";
             DEF_nPageSize = 5000;
             DEF_strFormat = "query.json";
+            DEF_strID = "id";
             
             % -- Default arguments
             if ~exist('strScheme', 'var') || isempty(strScheme)
@@ -186,6 +187,10 @@ classdef cache < handle
                 strFormat = DEF_strFormat;
             end
             
+            if ~exist('strID', 'var') || isempty(strID)
+                strID = DEF_strID;
+            end
+            
             % - Build a URL
             strURL = string(strScheme) + "://" + string(strHost) + "/" + ...
                 string(strRMAPrefix) + "/" + string(strFormat) + "?" + ...
@@ -205,7 +210,7 @@ classdef cache < handle
             
             while isempty(nTotalRows) || nStartRow < nTotalRows
                 % - Add page parameters
-                strURLQueryPage = strURL + ",rma::options[start_row$eq" + nStartRow + "][num_rows$eq" + nPageSize + "][order$eq'id']";
+                strURLQueryPage = strURL + ",rma::options[start_row$eq" + nStartRow + "][num_rows$eq" + nPageSize + "][order$eq'" + strID + "']";
                 
                 % - Perform query
                 response_raw = oCache.ccCache.webread(strURLQueryPage, [], options);
