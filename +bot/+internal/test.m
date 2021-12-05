@@ -213,13 +213,11 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_sessions(testCase)
          %% Test obtaining EPhys objects
-<<<<<<< HEAD
          % - Get the EPhys manifest
          bom = bot.item.internal.Manifest.instance('ephys');
-=======
+
          % - Get the EPhys sessionts
          sessions = bot.fetchSessions('ephys');
->>>>>>> master
          
          % - Get a session
          s = bot.session(sessions{1, 'id'});
@@ -230,13 +228,11 @@ classdef test < matlab.unittest.TestCase
 
       function test_ephys_probes(testCase)
          %% Test obtaining EPhys objects
-<<<<<<< HEAD
          % - Get the EPhys manifest
          bom = bot.item.internal.Manifest.instance('ephys');
-=======
+
          % - Get the probes table
          probes = bot.fetchProbes();
->>>>>>> master
 
          % - Get a probe, by ID and by table
          p = bot.probe(probes{1, 'id'});
@@ -247,13 +243,11 @@ classdef test < matlab.unittest.TestCase
 
       function test_ephys_channels(testCase)
          %% Test obtaining EPhys objects
-<<<<<<< HEAD
          % - Get the EPhys manifest
          bom = bot.item.internal.Manifest.instance('ephys');
-=======
+
          % - Get the channels table
          channels = bot.fetchChannels();
->>>>>>> master
 
          % - Get channels, by ID and by table
          c = bot.channel(channels{1, 'id'});
@@ -264,14 +258,12 @@ classdef test < matlab.unittest.TestCase
 
       function test_ephys_units(testCase)
          %% Test obtaining EPhys units objects
-<<<<<<< HEAD
          % - Get the EPhys manifest
          bom = bot.item.internal.Manifest.instance('ephys');
-=======
+
          % - Get the units table
          units = bot.fetchUnits(true);
          units = bot.fetchUnits(false);
->>>>>>> master
 
          % - Get units, by ID and by table
          u = bot.unit(units{1, 'id'});
@@ -329,13 +321,11 @@ classdef test < matlab.unittest.TestCase
       
       function test_ephys_session_methods(testCase)
          %% Test session data access methods
-<<<<<<< HEAD
          bom = bot.item.internal.Manifest.instance('ephys');
          s = bot.session(bom.ephys_sessions{1, 'id'});
-=======
+
          sess = bot.fetchSessions('ephys');
          s = bot.session(sess(1, :));
->>>>>>> master
 
          s.fetch_stimulus_table();
          s.getStimulusEpochsByDuration();
