@@ -356,8 +356,12 @@ classdef EphysSession < bot.item.Session
                 condFirstStimParams = self.FIRST_STIMULUS_PARAMETERS(ismember(self.FIRST_STIMULUS_PARAMETERS, string(stimulus_conditions_raw.Properties.VariableNames)));
                 stimulus_conditions_raw = movevars(stimulus_conditions_raw, condFirstStimParams, 'Before', 1);
                 
+                % - Make a timetable
+                stimulus_presentations_tt = table2timetable(stimulus_presentations_raw, "RowTimes", seconds(stimulus_presentations_raw.start_time));
+                stimulus_presentations_tt.duration = stimulus_presentations_tt.stop_time - stimulus_presentations_tt.start_time;
+
                 % - Insert into cache
-                self.property_cache.stimulus_presentations_raw = stimulus_presentations_raw;
+                self.property_cache.stimulus_presentations_raw = stimulus_presentations_tt;
                 self.property_cache.stimulus_conditions_raw = stimulus_conditions_raw;
             end
         end
@@ -439,6 +443,7 @@ classdef EphysSession < bot.item.Session
             end
             
             epochs = epochs(:, ["start_time", "stop_time", "duration", "stimulus_name", "stimulus_block"]);
+            epochs = table2timetable(epochs, "RowTimes", seconds(epochs.start_time));
         end
         
         function [tiled_data, time_base] = getPresentationwiseSpikeCounts(self, ...
