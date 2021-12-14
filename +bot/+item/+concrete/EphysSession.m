@@ -63,6 +63,7 @@ classdef EphysSession < bot.item.Session
     %%  PROPERTIES - HIDDEN
     
     properties (Hidden = true, Access = public, Transient = true)
+        warn_multiple_probes = false;
         nwb_metadata;  % TODO: consider to generalize this in the Session object superclass
         
         
@@ -184,14 +185,19 @@ classdef EphysSession < bot.item.Session
             
             unique_probes = unique(self.channels.ephys_probe_id);
             if numel(unique_probes) > 1
-                warning('BOT:MultipleProbes', "Calculating structure boundaries across channels from multiple probes.")
+                self.raise_MultipleProbes_warning()
             end
             
             tbl = table;
             tbl.intervals = zlclDiffIntervals(channels_selected.(structure_label_key))';
             tbl.labels = channels_selected.(structure_label_key)(tbl.intervals);
         end
-        
+       
+        function raise_MultipleProbes_warning(self)
+            self.warn_multiple_probes = true;
+            warning('BOT:MultipleProbes', "Calculating structure boundaries across channels from multiple probes.")
+        end
+
     end
     
     % VISIBLE PROPERTIES - from Primary File (NWB)
@@ -941,6 +947,25 @@ classdef EphysSession < bot.item.Session
         end
     end
     
+    methods (Hidden, Access = protected)
+        function displayScalarObject(self)
+            % - Turn off warnings
+            warning('off', 'BOT:MultipleProbes');
+
+            % - Display object
+            displayScalarObject@bot.item.Session(self);
+
+            % - Turn warnings on again
+            warning('on', 'BOT:MultipleProbes');
+        end
+
+        function s = getFooter(self)
+            if self.warn_multiple_probes
+                s = 'Warning: Structure boundaries were calculated across channels from multiple probes.';
+            end
+        end
+    end
+
     % MARK FOR DELETION - potential use case indeterminate
     %     %% HIDDEN INTERFACE - Static Methods
     %     methods(Static, Hidden)
