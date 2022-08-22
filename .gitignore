@@ -31,3 +31,7 @@ codegen/
 
 # Cloud based storage dotfile
 .MATLABDriveTag
+
+# Keep MATLAB projects local
+*.prj
+resources/
