@@ -1,19 +1,33 @@
-raster/
-
-*/*.m~
-*.m~
-
+# Autosave files
 *.asv
-*/*.asv
+*.m~
+*.autosave
+*.slx.r*
+*.mdl.r*
 
-+bot/Cache
+# Derived content-obscured files
+*.p
 
-*/*.mex*
-
+# Compiled MEX files
 *.mex*
 
-Cindy/
+# Packaged app and toolbox files
+*.mlappinstall
+*.mltbx
 
-*.prj
-resources/
-_scratch
+# Deployable archives
+*.ctf
+
+# Generated helpsearch folders
+helpsearch*/
+
+# Code generation folders
+slprj/
+sccprj/
+codegen/
+
+# Cache files
+*.slxc
+
+# Cloud based storage dotfile
+.MATLABDriveTag
