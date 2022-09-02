@@ -148,7 +148,7 @@ classdef OphysSession < bot.item.Session
         end
         
         function tt = get.pupil_location(bos)
-            tt = bos.fetch_cached('pupil_location', @bos.fetch_pupil_location);
+            tt = bos.fetch_cached('pupil_location', @bos.fetch_pupil_location);           
         end
         
         function tt = get.pupil_size(bos)
@@ -539,9 +539,10 @@ classdef OphysSession < bot.item.Session
         end
         
         
-        function [timestamps, pupil_location] = fetch_pupil_location(bos, as_spherical_coords)
+        function tt = fetch_pupil_location(bos, as_spherical_coords)
             % fetch_pupil_location - METHOD Return the pupil location trace for this experimental session
             %
+            % OLD (FOR INFO PURPOSES)
             % Usage: [timestamps, pupil_location] = fetch_pupil_location(bos, <as_spherical_coords>)
             %
             % `timestamps` will be a Tx1 vector of times in seconds,
@@ -583,12 +584,17 @@ classdef OphysSession < bot.item.Session
                 pupil_location = h5read(nwb_file, h5path(nwb_key, 'data'))';
                 timestamps = seconds(h5read(nwb_file, h5path(nwb_key, 'timestamps')));
                 
-                tt = timetable(timestamps,pupil_location);
+                if as_spherical_coords
+                    varNames = ["theta (deg)" "phi (deg)"];
+                else
+                    varNames = ["x (cm)" "y (cm)"];
+                end
+
+                tt = timetable(timestamps,pupil_location(:,1),pupil_location(:,2), 'VariableNames',varNames);
                 
-            catch cause
-                % - Couldn't find the eye tracking data
+            catch cause               
                 base = MException('BOT:NoEyeTracking', ...
-                    'No eye tracking data is available for this experiment.');
+                    'Failed to retrieve the eye tracking data for this experiment.');
                 base = base.addCause(cause);
                 throw(base);
             end
@@ -598,6 +604,7 @@ classdef OphysSession < bot.item.Session
         function tt = fetch_pupil_size(bos)
             % fetch_pupil_size - METHOD Return the pupil area trace for this experimental session
             %
+            % OLD (FOR INFO PURPOSES)
             % Usage: [timestamps, pupil_areas] = fetch_pupil_size(bos)
             %
             % `timestamps` will be a Tx1 vector of times in seconds,
