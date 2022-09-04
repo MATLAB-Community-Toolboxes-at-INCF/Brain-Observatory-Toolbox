@@ -3,12 +3,15 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for **accessing and using** the neural recording public datasets from the **Allen Brain Observatory**[\[1\]](#references). 
 
-:eyes: See the **Brain Observatory Toolbox** in action, with the [**EphysDemo**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FEphysDemo.mlx&embed=web) and the [**OphysDemo**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FOphysDemo.mlx&embed=web) demonstration live scripts.
+:rocket: Get started with the [**EphysQuickstart**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2FEphysQuickstart.mlx&embed=web) & [**OphysQuickstart**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2FOphysQuickstart.mlx&embed=web) guides.
 
-:construction: The Brain Observatory Toolbox is at an early stage (v0.9), meaning two things:
-* Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**)
-* Some interface compatibility changes may occur at each early-stage release (v0.9.x)
-  * The Allen Brain Observatory dataset records, files, and values browsed and accessed by this toolbox would not be impacted. 
+:microscope: See the Brain Observatory Toolbox applied to neuroscience data analysis in the [**EphysDemo**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Fdemos%2FEphysDemo.mlx&embed=web) & the [**OphysDemo**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Fdemos%2FOphysDemo.mlx&embed=web).
+
+:woman_teacher: Learn about how to use the Brain Observatory Toolbox with the [**EphysTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FEphysTutorial.mlx&embed=web), [**OphysTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FOphysTutorial.mlx&embed=web), & [**BehaviorTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FBehaviorTutorial.mlx&embed=web).
+
+:construction: The Brain Observatory Toolbox is at an early stage; the interface is not stable across the v0.9.* releases. 
+
+Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**).
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
@@ -38,38 +41,18 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 
 <small>*For retrieved item information, object representations, and file contents</small>
 
-## Installation Instructions
+## Installation
 
-1. Download the `.zip` file from the [**latest GitHub release**](https://github.com/emeyers/Brain-Observatory-Toolbox/releases)
-2. Unzip via preferred system tool to desired local folder location
-3. Open MATLAB 
-4. Add root directory of the unzipped folder contents to the MATLAB path, in one of three ways: 
-   1. Navigate to root directory in the *Current Folder* browser and select "Add to Path" from the right-click context menu,  using the "Selected Folder" option\*
-   1. Open the *Set Path* dialog from the Environment section of the Home tab
-   1. Call `addpath(<root directory location>)` in the Command Window
-   
-<small>*The BOT is contained in the `+bot` [package folder](https://www.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html). For package folders, adding the parent folder is sufficient to include all package contents.</small>
+The easiest way to install the **Brain Observatory Toolbox** is to use the [Add-on Explorer](https://www.mathworks.com/products/matlab/add-on-explorer.html): 
+1. Launch the Add-on Explorer ![image](https://user-images.githubusercontent.com/23032671/188336991-77ba49f1-d70d-4111-a265-3f9ba284bb8d.png)
+2. Search for "Brain Observatory Toolbox"
+3. Press the "Add" button. ![image](https://user-images.githubusercontent.com/23032671/188337089-9f9c75ea-0a4d-4049-915b-6209459ec5ae.png)
+
 
 #### Required products
 * MATLAB (R2021a)
 * Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
 
-## Getting started
-Four MATLAB live scripts are provided to help get started: 
-
-| Live Script(s) | About |
-| --- | --- |
-| [`EphysDemo.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FEphysDemo.mlx&embed=web)<br>[`OphysDemo.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FOphysDemo.mlx&embed=web) | Demonstrations of illustrative neurophysiological analyses using the BOT and the datasets| 
-| [`EphysTutorial.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FEphysTutorial.mlx&embed=web)<br>[`OphysTutorial.mlx`](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F501c4bc8-2509-40fc-aba0-323d33dff728%2Ffiles%2FOphysTutorial.mlx&embed=web) | Step-by-step instruction and "under the hood" technical detail about using the BOT and the datasets | 
- 
- 
-Or to get a fast first look yourself, enter the following commands in MATLAB: 
-```
->> sessions = bot.fetchSessions('ephys'); 
->> head(sessions) 
->> session = bot.session(sessions(1,:))
->> methods(session) 
-```
 ----
 #### References
 
