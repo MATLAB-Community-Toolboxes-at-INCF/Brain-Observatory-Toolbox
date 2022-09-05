@@ -9,7 +9,7 @@ A MATLAB toolbox for **accessing and using** the neural recording public dataset
 
 :woman_teacher: Learn about how to use the Brain Observatory Toolbox with the [**EphysTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FEphysTutorial.mlx&embed=web), [**OphysTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FOphysTutorial.mlx&embed=web), & [**BehaviorTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FBehaviorTutorial.mlx&embed=web).
 
-:construction: The Brain Observatory Toolbox is at an early stage; the interface is not stable across the v0.9.* releases. 
+:construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.* releases. 
 
 Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**).
 
@@ -32,7 +32,7 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 ![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
 
 ### Key Concepts
-* **Item tables** support all [tabular operations]() including [tabular indexing](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) which enables specific dataset item selection for inspection and analysis as item objects
+* **Item tables** support all [tabular operations](https://www.mathworks.com/help/matlab/tables.html), including [**tabular indexing**](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) which enables specific dataset item selection for inspection and analysis as item objects
 * **Item objects** consist of numerous [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) which each return direct, derived, or file-linked values about a specific item
   * Some item objects also have [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) to compute values requiring additional user-specified arguments 
 
@@ -60,11 +60,10 @@ The easiest way to install the **Brain Observatory Toolbox** is to use the [Add-
 * Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
 
 ----
-#### Acknowledgements
+### Acknowledgements 
 
 Initial engineering work was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College and hosted by the [Center for Brains, Minds, and Machines](https://cbmm.mit.edu/) at the Massachusetts Institute of Technology. 
 
-#### References
 
 [^1]: Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
