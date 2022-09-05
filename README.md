@@ -1,7 +1,7 @@
 [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)
 
 # Brain Observatory Toolbox
-A MATLAB toolbox for **accessing and using** the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
+A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
 :rocket: Get started with the [**EphysQuickstart**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2FEphysQuickstart.mlx&embed=web) & [**OphysQuickstart**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2FOphysQuickstart.mlx&embed=web) guides.
 
@@ -49,7 +49,7 @@ The basic workflow is illustrated by three lines of code:
 
 ## Installation
 
-The easiest way to install the **Brain Observatory Toolbox** is to use the [Add-on Explorer](https://www.mathworks.com/products/matlab/add-on-explorer.html): 
+The easiest way to install the Brain Observatory Toolbox is to use the [**Add-on Explorer**](https://www.mathworks.com/products/matlab/add-on-explorer.html): 
 1. Launch the Add-on Explorer ![image](https://user-images.githubusercontent.com/23032671/188336991-77ba49f1-d70d-4111-a265-3f9ba284bb8d.png)
 2. Search for "Brain Observatory Toolbox"
 3. Press the "Add" button. ![image](https://user-images.githubusercontent.com/23032671/188341517-6c2d372a-9eac-4aed-974a-a102880212da.png)
