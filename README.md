@@ -9,7 +9,7 @@ A MATLAB toolbox for **accessing and using** the neural recording public dataset
 
 :woman_teacher: Learn about how to use the Brain Observatory Toolbox with the [**EphysTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FEphysTutorial.mlx&embed=web), [**OphysTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FOphysTutorial.mlx&embed=web), & [**BehaviorTutorial**](https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F12bc63aa-aa55-48cc-8877-ea73b37dea59%2Ffiles%2Ftutorials%2FBehaviorTutorial.mlx&embed=web).
 
-:construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.* releases. 
+:construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
 
 Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**).
 
@@ -25,7 +25,7 @@ The Visual Coding datasets are both collected from the living mouse brain during
 
 ## About the Brain Observatory Toolbox (BOT) 
  
-The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use these Visual Coding neural datasets. 
+The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use the Visual Coding neural datasets. 
 
 The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
 
