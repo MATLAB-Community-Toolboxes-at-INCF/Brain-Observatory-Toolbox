@@ -29,7 +29,7 @@ The Brain Observatory Toolbox (BOT) provides a uniform interface to access and u
 
 The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
 
-![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
+![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/188445081-9971259e-a430-4036-a84b-bcd46c950a50.png)
 
 ### Key Concepts
 * **Item tables** support all [tabular operations](https://www.mathworks.com/help/matlab/tables.html), including [**tabular indexing**](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) which enables specific dataset item selection for inspection and analysis as item objects
