@@ -52,8 +52,7 @@ The basic workflow is illustrated by three lines of code:
 The easiest way to install the **Brain Observatory Toolbox** is to use the [Add-on Explorer](https://www.mathworks.com/products/matlab/add-on-explorer.html): 
 1. Launch the Add-on Explorer ![image](https://user-images.githubusercontent.com/23032671/188336991-77ba49f1-d70d-4111-a265-3f9ba284bb8d.png)
 2. Search for "Brain Observatory Toolbox"
-3. Press the "Add" button. ![image](https://user-images.githubusercontent.com/23032671/188337089-9f9c75ea-0a4d-4049-915b-6209459ec5ae.png)
-
+3. Press the "Add" button. ![image](https://user-images.githubusercontent.com/23032671/188341517-6c2d372a-9eac-4aed-974a-a102880212da.png)
 
 #### Required products
 * MATLAB (R2021a)
