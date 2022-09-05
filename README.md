@@ -31,15 +31,21 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 
 ![alt text](https://github.com/emeyers/Brain-Observatory-Toolbox/blob/backend/BOTDataSchematic.png?raw=true)
 
-**Key Points:**
-* **Dataset items** supported include experimental *sessions* (for both 2P and Neuropixels) as well as *probes*, *channels*, and *units* (for Neuropixels) 
-  * [Tabular indexing](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) or unique item identifiers allow specific item selection from item tables, for inspection and analysis as item objects
-* **Item object** [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) access direct, derived, and file-linked values for an item 
-  * *"On demand"* properties defer value retrieval, for those item object properties involving extensive compute or file reading 
-  * Item object [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) are used to compute values requiring additional user-specified arguments 
-* **Local caching** is implemented\*, to provide the fastest possible initial and repeat performance within and across MATLAB sessions
+### Key Concepts
+* **Item tables** support all [tabular operations]() including [tabular indexing](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) which enables specific dataset item selection for inspection and analysis as item objects
+* **Item objects** consist of numerous [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) which each return direct, derived, or file-linked values about a specific item
+  * Some item objects also have [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) to compute values requiring additional user-specified arguments 
 
-<small>*For retrieved item information, object representations, and file contents</small>
+The basic workflow is illustrated by three lines of code: 
+```matlab
+>> sessions = bot.fetchSessions('ephys')  % Obtain/view table showing available ephys session items
+>> session = bot.session(sessions(1,:)) % Obtain/view object representing first available session item
+>> methods(session) % Display methods (functions) available to access additional session item values
+```
+👉Try typing these three lines directly into the [MATLAB command window](https://www.mathworks.com/help/matlab/ref/commandwindow.html#:~:text=The%20Command%20Window%20is%20always,as%20the%20Editor%2C%20type%20commandwindow%20)
+
+### Technical Details
+* Local caching (of retrieved item information, object representation, and file contents) is implemented, to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
 
 ## Installation
 
