@@ -33,13 +33,17 @@ classdef cache < handle
             
             % - Check if a cache directory has been provided
             if ~exist('strCacheDir', 'var') || isempty(strCacheDir)
-                % - Get the default cache directory
-                strBOTDir = fileparts(which('bot.fetchSessions'));
-                oCache.strCacheDir = [strBOTDir filesep 'Cache'];
+                if ~oCache.HasPreferredCacheDirectory()
+                    strCacheDir = oCache.InitializePreferredCacheDirectory();
+                else
+                    strCacheDir = oCache.GetPreferredCacheDirectory();
+                end
             else
-                oCache.strCacheDir = strCacheDir;
+                % strCacheDir is provided and is not empty!
             end
-            
+
+            oCache.strCacheDir = strCacheDir;
+
             % - Find and return the global cache object, if one exists
             sUserData = get(0, 'UserData');
             if isfield(sUserData, 'BOT_GLOBAL_CACHE') && ...
@@ -60,7 +64,7 @@ classdef cache < handle
                 mkdir(oCache.strCacheDir);
             end
             
-            % - Set up cloud and ojbect caches
+            % - Set up cloud and object caches
             oCache.ccCache = bot.internal.CloudCacher(oCache.strCacheDir);
             oCache.ocCache = bot.internal.ObjectCacher(oCache.strCacheDir);
             
@@ -71,7 +75,6 @@ classdef cache < handle
     end
     
     %% Methods to manage manifests and caching
-    
     methods
         function InsertObject(oCache, strKey, object)
             % InsertObject - METHOD Insert an object into the object cache
@@ -94,7 +97,7 @@ classdef cache < handle
         function object = RetrieveObject(oCache, strKey)
             % RetrieveObject - METHOD Retrieve an object (key) from the object cache
             %
-            % Usage: object = oCache.Rerieve(strKey)
+            % Usage: object = oCache.Retrieve(strKey)
             %
             % `strKey` is a string which identifies an object in the cache.
             %
@@ -105,7 +108,7 @@ classdef cache < handle
         end
         
         function bIsInCache = IsObjectInCache(oCache, strKey)
-            % IsObjectInCache - METHOD Check if an object (key) is in the object cahce
+            % IsObjectInCache - METHOD Check if an object (key) is in the object cache
             %
             % Usage: bIsInCache = oCache.IsObjectInCache(strKey)
             %
@@ -134,7 +137,6 @@ classdef cache < handle
            for key = string(keys)
                oCache.RemoveObject(key);
            end
-            
         end
         
         function strFile = CacheFile(oCache, strURL, strLocalFile)
@@ -248,8 +250,6 @@ classdef cache < handle
                 end
             end
             
-  
-            
             function tMessages = cell_messages_to_table(cMessages)
                 % - Get an exhaustive list of fieldnames
                 cFieldnames = cellfun(@fieldnames, cMessages, 'UniformOutput', false);
@@ -271,5 +271,122 @@ classdef cache < handle
             end
         end
     end
+
+    %% Methods to get preferred or default cache directory
+    methods (Static, Access = private)
+        
+        function tf = HasPreferredCacheDirectory()
+        %HasPreferredCacheDirectory Check if a preferred cache directory exists
+            tf = ispref('BrainObservatoryToolbox', 'CacheDirectory');
+        end
+
+        function strCacheDir = InitializePreferredCacheDirectory()
+        %InitializePreferredCacheDirectory Let user configure a cache directory
+        %   
+        %   A method that opens a question dialog box for a user to select
+        %   whether to configure a preferred directory for downloaded data
+        %   (cache) or to use a factory (default) directory. If the user
+        %   answers "Yes" on the prompt, a folder selection dialog box
+        %   opens. Before returning, the selected directory (custom or
+        %   factory) is added to the BrainObservatoryToolbox' preferences.
+        %   
+        %   This method was introduced 2022-09-04. For backwards
+        %   compatibility; if a factory directory for cached data exists on
+        %   the file system, this method returns immediately.
+            
+            factoryCacheDir = bot.internal.cache.GetFactoryCacheDirectory();
+            
+            % If the factory cache directory already exists, the Brain 
+            % Observatory Toolbox has been used on this computer prior to the
+            % introduction of a preferred cache directory. Return here and
+            % use the factory setting.
+            if isfolder(factoryCacheDir)
+                strCacheDir = factoryCacheDir; return
+            end
+            
+            % - Construct a question dialog box where user can select if 
+            % he/she wants to configure a custom folder for downloaded
+            % data.
+            promptMessage = sprintf(['This is the first time you run ', ...
+                'the Brain Observatory Toolbox. Do you want to ', ...
+                'configure a directory for saving downloaded data?\n\n', ...
+                'If you select "No", data will be downloaded to the ', ...
+                'following directory:\n \\bf%s'], factoryCacheDir);
+
+            % - Format the message with a bigger font size
+            formattedMessage = strcat('\fontsize{14}', promptMessage);
+            
+            % - Fix some characters that are interpreted as tex markup
+            formattedMessage = strrep(formattedMessage, '_', '\_');
+            titleMessage = 'Select Download Directory for Data?'; 
+
+            % - Use the tex-interpreter for displaying the prompt message.
+            opts = struct('Default', 'Yes', 'Interpreter', 'tex');
+            
+            % - Present the question to the user
+            answer = questdlg(formattedMessage, titleMessage, opts);
+            
+            % - Handle answer
+            switch answer
+                case 'Yes'
+                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
+                case 'No'
+                    strCacheDir = factoryCacheDir;
+                case 'Cancel'
+                    error('BOT:InitializeCacheDirectory', ...
+                        'User canceled during configuration of a preferred cache directory.')
+            end
+
+            % - Store the selected cache directory to preferences
+            setpref('BrainObservatoryToolbox', 'CacheDirectory', strCacheDir)
+        end
+        
+        function strCacheDir = GetFactoryCacheDirectory()
+        %GetFactoryCacheDirectory Get the BOT default (factory) cache directory    
+            strBOTDir = fileparts(which('bot.fetchSessions'));
+            strCacheDir = fullfile(strBOTDir, 'Cache');
+        end
+
+        function strCacheDir = GetPreferredCacheDirectory()
+        %GetPreferredCacheDirectory Get the preferred cache directory from
+        %the BrainObservatoryToolbox preferences.
+
+            strCacheDir = getpref('BrainObservatoryToolbox', 'CacheDirectory');
+            
+            if ~isfolder(strCacheDir)
+                error('BOT:PreferredCacheDirectoryMissing', ...
+                    'The preferred cache directory is unavailable:\n%s', strCacheDir)
+            end
+
+            % Add suggested actions?
+            % Do you want to set a new cache directory?
+
+        end
+
+        function SetPreferredCacheDirectory(strCacheDir)
+        %SetPreferredCacheDirectory Set the preferred cache directory in
+        %the BrainObservatoryToolbox preferences.
+        %
+        %   Usage: bot.internal.cache.SetPreferredCacheDirectory(strCacheDir)
+        %
+        %   `strCacheDir` is a string specifying the path for a directory
+        %   to use as the preferred directory for downloaded data (cache).
+
+            setpref('BrainObservatoryToolbox', 'CacheDirectory', strCacheDir)
+        end
+
+        function strCacheDir = UiGetCacheDirectory()
+        %UiGetCacheDirectory Open folder selection dialog for selecting a  cache directory.
+        
+            strCacheDir = uigetdir();
+
+            if strCacheDir == 0
+                error('BOT:InitializeCacheDirectory', ...
+                    'User canceled during selection of a preferred cache directory.')
+            end
+        end
+
+    end
+
 end
 
