@@ -7,8 +7,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    end
    
    %% PROPERTIES - HIDDEN
-   
-   
+
    properties (SetAccess = protected, Hidden)
       linkedFileRespTables (1,1) struct; % Struct for storing response tables from linkedFile fetch ops, where applicable
       
@@ -23,6 +22,10 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          'VariableTypes',["string" "logical" "string" "string"], ...
          'VariableNames',["nickname" "autoDownload" "path" "download_link" ]);
    end
+
+   properties (Constant, Hidden)
+      S3_ROOT_PATH = fullfile('/home', 'ubuntu', 's3-allen')
+   end
    
    %% PROPERTIES - HIDDEN IMMUTABLES
    
@@ -30,13 +33,15 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       prop2LinkedFileMap; % handle to containers.Map
    end
    
-   
    properties (Abstract, SetAccess=protected, Hidden)
       % TODO: refactor this into a single "linkedFilesConfiguration" table
       LINKED_FILE_PROP_BINDINGS (1,1) struct; % structure of form s.<linked file nickname> = <property name string array>
       LINKED_FILE_AUTO_DOWNLOAD (1,1) struct; % structure of form s.<linked file nickname> = <logical>
    end
-   
+
+   properties (Abstract, Constant, Hidden)
+      S3_PRIMARY_DATA_FOLDER
+   end
    
    
    %% METHODS - HIDDEN
@@ -200,6 +205,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          obj.linkedFilesInfo(end+1,:) = struct2table(fileInfo);
          
       end
+      
    end
    
    % SUBCLASS INITIALIZER
@@ -232,6 +238,16 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             fileInfo = obj.linkedFilesInfo(nickname,:); %table row
             url = boc.strABOBaseUrl + fileInfo.download_link;
             
+            % Check if the Allen S3 bucket is mounted on the local file system
+            if isfolder( obj.S3_ROOT_PATH )
+                % Generate filename from nickname and use this for local
+                % file to bypass download through api and subsequent caching
+                filePath = obj.getS3Filepath(nickname);
+                obj.linkedFiles{nickname,"LocalFile"} = filePath;
+                obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
+                continue
+            end
+
             % Determine which linkedFiles have been downloaded
             if boc.IsURLInCache(url)
                obj.linkedFiles{nickname,"LocalFile"} = string(boc.ccCache.CachedFileForURL(url));
@@ -246,6 +262,21 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          
          obj.initState = true;
       end
+
+      function s3Filepath = getS3Filepath(obj, nickname)
+      %getS3Filepath Get filepath of file in s3 bucket given nickname
+
+         s3TrunkPath = fullfile(obj.S3_ROOT_PATH, obj.S3_PRIMARY_DATA_FOLDER);
+         s3BranchPath = obj.getS3BranchPath(nickname);
+         s3Filepath = fullfile(s3TrunkPath, s3BranchPath);
+      end
+
+      function [] = getS3BranchPath(obj, varargin)
+      %getS3BranchPath Get subfolders and and filename for file in s3 bucket
+         error('Linked files in S3 bucket is not implemented for item of type "%s"', class(obj))
+      end
+
+   
    end
 end
 
