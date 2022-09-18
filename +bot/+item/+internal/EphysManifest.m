@@ -8,9 +8,10 @@
 %% Class definition
 
 classdef EphysManifest < handle
+
     properties (Access = private, Transient = true)
-        cache = bot.internal.cache;        % BOT Cache object
-        api_access;                         % Function handles for low-level API access
+        cache = bot.internal.cache;     % BOT Cache object
+        api_access;                     % Function handles for low-level API access
     end
     
     properties (SetAccess = private, Dependent = true)
@@ -242,7 +243,6 @@ classdef EphysManifest < handle
             
             % - Rename variables %TODO: consider move upstream
             ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
-            
         end
         
         function ephys_units = fetch_ephys_units_table(manifest)
@@ -267,7 +267,6 @@ classdef EphysManifest < handle
             % - Get structure acronyms
             ephys_probes = fetch_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
                 'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
-            
         end
         
         function ephys_channels = fetch_ephys_channels_table(manifest)
@@ -283,7 +282,6 @@ classdef EphysManifest < handle
             
             % - Rename variables %TODO: consider move upstream
             ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
-            
         end
         
         function [ephys_session_manifest] = fetch_ephys_sessions(manifest)
@@ -410,7 +408,6 @@ classdef EphysManifest < handle
                 end
                 
             end
-            
         end
         
         function [ephys_probes_manifest] = fetch_ephys_probes(manifest)
@@ -441,8 +438,6 @@ classdef EphysManifest < handle
             ltsf = ephys_probes_manifest.lfp_temporal_subsampling_factor;
             [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this shoudl be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
             ephys_probes_manifest.lfp_temporal_subsampling_factor = cell2mat(ltsf);
-            
-            
         end
         
         function [ephys_channels_manifest] = fetch_ephys_channels(manifest)
