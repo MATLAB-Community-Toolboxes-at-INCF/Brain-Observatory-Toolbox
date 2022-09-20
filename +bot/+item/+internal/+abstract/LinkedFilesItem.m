@@ -242,8 +242,8 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             if isfolder( obj.S3_ROOT_PATH )
                 % Generate filename from nickname and use this for local
                 % file to bypass download through api and subsequent caching
-                filePath = obj.getS3Filepath(nickname);
-                obj.linkedFiles{nickname,"LocalFile"} = filePath;
+                filepath = obj.getS3Filepath(nickname);
+                obj.linkedFiles{nickname,"LocalFile"} = string(filepath);
                 obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
                 continue
             end
