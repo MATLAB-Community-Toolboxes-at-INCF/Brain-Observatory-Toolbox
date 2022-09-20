@@ -94,10 +94,18 @@ classdef CloudCacher < handle
                
                % - Download data from the provided URL and save
                strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
+
+               % - Check that we got the complete file
+               fileSizeWeb = bot.util.getWebFileSize(strURL);
+               fileSizeLocal = bot.util.getWebFileSize(strCacheFilename);
                
-               % - Add URL to cache and save manifest
-               ccObj.mapCachedData(strURL) = strRelativeFilename;
-               ccObj.SaveManifest();
+               if fileSizeWeb == fileSizeLocal
+                   % - Add URL to cache and save manifest
+                   ccObj.mapCachedData(strURL) = strRelativeFilename;
+                   ccObj.SaveManifest();
+               else
+                   error('CloudCacher:DownloadFailed', 'Something went wrong during download. Please try again.')
+               end
             end
             
          catch mErr_Cause
