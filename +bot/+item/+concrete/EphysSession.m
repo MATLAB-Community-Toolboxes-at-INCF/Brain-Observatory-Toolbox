@@ -1016,8 +1016,8 @@ classdef EphysSession < bot.item.Session
                 %sceneNumber = 1 % Todo
             end
             
-            assert(strcmp(nickname, 'SessNWB'), ...
-                'Currently only supports files with nickname SessNWB')
+            %assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'StimTemplatesGroup'), ...
+            %    'Currently only supports files with nickname SessNWB')
 
             experimentId = num2str(obj.id);
 
@@ -1032,6 +1032,9 @@ classdef EphysSession < bot.item.Session
                     folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
                     fileName = sprintf('session_%s.nwb', experimentId);
         
+                case 'StimTemplatesGroup'
+                    s3BranchPath = obj.getS3BranchPath('StimMovie'); return
+                    
                 case 'StimMovie'
                     folderPath = fullfile('ecephys-cache', 'natural_movie_templates');
                     fileName = sprintf('natural_movie_%d.h5', movieNumber);
