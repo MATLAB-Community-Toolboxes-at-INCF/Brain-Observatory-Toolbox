@@ -93,7 +93,8 @@ classdef CloudCacher < handle
                end
                
                % - Download data from the provided URL and save
-               strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
+               %strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
+               bot.util.http.downloadfile(strCacheFilename, strURL)
 
                % - Check that we got the complete file
                fileSizeWeb = bot.util.getWebFileSize(strURL);
