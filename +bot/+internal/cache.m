@@ -272,6 +272,24 @@ classdef cache < handle
         end
     end
 
+    methods (Static)
+        
+        function resetCache()
+            messageStr = 'This will delete all the cached files. Are you sure you want to continue?';
+            answer = questdlg(messageStr, 'Please confirm');
+
+            switch answer
+                case 'Yes'
+                    set(0, "UserData", [])
+
+                    cacheDirectory = bot.internal.cache.GetPreferredCacheDirectory();
+                    rmdir(cacheDirectory, 's')
+                    mkdir(cacheDirectory)
+            end
+        end
+
+    end
+
     %% Methods to get preferred or default cache directory
     methods (Static, Access = private)
         
