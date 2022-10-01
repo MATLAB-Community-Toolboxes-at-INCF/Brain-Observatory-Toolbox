@@ -1,4 +1,4 @@
-function [resp, req, hist] = downloadfile(strLocalFilename, strURLFilename)
+function [resp, req, hist] = downloadfile(strLocalFilename, strURLFilename, options)
 %downloadfile Download a file from web using http web services.
 %
 %   downloadfile(strLocalFilename, strURLFilename) downloads the file
@@ -10,20 +10,25 @@ function [resp, req, hist] = downloadfile(strLocalFilename, strURLFilename)
 %
 %   This function downloads and saves a file and shows the download
 %   progress
+%
+%   Options for the progress display:
+%       DisplayMode     : Where to display progress. Options: 'Dialog Box' (default) or 'Command Window'
+%       UpdateInterval  : Interval (in seconds) for updating progress. Default = 1 second.
 
-%   Todo: Add optional arguments as function input
-%       progressDisplayMode
+    arguments
+        strLocalFilename       char         {mustBeNonempty}
+        strURLFilename         char         {mustBeValidUrl}
+        options.displayMode    char         {mustBeValidDisplay} = 'Dialog Box'
+        options.updateInterval (1,1) double {mustBePositive}     = 1
+        options.useMonitor     logical                           = true
+    end
     
-    if ~nargin; downloadfiledemo(); return; end
-
     import bot.util.http.FileDownloadProgressMonitor
-    
-    monitorOpts = struct();
-    monitorOpts.DisplayMode = getpref('BrainObservatoryToolbox', 'DialogMode', 'Command Window');
 
+    monitorOpts = {'DisplayMode', options.displayMode, 'UpdateInterval', options.updateInterval};
     opt = matlab.net.http.HTTPOptions(...
-        'ProgressMonitorFcn', @(opts) FileDownloadProgressMonitor(monitorOpts),...
-        'UseProgressMonitor', true);
+        'ProgressMonitorFcn', @(opts) FileDownloadProgressMonitor(monitorOpts{:}),...
+        'UseProgressMonitor', options.useMonitor);
     
     % Create a file consumer for saving the file
     consumer = matlab.net.http.io.FileConsumer(strLocalFilename);
@@ -45,9 +50,16 @@ function [resp, req, hist] = downloadfile(strLocalFilename, strURLFilename)
     
 end
 
-function downloadfiledemo()
-    strLocalFilename = [tempname, '.json'];
-    strURLFilename = 'https://allen-brain-observatory.s3.us-west-2.amazonaws.com/visual-coding-2p/cell_specimens.json';
-    C = onCleanup(@(filename) delete(strLocalFilename));
-    bot.util.http.downloadfile(strLocalFilename, strURLFilename)
+%% Custom validation functions
+
+function mustBeValidDisplay(displayName)
+    mustBeMember(displayName, {'Dialog Box', 'Command Window'})
+end
+
+function mustBeValidUrl(urlString)
+    try
+        matlab.internal.webservices.urlencode(urlString);
+    catch ME
+        throwAsCaller(ME)
+    end
 end

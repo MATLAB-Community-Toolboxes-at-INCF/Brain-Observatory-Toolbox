@@ -94,7 +94,8 @@ classdef CloudCacher < handle
                
                % - Download data from the provided URL and save
                %strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
-               bot.util.http.downloadfile(strCacheFilename, strURL)
+               displayMode = getpref('BrainObservatoryToolbox', 'DialogMode', 'Command Window');
+               bot.util.http.downloadfile(strCacheFilename, strURL, 'displayMode', displayMode)
 
                % - Check that we got the complete file
                fileSizeWeb = bot.util.getWebFileSize(strURL);
