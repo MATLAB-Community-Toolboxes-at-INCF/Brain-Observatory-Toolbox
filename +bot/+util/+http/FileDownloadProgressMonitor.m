@@ -148,7 +148,7 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
                 % Call the required CancelFcn and then close our progress bar. 
                 % This is called when user clicks cancel or closes the window.
                 obj.CancelFcn();
-                obj.closeit();
+                obj.closeWaitbar();
             end
         end
         
