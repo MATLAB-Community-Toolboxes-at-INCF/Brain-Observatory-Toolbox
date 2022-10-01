@@ -11,12 +11,19 @@ function [resp, req, hist] = downloadfile(strLocalFilename, strURLFilename)
 %   This function downloads and saves a file and shows the download
 %   progress
 
-%   Todo: Add optional arguments
+%   Todo: Add optional arguments as function input
 %       progressDisplayMode
+    
+    if ~nargin; downloadfiledemo(); return; end
+
+    import bot.util.http.FileDownloadProgressMonitor
+    
+    monitorOpts = struct();
+    monitorOpts.DisplayMode = getpref('BrainObservatoryToolbox', 'DialogMode', 'Command Window');
 
     opt = matlab.net.http.HTTPOptions(...
-        'ProgressMonitorFcn',@bot.util.http.FileDownloadProgressMonitor,...
-        'UseProgressMonitor',true);
+        'ProgressMonitorFcn', @(opts) FileDownloadProgressMonitor(monitorOpts),...
+        'UseProgressMonitor', true);
     
     % Create a file consumer for saving the file
     consumer = matlab.net.http.io.FileConsumer(strLocalFilename);
@@ -36,4 +43,11 @@ function [resp, req, hist] = downloadfile(strLocalFilename, strURLFilename)
         clear hist
     end
     
+end
+
+function downloadfiledemo()
+    strLocalFilename = [tempname, '.json'];
+    strURLFilename = 'https://allen-brain-observatory.s3.us-west-2.amazonaws.com/visual-coding-2p/cell_specimens.json';
+    C = onCleanup(@(filename) delete(strLocalFilename));
+    bot.util.http.downloadfile(strLocalFilename, strURLFilename)
 end
