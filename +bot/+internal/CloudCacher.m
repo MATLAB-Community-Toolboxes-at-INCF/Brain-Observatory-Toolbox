@@ -97,13 +97,14 @@ classdef CloudCacher < handle
 
                % - Check that we got the complete file
                fileSizeWeb = bot.util.getWebFileSize(strURL);
-               fileSizeLocal = bot.util.getWebFileSize(strCacheFilename);
+               fileSizeLocal = bot.util.getLocalFileSize(strCacheFilename);
                
                if fileSizeWeb == fileSizeLocal
                    % - Add URL to cache and save manifest
                    ccObj.mapCachedData(strURL) = strRelativeFilename;
                    ccObj.SaveManifest();
                else
+                   delete(strCacheFilename) % Delete file if incomplete
                    error('CloudCacher:DownloadFailed', 'Something went wrong during download. Please try again.')
                end
             end
