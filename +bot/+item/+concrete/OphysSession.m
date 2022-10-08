@@ -93,6 +93,11 @@ classdef OphysSession < bot.item.Session
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
+
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
+    properties (Constant, Hidden)
+        S3_PRIMARY_DATA_FOLDER = 'visual-coding-2p';
+    end
     
     
     %% PROPERTY ACCESS METHODS
