@@ -26,6 +26,8 @@ function strLocalFilename = downloadFile(strLocalFilename, strURLFilename, optio
         options.IndentSize     (1,1) uint8                       = 0
     end
 
+    import bot.external.fex.filedownload.*
+
     if options.ShowFilename
         [~, filename, ext] = fileparts(strURLFilename);
         filename = [char(filename), char(ext)];
