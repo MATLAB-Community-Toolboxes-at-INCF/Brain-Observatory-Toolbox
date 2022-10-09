@@ -7,7 +7,7 @@
 classdef CloudCacher < handle
    
    properties (SetAccess = private)
-      strCacheDir;                        % File directory in which data is cached
+      strCacheDir                         % File directory in which data is cached
       strManifestFile;                    % .mat file containing the cache manifest
       bTemporaryCache = false;            % Boolean flag: should cache be deleted on variable deletion?
       mapCachedData = containers.Map();   % Map containing URLs that have been cached, maps to cache-relative filenames
@@ -56,20 +56,54 @@ classdef CloudCacher < handle
          end
       end
       
+      function strCacheFilename = copyfile(ccObj, strURL, strRelativeFilename, strCloudFilepath)
+      % copyfile - METHOD Cached replacement for copyfile function
+
+      % Hint: Copy files from S3 bucket to EC2 local drive
+      
+          strCacheFilename = ccObj.CachedFilename(strRelativeFilename);
+
+          targetFolder = fileparts(strCacheFilename);
+          if ~isfolder(targetFolder); mkdir(targetFolder); end
+          
+          try
+              copyfile(strCloudFilepath, strCacheFilename)
+              ccObj.mapCachedData(strURL) = strRelativeFilename;
+              ccObj.SaveManifest();
+          catch mErr_Cause
+             mErr_Base = MException('CloudCacher:FileCopyFailed', 'Could not copy file from S3 bucket.');
+             mErr_Base = mErr_Base.addCause(mErr_Cause);
+             throw(mErr_Base);
+          end
+      end
+
       function strCacheFilename = websave(ccObj, strRelativeFilename, strURL, varargin)
          % websave - METHOD Cached replacement for websave function
          %
          % Usage: strCacheFilename = ccObj.websave(strRelativeFilename, strURL, ...)
          %
          % Replaces the Matlab `websave` function, with a cached method.
+
+         % Note: This feature was removed when replacing websave with
+         % downloadFile (Todo: Consider to reimplement):
          % Optional additional arguments are passed to `websave`.
-         
+        
+         import bot.external.fex.filedownload.downloadFile
+
+         % Check varargin for optional SecondaryFileUrl (Todo: Add documentation)
+         isSecondaryFileArg = cellfun(@(arg) ischar(arg) && strcmp(arg, 'SecondaryFileUrl'), varargin);
+         if any( isSecondaryFileArg )
+            secondaryFileUrl = varargin{ find(isSecondaryFileArg) + 1};
+            %varargin(find(isSecondaryFileArg) + 0:1) = []; Placeholder
+         else
+            secondaryFileUrl = '';
+         end
+
          try
             % - Is the URL already in the cache?
             if ccObj.IsInCache(strURL) && exist(ccObj.CachedFileForURL(strURL), 'file')
                % - Yes, so read the cached file
                strCacheFilename = ccObj.CachedFileForURL(strURL);
-               
             else
                % - No, so we need to download and cache it
                
@@ -93,19 +127,25 @@ classdef CloudCacher < handle
                end
                
                % - Download data from the provided URL and save
-               strCacheFilename = websave(strCacheFilename, strURL, varargin{:});
+               if isempty(secondaryFileUrl)
+                  strCacheFilename = downloadFile(strCacheFilename, strURL, ...
+                      'DisplayMode', bot.Preferences.get('DialogMode'));
+               else
+                  strCacheFilename = downloadFile(strCacheFilename, secondaryFileUrl, ...
+                      'DisplayMode', bot.Preferences.get('DialogMode'));
+               end
 
                % - Check that we got the complete file
                fileSizeWeb = bot.util.getWebFileSize(strURL);
                fileSizeLocal = bot.util.getLocalFileSize(strCacheFilename);
                
                if fileSizeWeb == fileSizeLocal
-                   % - Add URL to cache and save manifest
-                   ccObj.mapCachedData(strURL) = strRelativeFilename;
-                   ccObj.SaveManifest();
+                  % - Add URL to cache and save manifest
+                  ccObj.mapCachedData(strURL) = strRelativeFilename;
+                  ccObj.SaveManifest();
                else
-                   delete(strCacheFilename) % Delete file if incomplete
-                   error('CloudCacher:DownloadFailed', 'Something went wrong during download. Please try again.')
+                  delete(strCacheFilename) % Delete file if incomplete
+                  error('CloudCacher:DownloadFailed', 'Something went wrong during download. Please try again.')
                end
             end
             

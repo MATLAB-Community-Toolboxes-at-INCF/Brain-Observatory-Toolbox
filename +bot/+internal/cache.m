@@ -139,12 +139,45 @@ classdef cache < handle
            end
         end
         
-        function strFile = CacheFile(oCache, strURL, strLocalFile)
+        function strFile = CacheFile(oCache, strFileURL, strLocalFile, strSecondaryFilePath, options)
             % CacheFile - METHOD Check for cached version of Allen Brain Observatory dataset file, and return local location on disk
             %
-            % Usage: strFile = oCache.CacheFile(strURL, strLocalFile)
+            % Usage: 
+            %     strFile = oCache.CacheFile(strFileURL, strLocalFile)
+            %     get filepath (strFile) for a file in the local cache. 
+            %     File is downloaded if from the specified file url 
+            %     (strFileUrl) if it does not exist in the local cache.
+            %
+            % Extended usage:
+            %     strFile = oCache.CacheFile(strFileURL, strLocalFile, strSecondaryFileURL)
+            %     file is downloaded from a secondary file url. This
+            %     version is used if the file should be downloaded from the
+            %     ABO S3 bucket using the https protocol.
+            %   
+            %     strFile = oCache.CacheFile(strFileURL, strLocalFile, strSecondaryFileURL, options)
+            %
+            %     options:
+            %       - RetrievalMode : Mode for file retrieval if file is not in cache. 
+            %                         Options: "Download" (default) or "Copy"
             
-            strFile = oCache.ccCache.websave(strLocalFile, strURL);
+            arguments
+                oCache                              % CloudCacher object 
+                strFileURL                          % Primary URL for downloading file 
+                strLocalFile                        % Path to local cache location of file
+                strSecondaryFilePath = ""           % Path or URL to retrieve file from secondary location (alternative to primary location)
+                options.RetrievalMode = "Download"  % Mode for file retrieval if file is not in cache. Options: 'Download' or 'Copy'
+            end
+
+            if options.RetrievalMode == "Copy" && strSecondaryFilePath ~= ""
+                strFile = oCache.ccCache.copyfile(strFileURL, strLocalFile, strSecondaryFilePath);
+            else
+                if strSecondaryFilePath ~= ""
+                    nvPairs = {'SecondaryFileUrl', strSecondaryFilePath};
+                else
+                    nvPairs = {};
+                end
+                strFile = oCache.ccCache.websave(strLocalFile, strFileURL, nvPairs{:});
+            end
         end
         
         function bIsURLInCache = IsURLInCache(oCache, strURL)
@@ -272,12 +305,56 @@ classdef cache < handle
         end
     end
 
+    methods (Static)
+        function clearInMemoryCache(force)
+        %clearInMemoryCache Clear the cache from memory.
+
+            arguments
+                force (1,1) logical = false
+            end
+
+            if ~force
+                message = 'This will clear the cache from memory, but will keep the cache on storage. Are you sure you want to continue?';
+                
+                switch bot.Preferences.get('DialogMode')
+                    case 'Dialog Box'
+                        answer = questdlg(message, 'Please Confirm');
+                    case 'Command Window'
+                        answer = input( strjoin({message, '(y/n):'}), "s" );
+                end
+
+                switch answer
+                    case {'Yes', 'y'}
+                        force = true;
+                end
+            end
+
+            if force
+                sUserData = get(0, 'UserData');
+                if isfield(sUserData, 'BOT_GLOBAL_CACHE')
+                    sUserData.BOT_GLOBAL_CACHE = [];
+                    set(0, 'UserData', sUserData)
+                end % Todo: separate method
+
+                bot.item.internal.EphysManifest.instance(true) % clear singleton
+                bot.item.internal.OphysManifest.instance(true) % clear singleton
+                clear bot.item.internal.EphysManifest
+                clear bot.item.internal.OphysManifest
+                clear bot.internal.cache
+                clear bot.internal.ObjectCacher
+                clear bot.internal.CloudCacher
+            end
+        end
+    end
+
     %% Methods to get preferred or default cache directory
     methods (Static, Access = private)
-        
         function tf = HasPreferredCacheDirectory()
         %HasPreferredCacheDirectory Check if a preferred cache directory exists
             tf = ispref('BrainObservatoryToolbox', 'CacheDirectory');
+            if tf
+                tf = ~isempty(getpref('BrainObservatoryToolbox', 'CacheDirectory'));
+            end
         end
 
         function strCacheDir = InitializePreferredCacheDirectory()
@@ -313,9 +390,10 @@ classdef cache < handle
                 'If you select "No", data will be downloaded to the ', ...
                 'following directory:\n \\bf%s'], factoryCacheDir);
 
-            % - Format the message with a bigger font size
-            formattedMessage = strcat('\fontsize{14}', promptMessage);
-            
+            % - Format the message with a bigger font size (Todo; should depend on screen resolution...)
+            %formattedMessage = strcat('\fontsize{14}', promptMessage);
+            formattedMessage = promptMessage;
+
             % - Fix some characters that are interpreted as tex markup
             formattedMessage = strrep(formattedMessage, '_', '\_');
             titleMessage = 'Select Download Directory for Data?'; 
@@ -385,7 +463,6 @@ classdef cache < handle
                     'User canceled during selection of a preferred cache directory.')
             end
         end
-
     end
 
 end
