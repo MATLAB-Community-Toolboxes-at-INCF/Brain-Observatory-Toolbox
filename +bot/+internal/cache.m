@@ -305,7 +305,7 @@ classdef cache < handle
         end
     end
 
-    methods (Static)
+    methods (Static) % Methods for reseting or clearing cache
         function clearInMemoryCache(force)
         %clearInMemoryCache Clear the cache from memory.
 
@@ -343,6 +343,20 @@ classdef cache < handle
                 clear bot.internal.cache
                 clear bot.internal.ObjectCacher
                 clear bot.internal.CloudCacher
+            end
+        end
+        
+        function resetCache()
+            messageStr = 'This will delete all the cached files. Are you sure you want to continue?';
+            answer = questdlg(messageStr, 'Please confirm');
+
+            switch answer
+                case 'Yes'
+                    set(0, "UserData", [])
+
+                    cacheDirectory = bot.internal.cache.GetPreferredCacheDirectory();
+                    rmdir(cacheDirectory, 's')
+                    mkdir(cacheDirectory)
             end
         end
     end
