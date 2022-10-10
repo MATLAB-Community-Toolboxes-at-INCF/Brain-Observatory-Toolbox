@@ -202,7 +202,7 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
         
                 case 'LFPNWB' % prove objects..
                     folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
-                    fileName = sprintf('probe_%s.nwb', probeId);
+                    fileName = sprintf('probe_%s_lfp.nwb', probeId);
         
                 otherwise
                     error('BOT:LinkedFiles', '%s is not a valid nickname for linked files of a probe', nickname)
