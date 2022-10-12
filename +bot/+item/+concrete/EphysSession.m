@@ -1041,7 +1041,7 @@ classdef EphysSession < bot.item.Session
         
                 case 'StimScene'
                     folderPath = fullfile('ecephys-cache', 'natural_scene_templates');
-                    fileName = sprintf('natural_scene_%d.h5', sceneNumber);
+                    fileName = sprintf('natural_scene_%d.tiff', sceneNumber);
         
                 case 'SyncH5'
                     folderPath = fullfile('raw_data', experimentId, probeId);
