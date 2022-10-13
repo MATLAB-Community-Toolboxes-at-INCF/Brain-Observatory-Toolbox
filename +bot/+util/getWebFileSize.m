@@ -10,6 +10,11 @@ function fileSizeBytes = getWebFileSize(webFileUrl)
     uri = URI(webFileUrl);
     req = RequestMessage('HEAD');
     response = req.send(uri);
+
+    if strcmp( response.StatusCode, 'NotFound' )
+        error('BOT:WebFileNotFound', 'File "%s" was not found', webFileUrl)
+    end
+
     contentLengthField = response.getFields("Content-Length");
     
     fileSizeBytes = str2double(contentLengthField.Value);
