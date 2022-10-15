@@ -196,7 +196,7 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
         end
     end
 
-    methods (Access = private)
+    methods (Access = private) % Format messages for display
 
         function titleStr = getProgressTitle(obj)
             if ~ isempty(obj.Filename)
@@ -208,13 +208,11 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
         
         function strMessage = getProgressMessage(obj)
         %getProgressMessage Get message with information about progress
-            strMessage = sprintf('Downloaded %d MB/%d MB (%d%%)...', ...
-                            obj.DownloadedMb, obj.FileSizeMb, round(obj.PercentDownloaded));
-
+            
+            strMessage = obj.getDownloadStatus();
             strRemainingTime = obj.getRemainingTimeEstimate();
             if ~isempty(strRemainingTime)
-                strMessage = replace(strMessage, '...', '.');
-                strMessage = sprintf('%s %s', strMessage, strRemainingTime);
+                strMessage = strjoin({strMessage, strRemainingTime});
             end
             
             % "Animate" ellipsis
@@ -229,37 +227,37 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
             end
         end
 
+        function strMessage = getDownloadCompletedMessage(obj)
+            strMessage = obj.getDownloadStatus();
+            
+            tElapsed = seconds( toc(obj.StartTime) );
+            tElapsedStr = obj.formatTimeAsString(tElapsed);
+            durationMessage = sprintf('Completed in %s. \n', tElapsedStr);
+
+            strMessage = strjoin({strMessage, durationMessage});
+        end
+    
         function str = getRemainingTimeEstimate(obj)
         %getRemainingTimeEstimate Get string with estimated time remaining        
             tElapsed = seconds( toc(obj.StartTime) );
             tRemaining = round( (tElapsed ./ obj.PercentDownloaded) .* (100-obj.PercentDownloaded) );
-    
+
             if seconds(tElapsed) > 10
-                if hours(tRemaining) > 1
-                    str = sprintf('Estimated time remaining: %d hours...', round(hours(tRemaining)));
-                    str = replace(str, ' 1 hours', ' 1 hour');
-                elseif minutes(tRemaining) > 1
-                    str = sprintf('Estimated time remaining: %d minutes...', round(minutes(tRemaining)));
-                    str = replace(str, ' 1 minutes', ' 1 minute');
-                else
-                    str = sprintf('Estimated time remaining: %d seconds...', seconds(tRemaining));
-                    str = replace(str, ' 1 seconds', ' 1 second');
-                end
+                tRemainingStr = obj.formatTimeAsString(tRemaining);
+                str = sprintf('Estimated time remaining: %s...', tRemainingStr);
             else
                 str = 'Estimating remaining time...';
             end
         end
-   
-        function msg = getDownloadCompletedMessage(obj)
-            msg = sprintf('Downloaded %d MB/%d MB (%d%%).', ...
-                            obj.DownloadedMb, obj.FileSizeMb, round(obj.PercentDownloaded));
-            msg = sprintf('%s %s\n', msg, 'Download completed.');
+        
+        function str = getDownloadStatus(obj)
+            str = sprintf('Downloaded %d MB/%d MB (%d%%).', ...
+                obj.DownloadedMb, obj.FileSizeMb, round(obj.PercentDownloaded));
         end
-    
     end
 
     methods (Static)
-        
+
         function [names, values] = parseVarargin(vararginCellArray)
         %parseVarargin Parse varargin (split names and values)
             [names, values] = deal({});
@@ -273,6 +271,26 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
                 names = vararginCellArray(1:2:end);
                 values = vararginCellArray(2:2:end);
             end
+        end
+            
+        function durationStr = formatTimeAsString(durationValue)
+        %formatTimeAsString Format time showing the leading unit.    
+            if hours(durationValue) > 1
+                durationUnit = 'hour';
+                durationValueInt = round(hours(durationValue));
+            elseif minutes(durationValue) > 1
+                durationUnit = 'minute';
+                durationValueInt = round(minutes(durationValue));
+            else
+                durationUnit = 'second';
+                durationValueInt = round(seconds(durationValue));
+            end
+            
+            if durationValueInt > 1 % make unit plural
+                durationUnit = strcat(durationUnit, 's');
+            end
+
+            durationStr = sprintf('%d %s', durationValueInt, durationUnit);
         end
     end
 end

@@ -15,7 +15,7 @@ function strLocalFilename = downloadFile(strLocalFilename, strURLFilename, optio
 %       IndentSize      : Size of indentation if displaying progress in command window.
 
 
-%   Written by Eivind Hennestad
+%   Written by Eivind Hennestad | v1.0.5
 
     arguments 
         strLocalFilename       char         {mustBeNonempty}
