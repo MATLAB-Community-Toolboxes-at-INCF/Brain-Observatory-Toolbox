@@ -126,6 +126,10 @@ classdef CloudCacher < handle
                   warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
                end
                
+               fileSizeWeb = bot.util.getWebFileSize(strURL);
+               C = onCleanup( @(filename, filesize) ...
+                   cleanUpFileDownload(strCacheFilename, fileSizeWeb) );
+
                % - Download data from the provided URL and save
                if isempty(secondaryFileUrl)
                   strCacheFilename = downloadFile(strCacheFilename, strURL, ...
@@ -407,4 +411,13 @@ classdef CloudCacher < handle
          end
       end
    end
+end
+
+function cleanUpFileDownload(strFilename, webFileSize)
+    fileSizeLocal = bot.util.getLocalFileSize(strFilename);
+    if fileSizeLocal < webFileSize
+        if isfile(strFilename)
+            delete(strFilename)
+        end
+    end        
 end
