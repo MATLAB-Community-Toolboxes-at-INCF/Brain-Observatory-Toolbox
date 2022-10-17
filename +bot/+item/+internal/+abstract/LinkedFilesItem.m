@@ -341,7 +341,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          % Ensure the url protocol is correct (fullfile removes double //)
          if strncmp(s3Filepath, 'https', 5)
              if ispc
-                % On windows, fix from file system slach to url slash
+                % On windows, fix from file system slash to url slash
                 s3Filepath = replace(s3Filepath, '\', '/');
              end
              s3Filepath = replace(s3Filepath, 'https:/', 'https://');
