@@ -339,7 +339,13 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          s3Filepath = fullfile(s3TrunkPath, s3BranchPath);
 
          % Ensure the url protocol is correct (fullfile removes double //)
-         s3Filepath = replace(s3Filepath, 'https:/', 'https://');
+         if strncmp(s3Filepath, 'https', 5)
+             if ispc
+                % On windows, fix from file system slach to url slash
+                s3Filepath = replace(s3Filepath, '\', '/');
+             end
+             s3Filepath = replace(s3Filepath, 'https:/', 'https://');
+         end
       end
 
       function [] = getS3BranchPath(obj, varargin)
