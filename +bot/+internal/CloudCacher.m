@@ -110,7 +110,10 @@ classdef CloudCacher < handle
                % - Get a filename for the cache
                if isempty(strRelativeFilename)
                   [~, strRelativeFilename] = fileparts(tempname());
-                  strRelativeFilename = [strRelativeFilename '.mat'];
+                  [~, ~, fileExtension] = fileparts(char(strURL));
+                  if ~isempty(fileExtension)
+                    strRelativeFilename = [strRelativeFilename fileExtension];
+                  end
                end
                
                % - Convert the filename to a file in the cache
