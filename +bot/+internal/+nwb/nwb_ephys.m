@@ -81,9 +81,9 @@ classdef nwb_ephys < handle
          
          % - Get a list of all epochs in the NWB file
          strRoot = '/intervals';
-         sEpochs = h5info(self.strFile, strRoot);
-         all_epoch_names = string({sEpochs.Groups.Name});
-         
+         sEpochsInfo = h5info(self.strFile, strRoot);
+         all_epoch_names = string({sEpochsInfo.Groups.Name});
+
          % - Read each epoch as a table
          cstrIgnoreKeys = {'tags', 'timeseries', 'tags_index', 'timeseries_index'};
          cell_epoch_tables = {};
@@ -486,4 +486,25 @@ function source_table = removevars_ifpresent(source_table, variables)
    if any(vbHasVariable)
       source_table = removevars(source_table, variables(vbHasVariable));
    end
+end
+
+
+function num_presentations = count_num_stimulus_presentations(datasetInfo)
+
+%all_epoch_names = string({datasetInfo.Groups.Name});
+
+% Each datasetGroup represents stimulus presentations from 1 out of 9
+% categories.
+datasetGroups = [datasetInfo.Groups];
+groupNames = {datasetGroups.Name};
+
+keep = ~strcmp( groupNames, '/intervals/invalid_times');
+
+datasetStructArray = arrayfun(@(a) [a.Datasets], datasetGroups(keep), 'UniformOutput', 0);
+%datasetNameArray = cellfun(@(c) {c.Name}, datasetStructArray, 'UniformOutput', 0);
+
+datasetLengths = cellfun(@(c) c(1).Dataspace.Size, datasetStructArray, 'UniformOutput', 1);
+num_presentations = sum(datasetLengths);
+
+% Note: All datasets within a group has the same lenght / number of samples
 end
