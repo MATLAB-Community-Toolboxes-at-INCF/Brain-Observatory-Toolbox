@@ -21,6 +21,7 @@ classdef cache < handle
     end
     
     properties
+        Api = bot.internal.BrainObservatoryAPI
         strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for the Allen Brain Observatory resource
     end
     
@@ -161,7 +162,7 @@ classdef cache < handle
             %                         Options: "Download" (default) or "Copy"
             
             arguments
-                oCache                              % CloudCacher object 
+                oCache                              % cache object 
                 strFileURL                          % Primary URL for downloading file 
                 strLocalFile                        % Path to local cache location of file
                 strSecondaryFilePath = ""           % Path or URL to retrieve file from secondary location (alternative to primary location)
@@ -187,13 +188,81 @@ classdef cache < handle
             
             bIsURLInCache = oCache.ccCache.IsInCache(strURL);
         end
+                    
+        function tResponse = CachedRMAQuery(oCache, rmaQueryUrl, options)
+             
+            arguments
+                oCache bot.internal.cache % Object of this class
+                rmaQueryUrl string
+                options.PageSize = 5000
+                options.SortingAttributeName = "id"
+            end
+
+            % - Set up options for http request
+            requestOptions = weboptions('ContentType', 'JSON', 'TimeOut', 60);
+            
+            nTotalRows = [];
+            nStartRow = 0;
+            
+            tResponse = table();
+            
+            while isempty(nTotalRows) || nStartRow < nTotalRows
+                
+                % - Add page parameters                
+                queryOptions = oCache.Api.getRMAPagingOptions(nStartRow, ...
+                    options.PageSize, options.SortingAttributeName);
+
+                strURLQueryPage = strjoin([rmaQueryUrl, queryOptions], ",");
+                
+                % - Perform query
+                response_raw = oCache.ccCache.webread(strURLQueryPage, [], requestOptions);
+                
+                % - Was there an error?
+                if ~response_raw.success
+                    error('BOT:DataAccess', 'Error querying Allen Brain Atlas API for URL [%s]', strURLQueryPage);
+                end
+                
+                % - Convert response to a table
+                if isa(response_raw.msg, 'cell')
+                    response_page = cell_messages_to_table(response_raw.msg);
+                else
+                    response_page = struct2table(response_raw.msg);
+                end
+                
+                % - Append response page to table
+                if isempty(tResponse)
+                    tResponse = response_page;
+                else
+                    tResponse = bot.internal.merge_tables(tResponse, response_page);
+                end
+                
+                % - Get total number of rows
+                if isempty(nTotalRows)
+                    nTotalRows = response_raw.total_rows;
+                end
+                
+                % - Move to next page
+                nStartRow = nStartRow + options.PageSize;
+                
+                % - Display progress if we didn't finish
+                if (nStartRow < nTotalRows)
+                    fprintf('Fetching.... [%.0f%%]\n', round(nStartRow / nTotalRows * 100))
+                end
+            end
+            
+            function tMessages = cell_messages_to_table(cMessages)
+                import bot.internal.utility.structcat
+                structArray = structcat(1, cMessages{:});
+                tMessages = struct2table(structArray);
+            end
+        end
         
         function tResponse = CachedAPICall(oCache, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme, strID)
-            % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Atlas API call
+            % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Map API call
             %
             % Usage: tResponse = CachedAPICall(oCache, strModel, strQueryString, ...)
             %        tResponse = CachedAPICall(..., <nPageSize>, <strFormat>, <strRMAPrefix>, <strHost>, <strScheme>, <strID>)
-            
+
             DEF_strScheme = "http";
             DEF_strHost = "api.brain-map.org";
             DEF_strRMAPrefix = "api/v2/data";
@@ -234,74 +303,9 @@ classdef cache < handle
             if ~isempty(strQueryString)
                 strURL = strURL + "," + strQueryString;
             end
-            
-            % - Set up options
-            options = weboptions('ContentType', 'JSON', 'TimeOut', 60);
-            
-            nTotalRows = [];
-            nStartRow = 0;
-            
-            tResponse = table();
-            
-            while isempty(nTotalRows) || nStartRow < nTotalRows
-                % - Add page parameters
-                strURLQueryPage = strURL + ",rma::options[start_row$eq" + nStartRow + "][num_rows$eq" + nPageSize + "][order$eq'" + strID + "']";
-                
-                % - Perform query
-                response_raw = oCache.ccCache.webread(strURLQueryPage, [], options);
-                
-                % - Was there an error?
-                if ~response_raw.success
-                    error('BOT:DataAccess', 'Error querying Allen Brain Atlas API for URL [%s]', strURLQueryPage);
-                end
-                
-                % - Convert response to a table
-                if isa(response_raw.msg, 'cell')
-                    response_page = cell_messages_to_table(response_raw.msg);
-                else
-                    response_page = struct2table(response_raw.msg);
-                end
-                
-                % - Append response page to table
-                if isempty(tResponse)
-                    tResponse = response_page;
-                else
-                    tResponse = bot.internal.merge_tables(tResponse, response_page);
-                end
-                
-                % - Get total number of rows
-                if isempty(nTotalRows)
-                    nTotalRows = response_raw.total_rows;
-                end
-                
-                % - Move to next page
-                nStartRow = nStartRow + nPageSize;
-                
-                % - Display progress if we didn't finish
-                if (nStartRow < nTotalRows)
-                    fprintf('Fetching.... [%.0f%%]\n', round(nStartRow / nTotalRows * 100))
-                end
-            end
-            
-            function tMessages = cell_messages_to_table(cMessages)
-                % - Get an exhaustive list of fieldnames
-                cFieldnames = cellfun(@fieldnames, cMessages, 'UniformOutput', false);
-                cFieldnames = unique(vertcat(cFieldnames{:}), 'stable');
-                
-                % - Make sure every message has all required field names
-                function sData = enforce_fields(sData)
-                    vbHasField = cellfun(@(c)isfield(sData, c), cFieldnames);
-                    
-                    for strField = cFieldnames(~vbHasField)'
-                        sData.(strField{1}) = [];
-                    end
-                end
-                
-                cMessages = cellfun(@(c)enforce_fields(c), cMessages, 'UniformOutput', false);
-                
-                % - Convert to a table
-                tMessages = struct2table([cMessages{:}]);
-            end
+
+            tResponse = oCache.CachedRMAQuery(strURL, 'PageSize', nPageSize, ...
+                'SortingAttributeName', strID);
         end
     end
 
@@ -316,10 +320,10 @@ classdef cache < handle
             if ~force
                 message = 'This will clear the cache from memory, but will keep the cache on storage. Are you sure you want to continue?';
                 
-                switch bot.Preferences.get('DialogMode')
-                    case 'Dialog Box'
+                switch bot.getPreferences('DialogMode')
+                    case "Dialog Box"
                         answer = questdlg(message, 'Please Confirm');
-                    case 'Command Window'
+                    case "Command Window"
                         answer = input( strjoin({message, '(y/n):'}), "s" );
                 end
 
@@ -336,10 +340,8 @@ classdef cache < handle
                     set(0, 'UserData', sUserData)
                 end % Todo: separate method
 
-                bot.item.internal.EphysManifest.instance(true) % clear singleton
-                bot.item.internal.OphysManifest.instance(true) % clear singleton
-                clear bot.item.internal.EphysManifest
-                clear bot.item.internal.OphysManifest
+                bot.item.internal.EphysManifest.instance("clear") % clear singleton
+                bot.item.internal.OphysManifest.instance("clear") % clear singleton
                 clear bot.internal.cache
                 clear bot.internal.ObjectCacher
                 clear bot.internal.CloudCacher
@@ -350,13 +352,17 @@ classdef cache < handle
             messageStr = 'This will delete all the cached files. Are you sure you want to continue?';
             answer = questdlg(messageStr, 'Please confirm');
 
+            % Todo:
+            % Remove cache folder from path
             switch answer
                 case 'Yes'
-                    set(0, "UserData", [])
+                    bot.internal.cache.clearInMemoryCache(true)
 
                     cacheDirectory = bot.internal.cache.GetPreferredCacheDirectory();
+                    rmpath(genpath(cacheDirectory)); savepath
                     rmdir(cacheDirectory, 's')
                     mkdir(cacheDirectory)
+                    addpath(genpath(cacheDirectory)); savepath
             end
         end
     end
@@ -365,10 +371,8 @@ classdef cache < handle
     methods (Static, Access = private)
         function tf = HasPreferredCacheDirectory()
         %HasPreferredCacheDirectory Check if a preferred cache directory exists
-            tf = ispref('BrainObservatoryToolbox', 'CacheDirectory');
-            if tf
-                tf = ~isempty(getpref('BrainObservatoryToolbox', 'CacheDirectory'));
-            end
+            prefCacheDirectory = bot.getPreferences('CacheDirectory');
+            tf = prefCacheDirectory ~= "";
         end
 
         function strCacheDir = InitializePreferredCacheDirectory()
@@ -394,6 +398,10 @@ classdef cache < handle
             if isfolder(factoryCacheDir)
                 strCacheDir = factoryCacheDir; return
             end
+
+            % Legacy factory cache directory did not exist, place factory
+            % directory on the userpath.
+            factoryCacheDir = fullfile(userpath, 'Brain Observatory Toolbox Cache');
             
             % - Construct a question dialog box where user can select if 
             % he/she wants to configure a custom folder for downloaded
@@ -430,7 +438,8 @@ classdef cache < handle
             end
 
             % - Store the selected cache directory to preferences
-            setpref('BrainObservatoryToolbox', 'CacheDirectory', strCacheDir)
+            prefs = bot.getPreferences();
+            prefs.CacheDirectory = strCacheDir;
         end
         
         function strCacheDir = GetFactoryCacheDirectory()
@@ -443,7 +452,7 @@ classdef cache < handle
         %GetPreferredCacheDirectory Get the preferred cache directory from
         %the BrainObservatoryToolbox preferences.
 
-            strCacheDir = getpref('BrainObservatoryToolbox', 'CacheDirectory');
+            strCacheDir = bot.getPreferences('CacheDirectory');
             
             if ~isfolder(strCacheDir)
                 error('BOT:PreferredCacheDirectoryMissing', ...
