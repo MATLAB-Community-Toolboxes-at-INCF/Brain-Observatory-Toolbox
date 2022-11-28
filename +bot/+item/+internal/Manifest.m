@@ -1,8 +1,265 @@
 % Manifest — Create or download a manifest from the Allen Brain Observatory
 
-classdef Manifest < handle 
 
+classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixin.OnDemandProps
+       
+    properties (Abstract, Access=protected, Constant, Hidden)
+        % Enumeration for dataset type that a concrete manifest is part of
+        DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType  
+        
+        % Names of available item types for a manifest of a given dataset type
+        ITEM_TYPES (1,:) string
+
+        % Resource to use for downloading the respective item tables. If 
+        % nothing is specified, the default resource will be gotten from
+        % preferences. The purpose of this constant property is to override
+        % the preference for some of the item types.
+        DOWNLOAD_FROM containers.Map
+    end
+
+    properties (Access = protected, Transient = true)
+        cache bot.internal.cache % BOT Cache object for caching of data to disk
+    end
+
+    properties (Access = protected)
+        MemoizedFetcher = struct % Memoized functions for fetching item tables
+    end
+
+    methods (Access = protected) % Constructor
+
+        function manifest = Manifest()
+
+            % Assign the disk cache
+            manifest.cache = bot.internal.cache();
+
+            % Assign on-demand properties
+            manifest.ON_DEMAND_PROPERTIES = lower(string(manifest.DATASET_TYPE)) ...
+                + "_" + lower(manifest.ITEM_TYPES) + "s";
+
+            % Suggested upgrade:
+            %manifest.ON_DEMAND_PROPERTIES = manifest.ITEM_TYPES + "s";     % Property names are plural
+
+        end
+    end
+
+    methods % Methods fetchAll & clearManifest
+
+        function fetchAll(manifest)
+        %fetchAll Fetches all of the item tables of the manifest
+        %
+        %   fetchAll(manifest) will fetch all item tables of the concrete
+        %   manifest.
+
+            for itemType = manifest.ITEM_TYPES
+                propName = lower(string(manifest.DATASET_TYPE)) + "_" + lower(itemType) + "s";
+                manifest.(propName)
+
+                % Suggested upgrade:
+                %manifest.(itemType+"s");
+            end
+        end
+
+        function manifest = updateManifest(manifest, updateMemoOnly)
+            arguments
+                manifest (1,1) bot.item.internal.Manifest
+                updateMemoOnly (1,1) logical = true
+            end
+            
+            manifest.clearManifest(updateMemoOnly)
+            manifest = manifest.instance(); % Create new instance
+            manifest.fetchAll()
+        end
     
+        function clearManifest(manifest, clearMemoOnly)
+        %clearManifest Clear the manifest contents (item tables)
+        %
+        %   clearManifest(manifest) clears the manifest from memory.
+        %   
+        %   clearManifest(manifest, clearMemoOnly) additionally specifies
+        %   the level of clearing. `clearMemoOnly = true` (default) will
+        %   clear the manifest contents from memory only, whereas 
+        %   `clearMemoOnly = false` will also clear the manifest contents 
+        %   from the disk cache
+
+            arguments
+                manifest (1,1) bot.item.internal.Manifest
+                clearMemoOnly (1,1) logical = true
+            end
+
+            if ~clearMemoOnly
+                for itemType = manifest.ITEM_TYPES
+                    
+                    % - Remove temporary item table data from disk cache
+                    manifest.clearTempTableFromCache(itemType)
+
+                    % - Remove complete item tables from disk cache
+                    cacheKey = manifest.getManifestCacheKey(itemType);
+                    manifest.cache.RemoveObject(cacheKey)
+                end
+            end
+
+            % - Clear all caches for memoized access functions
+            for strField = fieldnames(manifest.MemoizedFetcher)'
+                manifest.MemoizedFetcher.(strField{1}).clearCache();
+            end
+
+            % - Reset singleton instance
+            manifest.instance("clear");
+        end
+
+    end
+
+    methods (Abstract, Access = protected)
+        % Item tables downloaded from the S3 bucket are stored in different
+        % formats for different dataset types. Use this function in
+        % subclasses to read the table using appropriate methods.
+        readS3ItemTable(manifest, filePath)
+    end
+
+    methods (Hidden, Access = protected) % Override matlab.mixin.CustomDisplay
+        function str = getHeader(obj)
+            str = getHeader@matlab.mixin.CustomDisplay(obj);
+            str = replace(str, 'properties', 'item tables');
+        end
+        
+        function groups = getPropertyGroups(obj)
+        %getPropertyGroups Show on-demand status of manifest item tables
+
+            if ~isscalar(obj) % Should not be a case for singletons...
+                groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+            else                           
+               propListing = obj.getOnDemandPropListing(obj.ON_DEMAND_PROPERTIES);
+               propNameList = string( fieldnames(propListing)' );
+               itemTypeList = obj.ITEM_TYPES;
+
+               for i = 1:numel(propNameList)
+                  thisPropName = propNameList(i);
+                  thisItemType = itemTypeList(i);
+                  
+                  if strcmp(propListing.(thisPropName), '[on demand]')
+                    if obj.cache.IsObjectInCache(obj.getManifestCacheKey(thisItemType))
+                        propListing.(thisPropName) = '[on demand - available in cache]';
+                    else
+                        propListing.(thisPropName) = '[on demand - download required]';
+                    end
+                  end
+               end
+
+               groups = matlab.mixin.util.PropertyGroup(propListing, "");
+            end
+        end
+    end
+
+    methods (Access = protected) % Download tables from allen brain observatory
+        
+        function itemTable = download_item_table(manifest, itemType)
+        % download_item_table Download item table from Allen Brain Observatory dataset
+        %
+        % Usage: 
+        %   itemTable = download_item_table(manifest, itemType) downloads
+        %   the item table for the specified itemType.
+        %
+        %   itemType must be a character vector or a string and must be a
+        %   member of one of the ITEM_TYPES of the concrete manifest.
+            
+            downloadFrom = manifest.DOWNLOAD_FROM(itemType);
+
+            if strcmp(downloadFrom, "")
+                downloadFrom = bot.getPreferences('DownloadFrom');
+            end
+
+            fprintf('Downloading %s table...\n', lower(itemType))
+            
+            if downloadFrom == "API"
+                itemTable = manifest.download_table_from_api(itemType);
+            else
+                itemTable = manifest.download_table_from_s3(itemType);
+            end
+        end
+
+        function dataTable = download_table_from_s3(manifest, itemType)
+        %download_table_from_s3 download item table from ABO S3 bucket
+
+            import bot.internal.enum.URILookup
+
+            mustBeMember(itemType, manifest.ITEM_TYPES) % Sanity check
+            datasetType = char(manifest.DATASET_TYPE);
+
+            strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
+            strCachedFilepath = manifest.cache.CacheFile(strURI, '');
+
+            dataTable = manifest.readS3ItemTable(strCachedFilepath);
+        end
+
+        function dataTable = download_table_from_api(manifest, itemType)
+        %download_table_from_api download item table from ABO api
+
+            import bot.internal.enum.URILookup
+                               
+            mustBeMember(itemType, manifest.ITEM_TYPES) % Sanity check
+            datasetType = char(manifest.DATASET_TYPE);
+
+            if strcmp(itemType, 'Cell')
+                nvPairs = {'SortingAttributeName', "cell_specimen_id"};
+            else
+                nvPairs = {'SortingAttributeName', "id"};
+            end
+
+            strURL = URILookup.API.getItemTableURI(datasetType, itemType);
+            dataTable = manifest.cache.CachedRMAQuery(strURL, nvPairs{:});
+        end
+
+    end
+    
+    methods (Access = protected) % Utility methods for subclasses
+
+        function clearTempTableFromCache(manifest, itemType)
+        %clearTempTableFromCache Clear temporary item table from disk cache
+        %
+        %   clearTempTableFromCache(manifestObj, datasetType, itemType)
+        %       clears temporary table data for specified manifest object 
+        %       and itemType. 
+        
+        %   Note: Try to clear table data as retrieved from both S3 bucket
+        %   and web API.
+
+            import bot.internal.enum.URILookup
+            
+            datasetType = char(manifest.DATASET_TYPE);
+            diskCache = manifest.cache;
+
+            warning('off', 'CloudCacher:URLNotInCache')
+            
+            strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
+            diskCache.ccCache.RemoveURL(strURI)
+            strURI = URILookup.API.getItemTableURI(datasetType, itemType);
+            diskCache.ccCache.RemoveURLsMatchingSubstring(strURI)
+
+            warning('on', 'CloudCacher:URLNotInCache')
+        end
+    
+        function cacheKey = getManifestCacheKey(manifest, itemType)
+        %getManifestCacheKey Get cache key for manifest item type
+        %
+        %   cacheKey = getManifestCacheKey(manifest, itemType) returns a
+        %   character vector representing a key to use in the disk cache
+        %   for a itemtype of the manifest. itemType is a character vector
+        %   and should be one of the ITEM_TYPES for the manifest
+        %
+        %   Example:
+        %       cacheKey = getManifestCacheKey(ephysManifest, "Session")
+        %
+        %       ans =
+        %           'allen_brain_observatory_ephys_sessions_manifest'
+
+            datasetType = char(manifest.DATASET_TYPE);
+
+            cacheKey = sprintf('allen_brain_observatory_%s_%ss_manifest', ...
+                lower(datasetType), lower(itemType));
+        end
+    
+    end
+
     %% STATIC METHODS - PUBLIC
     methods (Static)
 
@@ -224,8 +481,7 @@ classdef Manifest < handle
             
             
         end
-        
+
     end
-    
-    
+
 end
