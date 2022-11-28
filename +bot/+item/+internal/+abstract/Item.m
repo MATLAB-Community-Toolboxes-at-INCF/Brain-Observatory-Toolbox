@@ -75,10 +75,10 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 itemIDSpec = uint32(round(itemIDSpec));
                 
                 manifestTablePrefix = lower(string(obj.DATASET_TYPE));
-                manifestTableSuffix = lower(string(obj.ITEM_TYPE)) + "s"; 
+                manifestTableSuffix = lower(string(obj.ITEM_TYPE)) + "s";
                 
                 manifestTable = obj.manifest.([manifestTablePrefix + "_" + manifestTableSuffix]); %#ok<NBRAK>
-                                               
+                             
                 matchingRow = manifestTable.id == itemIDSpec;
                 manifestTableRow = manifestTable(matchingRow, :);                          
             else
@@ -93,6 +93,11 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         end
     end
     
+    methods
+        function datasetType = getDatasetType(obj)
+            datasetType = char(obj.DATASET_TYPE);
+        end
+    end
     
     
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
