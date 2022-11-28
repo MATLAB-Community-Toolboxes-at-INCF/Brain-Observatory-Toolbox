@@ -1301,7 +1301,7 @@ classdef OphysSession < bot.item.Session
                 nickname char   % One of : SessNWB
             end
             
-            assert(strcmp(nickname, 'SessNWB'), ...
+            assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'SessH5'), ...
                 'Currently only supports files with nickname SessNWB')
             
             experimentId = num2str(obj.id);
@@ -1313,7 +1313,7 @@ classdef OphysSession < bot.item.Session
                     folderPath = 'ophys_experiment_data';
                     fileName = sprintf('%s.nwb', experimentId);
         
-                case 'AnalH5' 
+                case 'SessH5' 
                     folderPath = 'ophys_experiment_analysis';
                     fileName = sprintf('%s_%s_analysis.h5', experimentId, sessionName);
         
