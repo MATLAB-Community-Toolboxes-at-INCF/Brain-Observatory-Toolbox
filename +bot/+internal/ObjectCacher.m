@@ -78,9 +78,13 @@ classdef ObjectCacher < handle
                
             else
                % - Get a new filename for the cache object store
-               [~, strRelativeFilename] = fileparts(tempname());
+               if numel(char(strKey)) > 128 || ~strcmp(strKey, matlab.lang.makeValidName(strKey))
+                   [~, strRelativeFilename] = fileparts(tempname());
+               else
+                   strRelativeFilename = strKey;
+               end
                strRelativeFilename = [strRelativeFilename '.mat'];
-            
+
                % - Convert the filename to a file in the cache
                strCacheFilename = ocObj.CachedFilename(strRelativeFilename);
             end
