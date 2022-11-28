@@ -34,7 +34,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         
         % Where to download data from, i.e web api or s3 bucket
         DownloadFrom        (1,1) string ...
-            {mustBeMember(DownloadFrom, ["API" "S3"])} = "API"
+            {mustBeMember(DownloadFrom, ["API" "S3"])} = "S3"
 
         % Download file or variable (Work in progress).
         DownloadMode        (1,1) string ...
@@ -90,6 +90,22 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         function load(obj)
             S = load(obj.Filename);
             % Todo: Assign each field to obj
+        end
+    end
+
+    methods
+        function reset(obj)            
+            mc = metaclass(obj);
+
+            propertyList = mc.PropertyList( ~[mc.PropertyList.Constant] );
+            propertyNames = string( {propertyList.Name} );
+            propertyDefaultValues = {propertyList.DefaultValue};
+
+            for i = 1:numel(propertyNames)
+                obj.(propertyNames(i)) = propertyDefaultValues{i};
+            end
+
+            obj.save()
         end
     end
 
