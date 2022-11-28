@@ -136,10 +136,10 @@ classdef CloudCacher < handle
                % - Download data from the provided URL and save
                if isempty(secondaryFileUrl)
                   strCacheFilename = downloadFile(strCacheFilename, strURL, ...
-                      'DisplayMode', bot.Preferences.get('DialogMode'));
+                      'DisplayMode', bot.getPreferences('DialogMode'));
                else
                   strCacheFilename = downloadFile(strCacheFilename, secondaryFileUrl, ...
-                      'DisplayMode', bot.Preferences.get('DialogMode'));
+                      'DisplayMode', bot.getPreferences('DialogMode'));
                end
 
                % - Check that we got the complete file

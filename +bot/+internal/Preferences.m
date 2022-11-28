@@ -8,7 +8,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
 %       UseCacheWithS3Mount (logical) : Whether to use cache if working on an AWS cloud computer
 %       CacheDirectory      (string)  : Path to folder for storing cached (downloaded) data
 %       DialogMode          (string)  : How to show dialogs with user. 'Dialog Box' (default) or 'Command Window'
-%       AutodownloadFiles   (logical) : Whether to automatically download files when creating item objects
+%       AutoDownloadFiles   (logical) : Whether to automatically download files when creating item objects
 %       DownloadFrom        (string)  : Where to download data from. 'API' (default) or 'S3', i.e web api or s3 bucket
 %       DownloadMode        (string)  : Download file or variable
 
@@ -30,7 +30,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             {mustBeMember(DialogMode, ["Dialog Box" "Command Window"])} = "Dialog Box" 
         
         % Whether to automatically download files when creating item objects
-        AutodownloadFiles   (1,1) logical = true
+        AutoDownloadFiles   (1,1) logical = true
         
         % Where to download data from, i.e web api or s3 bucket
         DownloadFrom        (1,1) string ...
