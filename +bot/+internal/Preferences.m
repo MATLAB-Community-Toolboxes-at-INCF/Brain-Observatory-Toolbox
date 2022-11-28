@@ -93,7 +93,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         end
     end
 
-    methods
+    methods (Hidden)
         function reset(obj)            
             mc = metaclass(obj);
 
