@@ -27,14 +27,16 @@ classdef (Abstract) OnDemandProps < handle
             %
             % `data` will be the cached property data.
             
+            import bot.item.internal.enum.OnDemandState
+
             % - Check for cached property
-            if ~isfield(self.property_cache, property)
+            if ~isfield(self.property_cache, property) || ...
+                isequal( self.property_cache.(property), OnDemandState.Unavailable )
                 % - Use the access function
-                
                 try 
                     self.property_cache.(property) = fun_access();
-                catch 
-                    self.property_cache.(property) = bot.item.internal.enum.OnDemandState.Unavailable;
+                catch
+                    self.property_cache.(property) = OnDemandState.Unavailable;
                 end
             end
             
@@ -55,7 +57,6 @@ classdef (Abstract) OnDemandProps < handle
     end
     
     methods (Hidden, Access = protected)
-    
         
         function [propListing,onDemandPropList] = getOnDemandPropListing(obj,propSet)
             %Helper for implementing getPropertyGroups
