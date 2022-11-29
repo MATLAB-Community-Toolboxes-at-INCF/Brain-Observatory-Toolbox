@@ -851,6 +851,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function stimulus_presentations = mask_invalid_stimulus_presentations(self, stimulus_presentations)
+            
             arguments
                 self;
                 stimulus_presentations table;
@@ -861,26 +862,28 @@ classdef EphysSession < bot.item.Session
             
             is_numeric = table2array(varfun(@isnumeric, stimulus_presentations(1, :)));
             
-            for nRowIndex = 1:size(stimulus_presentations, 1)
-                sp = stimulus_presentations(nRowIndex, :);
-                id = sp.stimulus_presentation_id;
-                stim_epoch = [sp.start_time, sp.stop_time];
-                
-                for invalid_time_index = 1:size(invalid_times_filt, 1)
-                    it = invalid_times_filt(invalid_time_index, :);
-                    invalid_interval = [it.start_time, it.stop_time];
-                    
-                    if zlclHasOverlap(stim_epoch, invalid_interval)
-                        sp(1, is_numeric) = {nan};
-                        sp(1, ~is_numeric) = {""}; %#ok<STRSCALR>
-                        sp.stimulus_name = "invalid_presentation";
-                        sp.start_time = stim_epoch(1);
-                        sp.stop_time = stim_epoch(2);
-                        sp.stimulus_presentation_id = id;
-                        stimulus_presentations(nRowIndex, :) = sp;
-                    end
-                end
+            % - Replace data on invalidated rows with nan or ""
+            
+            invalid_epochs = [invalid_times_filt.start_time, invalid_times_filt.stop_time];
+            stimulus_epochs_ = [stimulus_presentations.start_time, stimulus_presentations.stop_time];
+
+            is_invalid_epoch = false( size(stimulus_epochs_, 1), 1);
+
+            for i = 1:size(invalid_epochs, 1)
+                is_overlapping = zlclHasOverlap(stimulus_epochs_, invalid_epochs(i,:));
+                is_invalid_epoch(is_overlapping) = true;
             end
+
+            varNames = stimulus_presentations.Properties.VariableNames;
+            replace = ~contains(varNames, {'start_time', 'stop_time', 'stimulus_presentation_id'});
+
+            % Update table rows:
+            stimulus_presentations_new = stimulus_presentations;
+            stimulus_presentations_new(is_invalid_epoch, is_numeric & replace) = {nan};
+            stimulus_presentations_new(is_invalid_epoch, ~is_numeric & replace) = {""}; %#ok<STRSCALR>
+
+            stimulus_presentations_new(is_invalid_epoch, 'stimulus_name') = {"invalid_presentation"}; %#ok<STRSCALR> 
+            stimulus_presentations = stimulus_presentations_new;
         end
         
         % CONSIDER FOR DEPRECATION - Currently unused, not sure if this extra filtering has a use case
@@ -1157,6 +1160,7 @@ end
 indices = arrayfun(fhFind, values);
 end
 
+%zlclBuildTimeWindowDomain
 function domain = zlclBuildTimeWindowWomain(bin_edges, offsets, callback)
 arguments
     bin_edges;
@@ -1168,6 +1172,7 @@ end
 domain = callback(domain + offsets);
 end
 
+
 function stimulus_presentations = zlclRemoveUnusedStimulusPresentationColumns(stimulus_presentations)
 is_string_col = varfun(@isstring, stimulus_presentations(1, :), 'OutputFormat', 'uniform');
 
@@ -1177,6 +1182,7 @@ is_empty_col = is_empty_col | varfun(@(c)all(isequal(c, 'null')), stimulus_prese
 
 stimulus_presentations = stimulus_presentations(:, ~is_empty_col);
 end
+
 
 function intervals = zlclDiffIntervals(array)
 
@@ -1217,7 +1223,6 @@ end
 % error('BOT:NotImplemented', 'This function is not implemented.');
 % end
 
-
 function t = zlclExtractSummaryCountStatistics(index, group)
 % - Extract statistics
 stimulus_condition_id = index.stimulus_condition_id;
@@ -1232,6 +1237,7 @@ spike_sem = spike_std/sqrt(numel(group.spike_count));
 t = table(stimulus_condition_id, unit_id, spike_count, ...
     stimulus_presentation_count, spike_mean, spike_std, spike_sem);
 end
+
 
 function t = zlclExtractSummaryRateStatistics(index, group)
 % - Extract statistics
@@ -1252,14 +1258,14 @@ function is_overlap = zlclHasOverlap(a, b)
 %
 %     Parameters
 %     ----------
-%     a : tuple
+%     a : matrix (n, 2)
 %         start, stop times
-%     b : tuple
+%     b : matrix (n, 2)
 %         start, stop times
 %     Returns
 %     -------
-%     bool : True if overlap, otherwise False
-is_overlap = max(a(1), b(1)) <= min(a(2), b(2));
+%     bool : logical (n, 1) - True if overlap, otherwise False
+    is_overlap = max(a(:,1), b(:,1) ) <= min(a(:,2), b(:,2) );
 end
 
 function source_table = zlclRemoveVarsIfPresent(source_table, variables)
