@@ -93,10 +93,10 @@ classdef CloudCacher < handle
          % Check varargin for optional SecondaryFileUrl (Todo: Add documentation)
          isSecondaryFileArg = cellfun(@(arg) ischar(arg) && strcmp(arg, 'SecondaryFileUrl'), varargin);
          if any( isSecondaryFileArg )
-            secondaryFileUrl = varargin{ find(isSecondaryFileArg) + 1};
+            fileDownloadUrl = varargin{ find(isSecondaryFileArg) + 1};
             %varargin(find(isSecondaryFileArg) + 0:1) = []; Placeholder
          else
-            secondaryFileUrl = '';
+            fileDownloadUrl = strURL;
          end
 
          try
@@ -129,18 +129,13 @@ classdef CloudCacher < handle
                   warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
                end
                
-               fileSizeWeb = bot.util.getWebFileSize(strURL);
+               fileSizeWeb = bot.util.getWebFileSize(fileDownloadUrl);
                C = onCleanup( @(filename, filesize) ...
                    cleanUpFileDownload(strCacheFilename, fileSizeWeb) );
 
                % - Download data from the provided URL and save
-               if isempty(secondaryFileUrl)
-                  strCacheFilename = downloadFile(strCacheFilename, strURL, ...
-                      'DisplayMode', bot.getPreferences('DialogMode'));
-               else
-                  strCacheFilename = downloadFile(strCacheFilename, secondaryFileUrl, ...
-                      'DisplayMode', bot.getPreferences('DialogMode'));
-               end
+              strCacheFilename = downloadFile(strCacheFilename, fileDownloadUrl, ...
+                  'DisplayMode', bot.getPreferences('DialogMode'));
 
                % - Check that we got the complete file
                fileSizeWeb = bot.util.getWebFileSize(strURL);
