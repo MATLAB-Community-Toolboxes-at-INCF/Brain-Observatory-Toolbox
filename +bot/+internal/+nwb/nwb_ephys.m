@@ -113,6 +113,28 @@ classdef nwb_ephys < handle
          % - Add an id column
          all_epochs_table.id = [0:size(all_epochs_table, 1)-1]';
       end
+
+      function num_stimulus_presentations = fetch_num_stimulus_presentations(self)
+         % fetch_num_stimulus_presentations - Return the number of stimulus presentations from the NWB file
+
+         strRoot = '/intervals';
+         datasetInfo = h5info(self.strFile, strRoot);
+         %all_epoch_names = string({datasetInfo.Groups.Name});
+         
+         % Each datasetGroup represents stimulus presentations from 1 out of 9
+         % categories.
+         datasetGroups = [datasetInfo.Groups];
+         groupNames = {datasetGroups.Name};
+         
+         keep = ~strcmp( groupNames, '/intervals/invalid_times');
+        
+         datasetStructArray = arrayfun(@(a) [a.Datasets], datasetGroups(keep), 'UniformOutput', 0);
+         %datasetNameArray = cellfun(@(c) {c.Name}, datasetStructArray, 'UniformOutput', 0);
+         
+          % Note: All datasets within a group has the same lenght / number of samples
+         datasetLengths = cellfun(@(c) c(1).Dataspace.Size, datasetStructArray, 'UniformOutput', 1);
+         num_stimulus_presentations = sum(datasetLengths);
+      end
       
       function stimulus_presentations = fetch_stimulus_presentations(self)
          % fetch_stimulus_presentations - Return the stimulus table from the NWB file
@@ -488,23 +510,3 @@ function source_table = removevars_ifpresent(source_table, variables)
    end
 end
 
-
-function num_presentations = count_num_stimulus_presentations(datasetInfo)
-
-%all_epoch_names = string({datasetInfo.Groups.Name});
-
-% Each datasetGroup represents stimulus presentations from 1 out of 9
-% categories.
-datasetGroups = [datasetInfo.Groups];
-groupNames = {datasetGroups.Name};
-
-keep = ~strcmp( groupNames, '/intervals/invalid_times');
-
-datasetStructArray = arrayfun(@(a) [a.Datasets], datasetGroups(keep), 'UniformOutput', 0);
-%datasetNameArray = cellfun(@(c) {c.Name}, datasetStructArray, 'UniformOutput', 0);
-
-datasetLengths = cellfun(@(c) c(1).Dataspace.Size, datasetStructArray, 'UniformOutput', 1);
-num_presentations = sum(datasetLengths);
-
-% Note: All datasets within a group has the same lenght / number of samples
-end
