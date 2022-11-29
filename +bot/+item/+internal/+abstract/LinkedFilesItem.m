@@ -311,11 +311,15 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       end
 
       function tf = retrieveFileFromS3Bucket(~)
-          tf = strcmp( bot.Preferences.get('DownloadFrom'), 'S3');
+          tf = bot.getPreferences('DownloadFrom') == 'S3';
       end
 
       function tf = useCloudCacher(~)
-         tf = bot.Preferences.get('UseCacheOnCloud');
+         if obj.isS3BucketMounted()
+            tf = bot.getPreferences('UseCacheWithS3Mount');
+         else
+            tf = true; % Always use cloud cacher when s3 bucket is not mounted
+         end
       end
 
       function s3Filepath = getS3Filepath(obj, nickname, localMount)
