@@ -864,8 +864,13 @@ classdef EphysSession < bot.item.Session
             is_numeric = table2array(varfun(@isnumeric, stimulus_presentations(1, :)));
             
             % - Replace data on invalidated rows with nan or ""
+            if ~isempty(invalid_times_filt)
+                invalid_epochs = [invalid_times_filt.start_time, invalid_times_filt.stop_time];
+            else
+                % not all session have invalid times / epochs
+                invalid_epochs = [];
+            end
             
-            invalid_epochs = [invalid_times_filt.start_time, invalid_times_filt.stop_time];
             stimulus_epochs_ = [stimulus_presentations.start_time, stimulus_presentations.stop_time];
 
             is_invalid_epoch = false( size(stimulus_epochs_, 1), 1);

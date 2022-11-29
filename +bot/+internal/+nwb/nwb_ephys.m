@@ -437,11 +437,25 @@ classdef nwb_ephys < handle
       end
       
       function invalid_times = fetch_invalid_times(self)
-         invalid_times = bot.internal.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
-         invalid_times.tags = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
-            '/intervals/invalid_times/tags', '/intervals/invalid_times/tags_index');
+         if self.has_invalid_times()
+            invalid_times = bot.internal.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
+            invalid_times.tags = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
+                '/intervals/invalid_times/tags', '/intervals/invalid_times/tags_index');
+         else
+            invalid_times = [];
+         end
       end
-      
+
+      function tf = has_invalid_times(self)
+      %has_invalid_times Check if '/intervals/invalid_times' is present in nwb file  
+         datasetInfo = h5info(self.strFile, '/intervals');
+
+         datasetGroups = [datasetInfo.Groups];
+         groupNames = {datasetGroups.Name};
+         
+         tf = any( strcmp( groupNames, '/intervals/invalid_times') );
+      end
+
       function im = fetch_image(self, name, module, image_api)
          error('BOT:NotImplemented', 'This method is not implemented');
          %         if image_api is None:
