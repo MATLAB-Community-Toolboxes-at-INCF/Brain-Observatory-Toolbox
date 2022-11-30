@@ -114,6 +114,18 @@ classdef nwb_ephys < handle
          all_epochs_table.id = [0:size(all_epochs_table, 1)-1]';
       end
 
+      function presentation_names = fetch_stimulus_presentation_names(self)
+         % - Get a list of all epochs in the NWB file
+         strRoot = '/intervals';
+         sEpochsInfo = h5info(self.strFile, strRoot);
+         presentation_names = string({sEpochsInfo.Groups.Name});
+         
+         presentation_names = replace(presentation_names, '/intervals/', '');
+         presentation_names = replace(presentation_names, '_presentations', '');
+         presentation_names = replace(presentation_names, 'invalid_times', 'invalid_presentation');
+         presentation_names = transpose(presentation_names);
+      end
+
       function num_stimulus_presentations = fetch_num_stimulus_presentations(self)
          % fetch_num_stimulus_presentations - Return the number of stimulus presentations from the NWB file
 

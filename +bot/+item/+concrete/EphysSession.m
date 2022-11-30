@@ -151,8 +151,9 @@ classdef EphysSession < bot.item.Session
         end
         
         function stimulus_names = get.stimulus_names(self)
+            n = self.nwbLocal;
             stimulus_names = self.fetch_cached('stimulus_names', ...
-                @(x) unique(self.stimulus_presentations.stimulus_name));
+                @()n.fetch_stimulus_presentation_names());
         end
         
         function structure_acronyms = get.structure_acronyms(self)
