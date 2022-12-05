@@ -407,10 +407,9 @@ classdef cache < handle
             % he/she wants to configure a custom folder for downloaded
             % data.
             promptMessage = sprintf(['This is the first time you run ', ...
-                'the Brain Observatory Toolbox. Do you want to ', ...
-                'configure a directory for saving downloaded data?\n\n', ...
-                'If you select "No", data will be downloaded to the ', ...
-                'following directory:\n \\bf%s'], factoryCacheDir);
+                'the Brain Observatory Toolbox. This toolbox will download ' ...
+                'and cache data in the following directory:' ...
+                '\n \\bf%s'], factoryCacheDir);
 
             % - Format the message with a bigger font size (Todo; should depend on screen resolution...)
             %formattedMessage = strcat('\fontsize{14}', promptMessage);
@@ -419,20 +418,20 @@ classdef cache < handle
             % - Fix some characters that are interpreted as tex markup
             formattedMessage = strrep(formattedMessage, '_', '\_');
             titleMessage = 'Select Download Directory for Data?'; 
-
+            choices = {'Continue', 'Change Cache Directory...'};
             % - Use the tex-interpreter for displaying the prompt message.
-            opts = struct('Default', 'Yes', 'Interpreter', 'tex');
+            opts = struct('Default', 'Continue', 'Interpreter', 'tex');
             
             % - Present the question to the user
-            answer = questdlg(formattedMessage, titleMessage, opts);
+            answer = questdlg(formattedMessage, titleMessage, choices{:}, opts);
             
             % - Handle answer
             switch answer
-                case 'Yes'
-                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
-                case 'No'
+                case 'Continue'
                     strCacheDir = factoryCacheDir;
-                case 'Cancel'
+                case 'Change Cache Directory...'
+                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
+                otherwise
                     error('BOT:InitializeCacheDirectory', ...
                         'User canceled during configuration of a preferred cache directory.')
             end
