@@ -32,19 +32,6 @@ classdef cache < handle
             %
             % Usage: oCache = bot.internal.cache(<strCacheDir>)
             
-            % - Check if a cache directory has been provided
-            if ~exist('strCacheDir', 'var') || isempty(strCacheDir)
-                if ~oCache.HasPreferredCacheDirectory()
-                    strCacheDir = oCache.InitializePreferredCacheDirectory();
-                else
-                    strCacheDir = oCache.GetPreferredCacheDirectory();
-                end
-            else
-                % strCacheDir is provided and is not empty!
-            end
-
-            oCache.strCacheDir = strCacheDir;
-
             % - Find and return the global cache object, if one exists
             sUserData = get(0, 'UserData');
             if isfield(sUserData, 'BOT_GLOBAL_CACHE') && ...
@@ -58,6 +45,19 @@ classdef cache < handle
                 return;
             end
             
+            % - Check if a cache directory has been provided
+            if ~exist('strCacheDir', 'var') || isempty(strCacheDir)
+                if ~oCache.HasPreferredCacheDirectory()
+                    strCacheDir = oCache.InitializePreferredCacheDirectory();
+                else
+                    strCacheDir = oCache.GetPreferredCacheDirectory();
+                end
+            else
+                % strCacheDir is provided and is not empty!
+            end
+
+            oCache.strCacheDir = strCacheDir;
+
             %% - Set up a cache object, if no object exists
             
             % - Ensure the cache directory exists
