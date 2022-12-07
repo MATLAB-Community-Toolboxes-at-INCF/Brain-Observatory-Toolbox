@@ -1,4 +1,4 @@
-% Brain-Observatory-Toolbox
+% Brain Observatory Toolbox
 % Version 0.9.3 (R2022a) 15-dec-2022
 %
 % Copyright (c) 2017, Ethan Meyers
@@ -14,3 +14,23 @@
 % 
 % Learn how to use the Brain Observatory Toolbox with the 
 % <a href="matlab:open EphysTutorial" style="font-weight:bold">EphysTutorial</a>, <a href="matlab:open OphysTutorial" style="font-weight:bold">OphysTutorial</a> & <a href="matlab:open BehaviorTutorial" style="font-weight:bold">BehaviorTutorial</a>
+%
+%
+%   Fetching item information:
+%     bot.fetchExperiments   - List information about all experiments (Ophys)
+%     bot.fetchSessions      - List information about all sessions (Ephys & Ophys)
+%     bot.fetchProbes        - List information about all probes (Ephys)
+%     bot.fetchChannels      - List information about all channels (Ephys)
+%     bot.fetchUnits         - List information about all units (Ephys)
+%     bot.fetchCells         - List information about all cells (Ophys)
+%   
+%   Getting item objects:
+%     bot.experiment         - Get item(s) representing experiments (Ophys)
+%     bot.session            - Get item(s) representing sessions (Ephys & Ophys)
+%     bot.probe              - Get item(s) representing probes (Ephys)
+%     bot.channel            - Get item(s) representing channels (Ephys)
+%     bot.unit               - Get item(s) representing units (Ephys)
+%     bot.cell               - Get item(s) representing cells (Ophys)
+%
+%   Get preferences for the toolbox:
+%     bot.getPreferences     - Get a preference singleton object. 
