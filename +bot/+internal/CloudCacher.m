@@ -41,6 +41,9 @@ classdef CloudCacher < handle
          if ~isfolder(ccObj.strCacheDir)
             mkdir(ccObj.strCacheDir);
          end
+
+         % - Initialize manifest
+         ccObj.mapCachedData = containers.Map();
          
          % - Does a saved cache manifest exist?
          ccObj.strManifestFile = fullfile(ccObj.strCacheDir, 'CC_manifest.mat');

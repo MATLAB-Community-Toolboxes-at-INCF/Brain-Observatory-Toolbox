@@ -41,6 +41,9 @@ classdef ObjectCacher < handle
          if ~isfolder(ocObj.strCacheDir)
             mkdir(ocObj.strCacheDir);
          end
+                  
+         % - Initialize manifest
+         ocObj.mapCachedData = containers.Map();
          
          % - Does a saved cache manifest exist?
          ocObj.strManifestFile = fullfile(ocObj.strCacheDir, 'OC_manifest.mat');
