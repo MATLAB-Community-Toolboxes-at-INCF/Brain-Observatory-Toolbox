@@ -6,6 +6,9 @@ classdef S3Bucket < bot.internal.abstract.FileResource
 %
 %   The class is implemented as a singleton
 
+% Todo: Use the manifest.json in the ABO S3 root dataset folder to map
+% varables to filenames / file expressions
+
     properties (Constant)
         BucketName = "allen-brain-observatory"
         RegionCode = "us-west-2"
@@ -20,7 +23,7 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         S3BaseUrl = "https://allen-brain-observatory.s3.us-west-2.amazonaws.com"
         
         % Directory path if S3 bucket is mounted as a local file system     % Todo: Should this be a preference instead?
-        S3LocalMount = fullfile("/home", "ubuntu", "s3-allen")
+        S3LocalMount = fullfile("/home", "ubuntu", "s3-allen") % Todo: Should get from preferences
 
         % Folder in the S3 bucket for ephys data or ophys
         S3DataFolder = struct(...
@@ -49,9 +52,10 @@ classdef S3Bucket < bot.internal.abstract.FileResource
     end
 
     methods % Public methods
-        function tf = isMounted(obj)
+        function tf = isMounted(~)
         %isMounted Determine if s3 bucket is mounted as local file system
-            tf = obj.existLocalMount();
+            tf = bot.getPreferences('UseLocalS3Mount') && ...
+                isfolder( bot.getPreferences('S3MountDirectory') );
         end
 
         function strURI = getDataFileURI(obj, itemObject, fileNickname, varargin)
@@ -116,10 +120,7 @@ classdef S3Bucket < bot.internal.abstract.FileResource
     end
 
     methods (Hidden, Access = protected)
-        function tf = existLocalMount(obj)
-            tf = isfolder( obj.S3LocalMount );
-        end
-        
+
         function tf = retrieveFileFromS3Bucket(~)
             tf = bot.getPreferences('DownloadFrom') == "S3";
         end

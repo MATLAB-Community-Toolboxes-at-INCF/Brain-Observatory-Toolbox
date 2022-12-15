@@ -46,7 +46,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    
    properties (Constant, Hidden)
       % Path if ABO S3 bucket is mounted on AWS EC2 (cloud computer) 
-      S3_ROOT_PATH = fullfile('/home', 'ubuntu', 's3-allen')
+      S3_ROOT_PATH = fullfile('/home', 'ubuntu', 's3-allen') % Todo: get from preferences instead
       
       % Web URL for the ABO S3 bucket
       S3_BASE_URL = "https://allen-brain-observatory.s3.us-west-2.amazonaws.com"
@@ -306,15 +306,16 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    %% METHODS - S3 FILE RETRIEVAL
    
    methods (Hidden, Access = protected)
-      function tf = isS3BucketMounted(obj)
-         tf = isfolder( obj.S3_ROOT_PATH );
+      function tf = isS3BucketMounted(~)
+         tf = bot.getPreferences('UseLocalS3Mount') && ...
+             isfolder( bot.getPreferences('S3MountDirectory') );
       end
 
       function tf = retrieveFileFromS3Bucket(~)
           tf = bot.getPreferences('DownloadFrom') == 'S3';
       end
 
-      function tf = useCloudCacher(~)
+      function tf = useCloudCacher(obj)
          if obj.isS3BucketMounted()
             tf = bot.getPreferences('UseCacheWithS3Mount');
          else
