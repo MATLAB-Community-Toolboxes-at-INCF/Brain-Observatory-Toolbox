@@ -10,7 +10,7 @@ classdef ObjectCacher < handle
       strCacheDir;                        % File directory in which data is cached
       strManifestFile;                    % .mat file containing the cache manifest
       bTemporaryCache = false;            % Boolean flag: should cache be deleted on variable deletion?
-      mapCachedData = containers.Map();   % Map containing objects that have been cached, maps to cache-relative filenames
+      mapCachedData containers.Map        % Map containing objects that have been cached, maps to cache-relative filenames
    end
    
    properties (SetAccess = immutable)
