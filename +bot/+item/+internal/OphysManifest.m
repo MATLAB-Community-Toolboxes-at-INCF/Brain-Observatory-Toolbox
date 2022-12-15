@@ -7,9 +7,9 @@
 % Item tables contain overview information about individual items belonging 
 % to the dataset and tables for the following item types are available:
 %
-%       Experiments  : Container for multiple experimenal sessions
-%       Sessions     : Experimental sessions
-%       Cells        : Recorded neurons
+%       ophys_experiments  : Container for multiple experimenal sessions
+%       ophys_sessions     : Experimental sessions
+%       ophys_cells        : Recorded neurons
 %   
 %
 % USAGE:
@@ -19,7 +19,7 @@
 % >> bom = bot.item.internal.OphysManifest.instance()
 %
 % Get information about all OPhys experimental sessions:
-% >> bom.Sessions
+% >> bom.ophys_sessions
 % ans =
 %      date_of_acquisition      experiment_container_id    fail_eye_tracking  ...
 %     ______________________    _______________________    _________________  ...
@@ -32,7 +32,7 @@
 % >> bom.UpdateManifests()
 %
 % Access data from an experimental session:
-% >> nSessionID = bom.Sessions(1, 'id');
+% >> nSessionID = bom.ophys_sessions(1, 'id');
 % >> bos = bot.session(nSessionID)
 % bos =
 %   ophyssession with properties:
@@ -60,18 +60,18 @@ classdef OphysManifest < bot.item.internal.Manifest
         ophys_cells         % Table of all OPhys cells
     end
 
-% % %     properties (SetAccess = private, Dependent = true)
-% % %         Experiments   % Table of all OPhys experiment containers
-% % %         Sessions      % Table of all OPhys experimental sessions
-% % %         Cells         % Table of all OPhys cells
-% % %     end
+% %     properties (SetAccess = private, Dependent = true) % Todo: rename?
+% %         Experiments   % Table of all OPhys experiment containers
+% %         Sessions      % Table of all OPhys experimental sessions
+% %         Cells         % Table of all OPhys cells
+% %     end
 
     properties (Constant, Access = protected, Hidden)
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
         ITEM_TYPES = ["Experiment", "Session", "Cell"]
         DOWNLOAD_FROM = containers.Map(...
             bot.item.internal.OphysManifest.ITEM_TYPES, ...
-            ["S3", "S3", ""])
+            ["API", "API", ""])
     end
     
     %% Constructor

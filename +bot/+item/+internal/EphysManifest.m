@@ -6,10 +6,10 @@
 %
 % Item tables contain overview information about individual items belonging 
 % to the dataset and tables for the following item types are available:
-%   Session     : Experimental sessions
-%   Probe       : Neuropixels probes
-%   Channel     : Recording channel of a probe
-%   Unit        : Functional unit as detected by spike sorting
+%   ephys_sessions     : Experimental sessions
+%   ephys_probes       : Neuropixels probes
+%   ephys_channels     : Recording channel of a probe
+%   ephys_units        : Functional unit as detected by spike sorting
 %
 %
 % USAGE:
@@ -59,12 +59,12 @@ classdef EphysManifest < bot.item.internal.Manifest
         ephys_units        % Table of all EPhys units
     end
 
-% % %     properties (SetAccess = private, Dependent = true)
-% % %         Sessions     % Table of all EPhys experimental sessions
-% % %         Probes       % Table of all EPhys probes
-% % %         Channels     % Table of all EPhys channels
-% % %         Units        % Table of all EPhys units
-% % %     end
+% %     properties (SetAccess = private, Dependent = true) % Todo: rename?
+% %         Sessions     % Table of all EPhys experimental sessions
+% %         Probes       % Table of all EPhys probes
+% %         Channels     % Table of all EPhys channels
+% %         Units        % Table of all EPhys units
+% %     end
         
     properties (Constant, Access=protected, Hidden)
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;

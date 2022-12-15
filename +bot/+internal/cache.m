@@ -168,7 +168,7 @@ classdef cache < handle
                 strSecondaryFilePath = ""           % Path or URL to retrieve file from secondary location (alternative to primary location)
                 options.RetrievalMode = "Download"  % Mode for file retrieval if file is not in cache. Options: 'Download' or 'Copy'
             end
-
+            
             if options.RetrievalMode == "Copy" && strSecondaryFilePath ~= ""
                 strFile = oCache.ccCache.copyfile(strFileURL, strLocalFile, strSecondaryFilePath);
             else
@@ -348,11 +348,22 @@ classdef cache < handle
             end
         end
         
-        function resetCache()
-            messageStr = 'This will delete all the cached files. Are you sure you want to continue?';
-            answer = questdlg(messageStr, 'Please confirm');
+        function resetCache(mode)
+                        
+            arguments
+                % Extra layer of precaution
+                mode (1,1) string = "ask" % "ask" || "force"
+            end
 
-            % Todo:
+            if strcmp(mode, "ask")
+                messageStr = 'This will delete all the cached files. Are you sure you want to continue?';
+                answer = questdlg(messageStr, 'Please confirm');
+            elseif strcmp(mode, "force")
+                answer = 'Yes';
+            else
+                error("Invalid input")
+            end
+
             % Remove cache folder from path
             switch answer
                 case 'Yes'
