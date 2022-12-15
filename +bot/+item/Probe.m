@@ -153,7 +153,7 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
                 obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);
 
                 % Assign linked Item objects (upstream)
-                obj.session = bot.session(obj.info.ephys_session_id);
+                obj.session = bot.session(obj.info.ephys_session_id, "ephys");
 
                 % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
                 obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));
