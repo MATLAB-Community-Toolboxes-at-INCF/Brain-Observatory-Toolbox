@@ -52,7 +52,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
             for itemType = manifest.ITEM_TYPES
                 propName = lower(string(manifest.DATASET_TYPE)) + "_" + lower(itemType) + "s";
-                manifest.(propName)
+                manifest.(propName);
 
                 % Suggested upgrade:
                 %manifest.(itemType+"s");
@@ -186,7 +186,18 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             datasetType = char(manifest.DATASET_TYPE);
 
             strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
-            strCachedFilepath = manifest.cache.CacheFile(strURI, '');
+            objURI = matlab.net.URI(strURI);
+            
+            switch objURI.Scheme
+                case 'file'
+                    strCachedFilepath = objURI.EncodedPath; % Uncached
+                case 's3'
+                    strCachedFilepath = manifest.cache.CacheFile(strURI, '', '', 'RetrievalMode', "Copy");
+                case 'https'
+                    strCachedFilepath = manifest.cache.CacheFile(strURI, '');
+            end
+            % Todo: Consider to move the logic above into cache/CacheFile,
+            % but need to also adapt LinkedFilesItem to use URILookup first
 
             dataTable = manifest.readS3ItemTable(strCachedFilepath);
         end
