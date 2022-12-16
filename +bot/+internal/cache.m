@@ -370,7 +370,9 @@ classdef cache < handle
                     bot.internal.cache.clearInMemoryCache(true)
 
                     cacheDirectory = bot.internal.cache.GetPreferredCacheDirectory();
+                    warning('off', 'MATLAB:rmpath:DirNotFound')
                     rmpath(genpath(cacheDirectory)); savepath
+                    warning('on', 'MATLAB:rmpath:DirNotFound')
                     rmdir(cacheDirectory, 's')
                     mkdir(cacheDirectory)
                     addpath(genpath(cacheDirectory)); savepath
