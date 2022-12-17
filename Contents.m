@@ -4,8 +4,8 @@
 % Copyright (c) 2017, Ethan Meyers
 % ----------------------------------
 %
-% A MATLAB toolbox for accessing and using the neural recording 
-% public datasets from the Allen Brain Observatory.
+% A MATLAB toolbox for accessing and using the public neural 
+% recording datasets from the Allen Brain Observatory.
 % 
 % Get started with the <a href="matlab:open EphysQuickstart" style="font-weight:bold">EphysQuickstart</a> & <a href="matlab:open OphysQuickstart" style="font-weight:bold">OphysQuickstart</a> guides.
 % 
