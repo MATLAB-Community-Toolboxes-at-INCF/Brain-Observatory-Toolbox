@@ -1,18 +1,27 @@
 classdef Preferences < matlab.mixin.CustomDisplay & handle
 %Preferences for the Brain Observatory Toolbox 
 %
-%       Preference names                Description
-%       -------------------------       ---------------------------------------
+%       Preference name                 Description
+%       -----------------------------   ---------------------------------------
+%       DownloadFrom        (string)  : Where to download data from. 'S3' (default) or 'API', i.e AWS S3 bucket or web API
+%       CacheDirectory      (string)  : Path to folder for storing cached (downloaded) data
 %       UseLocalS3Mount     (logical) : Whether S3 bucket is mounted as a local file system
 %       S3MountDirectory    (string)  : Path to directory where S3 bucket is mounted locally
 %       UseCacheWithS3Mount (logical) : Whether to use cache if working on an AWS cloud computer
-%       CacheDirectory      (string)  : Path to folder for storing cached (downloaded) data
 %       DialogMode          (string)  : How to show dialogs with user. 'Dialog Box' (default) or 'Command Window'
+
+%       Suggestions for new preferences (Todo)
 %       AutoDownloadFiles   (logical) : Whether to automatically download files when creating item objects
-%       DownloadFrom        (string)  : Where to download data from. 'API' (default) or 'S3', i.e web api or s3 bucket
 %       DownloadMode        (string)  : Download file or variable
 
     properties
+        % Where to download data from, i.e web api or S3 bucket (AWS)
+        DownloadFrom        (1,1) string ...
+            {mustBeMember(DownloadFrom, ["API" "S3"])} = "S3"
+        
+        % Directory for local caching of downloaded data and files
+        CacheDirectory      (1,1) string = "" 
+
         % Whether S3 bucket is mounted as a local file system
         UseLocalS3Mount     (1,1) logical = false
         
@@ -20,25 +29,20 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         S3MountDirectory    (1,1) string  = ""
         
         % Whether to use cache if working on an AWS cloud computer
-        UseCacheWithS3Mount (1,1) logical = false
-
-        % Directory for local caching of downloaded data and files
-        CacheDirectory      (1,1) string = "" %{mustBeFolder(CacheDirectory)} = ""   
+        UseCacheWithS3Mount (1,1) logical = true
         
         % How to show dialogs with user. Options: Dialog Box or Command Window
         DialogMode          (1,1) string ...
             {mustBeMember(DialogMode, ["Dialog Box" "Command Window"])} = "Dialog Box" 
-        
-        % Whether to automatically download files when creating item objects
-        AutoDownloadFiles   (1,1) logical = true
-        
-        % Where to download data from, i.e web api or s3 bucket
-        DownloadFrom        (1,1) string ...
-            {mustBeMember(DownloadFrom, ["API" "S3"])} = "S3"
-
-        % Download file or variable (Work in progress).
-        DownloadMode        (1,1) string ...
-            {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
+     
+% %         Suggestions for new preferences (Todo):
+% % 
+% %         % Whether to automatically download files when creating item objects
+% %         AutoDownloadFiles   (1,1) logical = true
+% %         
+% %         % Download file or variable (Work in progress).
+% %         DownloadMode        (1,1) string ...
+% %             {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
     end
 
     properties (Constant, Access = private)
@@ -56,7 +60,6 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             msg = sprintf('Cache folder changed to: %s', obj.CacheDirectory);
             fprintf('%s\n', msg)
             obj.save()
-            %bot.internal.Logger.inform(msg, 'Updated Preferences')
         end
     end
     
@@ -85,11 +88,6 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
 
         function save(obj)
             save(obj.Filename, 'obj');
-        end
-
-        function load(obj)
-            S = load(obj.Filename);
-            % Todo: Assign each field to obj
         end
     end
 

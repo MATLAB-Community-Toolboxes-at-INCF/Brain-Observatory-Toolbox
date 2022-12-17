@@ -454,6 +454,13 @@ classdef cache < handle
             prefs.CacheDirectory = strCacheDir;
         end
         
+        function ResolveMissingCacheDirectory()
+                error('BOT:PreferredCacheDirectoryMissing', ...
+                    'The preferred cache directory is unavailable:\n%s', strCacheDir)
+
+
+        end
+
         function strCacheDir = GetFactoryCacheDirectory()
         %GetFactoryCacheDirectory Get the BOT default (factory) cache directory    
             strBOTDir = fileparts(which('bot.fetchSessions'));
@@ -467,25 +474,19 @@ classdef cache < handle
             strCacheDir = bot.util.getPreferenceValue('CacheDirectory');
             
             if ~isfolder(strCacheDir)
+                strCacheDir = bot.internal.cache.ResolveMissingCacheDirectory();
                 error('BOT:PreferredCacheDirectoryMissing', ...
                     'The preferred cache directory is unavailable:\n%s', strCacheDir)
+                
+                if isempty(strCacheDir)
+                    error('BOT:PreferredCacheDirectoryMissing', ...
+                          'Cache directory is unavailable.')
+                end
             end
 
             % Add suggested actions?
             % Do you want to set a new cache directory?
 
-        end
-
-        function SetPreferredCacheDirectory(strCacheDir)
-        %SetPreferredCacheDirectory Set the preferred cache directory in
-        %the BrainObservatoryToolbox preferences.
-        %
-        %   Usage: bot.internal.cache.SetPreferredCacheDirectory(strCacheDir)
-        %
-        %   `strCacheDir` is a string specifying the path for a directory
-        %   to use as the preferred directory for downloaded data (cache).
-
-            setpref('BrainObservatoryToolbox', 'CacheDirectory', strCacheDir)
         end
 
         function strCacheDir = UiGetCacheDirectory()
