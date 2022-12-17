@@ -165,7 +165,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             downloadFrom = manifest.DOWNLOAD_FROM(itemType);
 
             if strcmp(downloadFrom, "")
-                downloadFrom = bot.getPreferences('DownloadFrom');
+                downloadFrom = bot.util.getPreferenceValue('DownloadFrom');
             end
 
             fprintf('Downloading %s table...\n', lower(itemType))

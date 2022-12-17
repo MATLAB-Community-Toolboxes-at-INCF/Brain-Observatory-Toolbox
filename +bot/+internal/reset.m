@@ -4,6 +4,6 @@ function reset(mode)
         mode (1,1) string = "ask" % "ask" || "force"
     end
     bot.internal.cache.resetCache(mode)
-    prefs = bot.getPreferences;
+    prefs = bot.getPreferences();
     prefs.reset()
 end

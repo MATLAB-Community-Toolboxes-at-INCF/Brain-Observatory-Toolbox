@@ -307,17 +307,17 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    
    methods (Hidden, Access = protected)
       function tf = isS3BucketMounted(~)
-         tf = bot.getPreferences('UseLocalS3Mount') && ...
-             isfolder( bot.getPreferences('S3MountDirectory') );
+         tf = bot.util.getPreferenceValue('UseLocalS3Mount') && ...
+             isfolder( bot.util.getPreferenceValue('S3MountDirectory') );
       end
 
       function tf = retrieveFileFromS3Bucket(~)
-          tf = bot.getPreferences('DownloadFrom') == 'S3';
+          tf = bot.util.getPreferenceValue('DownloadFrom') == 'S3';
       end
 
       function tf = useCloudCacher(obj)
          if obj.isS3BucketMounted()
-            tf = bot.getPreferences('UseCacheWithS3Mount');
+            tf = bot.util.getPreferenceValue('UseCacheWithS3Mount');
          else
             tf = true; % Always use cloud cacher when s3 bucket is not mounted
          end

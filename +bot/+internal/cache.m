@@ -320,7 +320,7 @@ classdef cache < handle
             if ~force
                 message = 'This will clear the cache from memory, but will keep the cache on storage. Are you sure you want to continue?';
                 
-                switch bot.getPreferences('DialogMode')
+                switch bot.util.getPreferenceValue('DialogMode')
                     case "Dialog Box"
                         answer = questdlg(message, 'Please Confirm');
                     case "Command Window"
@@ -384,7 +384,7 @@ classdef cache < handle
     methods (Static, Access = private)
         function tf = HasPreferredCacheDirectory()
         %HasPreferredCacheDirectory Check if a preferred cache directory exists
-            prefCacheDirectory = bot.getPreferences('CacheDirectory');
+            prefCacheDirectory = bot.util.getPreferenceValue('CacheDirectory');
             tf = prefCacheDirectory ~= "";
         end
 
@@ -464,7 +464,7 @@ classdef cache < handle
         %GetPreferredCacheDirectory Get the preferred cache directory from
         %the BrainObservatoryToolbox preferences.
 
-            strCacheDir = bot.getPreferences('CacheDirectory');
+            strCacheDir = bot.util.getPreferenceValue('CacheDirectory');
             
             if ~isfolder(strCacheDir)
                 error('BOT:PreferredCacheDirectoryMissing', ...

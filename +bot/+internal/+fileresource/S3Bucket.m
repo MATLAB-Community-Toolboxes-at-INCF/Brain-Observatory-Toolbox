@@ -54,8 +54,8 @@ classdef S3Bucket < bot.internal.abstract.FileResource
     methods % Public methods
         function tf = isMounted(~)
         %isMounted Determine if s3 bucket is mounted as local file system
-            tf = bot.getPreferences('UseLocalS3Mount') && ...
-                isfolder( bot.getPreferences('S3MountDirectory') );
+            tf = bot.util.getPreferenceValue('UseLocalS3Mount') && ...
+                isfolder( bot.util.getPreferenceValue('S3MountDirectory') );
         end
 
         function strURI = getDataFileURI(obj, itemObject, fileNickname, varargin)
@@ -122,15 +122,15 @@ classdef S3Bucket < bot.internal.abstract.FileResource
     methods (Hidden, Access = protected)
 
         function tf = retrieveFileFromS3Bucket(~)
-            tf = bot.getPreferences('DownloadFrom') == "S3";
+            tf = bot.util.getPreferenceValue('DownloadFrom') == "S3";
         end
         
         function tf = useCloudCacher(~)
-            tf = bot.getPreferences('UseCacheWithS3Mount');
+            tf = bot.util.getPreferenceValue('UseCacheWithS3Mount');
         end
 
         function tf = useS3Protocol(~)
-            tf = strcmp( bot.getPreferences('DownloadMode'), 'Variable');
+            tf = strcmp( bot.util.getPreferenceValue('DownloadMode'), 'Variable');
         end
     end
 
