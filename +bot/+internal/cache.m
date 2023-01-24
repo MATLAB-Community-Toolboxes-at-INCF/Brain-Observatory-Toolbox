@@ -437,7 +437,7 @@ classdef cache < handle
             switch answer
                 case 'Locate...'
                     strCacheDir = bot.internal.cache.UiGetCacheDirectory();
-                case 'Recreate'
+                case 'Reinitialize'
                     mkdir(strCacheDir);
                 otherwise
                     strCacheDir = '';
