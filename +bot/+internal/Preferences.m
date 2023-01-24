@@ -81,8 +81,12 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
 
         function obj = Preferences()
             if isfile(obj.Filename)
-                S = load(obj.Filename);
-                obj = S.obj;
+                try
+                    S = load(obj.Filename);
+                    obj = S.obj;
+                catch
+                    warning('Could not load preferences, using defaults')
+                end
             end
         end
 
@@ -138,7 +142,6 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     methods (Access = protected) % Overrides CustomDisplay methods
 
         function str = getHeader(obj)
-            %className = class(obj);
             helpLink = sprintf('<a href="matlab:help bot.internal.Preferences" style="font-weight:bold">%s</a>', 'Preferences');
             str = sprintf('%s for the Brain Observatory Toolbox:\n', helpLink);
         end
