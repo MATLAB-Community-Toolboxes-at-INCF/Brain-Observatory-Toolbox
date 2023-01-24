@@ -424,41 +424,24 @@ classdef cache < handle
                 'and cache data in the following directory:' ...
                 '\n \\bf%s'], factoryCacheDir);
 
-            % - Format the message with a bigger font size (Todo; should depend on screen resolution...)
-            %formattedMessage = strcat('\fontsize{14}', promptMessage);
-            formattedMessage = promptMessage;
-
-            % - Fix some characters that are interpreted as tex markup
-            formattedMessage = strrep(formattedMessage, '_', '\_');
-            titleMessage = 'Select Download Directory for Data?'; 
-            choices = {'Continue', 'Change Cache Directory...'};
-            % - Use the tex-interpreter for displaying the prompt message.
-            opts = struct('Default', 'Continue', 'Interpreter', 'tex');
-            
-            % - Present the question to the user
-            answer = questdlg(formattedMessage, titleMessage, choices{:}, opts);
-            
-            % - Handle answer
-            switch answer
-                case 'Continue'
-                    strCacheDir = factoryCacheDir;
-                case 'Change Cache Directory...'
-                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
-                otherwise
-                    error('BOT:InitializeCacheDirectory', ...
-                        'User canceled during configuration of a preferred cache directory.')
-            end
-
-            % - Store the selected cache directory to preferences
-            prefs = bot.getPreferences();
-            prefs.CacheDirectory = strCacheDir;
+            strCacheDir = bot.internal.cache.CreateCacheDirectory(factoryCacheDir, promptMessage);
         end
         
-        function ResolveMissingCacheDirectory()
-                error('BOT:PreferredCacheDirectoryMissing', ...
-                    'The preferred cache directory is unavailable:\n%s', strCacheDir)
+        function strCacheDir = ResolveMissingCacheDirectory(strCacheDir)
 
+            msg = sprintf([ 'Can''t find the preferred cache directory for ', ...
+                'the Brain Observatory Toolbox:\n%s'], strCacheDir);
 
+            answer = questdlg(msg, 'Directory Missing', 'Locate...', 'Reinitialize', 'Locate...');
+
+            switch answer
+                case 'Locate...'
+                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
+                case 'Recreate'
+                    mkdir(strCacheDir);
+                otherwise
+                    strCacheDir = '';
+            end
         end
 
         function strCacheDir = GetFactoryCacheDirectory()
@@ -474,19 +457,52 @@ classdef cache < handle
             strCacheDir = bot.util.getPreferenceValue('CacheDirectory');
             
             if ~isfolder(strCacheDir)
-                strCacheDir = bot.internal.cache.ResolveMissingCacheDirectory();
-                error('BOT:PreferredCacheDirectoryMissing', ...
-                    'The preferred cache directory is unavailable:\n%s', strCacheDir)
+                strCacheDir = bot.internal.cache.ResolveMissingCacheDirectory(strCacheDir);
                 
                 if isempty(strCacheDir)
                     error('BOT:PreferredCacheDirectoryMissing', ...
                           'Cache directory is unavailable.')
                 end
             end
+        end
+        
+        function strCacheDir = CreateCacheDirectory(strInitCacheDir, promptMessage)
+   
+            if nargin < 2 || isempty(promptMessage)
+                promptMessage = sprintf(['Download ' ...
+                    'and cache data in the following directory:' ...
+                    '\n \\bf%s'], strInitCacheDir);
+            end
 
-            % Add suggested actions?
-            % Do you want to set a new cache directory?
+            % - Format the message with a bigger font size (Todo; should depend on screen resolution...)
+            %formattedMessage = strcat('\fontsize{14}', promptMessage);
+            formattedMessage = promptMessage;
 
+            % - Fix some characters that are interpreted as tex markup
+            formattedMessage = strrep(formattedMessage, '_', '\_');
+            titleMessage = 'Select Download Directory for Data'; 
+            choices = {'Continue', 'Change Cache Directory...'};
+            
+            % - Use the tex-interpreter for displaying the prompt message.
+            opts = struct('Default', 'Continue', 'Interpreter', 'tex');
+            
+            % - Present the question to the user
+            answer = questdlg(formattedMessage, titleMessage, choices{:}, opts);
+            
+            % - Handle answer
+            switch answer
+                case 'Continue'
+                    strCacheDir = strInitCacheDir;
+                case 'Change Cache Directory...'
+                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
+                otherwise
+                    error('BOT:InitializeCacheDirectory', ...
+                        'User canceled during configuration of the preferred cache directory.')
+            end
+            
+            % - Store the selected cache directory to preferences
+            prefs = bot.getPreferences();
+            prefs.CacheDirectory = strCacheDir;
         end
 
         function strCacheDir = UiGetCacheDirectory()
