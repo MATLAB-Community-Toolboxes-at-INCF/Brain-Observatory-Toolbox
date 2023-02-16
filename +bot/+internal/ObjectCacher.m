@@ -10,7 +10,7 @@ classdef ObjectCacher < handle
       strCacheDir;                        % File directory in which data is cached
       strManifestFile;                    % .mat file containing the cache manifest
       bTemporaryCache = false;            % Boolean flag: should cache be deleted on variable deletion?
-      mapCachedData = containers.Map();   % Map containing objects that have been cached, maps to cache-relative filenames
+      mapCachedData containers.Map        % Map containing objects that have been cached, maps to cache-relative filenames
    end
    
    properties (SetAccess = immutable)
@@ -41,6 +41,9 @@ classdef ObjectCacher < handle
          if ~isfolder(ocObj.strCacheDir)
             mkdir(ocObj.strCacheDir);
          end
+                  
+         % - Initialize manifest
+         ocObj.mapCachedData = containers.Map();
          
          % - Does a saved cache manifest exist?
          ocObj.strManifestFile = fullfile(ocObj.strCacheDir, 'OC_manifest.mat');
@@ -78,9 +81,13 @@ classdef ObjectCacher < handle
                
             else
                % - Get a new filename for the cache object store
-               [~, strRelativeFilename] = fileparts(tempname());
+               if numel(char(strKey)) > 128 || ~strcmp(strKey, matlab.lang.makeValidName(strKey))
+                   [~, strRelativeFilename] = fileparts(tempname());
+               else
+                   strRelativeFilename = strKey;
+               end
                strRelativeFilename = [strRelativeFilename '.mat'];
-            
+
                % - Convert the filename to a file in the cache
                strCacheFilename = ocObj.CachedFilename(strRelativeFilename);
             end

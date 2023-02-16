@@ -81,9 +81,9 @@ classdef nwb_ephys < handle
          
          % - Get a list of all epochs in the NWB file
          strRoot = '/intervals';
-         sEpochs = h5info(self.strFile, strRoot);
-         all_epoch_names = string({sEpochs.Groups.Name});
-         
+         sEpochsInfo = h5info(self.strFile, strRoot);
+         all_epoch_names = string({sEpochsInfo.Groups.Name});
+
          % - Read each epoch as a table
          cstrIgnoreKeys = {'tags', 'timeseries', 'tags_index', 'timeseries_index'};
          cell_epoch_tables = {};
@@ -112,6 +112,40 @@ classdef nwb_ephys < handle
          
          % - Add an id column
          all_epochs_table.id = [0:size(all_epochs_table, 1)-1]';
+      end
+
+      function presentation_names = fetch_stimulus_presentation_names(self)
+         % - Get a list of all epochs in the NWB file
+         strRoot = '/intervals';
+         sEpochsInfo = h5info(self.strFile, strRoot);
+         presentation_names = string({sEpochsInfo.Groups.Name});
+         
+         presentation_names = replace(presentation_names, '/intervals/', '');
+         presentation_names = replace(presentation_names, '_presentations', '');
+         presentation_names = replace(presentation_names, 'invalid_times', 'invalid_presentation');
+         presentation_names = transpose(presentation_names);
+      end
+
+      function num_stimulus_presentations = fetch_num_stimulus_presentations(self)
+         % fetch_num_stimulus_presentations - Return the number of stimulus presentations from the NWB file
+
+         strRoot = '/intervals';
+         datasetInfo = h5info(self.strFile, strRoot);
+         %all_epoch_names = string({datasetInfo.Groups.Name});
+         
+         % Each datasetGroup represents stimulus presentations from 1 out of 9
+         % categories.
+         datasetGroups = [datasetInfo.Groups];
+         groupNames = {datasetGroups.Name};
+         
+         keep = ~strcmp( groupNames, '/intervals/invalid_times');
+        
+         datasetStructArray = arrayfun(@(a) [a.Datasets], datasetGroups(keep), 'UniformOutput', 0);
+         %datasetNameArray = cellfun(@(c) {c.Name}, datasetStructArray, 'UniformOutput', 0);
+         
+          % Note: All datasets within a group has the same lenght / number of samples
+         datasetLengths = cellfun(@(c) c(1).Dataspace.Size, datasetStructArray, 'UniformOutput', 1);
+         num_stimulus_presentations = sum(datasetLengths);
       end
       
       function stimulus_presentations = fetch_stimulus_presentations(self)
@@ -415,11 +449,25 @@ classdef nwb_ephys < handle
       end
       
       function invalid_times = fetch_invalid_times(self)
-         invalid_times = bot.internal.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
-         invalid_times.tags = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
-            '/intervals/invalid_times/tags', '/intervals/invalid_times/tags_index');
+         if self.has_invalid_times()
+            invalid_times = bot.internal.nwb.table_from_datasets(self.strFile, '/intervals/invalid_times', {'tags', 'tags_index'});
+            invalid_times.tags = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
+                '/intervals/invalid_times/tags', '/intervals/invalid_times/tags_index');
+         else
+            invalid_times = [];
+         end
       end
-      
+
+      function tf = has_invalid_times(self)
+      %has_invalid_times Check if '/intervals/invalid_times' is present in nwb file  
+         datasetInfo = h5info(self.strFile, '/intervals');
+
+         datasetGroups = [datasetInfo.Groups];
+         groupNames = {datasetGroups.Name};
+         
+         tf = any( strcmp( groupNames, '/intervals/invalid_times') );
+      end
+
       function im = fetch_image(self, name, module, image_api)
          error('BOT:NotImplemented', 'This method is not implemented');
          %         if image_api is None:
@@ -487,3 +535,4 @@ function source_table = removevars_ifpresent(source_table, variables)
       source_table = removevars(source_table, variables(vbHasVariable));
    end
 end
+

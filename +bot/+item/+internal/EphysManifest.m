@@ -1,342 +1,476 @@
 %% CLASS EphysManifest
+%
+% This class can be used to obtain various `tables of items´ from the 
+% Visual Coding Neuropixels dataset [1] obtained with the Allen Brain 
+% Observatory platform [2].
+%
+% Item tables contain overview information about individual items belonging 
+% to the dataset and tables for the following item types are available:
+%   ephys_sessions     : Experimental sessions
+%   ephys_probes       : Neuropixels probes
+%   ephys_channels     : Recording channel of a probe
+%   ephys_units        : Functional unit as detected by spike sorting
+%
+%
+% USAGE:
+%
+% Construction:
+% >> bem = bot.item.internal.Manifest.instance('ephys')
+% >> bem = bot.item.internal.EphysManifest.instance()
+%
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. 
+%       Available from: portal.brain-map.org/explore/circuits/visual-coding-neuropixels.
+% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. 
+%       Available from: portal.brain-map.org/explore/circuits
 
-% Notes regarding various item fetchers
-%  fetch_ephys_XXX: retrieves raw item table from cloud cache. Pre-memoized.
-%  fetch_annotated_ephys_XXX: retrieves item table joined with item table one level up in hierarchy, w/ some post-join tranformations (e.g. identifying source table in joined table variable name). Pre-memoized.
-%  fetch_ephys_XXX_table: retrieves item table for public property access, including final transformations (e.g. linked item counts). Post-memoized & pre-cached.
+% Notes regarding fetching of item tables for the ephys manifest.
+% 
+% The item tables goes through three steps of processing after being
+% downloaded:
+%   1) Preprocessing: The item table is restructured by adding extra
+%           information, renaming variables and converting data types to
+%           appropriate types for the table format.
+%   2) Joining: The table is joined with the item table one level up in the
+%           hierarchy w/ some post-join tranformations (e.g. identifying 
+%           source table in joined table variable name).
+%   3) Adding linked item counts: Counts for linked items of tables for all
+%           tables below the current in the hierarchy is added as separate
+%           table variables.
+%   
+%   Methods for performing step 1) and 2) are memoized in order to reduce
+%   overhead when fetching the different tables. Because tables are
+%   dependent on tables bove or below in the hierarchy, fetching one table
+%   might require a partial fetching of one or more other tables. By
+%   memoizing these steps, it is ensured that intermediate processing steps
+%   are cached for later use.
+
+% Note: The S3 session table has some discrepencies, and the download from 
+% api is quick anyway, so this is always retrieved from api.
+
 
 %% Class definition
 
-classdef EphysManifest < handle
-    properties (Access = private, Transient = true)
-        cache = bot.internal.cache;        % BOT Cache object
-        api_access;                         % Function handles for low-level API access
-    end
+classdef EphysManifest < bot.item.internal.Manifest
     
     properties (SetAccess = private, Dependent = true)
-        ephys_sessions;                 % Table of all EPhys experimental sessions
-        ephys_channels;                 % Table of all EPhys channels
-        ephys_probes;                   % Table of all EPhys probes
-        ephys_units;                    % Table of all EPhys units
+        ephys_sessions     % Table of all EPhys experimental sessions
+        ephys_probes       % Table of all EPhys probes
+        ephys_channels     % Table of all EPhys channels
+        ephys_units        % Table of all EPhys units
     end
-    
+
+% %     properties (SetAccess = private, Dependent = true) % Todo: rename?
+% %         Sessions     % Table of all EPhys experimental sessions
+% %         Probes       % Table of all EPhys probes
+% %         Channels     % Table of all EPhys channels
+% %         Units        % Table of all EPhys units
+% %     end
+        
+    properties (Constant, Access=protected, Hidden)
+        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        ITEM_TYPES = ["Session", "Probe", "Channel", "Unit"]
+        DOWNLOAD_FROM = containers.Map(...
+            bot.item.internal.EphysManifest.ITEM_TYPES, ...
+            ["API", "", "", ""] )
+    end
+
     %% Constructor
     methods (Access = private)
-        function manifest = EphysManifest()
-            % - Initialise internal manifest cache
-            manifest.api_access.ephys_sessions = [];
-            manifest.api_access.ephys_channels = [];
-            manifest.api_access.ephys_probes = [];
-            manifest.api_access.ephys_units = [];
+        function eManifest = EphysManifest()
+
+            eManifest@bot.item.internal.Manifest()
+
+            % Memoize methods for fetching item tables at various stages
+            eManifest.MemoizedFetcher.RawTable = ...
+                memoize(@eManifest.fetchRawItemTable);
             
-            manifest.api_access.memoized.fetch_ephys_sessions = memoize(@manifest.fetch_ephys_sessions);
-            manifest.api_access.memoized.fetch_ephys_channels = memoize(@manifest.fetch_ephys_channels);
-            manifest.api_access.memoized.fetch_ephys_probes = memoize(@manifest.fetch_ephys_probes);
-            manifest.api_access.memoized.fetch_ephys_units = memoize(@manifest.fetch_ephys_units);
-            manifest.api_access.memoized.fetch_annotated_ephys_units = memoize(@manifest.fetch_annotated_ephys_units);
-            manifest.api_access.memoized.fetch_annotated_ephys_channels = memoize(@manifest.fetch_annotated_ephys_channels);
-            manifest.api_access.memoized.fetch_annotated_ephys_units = memoize(@manifest.fetch_annotated_ephys_units);
-            manifest.api_access.memoized.fetch_annotated_ephys_probes = memoize(@manifest.fetch_annotated_ephys_probes);
+            eManifest.MemoizedFetcher.JointTable = ...
+                memoize(@eManifest.fetchJointItemTable);
         end
     end
-    
-    methods (Static = true)
-        function manifest = instance(clear_manifest)
-            % instance - STATIC METHOD Retrieve or reset the singleton instance of the EPhys manifest
+
+    %% Method for interacting with singleton instance
+    methods (Static = true) 
+        function manifest = instance(action)
+            % instance Get or clear singleton instance of the EPhys manifest
             %
-            % Usage: manifest = instance()
-            %        instance(clear_manifest)
-            %
-            % `manifest` will be a singleton manifest object.
-            %
-            % If `clear_manifest` = `true` is provided, then the single
-            % instance will be cleared and reset.
+            %   manifest = bot.item.internal.EphysManifest.instance()
+            %   returns a singleton instance of the EphysManifest class
+            %        
+            %   bot.item.internal.EphysManifest.instance("clear") will 
+            %   clear the singleton instance from memory
             
             arguments
-                clear_manifest = false
+                action (1,1) string {mustBeMember(action, ...
+                    ["get", "clear", "reset"])} = "get";
             end
             
-            persistent ephysmanifest
-            
-            % - Construct the manifest if single instance is not present
-            if isempty(ephysmanifest)
-                ephysmanifest = bot.item.internal.EphysManifest();
-            end
-            
-            % - Return the instance
-            manifest = ephysmanifest;
+            persistent ephysmanifest % singleton instance
             
             % - Clear the manifest if requested
-            if clear_manifest
-                ephysmanifest = [];
-                clear manifest;
+            if ismember(action, ["clear", "reset"])
+                delete(ephysmanifest); ephysmanifest = [];
+            end
+
+            if ismember(action, ["get", "reset"])
+                % - Construct the manifest if singleton instance is not present
+                if isempty(ephysmanifest)
+                    ephysmanifest = bot.item.internal.EphysManifest();
+                end
+
+                % - Return the instance
+                manifest = ephysmanifest; 
             end
         end
     end
-    
+
     %% Getter methods
     methods
-        function ephys_sessions = get.ephys_sessions(manifest)
-            % - Try to get cached table
-            ephys_sessions = manifest.api_access.ephys_sessions;
-            
-            % - If table is not already in-memory
-            if isempty(ephys_sessions)
-                % - Try to retrieve table from on-disk cache
-                strKey = 'allen_brain_observatory_ephys_sessions_manifest';
-                if manifest.cache.IsObjectInCache(strKey)
-                    ephys_sessions = manifest.cache.RetrieveObject(strKey);
-                else
-                    % - Construct table from API
-                    ephys_sessions = manifest.fetch_ephys_sessions_table();
-                    
-                    % - Insert object in disk cache
-                    manifest.cache.InsertObject(strKey, ephys_sessions);
-                end
-                
-                % Apply standardized display logic
-                ephys_sessions = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_sessions);
-                
-                % - Store table in memory cache
-                manifest.api_access.ephys_sessions = ephys_sessions;
-            end
+
+        function sessionTable = get.ephys_sessions(eManifest)
+            sessionTable = eManifest.fetch_cached('ephys_sessions', ...
+                @(itemType) eManifest.fetch_item_table('Session') );
         end
-        
-        function ephys_channels = get.ephys_channels(manifest)
-            % - Try to get cached table
-            ephys_channels = manifest.api_access.ephys_channels;
-            
-            % - If table is not already in-memory
-            if isempty(ephys_channels)
-                % - Try to retrieve table from on-disk cache
-                nwb_key = 'allen_brain_observatory_ephys_channels_manifest';
-                if manifest.cache.IsObjectInCache(nwb_key)
-                    ephys_channels = manifest.cache.RetrieveObject(nwb_key);
-                else
-                    % - Construct table from API
-                    ephys_channels = manifest.fetch_ephys_channels_table();
-                    
-                    % - Insert object in disk cache
-                    manifest.cache.InsertObject(nwb_key, ephys_channels);
-                end
-                
-                % Apply standardized display logic
-                ephys_channels = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_channels);
-                
-                % - Store table in memory cache
-                manifest.api_access.ephys_channels = ephys_channels;
-            end
+
+        function probeTable = get.ephys_probes(eManifest)
+            probeTable = eManifest.fetch_cached('ephys_probes', ...
+                @(itemType) eManifest.fetch_item_table('Probe'));
         end
-        
-        function ephys_probes = get.ephys_probes(manifest)
-            % - Try to get cached table
-            ephys_probes = manifest.api_access.ephys_probes;
-            
-            % - If table is not already in-memory
-            if isempty(ephys_probes)
-                % - Try to retrieve table from on-disk cache
-                nwb_key = 'allen_brain_observatory_ephys_probes_manifest';
-                if manifest.cache.IsObjectInCache(nwb_key)
-                    ephys_probes = manifest.cache.RetrieveObject(nwb_key);
-                else
-                    % - Construct table from API
-                    ephys_probes = manifest.fetch_ephys_probes_table();
-                    
-                    % - Insert object in disk cache
-                    manifest.cache.InsertObject(nwb_key, ephys_probes);
-                end
-                
-                % Apply standardized display logic
-                ephys_probes = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_probes);
-                
-                % - Store table in memory cache
-                manifest.api_access.ephys_probes = ephys_probes;
-            end
+
+        function channelTable = get.ephys_channels(eManifest)
+            channelTable = eManifest.fetch_cached('ephys_channels', ...
+                @(itemType) eManifest.fetch_item_table('Channel') );
         end
-        
-        function ephys_units = get.ephys_units(manifest)
-            % - Try to get cached table
-            ephys_units = manifest.api_access.ephys_units;
-            
-            % - If table is not already in-memory
-            if isempty(ephys_units)
-                % - Try to retrieve table from on-disk cache
-                nwb_key = 'allen_brain_observatory_ephys_units_manifest';
-                if manifest.cache.IsObjectInCache(nwb_key)
-                    ephys_units = manifest.cache.RetrieveObject(nwb_key);
-                else
-                    % - Construct table from API
-                    ephys_units = manifest.fetch_ephys_units_table();
-                    
-                    % - Insert object in disk cache
-                    manifest.cache.InsertObject(nwb_key, ephys_units);
-                end
-                
-                % Apply standardized display logic
-                ephys_units = bot.item.internal.Manifest.applyUserDisplayLogic(ephys_units);
-                
-                % - Store table in memory cache
-                manifest.api_access.ephys_units = ephys_units;
-            end
+
+        function unitTable = get.ephys_units(eManifest)
+            unitTable = eManifest.fetch_cached('ephys_units', ...
+                @(itemType) eManifest.fetch_item_table('Unit') );
         end
+
     end
     
-    %% Update manifest method
-    methods
-        function UpdateManifests(oManifest,clearMemoOnly)
-            
-            arguments
-                oManifest (1,1) bot.item.internal.EphysManifest
-                clearMemoOnly (1,1) logical = true
+
+    %% Low-level getter method for EPhys item tables
+    methods (Access = protected)
+
+        function itemTable = fetch_item_table(eManifest, itemType)
+        %fetch_item_table Fetch item table (get from cache or download)
+        %
+        %   itemTable = fetch_item_table(eManifest, itemType) fetches the
+        %   item table (itemTable) for the given item type (itemType),
+        %   either by retrieving from the disk cache, or by downloading and
+        %   processing the table if it does not exist in the disk cache.
+        %
+        %   itemType must be a character vector or a string and must be one
+        %   of the following:
+        %       'Session', 'Probe', 'Channel', 'Unit'
+
+            cache_key = eManifest.getManifestCacheKey(itemType);
+
+            if eManifest.cache.IsObjectInCache(cache_key)
+                itemTable = eManifest.cache.RetrieveObject(cache_key);
+
+            else
+                itemTable = eManifest.fetchAnnotatedItemTable(itemType);
+
+                eManifest.cache.InsertObject(cache_key, itemTable);
+                eManifest.clearTempTableFromCache(itemType)
             end
-            
-            boc = bot.internal.cache;
-            
-            if ~clearMemoOnly
-                % - Invalidate manifests in cache
-                boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysSession');
-                boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysUnit');
-                boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysProbe');
-                boc.ccCache.RemoveURLsMatchingSubstring('criteria=model::EcephysChannel');
-                
-                % - Remove cached manifest tables
-                boc.ocCache.Remove('allen_brain_observatory_ephys_sessions_manifest')
-                boc.ocCache.Remove('allen_brain_observatory_ephys_units_manifest')
-                boc.ocCache.Remove('allen_brain_observatory_ephys_probes_manifest')
-                boc.ocCache.Remove('allen_brain_observatory_ephys_channels_manifest')
-            end
-            
-            % - Clear all caches for memoized access functions
-            for strField = fieldnames(oManifest.api_access.memoized)'
-                oManifest.api_access.memoized.(strField{1}).clearCache();
-            end
-            
-            % - Reset singleton instance
-            bot.item.internal.EphysManifest.instance(true);
+
+            % Apply standardized table display logic
+            itemTable = eManifest.applyUserDisplayLogic(itemTable); 
         end
+
+        function itemTable = fetchRawItemTable(eManifest, itemType)
+        %fetchRawItemTable Download the item table and preprocess it
+        
+            itemTable = eManifest.download_item_table(itemType);
+
+            fcnName = sprintf('%s.preprocess_ephys_%s_table', class(eManifest), lower(itemType)); % Static method
+            itemTable = feval(fcnName, itemTable);
+        end
+            
+        function itemTable = fetchJointItemTable(eManifest, itemType)
+        %fetchRawItemTable Join a preprocessed item table with it's parent
+
+            itemTable = eManifest.MemoizedFetcher.RawTable(itemType);
+
+            % Join with upstream item table (parent node)
+            fcnName = sprintf('join_ephys_%s_table_with_parent', lower(itemType));
+            itemTable = feval(fcnName, eManifest, itemTable);
+        end
+
+        function itemTable = fetchAnnotatedItemTable(eManifest, itemType)
+        %fetchAnnotatedItemTable Add counts of linked items to item table
+
+            itemTable = eManifest.MemoizedFetcher.JointTable(itemType);
+            
+            % Add counts of linked items (child nodes) to item table
+            fcnName = sprintf('add_linked_item_counts_to_%s_table', lower(itemType));
+            itemTable = feval(fcnName, eManifest, itemTable);
+        end
+
     end
     
-    methods (Access = private)
-        %% Low-level getter methods for EPhys data
+    methods (Static, Access = protected)
         
-        function ephys_sessions = fetch_ephys_sessions_table(manifest)
-            % METHOD - Return the table of all EPhys experimental sessions
+        function dataTable = readS3ItemTable(cacheFilePath)
+        %readS3ItemTable Read table from file downloaded from S3 bucket
+        %
+        %   Use readtable (ephys item tables are stored in csv files)
+            dataTable = readtable(cacheFilePath);
+        end
+        
+    end
+
+    methods (Access = private) % Annotate - Add linked item counts for all downstream tables
+        % Session - Probe - Channel 
+
+        function session_table = add_linked_item_counts_to_session_table(eManifest, session_table)
             
-            % - Get table of EPhys sessions
-            ephys_sessions = manifest.api_access.memoized.fetch_ephys_sessions();
-            annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
-            annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
-            annotated_ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
+            % Get joint tables for each of the children tables of session
+            joint_probe_table = eManifest.MemoizedFetcher.JointTable('Probe');
+            joint_channel_table = eManifest.MemoizedFetcher.JointTable('Channel');
+            joint_unit_table = eManifest.MemoizedFetcher.JointTable('Unit');
             
             % - Count numbers of units, channels and probes
-            ephys_sessions = count_owned(ephys_sessions, annotated_ephys_units, ...
+            session_table = count_owned(session_table, joint_unit_table, ...
                 "id", "ephys_session_id", "unit_count");
-            ephys_sessions = count_owned(ephys_sessions, annotated_ephys_channels, ...
+            session_table = count_owned(session_table, joint_channel_table, ...
                 "id", "ephys_session_id", "channel_count");
-            ephys_sessions = count_owned(ephys_sessions, annotated_ephys_probes, ...
+            session_table = count_owned(session_table, joint_probe_table, ...
                 "id", "ephys_session_id", "probe_count");
             
-            % - Get structure acronyms
-            ephys_sessions = fetch_grouped_uniques(ephys_sessions, annotated_ephys_channels, ...
+            % - Get structure acronyms Todo?
+            session_table = fetch_grouped_uniques(session_table, joint_channel_table, ...
                 'id', 'ephys_session_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
-            
-            % - Rename variables %TODO: consider move upstream
-            ephys_sessions = rename_variables(ephys_sessions, 'genotype', 'full_genotype');
-            
         end
-        
-        function ephys_units = fetch_ephys_units_table(manifest)
-            % METHOD - Return the table of all EPhys recorded units
-            ephys_units = manifest.fetch_annotated_ephys_units();
-        end
-        
-        function ephys_probes = fetch_ephys_probes_table(manifest)
-            % METHOD - Return the table of all EPhys recorded probes
+
+        function probe_table = add_linked_item_counts_to_probe_table(eManifest, probe_table)
             
-            % - Get the annotated probes
-            ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
-            annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
-            annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
+            joint_channel_table = eManifest.MemoizedFetcher.JointTable('Channel');
+            joint_unit_table = eManifest.MemoizedFetcher.JointTable('Unit');
             
             % - Count units and channels
-            ephys_probes = count_owned(ephys_probes, annotated_ephys_units, ...
+            probe_table = count_owned(probe_table, joint_unit_table, ...
                 'id', 'ephys_probe_id', 'unit_count');
-            ephys_probes = count_owned(ephys_probes, annotated_ephys_channels, ...
+            probe_table = count_owned(probe_table, joint_channel_table, ...
                 'id', 'ephys_probe_id', 'channel_count');
             
             % - Get structure acronyms
-            ephys_probes = fetch_grouped_uniques(ephys_probes, annotated_ephys_channels, ...
+            probe_table = fetch_grouped_uniques(probe_table, joint_channel_table, ...
                 'id', 'ephys_probe_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
-            
         end
-        
-        function ephys_channels = fetch_ephys_channels_table(manifest)
-            % METHOD - Return the table of all EPhys recorded channels
+
+        function channel_table = add_linked_item_counts_to_channel_table(eManifest, channel_table)
             
-            % - Get annotated channels
-            ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
-            annotated_ephys_units = manifest.api_access.memoized.fetch_annotated_ephys_units();
+            joint_unit_table = eManifest.MemoizedFetcher.JointTable('Unit');
             
             % - Count owned units
-            ephys_channels = count_owned(ephys_channels, annotated_ephys_units, ...
-                'id', 'ephys_channel_id', 'unit_count');
-            
-            % - Rename variables %TODO: consider move upstream
-            ephys_channels = rename_variables(ephys_channels, 'name', 'probe_name');
-            
+            channel_table = count_owned(channel_table, ...
+                joint_unit_table, 'id', 'ephys_channel_id', 'unit_count');
         end
-        
-        function [ephys_session_manifest] = fetch_ephys_sessions(manifest)
-            % - Fetch the ephys sessions manifest
-            % - Download EPhys session manifest
-            disp('Fetching EPhys sessions manifest...');
-            ephys_session_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysSession', 'rma::include,specimen(donor(age)),well_known_files(well_known_file_type)');
+
+        function unit_table = add_linked_item_counts_to_unit_table(~, unit_table)
+            % No downstream tables - pass
+        end
+    
+    end
+
+    methods (Access = private) % Join with upstream table
+        % For the join operation, we want to join the table with the table
+        % one level up in the hierarchy. However, we can't join with the 
+        % fully processed table, because it contains linked items count, 
+        % and we dont want to include these! Therefore the memoized method
+        % is used to obtain a table which is not fully processed.
+
+        function annotated_session_table = join_ephys_session_table_with_parent(~, session_table)
+            annotated_session_table = session_table;
+            % No downstream tables - pass
+        end
+
+        function annotated_probe_table = join_ephys_probe_table_with_parent(eManifest, probe_table)
             
+            session_table_raw = eManifest.MemoizedFetcher.RawTable('Session');
+
+            annotated_probe_table = join(probe_table, session_table_raw, ...
+                'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
+        end
+
+        function joint_channel_table = join_ephys_channel_table_with_parent(eManifest, channel_table)
+            
+            joint_probe_table = eManifest.MemoizedFetcher.JointTable('Probe');
+            joint_channel_table = join(channel_table, joint_probe_table, ...
+                'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
+        end
+
+        function joint_unit_table = join_ephys_unit_table_with_parent(eManifest, unit_table)
+
+            % - Annotate units
+            joint_channel_table = eManifest.MemoizedFetcher.JointTable('Channel');
+
+            joint_unit_table = join(unit_table, joint_channel_table, ...
+                'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
+            
+            % - Rename variables
+            joint_unit_table = rename_variables(joint_unit_table, ...
+                'name', 'probe_name', ...
+                'phase', 'probe_phase', ...
+                'sampling_rate', 'probe_sampling_rate', ...
+                'lfp_sampling_rate', 'probe_lfp_sampling_rate', ...
+                'local_index', 'peak_channel');
+            
+            % Apply upstream transformation, converting acronymys(cell arrays) to categoricals, since invalid units  have been filtered away   
+            % TODO: Refactor ephys_structure_acronym handling to at least generalize between units & channels; possibly delegate to manifest
+            joint_unit_table.ephys_structure_acronym = categorical(arrayfun(@(e)string(e{1}), joint_unit_table.ephys_structure_acronym));   
+        end
+
+    end
+
+    methods (Static, Access = private) % Preprocess tables (restructure)
+
+        function session_table = preprocess_ephys_session_table(session_table)
+            
+            num_sessions = size(session_table, 1);
+
             % - Label as EPhys sessions
-            ephys_session_manifest = addvars(ephys_session_manifest, ...
-                repmat(categorical({'EPhys'}, {'EPhys', 'OPhys'}), size(ephys_session_manifest, 1), 1), ...
+            session_table = addvars(session_table, ...
+                repmat(categorical({'EPhys'}, {'EPhys', 'OPhys'}), num_sessions, 1), ...
                 'NewVariableNames', 'type', ...
                 'before', 1);
             
-            % - Post-process EPhys manifest
-            age_in_days = arrayfun(@(s)s.donor.age.days, ephys_session_manifest.specimen);
-            cSex = arrayfun(@(s)s.donor.sex, ephys_session_manifest.specimen, 'UniformOutput', false);
-            cGenotype = arrayfun(@(s)s.donor.full_genotype, ephys_session_manifest.specimen, 'UniformOutput', false);
+            % - Get some specimen/subject info
+            age_in_days = arrayfun(@(s)s.donor.age.days, session_table.specimen);
+            cSex = arrayfun(@(s)s.donor.sex, session_table.specimen, 'UniformOutput', false);
+            cGenotype = arrayfun(@(s)s.donor.full_genotype, session_table.specimen, 'UniformOutput', false);
             
             vbWT = cellfun(@isempty, cGenotype);
             if any(vbWT)
                 cGenotype{vbWT} = 'wt';
             end
             
-            cWkf_types = arrayfun(@(s)s.well_known_file_type.name, ephys_session_manifest.well_known_files, 'UniformOutput', false);
+            % Get boolean flag for whether nwb file exists
+            cWkf_types = arrayfun(@(s)s.well_known_file_type.name, session_table.well_known_files, 'UniformOutput', false);
             has_nwb = cWkf_types == "EcephysNwb";
             
             % - Add variables
-            ephys_session_manifest = addvars(ephys_session_manifest, age_in_days, cSex, cGenotype, has_nwb, ...
-                'NewVariableNames', {'age_in_days', 'sex', 'genotype', 'has_nwb'});
+            session_table = addvars(session_table, age_in_days, cSex, cGenotype, has_nwb, ...
+                'NewVariableNames', {'age_in_days', 'sex', 'full_genotype', 'has_nwb'});
             
             % - Rename variables
-            ephys_session_manifest = rename_variables(ephys_session_manifest, "stimulus_name", "session_type");
+            session_table = rename_variables(session_table, "stimulus_name", "session_type");
             
             % - Convert variables to useful types
-            ephys_session_manifest.date_of_acquisition = datetime(ephys_session_manifest.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-            ephys_session_manifest.id = uint32(ephys_session_manifest.id);
-            ephys_session_manifest.isi_experiment_id = uint32(ephys_session_manifest.isi_experiment_id);
-            ephys_session_manifest.published_at = datetime(ephys_session_manifest.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-            ephys_session_manifest.specimen_id = uint32(ephys_session_manifest.specimen_id);
-            ephys_session_manifest.sex = categorical(ephys_session_manifest.sex, {'M', 'F'});
-            ephys_session_manifest.session_type = categorical(ephys_session_manifest.session_type);
-            ephys_session_manifest.genotype = string(ephys_session_manifest.genotype);
+            session_table.date_of_acquisition = datetime(session_table.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+            session_table.id = uint32(session_table.id);
+            session_table.isi_experiment_id = uint32(session_table.isi_experiment_id);
+            session_table.published_at = datetime(session_table.published_at,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+            session_table.specimen_id = uint32(session_table.specimen_id);
+            session_table.sex = categorical(session_table.sex, {'M', 'F'});
+            session_table.session_type = categorical(session_table.session_type);
+            session_table.full_genotype = string(session_table.full_genotype);
+
         end
-        
-        function [ephys_unit_manifest] = fetch_ephys_units(manifest)
-            % - Fetch the ephys units manifest
-            % - Download EPhys units
-            disp('Fetching EPhys units manifest...');
-            ephys_unit_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysUnit', '');
+
+        function probe_table = preprocess_ephys_probe_table(probe_table)
             
             % - Rename variables
-            ephys_unit_manifest = rename_variables(ephys_unit_manifest, ...
+            probe_table = rename_variables(probe_table, ...
+                "use_lfp_data", "has_lfp_data", "ecephys_session_id", "ephys_session_id");
+            
+            % - Divide the lfp sampling by the subsampling factor for clearer presentation (if provided)
+            if all(ismember({'lfp_sampling_rate', 'lfp_temporal_subsampling_factor'}, ...
+                    probe_table.Properties.VariableNames))
+                cfTSF = probe_table.lfp_temporal_subsampling_factor;
+                if iscell(cfTSF)
+                    cfTSF(cellfun(@isempty, cfTSF)) = {1};
+                    vfTSF = cell2mat(cfTSF);
+                else
+                    cfTSF(isnan(cfTSF)) = 1;
+                    vfTSF = cfTSF;
+                end
+                probe_table.lfp_sampling_rate = ...
+                    probe_table.lfp_sampling_rate ./ vfTSF;
+            end
+            
+            % - Convert variables to useful types
+            probe_table.ephys_session_id = uint32(probe_table.ephys_session_id);
+            probe_table.id = uint32(probe_table.id);
+            probe_table.phase = categorical(probe_table.phase);
+            probe_table.name= categorical(probe_table.name);
+            
+            ltsf = probe_table.lfp_temporal_subsampling_factor;
+            if iscell(ltsf)
+                [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this shoudl be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
+                ltsf = cell2mat(ltsf);
+            else
+                % missing values are already nan
+            end
+            probe_table.lfp_temporal_subsampling_factor = ltsf;
+
+            % - Convert has_lfp_data to logical if data is stored as 'True'
+            % and 'False'
+            if iscell( probe_table.has_lfp_data )
+                if ischar( probe_table.has_lfp_data{1} )
+                    if any(strcmp( probe_table.has_lfp_data{1}, {'True', 'False'}))
+                        probe_table.has_lfp_data = strcmp(probe_table.has_lfp_data, 'True');
+                    end
+                end
+            end
+        end
+
+        function channel_table = preprocess_ephys_channel_table(channel_table)
+            
+            % Todo: treat api and s3 result differently
+
+            if any(strcmp(channel_table.Properties.VariableNames, 'ecephys_probe_id'))
+                % Table was downloaded from s3, requires different processing
+
+                % - Rename variables
+                channel_table = rename_variables(channel_table, ...
+                    'ecephys_probe_id', 'ephys_probe_id', ...
+                    'ecephys_structure_id', 'ephys_structure_id', ...
+                    'ecephys_structure_acronym', 'ephys_structure_acronym');
+                
+                % Convert to uint32
+                varNames = {'id', 'ephys_probe_id', 'local_index', 'probe_horizontal_position', ...
+                    'probe_vertical_position', 'anterior_posterior_ccf_coordinate', ...
+                    'dorsal_ventral_ccf_coordinate', 'left_right_ccf_coordinate', ...
+                    'ephys_structure_id'};
+                
+                for i = 1:numel(varNames)
+                    channel_table.(varNames{i}) = uint32( channel_table.(varNames{i}) );
+                end
+            else % Table was downloaded from api
+
+                % - Convert columns to reasonable formats
+                id = uint32(cell2mat(cellfun(@str2num_nan, channel_table.id, 'UniformOutput', false)));
+                ephys_probe_id = uint32(cell2mat(cellfun(@str2num_nan, channel_table.ephys_probe_id, 'UniformOutput', false)));
+                local_index = uint32(cell2mat(cellfun(@str2num_nan, channel_table.local_index, 'UniformOutput', false)));
+                probe_horizontal_position = uint32(cell2mat(cellfun(@str2num_nan, channel_table.probe_horizontal_position, 'UniformOutput', false)));
+                probe_vertical_position = uint32(cell2mat(cellfun(@str2num_nan, channel_table.probe_vertical_position, 'UniformOutput', false)));
+                anterior_posterior_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, channel_table.anterior_posterior_ccf_coordinate, 'UniformOutput', false)));
+                dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, channel_table.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
+                left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, channel_table.left_right_ccf_coordinate, 'UniformOutput', false)));
+            
+                ephys_structure_acronym = channel_table.ephys_structure_acronym;
+            
+                ephys_structure_id = uint32(cell2mat(cellfun(@str2num_nan, channel_table.ephys_structure_id, 'UniformOutput', false))); % so long as it's retained, convert from cell to numeric
+                % TODO: consider removing ephys_structure_id altogether from table, after verifying it's fundamentally redundant
+                % assert(isempty(setdiff(histcounts(ephys_structure_id),histcounts(categorical(cell2mat(ephys_structure_acronym))))));
+                
+                % - Rebuild table
+                channel_table = table(id, ephys_probe_id, local_index, ...
+                    probe_horizontal_position, probe_vertical_position, ...
+                    anterior_posterior_ccf_coordinate, dorsal_ventral_ccf_coordinate, ...
+                    left_right_ccf_coordinate, ephys_structure_id, ephys_structure_acronym);
+            end
+        end
+
+        function unit_table = preprocess_ephys_unit_table(unit_table)
+            
+            % - Rename variables
+            unit_table = rename_variables(unit_table, ...
                 'PT_ratio', 'waveform_PT_ratio', ...
                 'amplitude', 'waveform_amplitude', ...
                 'duration', 'waveform_duration', ...
@@ -374,145 +508,44 @@ classdef EphysManifest < handle
             end
             
             % - Filter units
-            ephys_unit_manifest = ...
-                ephys_unit_manifest(ephys_unit_manifest.amplitude_cutoff <= sFilterValues.amplitude_cutoff_maximum & ...
-                ephys_unit_manifest.presence_ratio >= sFilterValues.presence_ratio_minimum & ...
-                ephys_unit_manifest.isi_violations <= sFilterValues.isi_violations_maximum, :);
+            unit_table = ...
+                unit_table(unit_table.amplitude_cutoff <= sFilterValues.amplitude_cutoff_maximum & ...
+                unit_table.presence_ratio >= sFilterValues.presence_ratio_minimum & ...
+                unit_table.isi_violations <= sFilterValues.isi_violations_maximum, :);
             
-            if any(ephys_unit_manifest.Properties.VariableNames == "quality")
-                ephys_unit_manifest = ephys_unit_manifest(ephys_unit_manifest.quality == "good", :);
+            if any(unit_table.Properties.VariableNames == "quality")
+                unit_table = unit_table(unit_table.quality == "good", :);
             end
             
-            if any(ephys_unit_manifest.Properties.VariableNames == "ephys_structure_id")
-                ephys_unit_manifest = ephys_unit_manifest(~isempty(ephys_unit_manifest.ephys_structure_id), :);
+            if any(unit_table.Properties.VariableNames == "ephys_structure_id")
+                unit_table = unit_table(~isempty(unit_table.ephys_structure_id), :);
             end
             
             % - Convert variables to useful types
-            ephys_unit_manifest.ephys_channel_id = uint32(ephys_unit_manifest.ephys_channel_id);
-            ephys_unit_manifest.id = uint32(ephys_unit_manifest.id);
+            unit_table.ephys_channel_id = uint32(unit_table.ephys_channel_id);
+            unit_table.id = uint32(unit_table.id);
             
-            
-            for var = string(ephys_unit_manifest.Properties.VariableNames)
-                firstRowVal = ephys_unit_manifest{1,var};
+            for var = string(unit_table.Properties.VariableNames)
+                firstRowVal = unit_table{1,var};
                 
-                if iscellstr(ephys_unit_manifest.(var)) %#ok<ISCLSTR>
-                    ephys_unit_manifest.(var) = string(ephys_unit_manifest.(var));
+                if iscellstr(unit_table.(var)) %#ok<ISCLSTR>
+                    unit_table.(var) = string(unit_table.(var));
                 elseif iscell(firstRowVal)
                     assert(isscalar(firstRowVal));
                     
-                    if all(cellfun(@isnumeric,ephys_unit_manifest.(var)))
-                        [ephys_unit_manifest.(var)(cellfun(@isempty,ephys_unit_manifest.(var)))] = deal({nan});
-                        ephys_unit_manifest.(var) = cell2mat(ephys_unit_manifest.(var));
-                    elseif any(cellfun(@ischar,ephys_unit_manifest.(var)))
-                        ephys_unit_manifest.(var) = string_emptyNonChar(ephys_unit_manifest.(var));
+                    if all(cellfun(@isnumeric,unit_table.(var)))
+                        [unit_table.(var)(cellfun(@isempty,unit_table.(var)))] = deal({nan});
+                        unit_table.(var) = cell2mat(unit_table.(var));
+                    elseif any(cellfun(@ischar,unit_table.(var)))
+                        unit_table.(var) = string_emptyNonChar(unit_table.(var));
                     end
                     
                 end
-                
             end
-            
         end
-        
-        function [ephys_probes_manifest] = fetch_ephys_probes(manifest)
-            % - Fetch the ephys probes manifest
-            disp('Fetching EPhys probes manifest...');
-            ephys_probes_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysProbe', '');
-            
-            % - Rename variables
-            ephys_probes_manifest = rename_variables(ephys_probes_manifest, ...
-                "use_lfp_data", "has_lfp_data", "ecephys_session_id", "ephys_session_id");
-            
-            % - Divide the lfp sampling by the subsampling factor for clearer presentation (if provided)
-            if all(ismember({'lfp_sampling_rate', 'lfp_temporal_subsampling_factor'}, ...
-                    ephys_probes_manifest.Properties.VariableNames))
-                cfTSF = ephys_probes_manifest.lfp_temporal_subsampling_factor;
-                cfTSF(cellfun(@isempty, cfTSF)) = {1};
-                vfTSF = cell2mat(cfTSF);
-                ephys_probes_manifest.lfp_sampling_rate = ...
-                    ephys_probes_manifest.lfp_sampling_rate ./ vfTSF;
-            end
-            
-            % - Convert variables to useful types
-            ephys_probes_manifest.ephys_session_id = uint32(ephys_probes_manifest.ephys_session_id);
-            ephys_probes_manifest.id = uint32(ephys_probes_manifest.id);
-            ephys_probes_manifest.phase = categorical(ephys_probes_manifest.phase);
-            ephys_probes_manifest.name= categorical(ephys_probes_manifest.name);
-            
-            ltsf = ephys_probes_manifest.lfp_temporal_subsampling_factor;
-            [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this shoudl be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
-            ephys_probes_manifest.lfp_temporal_subsampling_factor = cell2mat(ltsf);
-            
-            
-        end
-        
-        function [ephys_channels_manifest] = fetch_ephys_channels(manifest)
-            % - Fetch the ephys units manifest
-            disp('Fetching EPhys channels manifest...');
-            ephys_channels_manifest = manifest.cache.CachedAPICall('criteria=model::EcephysChannel', "rma::include,structure,rma::options[tabular$eq'ecephys_channels.id,ecephys_probe_id as ephys_probe_id,local_index,probe_horizontal_position,probe_vertical_position,anterior_posterior_ccf_coordinate,dorsal_ventral_ccf_coordinate,left_right_ccf_coordinate,structures.id as ephys_structure_id,structures.acronym as ephys_structure_acronym']");
-            
-            % - Convert columns to reasonable formats
-            id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.id, 'UniformOutput', false)));
-            ephys_probe_id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.ephys_probe_id, 'UniformOutput', false)));
-            local_index = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.local_index, 'UniformOutput', false)));
-            probe_horizontal_position = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.probe_horizontal_position, 'UniformOutput', false)));
-            probe_vertical_position = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.probe_vertical_position, 'UniformOutput', false)));
-            anterior_posterior_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.anterior_posterior_ccf_coordinate, 'UniformOutput', false)));
-            dorsal_ventral_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.dorsal_ventral_ccf_coordinate, 'UniformOutput', false)));
-            left_right_ccf_coordinate = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.left_right_ccf_coordinate, 'UniformOutput', false)));
-            
-            ephys_structure_acronym = ephys_channels_manifest.ephys_structure_acronym;
-            
-            ephys_structure_id = uint32(cell2mat(cellfun(@str2num_nan, ephys_channels_manifest.ephys_structure_id, 'UniformOutput', false))); % so long as it's retained, convert from cell to numeric
-            % TODO: consider removing ephys_structure_id altogether from table, after verifying it's fundamentally redundant
-            % assert(isempty(setdiff(histcounts(ephys_structure_id),histcounts(categorical(cell2mat(ephys_structure_acronym))))));
-            
-            % - Rebuild table
-            ephys_channels_manifest = table(id, ephys_probe_id, local_index, ...
-                probe_horizontal_position, probe_vertical_position, ...
-                anterior_posterior_ccf_coordinate, dorsal_ventral_ccf_coordinate, ...
-                left_right_ccf_coordinate, ephys_structure_id, ephys_structure_acronym);
-        end
-        
-        function annotated_ephys_units = fetch_annotated_ephys_units(manifest)
-            % METHOD - Return table of annotated EPhys units
-            
-            % - Annotate units
-            annotated_ephys_units = manifest.api_access.memoized.fetch_ephys_units();
-            annotated_ephys_channels = manifest.api_access.memoized.fetch_annotated_ephys_channels();
-            
-            annotated_ephys_units = join(annotated_ephys_units, annotated_ephys_channels, ...
-                'LeftKeys', 'ephys_channel_id', 'RightKeys', 'id');
-            
-            % - Rename variables
-            annotated_ephys_units = rename_variables(annotated_ephys_units, ...
-                'name', 'probe_name', ...
-                'phase', 'probe_phase', ...
-                'sampling_rate', 'probe_sampling_rate', ...
-                'lfp_sampling_rate', 'probe_lfp_sampling_rate', ...
-                'local_index', 'peak_channel');
-            
-            % Apply upstream transformation, converting acronymys(cell arrays) to categoricals, since invalid units  have been filtered away   
-            % TODO: Refactor ephys_structure_acronym handling to at least generalize between units & channels; possibly delegate to manifest
-            annotated_ephys_units.ephys_structure_acronym = categorical(arrayfun(@(e)string(e{1}), annotated_ephys_units.ephys_structure_acronym));            
-        end
-        
-        function annotated_ephys_probes = fetch_annotated_ephys_probes(manifest)
-            % METHOD - Return the annotate table of EPhys probes
-            % - Annotate probes and return
-            annotated_ephys_probes = manifest.api_access.memoized.fetch_ephys_probes();
-            sessions = manifest.api_access.memoized.fetch_ephys_sessions();
-            annotated_ephys_probes = join(annotated_ephys_probes, sessions, 'LeftKeys', 'ephys_session_id', 'RightKeys', 'id');
-        end
-        
-        function annotated_ephys_channels = fetch_annotated_ephys_channels(manifest)
-            % - METHOD - Return the annotated table of EPhys channels
-            annotated_ephys_channels = manifest.api_access.memoized.fetch_ephys_channels();
-            annotated_ephys_probes = manifest.api_access.memoized.fetch_annotated_ephys_probes();
-            annotated_ephys_channels = join(annotated_ephys_channels, annotated_ephys_probes, ...
-                'LeftKeys', 'ephys_probe_id', 'RightKeys', 'id');
-            
-        end
+
     end
+
 end
 
 %% Helper functions
@@ -598,7 +631,6 @@ end
 return_table = addvars(source_table, groups, 'NewVariableNames', source_new_var);
 end
 
-
 function return_table = count_owned(source_table, scan_table, grouping_var_source, grouping_var_scan, new_var_source)
 % count_owned - FUNCTION Count the number of rows in `scan_table` owned by a particular variable value
 %
@@ -640,7 +672,6 @@ end
 % - Add the counts to the table
 return_table = addvars(source_table, counts, 'NewVariableNames', new_var_source);
 end
-
 
 function n = str2num_nan(s)
 if isempty(s)

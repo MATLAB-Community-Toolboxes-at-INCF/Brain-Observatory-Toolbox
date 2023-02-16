@@ -47,7 +47,7 @@ classdef EphysSession < bot.item.Session
         
         stimulus_presentations;         % Table whose rows are stimulus presentations and whose columns are presentation characteristics. A stimulus presentation is the smallest unit of distinct stimulus presentation and lasts for (usually) 1 60hz frame. Since not all parameters are relevant to all stimuli, this table contains many 'null' values
         stimulus_conditions;            % Table indicating unique stimulus presentations presented in this experiment
-        %num_stimulus_presentations     % Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
+        num_stimulus_presentations;     % Number of stimulus presentations in this session % TODO: consider property revival if there is a way to get at size without full stimulus_presentations access
         stimulus_names;                 % Names of stimuli presented in this session
         stimulus_epochs;                % Table of stimulus presentation epochs
         optogenetic_stimulation_epochs; % Table of optogenetic stimulation epochs for this experimental session (if present)
@@ -130,6 +130,11 @@ classdef EphysSession < bot.item.Session
     properties (Hidden, Access=private)
         nwbLocal_;
     end
+
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
+    properties (Constant, Hidden)
+        S3_PRIMARY_DATA_FOLDER = 'visual-coding-neuropixels';
+    end
     
     
     %% PROPERTY ACCESS METHODS
@@ -140,13 +145,15 @@ classdef EphysSession < bot.item.Session
             inter_presentation_intervals = self.fetch_cached('inter_presentation_intervals', @self.zprpBuildInterPresentationIntervals);
         end
         
-        % TODO:
-        %         function num_stimulus_presentations = get.num_stimulus_presentations(self)
-        %             num_stimulus_presentations = size(self.stimulus_presentations, 1);
-        %         end
+        function num_stimulus_presentations = get.num_stimulus_presentations(self)
+            num_stimulus_presentations = self.fetch_cached('num_stimulus_presentations', ...
+                @() self.nwbLocal_.fetch_num_stimulus_presentations());
+        end
         
         function stimulus_names = get.stimulus_names(self)
-            stimulus_names = unique(self.stimulus_presentations.stimulus_name);
+            n = self.nwbLocal;
+            stimulus_names = self.fetch_cached('stimulus_names', ...
+                @()n.fetch_stimulus_presentation_names());
         end
         
         function structure_acronyms = get.structure_acronyms(self)
@@ -251,7 +258,6 @@ classdef EphysSession < bot.item.Session
         end
     end
     
-    
     % VISIBLE PROPERTIES - Auxiliary File (NWB)
     methods
         function stimulus_table = get.stimulus_templates(self)
@@ -259,7 +265,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function epochs = get.stimulus_epochs(self)
-            epochs = self.getStimulusEpochsByDuration();
+            epochs = self.fetch_cached('stimulus_epochs', @self.getStimulusEpochsByDuration);
         end
         
     end
@@ -847,6 +853,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function stimulus_presentations = mask_invalid_stimulus_presentations(self, stimulus_presentations)
+            
             arguments
                 self;
                 stimulus_presentations table;
@@ -857,26 +864,33 @@ classdef EphysSession < bot.item.Session
             
             is_numeric = table2array(varfun(@isnumeric, stimulus_presentations(1, :)));
             
-            for nRowIndex = 1:size(stimulus_presentations, 1)
-                sp = stimulus_presentations(nRowIndex, :);
-                id = sp.stimulus_presentation_id;
-                stim_epoch = [sp.start_time, sp.stop_time];
-                
-                for invalid_time_index = 1:size(invalid_times_filt, 1)
-                    it = invalid_times_filt(invalid_time_index, :);
-                    invalid_interval = [it.start_time, it.stop_time];
-                    
-                    if zlclHasOverlap(stim_epoch, invalid_interval)
-                        sp(1, is_numeric) = {nan};
-                        sp(1, ~is_numeric) = {""}; %#ok<STRSCALR>
-                        sp.stimulus_name = "invalid_presentation";
-                        sp.start_time = stim_epoch(1);
-                        sp.stop_time = stim_epoch(2);
-                        sp.stimulus_presentation_id = id;
-                        stimulus_presentations(nRowIndex, :) = sp;
-                    end
-                end
+            % - Replace data on invalidated rows with nan or ""
+            if ~isempty(invalid_times_filt)
+                invalid_epochs = [invalid_times_filt.start_time, invalid_times_filt.stop_time];
+            else
+                % not all session have invalid times / epochs
+                invalid_epochs = [];
             end
+            
+            stimulus_epochs_ = [stimulus_presentations.start_time, stimulus_presentations.stop_time];
+
+            is_invalid_epoch = false( size(stimulus_epochs_, 1), 1);
+
+            for i = 1:size(invalid_epochs, 1)
+                is_overlapping = zlclHasOverlap(stimulus_epochs_, invalid_epochs(i,:));
+                is_invalid_epoch(is_overlapping) = true;
+            end
+
+            varNames = stimulus_presentations.Properties.VariableNames;
+            replace = ~contains(varNames, {'start_time', 'stop_time', 'stimulus_presentation_id'});
+
+            % Update table rows:
+            stimulus_presentations_new = stimulus_presentations;
+            stimulus_presentations_new(is_invalid_epoch, is_numeric & replace) = {nan};
+            stimulus_presentations_new(is_invalid_epoch, ~is_numeric & replace) = {""}; %#ok<STRSCALR>
+
+            stimulus_presentations_new(is_invalid_epoch, 'stimulus_name') = {"invalid_presentation"}; %#ok<STRSCALR> 
+            stimulus_presentations = stimulus_presentations_new;
         end
         
         % CONSIDER FOR DEPRECATION - Currently unused, not sure if this extra filtering has a use case
@@ -964,6 +978,104 @@ classdef EphysSession < bot.item.Session
                 s = 'Warning: Structure boundaries were calculated across channels from multiple probes.';
             end
         end
+    end
+
+    methods (Hidden, Access = protected)
+        
+        function s3BranchPath = getS3BranchPath(obj, nickname)
+        %getS3BranchPath Get subfolders and filename for file given nickname
+        %
+        % Bucket Organization for neuropixels data :
+        % 
+        % visual-coding-neuropixels
+        % +-- ecephys-cache                  # packaged processed ExtraCellular Electrophysiology data
+        % ¦   +-- manifest.json              # used by AllenSDK to look up file paths
+        % ¦   +-- sessions.csv               # metadata for each experiment session
+        % ¦   +-- probes.csv                 # metadata for each experiment probe
+        % ¦   +-- channels.csv               # metadata for each location on a probe
+        % ¦   +-- units.csv                  # metadata for each recorded signal
+        % ¦   +-- brain_observatory_1.1_analysis_metrics.csv         # pre-computed metrics for brain observatory stimulus set
+        % ¦   +-- functional_connectivity_analysis_metrics.csv       # pre-computed metrics for functional connectivity stimulus set
+        % ¦   +-- session_<experiment_id>
+        % ¦   ¦   +-- session_<experiment_id>.nwb                    # experiment session nwb
+        % ¦   ¦   +-- probe_<probe_id>_lfp.nwb                       # probe lfp nwb
+        % ¦   ¦   +-- session_<experiment_id>_analysis_metrics.csv   # pre-computed metrics for experiment
+        % ¦   +-- ...
+        % ¦   +-- natural_movie_templates
+        % ¦   ¦   +-- natural_movie_1.h5                    # stimulus movie
+        % ¦   ¦   +-- natural_movie_3.h5                    # stimulus movie
+        % ¦   +-- natural_scene_templates
+        % ¦   ¦   +-- natural_scene_<image_id>.tiff         # stimulus image
+        % ¦   ¦   +-- ...
+        % +-- raw-data                       # Sorted spike recordings and unprocessed data streams
+        % ¦   +-- <experiment_id>
+        % ¦   ¦   +-- sync.h5                # Information describing the synchronization of experiment data streams
+        % ¦   ¦   +-- <probe_id>
+        % ¦   ¦   ¦ +-- channel_states.npy   #
+        % ¦   ¦   ¦ +-- event_timestamps.npy #
+        % ¦   ¦   ¦ +-- lfp_band.dat         # Local field potential data
+        % ¦   ¦   ¦ +-- spike_band.dat       # Spike data
+        % ¦   ¦   +-- ...
+        % ¦   +-- ...
+
+            arguments
+                obj             % Class object
+                nickname char   % One of: SessNWB
+                %probeId = 1 % Todo
+                %movieNumber = 1 % Todo
+                %sceneNumber = 1 % Todo
+            end
+            
+            %assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'StimTemplatesGroup'), ...
+            %    'Currently only supports files with nickname SessNWB')
+
+            experimentId = num2str(obj.id);
+
+            % Hardcoded awaiting implementation 
+            probeId = 1;
+            movieNumber = 1;
+            sceneNumber = 2;
+
+            switch nickname
+
+                case 'SessNWB'
+                    folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
+                    fileName = sprintf('session_%s.nwb', experimentId);
+        
+                case 'StimTemplatesGroup'
+                    s3BranchPath = obj.getS3BranchPath('StimMovie'); return
+                    
+                case 'StimMovie'
+                    folderPath = fullfile('ecephys-cache', 'natural_movie_templates');
+                    fileName = sprintf('natural_movie_%d.h5', movieNumber);
+        
+                case 'StimScene'
+                    folderPath = fullfile('ecephys-cache', 'natural_scene_templates');
+                    fileName = sprintf('natural_scene_%d.tiff', sceneNumber);
+        
+                case 'SyncH5'
+                    folderPath = fullfile('raw_data', experimentId, probeId);
+                    fileName = 'sync.h5';
+                
+                case 'ChStatesNpy'
+                    folderPath = fullfile('raw_data', experimentId, probeId);
+                    fileName = 'channel_states.npy';
+                
+                case 'EventTsNpy'
+                    folderPath = fullfile('raw_data', experimentId, probeId);
+                    fileName = 'event_timestamps.npy';
+        
+                case 'LFPDAT'
+                    folderPath = fullfile('raw_data', experimentId, probeId);
+                    fileName = 'lfp_band.dat';
+        
+                case 'SPKDAT'
+                    folderPath = fullfile('raw_data', experimentId, probeId);
+                    fileName = 'spike_band.dat';
+            end
+            s3BranchPath = fullfile(folderPath, fileName);
+        end
+
     end
 
     % MARK FOR DELETION - potential use case indeterminate
@@ -1055,6 +1167,7 @@ end
 indices = arrayfun(fhFind, values);
 end
 
+%zlclBuildTimeWindowDomain
 function domain = zlclBuildTimeWindowWomain(bin_edges, offsets, callback)
 arguments
     bin_edges;
@@ -1113,13 +1226,9 @@ intervals = unique(intervals);
 
 end
 
-
-
-
 % function coerce_scalar(value, message, warn)
 % error('BOT:NotImplemented', 'This function is not implemented.');
 % end
-
 
 function t = zlclExtractSummaryCountStatistics(index, group)
 % - Extract statistics
@@ -1156,14 +1265,14 @@ function is_overlap = zlclHasOverlap(a, b)
 %
 %     Parameters
 %     ----------
-%     a : tuple
+%     a : matrix (n, 2)
 %         start, stop times
-%     b : tuple
+%     b : matrix (n, 2)
 %         start, stop times
 %     Returns
 %     -------
-%     bool : True if overlap, otherwise False
-is_overlap = max(a(1), b(1)) <= min(a(2), b(2));
+%     bool : logical (n, 1) - True if overlap, otherwise False
+    is_overlap = max(a(:,1), b(:,1) ) <= min(a(:,2), b(:,2) );
 end
 
 function source_table = zlclRemoveVarsIfPresent(source_table, variables)

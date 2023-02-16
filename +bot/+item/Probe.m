@@ -41,6 +41,10 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
         LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB",false);
     end
 
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
+    properties (Constant, Hidden)
+        S3_PRIMARY_DATA_FOLDER = 'visual-coding-neuropixels';
+    end
 
     %% PROPERTY ACCESS METHODS
 
@@ -149,7 +153,7 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
                 obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);
 
                 % Assign linked Item objects (upstream)
-                obj.session = bot.session(obj.info.ephys_session_id);
+                obj.session = bot.session(obj.info.ephys_session_id, "ephys");
 
                 % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
                 obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));
@@ -173,5 +177,38 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
                 fprintf('     From session ids: %s\n\n', exp_ids_part)
             end
         end
+    end
+
+    methods (Hidden, Access = protected)
+
+        function s3BranchPath = getS3BranchPath(obj, nickname)
+        %getS3BranchPath Get subfolders and filename for file given nickname
+        %
+        % See bot.item.concrete.EphysSession/getS3BranchPath for details on
+        % the internal S3 bucket folder hierarchy.
+
+            arguments
+                obj             % Class object
+                nickname char   % One of: LFPNWB
+            end
+
+            assert(strcmp(nickname, 'LFPNWB'), ...
+                'Currently only supports files with nickname LFPNWB')
+
+            experimentId = num2str(obj.session.id);
+            probeId = num2str(obj.id);
+        
+            switch nickname
+        
+                case 'LFPNWB' % prove objects..
+                    folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
+                    fileName = sprintf('probe_%s_lfp.nwb', probeId);
+        
+                otherwise
+                    error('BOT:LinkedFiles', '%s is not a valid nickname for linked files of a probe', nickname)
+            end
+            s3BranchPath = fullfile(folderPath, fileName);
+        end
+
     end
 end

@@ -93,6 +93,11 @@ classdef OphysSession < bot.item.Session
     properties (Hidden, SetAccess = protected)
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
+
+    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
+    properties (Constant, Hidden)
+        S3_PRIMARY_DATA_FOLDER = 'visual-coding-2p';
+    end
     
     
     %% PROPERTY ACCESS METHODS
@@ -1263,6 +1268,73 @@ classdef OphysSession < bot.item.Session
             end
         end
     end
+
+    methods (Hidden, Access = protected)
+
+        function s3BranchPath = getS3BranchPath(obj, nickname)
+        %getS3BranchPath Get subfolders and filename for file given nickname
+        %
+        % Bucket Organization for 2-photon data :
+        % 
+        % visual-coding-2p
+        % +-- ophys_experiment_data       # traces, running speed, etc per experiment session
+        % ¦   +-- <experiment_id>.nwb
+        % ¦   +-- ...
+        % +-- ophys_experiment_analysis   # analysis files per experiment session
+        % ¦   +-- <experiment_id>_<session_name>.h5 (*)
+        % ¦   +-- ...
+        % +-- ophys_movies                # motion-corrected video per experiment session
+        % ¦   +-- ophys_experiment_<experiment_id>.h5
+        % ¦   +-- ...
+        % +-- ophys_experiment_events     # neuron activity modeled as discrete events
+        % ¦   +-- <experiment_id>_events.npz
+        % ¦   +-- ...
+        % +-- ophys_eye_gaze_mapping      # subject eye position over the course of the experiment
+        % ¦   +-- <experiment_id>_<session_id>_eyetracking_dlc_to_screen_mapping.h5
+        % ¦   +-- ...
+        %
+        % Notes:
+        %  * Analysis files are named <experiment_id>_<session_name>_analysis.h5
+
+            arguments
+                obj             % Class object
+                nickname char   % One of : SessNWB
+            end
+            
+            assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'SessH5'), ...
+                'Currently only supports files with nickname SessNWB')
+            
+            experimentId = num2str(obj.id);
+            sessionName = obj.session_type;
+        
+            switch nickname
+        
+                case 'SessNWB'       
+                    folderPath = 'ophys_experiment_data';
+                    fileName = sprintf('%s.nwb', experimentId);
+        
+                case 'SessH5' 
+                    folderPath = 'ophys_experiment_analysis';
+                    fileName = sprintf('%s_%s_analysis.h5', experimentId, sessionName);
+        
+                case 'Movie'
+                    folderPath = 'ophys_movies';
+                    fileName = sprintf('ophys_experiment_%s.h5', experimentId);
+        
+                case 'Events'
+                    folderPath = 'ophys_experiment_events';
+                    fileName = sprintf('%s_events.npz', experimentId);
+                
+                case 'EyeH5'
+                    error('File is not available')
+                    folderPath = 'ophys_eye_gaze_mapping';
+                    fileName = sprintf('%s_%s_eyetracking_dlc_to_screen_mapping.h5', experimentId, obj.sessionId);
+            end
+            s3BranchPath = fullfile(folderPath, fileName);
+        end
+
+    end
+
 end
 
 %% LOCAL FUNCTIONS

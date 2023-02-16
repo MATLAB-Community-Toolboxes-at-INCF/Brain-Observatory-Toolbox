@@ -1,22 +1,28 @@
 classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.mixin.OnDemandProps
    %LINKEDFILES Handles linked files for this BOT Item
-   
+
+    % Todo: Consider whether to add s3 path info to the linkedFilesInfo table...
+
    %% PROPERTIES - VISIBLE
+   
    properties (SetAccess = private)
-      linkedFiles table = table('Size',[0 1],'VariableTypes',"string",'VariableNames',"LocalFile");
+      % Table containing local file paths for linked files
+      linkedFiles table = table('Size', [0 1], 'VariableTypes', "string", 'VariableNames', "LocalFile");
    end
    
    %% PROPERTIES - HIDDEN
-   
-   
-   properties (SetAccess = protected, Hidden)
-      linkedFileRespTables (1,1) struct; % Struct for storing response tables from linkedFile fetch ops, where applicable
+
+   properties (Hidden, SetAccess = protected)
+      % Struct for storing response tables from linkedFile fetch ops, where applicable
+      linkedFileRespTables (1,1) struct
       
-      downloadedFileProps (1,:) string; % string array of properties whose linked file has been downloaded
+      % String array of properties whose linked file has been downloaded
+      downloadedFileProps (1,:) string
    end
    
-   properties (SetAccess = private, Hidden)
-      initState = false;
+   properties (Hidden, SetAccess = private)
+      % Boolean flag, whether linked files info have been initialized
+      initState = false
       
       %linkedFilesInfo struct = struct('Nickname',{},'LocalFile',{},'URL',{},'FileInfo',{});
       linkedFilesInfo table = table(  'Size',[0 4],... %TODO: add a "MATLAB file info" variable that specifies fcn for checking if a file is valid (iss#94)
@@ -27,16 +33,30 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    %% PROPERTIES - HIDDEN IMMUTABLES
    
    properties (SetAccess = immutable, Hidden)
-      prop2LinkedFileMap; % handle to containers.Map
+      prop2LinkedFileMap % Handle to containers.Map
    end
-   
    
    properties (Abstract, SetAccess=protected, Hidden)
       % TODO: refactor this into a single "linkedFilesConfiguration" table
-      LINKED_FILE_PROP_BINDINGS (1,1) struct; % structure of form s.<linked file nickname> = <property name string array>
-      LINKED_FILE_AUTO_DOWNLOAD (1,1) struct; % structure of form s.<linked file nickname> = <logical>
+      LINKED_FILE_PROP_BINDINGS (1,1) struct % Structure of form s.<linked file nickname> = <property name string array>
+      LINKED_FILE_AUTO_DOWNLOAD (1,1) struct % Structure of form s.<linked file nickname> = <logical>
    end
    
+   %% PROPERTIES - CONSTANT (S3 bucket url/path definitions)
+   
+   properties (Constant, Hidden)
+      % Path if ABO S3 bucket is mounted on AWS EC2 (cloud computer) 
+      S3_ROOT_PATH = fullfile('/home', 'ubuntu', 's3-allen') % Todo: get from preferences instead
+      
+      % Web URL for the ABO S3 bucket
+      S3_BASE_URL = "https://allen-brain-observatory.s3.us-west-2.amazonaws.com"
+   end
+
+   properties (Abstract, Constant, Hidden)
+      % Primary data folder is the name of the folder containing either 
+      % EPhys or OPhys data. Subclass must implement
+      S3_PRIMARY_DATA_FOLDER
+   end
    
    
    %% METHODS - HIDDEN
@@ -44,19 +64,51 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    % SUBCLASS API
    methods (Hidden, Access = protected)
       function downloadLinkedFile(obj,fileNickname)
-         
+      %downloadLinkedFile Retrieve a linked file (from cache or api/s3)
+      %
+      %  This method will retrieve a file using different strategies which
+      %  depends on preference selections. 
+      %
+      %    1) If an Allen Brain Observatory S3 bucket is mounted locally
+      %    and the preferences is set to download from S3, the file is
+      %    copied from the bucket to the local cache
+      %
+      %    2) If an S3 bucket is not mounted locally, and the preference is
+      %    set to download from S3, the file will be downloaded from the
+      %    bucket using the https protocol.
+      %
+      %    3) If an S3 bucket is not mounted locally, and the preference is
+      %    set to download from API, the file will be downloaded from the
+      %    Allen Brain Observatory API
+      
          fileInfo = obj.linkedFilesInfo(fileNickname,:); %table row
          
          boc = bot.internal.cache;
-         url = boc.strABOBaseUrl + fileInfo.download_link;
-         assert(~boc.IsURLInCache(url),"File has already been downloaded");
+         strApiUrl = boc.strABOBaseUrl + fileInfo.download_link;
+         assert(~boc.IsURLInCache(strApiUrl), "File has already been downloaded");
          %assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}),"File has already been downloaded");
          
-         try
-            disp(   "Downloading URL: [" + url + "]" + newline + ...
-               "to cache location: " + fileInfo.path + "...");
-            lclFilename = boc.CacheFile(url, fileInfo.path);
-            disp("Download complete.");
+         try % Retrieve file based on current strategy
+             if obj.isS3BucketMounted() && obj.retrieveFileFromS3Bucket()
+                action = "Copy";
+             else
+                action = "Download";
+             end
+             
+             if obj.retrieveFileFromS3Bucket()
+                strS3Filepath = obj.getS3Filepath(fileNickname, action=="Copy");
+                strSourcePath = strS3Filepath;
+             else
+                strS3Filepath = "";
+                strSourcePath = strApiUrl;
+             end
+             
+             disp( action+"ing file: [" + strSourcePath + "]" + newline + ...
+                   "to cache location: " + fileInfo.path + "..." )
+             localFilename = boc.CacheFile(strApiUrl, fileInfo.path, ...
+                     strS3Filepath, 'RetrievalMode', action);
+             disp( strjoin([action, "complete."]) )
+
          catch ME
             % TODO: handle caching errors
             ME.rethrow();
@@ -65,10 +117,9 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
          
          assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
-         obj.linkedFiles{fileNickname,"LocalFile"} = string(lclFilename);
-         
+         obj.linkedFiles{fileNickname,"LocalFile"} = string(localFilename);
       end
-      
+
       function ensurePropFileDownloaded(obj,propName)
          if ~ismember(propName,obj.downloadedFileProps)
             obj.downloadLinkedFile(obj.prop2LinkedFileMap(propName));
@@ -83,7 +134,6 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             lclFilename = missing;
          end
       end
-      
    end
    
    % SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
@@ -93,7 +143,6 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
          else
             groups = getPropertyGroups@bot.item.internal.abstract.Item(obj);
-            
             
             for nickname = string(obj.linkedFiles.Row)'
                
@@ -146,13 +195,11 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             obj.CORE_PROPERTIES = [obj.CORE_PROPERTIES "linkedFiles"];
          end
       end
-      
    end
    
    % SUBCLASS CONSTRUCTOR API
    % Methods to populate linkedFileInfo table
    methods (Hidden, Access = protected)
-      
       % Call API to fetch linkedFileInfo
       function apiRespTbl = fetchLinkedFileInfo(obj,nickname,apiReqStr,storeRespTbl)
          
@@ -198,14 +245,12 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          fileInfo.download_link = wellKnownFileInfo.download_link;
          
          obj.linkedFilesInfo(end+1,:) = struct2table(fileInfo);
-         
       end
    end
    
    % SUBCLASS INITIALIZER
    % Mandatory initialization step prior to object use
-   methods  (Hidden, Access = protected)
-      
+   methods (Hidden, Access = protected)
       function initLinkedFiles(obj)
          
          % Make linkedFilesInfo easier to access
@@ -232,6 +277,16 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             fileInfo = obj.linkedFilesInfo(nickname,:); %table row
             url = boc.strABOBaseUrl + fileInfo.download_link;
             
+            % Check if the Allen S3 bucket is mounted on the local file system
+            if obj.isS3BucketMounted() && ~obj.useCloudCacher() % Download-free mode
+                % Generate filename from nickname and use this for local
+                % file to bypass download through api and subsequent caching
+                filepath = obj.getS3Filepath(nickname, true);
+                obj.linkedFiles{nickname,"LocalFile"} = string(filepath);
+                obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
+                continue
+            end
+
             % Determine which linkedFiles have been downloaded
             if boc.IsURLInCache(url)
                obj.linkedFiles{nickname,"LocalFile"} = string(boc.ccCache.CachedFileForURL(url));
@@ -247,8 +302,60 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          obj.initState = true;
       end
    end
+
+   %% METHODS - S3 FILE RETRIEVAL
+   
+   methods (Hidden, Access = protected)
+      function tf = isS3BucketMounted(~)
+         tf = bot.util.getPreferenceValue('UseLocalS3Mount') && ...
+             isfolder( bot.util.getPreferenceValue('S3MountDirectory') );
+      end
+
+      function tf = retrieveFileFromS3Bucket(~)
+          tf = bot.util.getPreferenceValue('DownloadFrom') == 'S3';
+      end
+
+      function tf = useCloudCacher(obj)
+         if obj.isS3BucketMounted()
+            tf = bot.util.getPreferenceValue('UseCacheWithS3Mount');
+         else
+            tf = true; % Always use cloud cacher when s3 bucket is not mounted
+         end
+      end
+
+      function s3Filepath = getS3Filepath(obj, nickname, localMount)
+      %getS3Filepath Get filepath of file in s3 bucket given nickname
+         
+         arguments
+            obj                             % An object of the LinkedFilesItem class
+            nickname (1,1) string           % Nickname of file to get filepath for
+            localMount (1,1) logical = true % Action used for retrieving file. Options: "Copy" or "Download"
+         end
+
+         if localMount % S3 bucket is mounted.
+            rootPath = obj.S3_ROOT_PATH;
+         else
+            rootPath = obj.S3_BASE_URL; % Use S3 web 
+         end
+         
+         % Build the full filepath for the file
+         s3TrunkPath = fullfile(rootPath, obj.S3_PRIMARY_DATA_FOLDER);
+         s3BranchPath = obj.getS3BranchPath(nickname);
+         s3Filepath = fullfile(s3TrunkPath, s3BranchPath);
+
+         % Ensure the url protocol is correct (fullfile removes double //)
+         if strncmp(s3Filepath, 'https', 5)
+             if ispc
+                % On windows, fix from file system slash to url slash
+                s3Filepath = replace(s3Filepath, '\', '/');
+             end
+             s3Filepath = replace(s3Filepath, 'https:/', 'https://');
+         end
+      end
+
+      function [] = getS3BranchPath(obj, varargin)
+      %getS3BranchPath Get subfolders and and filename for file in s3 bucket
+         error('Linked files in S3 bucket is not implemented for item of type "%s"', class(obj))
+      end
+   end
 end
-
-
-
-
