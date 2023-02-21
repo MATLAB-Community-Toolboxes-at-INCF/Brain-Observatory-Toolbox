@@ -138,7 +138,7 @@ classdef CloudCacher < handle
 
                % - Download data from the provided URL and save
               strCacheFilename = downloadFile(strCacheFilename, fileDownloadUrl, ...
-                  'DisplayMode', bot.util.getPreferenceValue('DialogMode'));
+                  'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'));
 
                % - Check that we got the complete file
                fileSizeWeb = bot.util.getWebFileSize(strURL);
