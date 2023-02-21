@@ -251,7 +251,7 @@ classdef cache < handle
             end
             
             function tMessages = cell_messages_to_table(cMessages)
-                import bot.internal.utility.structcat
+                import bot.internal.util.structcat
                 structArray = structcat(1, cMessages{:});
                 tMessages = struct2table(structArray);
             end

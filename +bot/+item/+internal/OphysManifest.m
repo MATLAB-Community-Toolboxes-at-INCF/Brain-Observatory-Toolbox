@@ -171,7 +171,7 @@ classdef OphysManifest < bot.item.internal.Manifest
         %
         %   Ophys item tables are stored in json files
 
-            import bot.internal.utility.structcat
+            import bot.internal.util.structcat
 
             fprintf('Reading table from file...')
             data = jsondecode(fileread(cacheFilePath));
