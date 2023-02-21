@@ -33,4 +33,4 @@
 %     bot.getCells           - Obtain item(s) representing cells (Ophys)
 %
 %   Get preferences for the toolbox:
-%     bot.getPreferences     - Get a preference singleton object. 
+%     bot.util.getPreferences     - Get a preference singleton object. 
