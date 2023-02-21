@@ -25,12 +25,12 @@
 %     bot.fetchCells         - List information about all cells (Ophys)
 %   
 %   Getting item objects:
-%     bot.experiment         - Get item(s) representing experiments (Ophys)
-%     bot.session            - Get item(s) representing sessions (Ephys & Ophys)
-%     bot.probe              - Get item(s) representing probes (Ephys)
-%     bot.channel            - Get item(s) representing channels (Ephys)
-%     bot.unit               - Get item(s) representing units (Ephys)
-%     bot.cell               - Get item(s) representing cells (Ophys)
+%     bot.getExperiments     - Obtain item(s) representing experiments (Ophys)
+%     bot.getSessions        - Obtain item(s) representing sessions (Ephys & Ophys)
+%     bot.getProbes          - Obtain item(s) representing probes (Ephys)
+%     bot.getChannels        - Obtain item(s) representing channels (Ephys)
+%     bot.getUnits           - Obtain item(s) representing units (Ephys)
+%     bot.getCells           - Obtain item(s) representing cells (Ophys)
 %
 %   Get preferences for the toolbox:
 %     bot.getPreferences     - Get a preference singleton object. 

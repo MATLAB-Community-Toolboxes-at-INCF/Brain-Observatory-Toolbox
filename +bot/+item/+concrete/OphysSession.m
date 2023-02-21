@@ -1246,7 +1246,7 @@ classdef OphysSession < bot.item.Session
                 
                 obj.initLinkedFiles();
                 
-                obj.experiment = bot.experiment(obj.info.experiment_container_id);
+                obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
                 obj.cells = obj.experiment.cells;
             end
         end

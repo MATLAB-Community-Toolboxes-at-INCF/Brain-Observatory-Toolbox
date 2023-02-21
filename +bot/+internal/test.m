@@ -34,21 +34,21 @@ classdef test < matlab.unittest.TestCase
          % - Get session IDs
          vIDs = sess.id;
          
-         % - Create some bot.session objects
-         bot.session(vIDs(1));
-         bot.session(vIDs(1:3));
-         bot.session(sess(1, :));
-         bot.session(sess(1:3, :));
+         % - Create some bot.item.Session objects
+         bot.getSessions(vIDs(1));
+         bot.getSessions(vIDs(1:3));
+         bot.getSessions(sess(1, :));
+         bot.getSessions(sess(1:3, :));
 
          % - Fetch all sessions from one experiment
          exps = bot.fetchExperiments();
-         s = bot.session(sess(sess.experiment_container_id == exps.id(1), :));
+         s = bot.getSessions(sess(sess.experiment_container_id == exps.id(1), :));
       end
       
       function testSessionDataAccess(testCase)
-         %% Test data access methods of the bot.session class for OPhys data
-         % - Create a bot.session object
-         s = bot.session(496934409);
+         %% Test data access methods of the bot.item.Session class for OPhys data
+         % - Create a bot.item.Session object
+         s = bot.getSessions(496934409);
 
          % - Test summary methods
          s.nwb_metadata;
@@ -76,7 +76,7 @@ classdef test < matlab.unittest.TestCase
       function testStimulusExtraction(testCase)
          %% Test OPhys session stimulus extraction methods
          % - Create a bot.session object
-         s = bot.session(528402271);
+         s = bot.getSessions(528402271);
 
          % - Get a vector of fluorescence frame IDs
          vnFrameIDs = 1:numel(s.fluorescence_timestamps);
@@ -103,7 +103,7 @@ classdef test < matlab.unittest.TestCase
          s.spontaneous_activity_stimulus_table;
          
          % - Get an OPhys session with sparse noise
-         s = bot.session(566752133);
+         s = bot.getSessions(566752133);
          
          % - Get the sparse noise stimulus template
          s.getStimulusTemplate('locally_sparse_noise_4deg');
@@ -112,20 +112,20 @@ classdef test < matlab.unittest.TestCase
       function testOPhysExperiment(testCase)
           %% Test obtaining OPhys experiment object
           exp_table = bot.fetchExperiments();
-          exp = bot.experiment(exp_table.id(1));
-          exp = bot.experiment(exp_table(1, :));
-          exps = bot.experiment(exp_table.id(1:3));
-          exps = bot.experiment(exp_table(1:3, :));
+          exp = bot.getExperiments(exp_table.id(1));
+          exp = bot.getExperiments(exp_table(1, :));
+          exps = bot.getExperiments(exp_table.id(1:3));
+          exps = bot.getExperiments(exp_table(1:3, :));
       end
       
       function testOPhysCell(testCase)
           %% Test obtaining OPhys cell object
           cell_table = bot.fetchCells(true);
           cell_table = bot.fetchCells(false);
-          cell = bot.cell(cell_table.id(1));
-          cell = bot.cell(cell_table(1, :));
-          cells = bot.cell(cell_table(1:3, :));
-          cells = bot.cell(cell_table.id(1:3));
+          cell = bot.getCells(cell_table.id(1));
+          cell = bot.getCells(cell_table(1, :));
+          cells = bot.getCells(cell_table(1:3, :));
+          cells = bot.getCells(cell_table.id(1:3));
 
           assert(~isempty(fieldnames(cells(1).metrics)), '`metrics` property structure was not set properly')
       end
@@ -140,9 +140,9 @@ classdef test < matlab.unittest.TestCase
       function test_ophys_cells(testCase)
           %% Tect obtaining OPhys cells
           cells = bot.fetchCells();
-          c = bot.cell(cells(1, :));
-          c = bot.cell(cells.id(1));
-          c = bot.cell(cells(1:3, :));
+          c = bot.getCells(cells(1, :));
+          c = bot.getCells(cells.id(1));
+          c = bot.getCells(cells(1:3, :));
       end
 
       function test_ephys_sessions(testCase)
@@ -154,10 +154,10 @@ classdef test < matlab.unittest.TestCase
          sessions = bot.fetchSessions('ephys');
          
          % - Get a session
-         s = bot.session(sessions{1, 'id'});
-         s = bot.session(sessions(1, :));
-         s = bot.session(sessions{1:3, 'id'});
-         s = bot.session(sessions(1:3, :));
+         s = bot.getSessions(sessions{1, 'id'});
+         s = bot.getSessions(sessions(1, :));
+         s = bot.getSessions(sessions{1:3, 'id'});
+         s = bot.getSessions(sessions(1:3, :));
       end
 
       function test_ephys_probes(testCase)
@@ -169,10 +169,10 @@ classdef test < matlab.unittest.TestCase
          probes = bot.fetchProbes();
 
          % - Get a probe, by ID and by table
-         p = bot.probe(probes{1, 'id'});
-         p = bot.probe(probes(1, :));
-         p = bot.probe(probes{1:3, 'id'});
-         p = bot.probe(probes(1:3, :));
+         p = bot.getProbes(probes{1, 'id'});
+         p = bot.getProbes(probes(1, :));
+         p = bot.getProbes(probes{1:3, 'id'});
+         p = bot.getProbes(probes(1:3, :));
       end
 
       function test_ephys_channels(testCase)
@@ -184,10 +184,10 @@ classdef test < matlab.unittest.TestCase
          channels = bot.fetchChannels();
 
          % - Get channels, by ID and by table
-         c = bot.channel(channels{1, 'id'});
-         c = bot.channel(channels(1, :));
-         c = bot.channel(channels{1:3, 'id'});
-         c = bot.channel(channels(1:3, :));
+         c = bot.getChannels(channels{1, 'id'});
+         c = bot.getChannels(channels(1, :));
+         c = bot.getChannels(channels{1:3, 'id'});
+         c = bot.getChannels(channels(1:3, :));
       end
 
       function test_ephys_units(testCase)
@@ -200,10 +200,10 @@ classdef test < matlab.unittest.TestCase
          units = bot.fetchUnits(false);
 
          % - Get units, by ID and by table
-         u = bot.unit(units{1, 'id'});
-         u = bot.unit(units(1, :));
-         u = bot.unit(units{1:3, 'id'});
-         u = bot.unit(units(1:3, :));
+         u = bot.getUnits(units{1, 'id'});
+         u = bot.getUnits(units(1, :));
+         u = bot.getUnits(units{1:3, 'id'});
+         u = bot.getUnits(units(1:3, :));
          
          assert(~isempty(fieldnames(u(1).metrics)), '`metrics` property structure was not set properly')
       end
@@ -214,7 +214,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get a probe
-         p = bot.probe(bom.ephys_probes{1, 'id'});
+         p = bot.getProbes(bom.ephys_probes{1, 'id'});
          
          % - Access LFP data
          p.lfpData;
@@ -226,7 +226,7 @@ classdef test < matlab.unittest.TestCase
       function test_ephys_lazy_attributes(testCase)
          %% Test reading lazy attributes
          bom = bot.item.internal.Manifest.instance('ephys');
-         s = bot.session(bom.ephys_sessions{1, 'id'});
+         s = bot.getSessions(bom.ephys_sessions{1, 'id'});
          
          s.mean_waveforms;
          s.optogenetic_stimulation_epochs;
@@ -256,10 +256,10 @@ classdef test < matlab.unittest.TestCase
       function test_ephys_session_methods(testCase)
          %% Test session data access methods
          bom = bot.item.internal.Manifest.instance('ephys');
-         s = bot.session(bom.ephys_sessions{1, 'id'});
+         s = bot.getSessions(bom.ephys_sessions{1, 'id'});
 
          sess = bot.fetchSessions('ephys');
-         s = bot.session(sess(1, :));
+         s = bot.getSessions(sess(1, :));
 
          s.fetch_stimulus_table();
          s.getStimulusEpochsByDuration();
@@ -283,13 +283,13 @@ classdef test < matlab.unittest.TestCase
          cells = bot.fetchCells(true);
          
          % - Test "get object" factory functions
-         bot.session(sess_ephys{1, 'id'});
-         bot.session(sess_ophys{1, 'id'});
-         bot.experiment(exps{1, 'id'});
-         bot.unit(units{1, 'id'});
-         bot.probe(probes{1, 'id'});
-         bot.channel(channels{1, 'id'});
-         bot.cell(cells{1, 'id'});
+         bot.getSessions(sess_ephys{1, 'id'});
+         bot.getSessions(sess_ophys{1, 'id'});
+         bot.getExperiments(exps{1, 'id'});
+         bot.getUnits(units{1, 'id'});
+         bot.getProbes(probes{1, 'id'});
+         bot.getChannels(channels{1, 'id'});
+         bot.getCells(cells{1, 'id'});
       end
    end
 end

@@ -14,8 +14,8 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
 % [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
 % 
-%% function cellObj = cell(cellIDSpec)
-function cellObj = cell(cellIDSpec)
+%% function cellObj = getCells(cellIDSpec)
+function cellObj = getCells(cellIDSpec)
 
 arguments
     cellIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}

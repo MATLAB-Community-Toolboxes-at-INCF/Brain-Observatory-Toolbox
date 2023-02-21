@@ -33,7 +33,7 @@
 %
 % Access data from an experimental session:
 % >> nSessionID = bom.ophys_sessions(1, 'id');
-% >> bos = bot.session(nSessionID)
+% >> bos = bot.getSessions(nSessionID)
 % bos =
 %   ophyssession with properties:
 %
