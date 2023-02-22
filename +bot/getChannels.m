@@ -3,11 +3,11 @@
 % Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
 %
 % Specify item(s) by unique numeric IDs for item. These can be obtained via:
-%   * table returned by bot.fetchChannels() 
+%   * table returned by bot.listChannels() 
 %   * tables contained by other item objects (sessions, probes, units)   
 %
 % Can also specify item(s) by supplying an information table of the format
-% returned by bot.fetchChannels. This is often useful when such a table has
+% returned by bot.listChannels. This is often useful when such a table has
 % been "filtered" to one or a few rows of interest via table indexing
 % operations.
 %

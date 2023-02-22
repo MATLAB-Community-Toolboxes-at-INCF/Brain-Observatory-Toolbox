@@ -38,8 +38,8 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 
 The basic workflow is illustrated by three lines of code: 
 ```matlab
->> sessions = bot.fetchSessions('ephys')  % Obtain/view table showing available ephys session items
->> session = bot.getSessions(sessions(1,:)) % Obtain/view object representing first available session item
+>> sessions = bot.listSessions('ephys')  % View table listing available ephys session items
+>> session = bot.getSessions(sessions(1,:)) % Obtain & view object representing first available session item
 >> methods(session) % Display methods (functions) available to access additional session item values
 ```
 👉Try typing these three lines directly into the [MATLAB command window](https://www.mathworks.com/help/matlab/ref/commandwindow.html#:~:text=The%20Command%20Window%20is%20always,as%20the%20Editor%2C%20type%20commandwindow%20)

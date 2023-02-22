@@ -5,11 +5,11 @@
 %   * Visual Coding Neuropixels [3] ("ephyssession") 
 %
 % Can specify item(s) by unique numeric IDs for item. These can be obtained via:
-%   * table returned by bot.fetchSessions(...) 
+%   * table returned by bot.listSessions(...) 
 %   * tables contained by other item objects (channels, probes, units, experiments)
 %
 % Can also specify item(s) by supplying an information table of the format
-% returned by bot.fetchSessions. This is often useful when such a table has
+% returned by bot.listSessions. This is often useful when such a table has
 % been "filtered" to one or a few rows of interest via table indexing
 % operations. 
 %   

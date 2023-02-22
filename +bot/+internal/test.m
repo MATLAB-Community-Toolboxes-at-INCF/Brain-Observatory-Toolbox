@@ -29,7 +29,7 @@ classdef test < matlab.unittest.TestCase
 
       function testObtainSessionObject(testCase)
          %% Test creation of an OPhys session object
-         sess = bot.fetchSessions('ophys');
+         sess = bot.listSessions('ophys');
          
          % - Get session IDs
          vIDs = sess.id;
@@ -41,7 +41,7 @@ classdef test < matlab.unittest.TestCase
          bot.getSessions(sess(1:3, :));
 
          % - Fetch all sessions from one experiment
-         exps = bot.fetchExperiments();
+         exps = bot.listExperiments();
          s = bot.getSessions(sess(sess.experiment_container_id == exps.id(1), :));
       end
       
@@ -111,7 +111,7 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysExperiment(testCase)
           %% Test obtaining OPhys experiment object
-          exp_table = bot.fetchExperiments();
+          exp_table = bot.listExperiments();
           exp = bot.getExperiments(exp_table.id(1));
           exp = bot.getExperiments(exp_table(1, :));
           exps = bot.getExperiments(exp_table.id(1:3));
@@ -120,8 +120,8 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysCell(testCase)
           %% Test obtaining OPhys cell object
-          cell_table = bot.fetchCells(true);
-          cell_table = bot.fetchCells(false);
+          cell_table = bot.listCells(true);
+          cell_table = bot.listCells(false);
           cell = bot.getCells(cell_table.id(1));
           cell = bot.getCells(cell_table(1, :));
           cells = bot.getCells(cell_table(1:3, :));
@@ -139,7 +139,7 @@ classdef test < matlab.unittest.TestCase
       
       function test_ophys_cells(testCase)
           %% Tect obtaining OPhys cells
-          cells = bot.fetchCells();
+          cells = bot.listCells();
           c = bot.getCells(cells(1, :));
           c = bot.getCells(cells.id(1));
           c = bot.getCells(cells(1:3, :));
@@ -151,7 +151,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get the EPhys sessionts
-         sessions = bot.fetchSessions('ephys');
+         sessions = bot.listSessions('ephys');
          
          % - Get a session
          s = bot.getSessions(sessions{1, 'id'});
@@ -166,7 +166,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get the probes table
-         probes = bot.fetchProbes();
+         probes = bot.listProbes();
 
          % - Get a probe, by ID and by table
          p = bot.getProbes(probes{1, 'id'});
@@ -181,7 +181,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get the channels table
-         channels = bot.fetchChannels();
+         channels = bot.listChannels();
 
          % - Get channels, by ID and by table
          c = bot.getChannels(channels{1, 'id'});
@@ -196,8 +196,8 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get the units table
-         units = bot.fetchUnits(true);
-         units = bot.fetchUnits(false);
+         units = bot.listUnits(true);
+         units = bot.listUnits(false);
 
          % - Get units, by ID and by table
          u = bot.getUnits(units{1, 'id'});
@@ -258,7 +258,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
          s = bot.getSessions(bom.ephys_sessions{1, 'id'});
 
-         sess = bot.fetchSessions('ephys');
+         sess = bot.listSessions('ephys');
          s = bot.getSessions(sess(1, :));
 
          s.fetch_stimulus_table();
@@ -272,15 +272,15 @@ classdef test < matlab.unittest.TestCase
       
       function test_factory_functions(testCase)
          %% - Test manifest fetch factory functions
-         exps = bot.fetchExperiments();
-         sess_ephys = bot.fetchSessions('ephys');
-         sess_ophys = bot.fetchSessions('ophys');
-         units = bot.fetchUnits();
-         units = bot.fetchUnits(true);
-         probes = bot.fetchProbes();
-         channels = bot.fetchChannels();
-         cells = bot.fetchCells();
-         cells = bot.fetchCells(true);
+         exps = bot.listExperiments();
+         sess_ephys = bot.listSessions('ephys');
+         sess_ophys = bot.listSessions('ophys');
+         units = bot.listUnits();
+         units = bot.listUnits(true);
+         probes = bot.listProbes();
+         channels = bot.listChannels();
+         cells = bot.listCells();
+         cells = bot.listCells(true);
          
          % - Test "get object" factory functions
          bot.getSessions(sess_ephys{1, 'id'});

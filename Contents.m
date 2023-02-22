@@ -16,15 +16,15 @@
 % <a href="matlab:open EphysTutorial" style="font-weight:bold">EphysTutorial</a>, <a href="matlab:open OphysTutorial" style="font-weight:bold">OphysTutorial</a> & <a href="matlab:open BehaviorTutorial" style="font-weight:bold">BehaviorTutorial</a>
 %
 %
-%   Fetching item information:
-%     bot.fetchExperiments   - List information about all experiments (Ophys)
-%     bot.fetchSessions      - List information about all sessions (Ephys & Ophys)
-%     bot.fetchProbes        - List information about all probes (Ephys)
-%     bot.fetchChannels      - List information about all channels (Ephys)
-%     bot.fetchUnits         - List information about all units (Ephys)
-%     bot.fetchCells         - List information about all cells (Ophys)
+%   Listing item information:
+%     bot.listExperiments   - List information about all experiments (Ophys)
+%     bot.listSessions      - List information about all sessions (Ephys & Ophys)
+%     bot.listProbes        - List information about all probes (Ephys)
+%     bot.listChannels      - List information about all channels (Ephys)
+%     bot.listUnits         - List information about all units (Ephys)
+%     bot.listCells         - List information about all cells (Ophys)
 %   
-%   Getting item objects:
+%   Obtaining item objects:
 %     bot.getExperiments     - Obtain item(s) representing experiments (Ophys)
 %     bot.getSessions        - Obtain item(s) representing sessions (Ephys & Ophys)
 %     bot.getProbes          - Obtain item(s) representing probes (Ephys)

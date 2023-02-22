@@ -446,7 +446,7 @@ classdef cache < handle
 
         function strCacheDir = GetFactoryCacheDirectory()
         %GetFactoryCacheDirectory Get the BOT default (factory) cache directory    
-            strBOTDir = fileparts(which('bot.fetchSessions'));
+            strBOTDir = fileparts(which('bot.listSessions'));
             strCacheDir = fullfile(strBOTDir, 'Cache');
         end
 
