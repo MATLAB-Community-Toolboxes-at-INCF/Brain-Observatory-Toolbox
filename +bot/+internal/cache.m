@@ -501,7 +501,7 @@ classdef cache < handle
             end
             
             % - Store the selected cache directory to preferences
-            prefs = bot.getPreferences();
+            prefs = bot.util.getPreferences();
             prefs.CacheDirectory = strCacheDir;
         end
 
