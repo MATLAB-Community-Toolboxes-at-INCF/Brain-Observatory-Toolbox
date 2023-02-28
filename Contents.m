@@ -7,13 +7,13 @@
 % A MATLAB toolbox for accessing and using the public neural 
 % recording datasets from the Allen Brain Observatory.
 % 
-% Get started with the <a href="matlab:open EphysQuickstart" style="font-weight:bold">EphysQuickstart</a> & <a href="matlab:open bot.OphysQuickstart" style="font-weight:bold">OphysQuickstart</a> guides.
+% Get started with the <a href="matlab:open(fullfile('.',filesep,'EphysQuickstart.mlx'))" style="font-weight:bold">EphysQuickstart</a> & <a href="matlab:open(fullfile('.',filesep,'OphysQuickstart.mlx'))" style="font-weight:bold">OphysQuickstart</a> guides.
 % 
 % See the Brain Observatory Toolbox applied to neuroscience data 
-% analysis in the <a href="matlab:open demos\EphysDemo" style="font-weight:bold">EphysDemo</a> & <a href="matlab:open demos\OphysDemo" style="font-weight:bold">OphysDemo</a>.
+% analysis in the <a href="matlab:open(fullfile('.',filesep,'demos',filesep,'EphysDemo.mlx'))" style="font-weight:bold">EphysDemo</a> & <a href="matlab:open(fullfile('.',filesep,'demos',filesep,'OphysDemo.mlx'))" style="font-weight:bold">OphysDemo</a>.
 % 
 % Learn how to use the Brain Observatory Toolbox with the 
-% <a href="matlab:open tutorials\EphysTutorial" style="font-weight:bold">EphysTutorial</a>, <a href="matlab:open tutorials\OphysTutorial" style="font-weight:bold">OphysTutorial</a> & <a href="matlab:open tutorials\BehaviorTutorial" style="font-weight:bold">BehaviorTutorial</a>
+% <a href="matlab:open(fullfile('.',filesep,'tutorials',filesep,'EphysTutorial.mlx'))" style="font-weight:bold">EphysTutorial</a>, <a href="matlab:open(fullfile('.',filesep,'tutorials',filesep,'OphysTutorial.mlx'))" style="font-weight:bold">OphysTutorial</a> & <a href="matlab:open(fullfile('.',filesep,'tutorials',filesep,'BehaviorTutorial.mlx'))" style="font-weight:bold">BehaviorTutorial</a>
 %
 %   Getting started
 %     bot.callMeFirst       - Show Getting Started live script (if using desktop environment)
