@@ -3,7 +3,9 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
-Several **live script examples** are available to guide new users, including _demos_ of neural data science analysis & _tutorials_ covering Brain Observatory Toolbox concepts & operations. You can view (:eyes:) them or run (:arrow_forward:) them yourself on MATLAB Online:
+Several **live script examples** are available to guide new users, including _demos_ of neural data science analysis & _tutorials_ covering Brain Observatory Toolbox concepts & operations.
+
+You can view (:eyes:) them or run (:arrow_forward:) them yourself on MATLAB Online:
 | Example Type | Data Type | View | Run | 
 | --- | --- | --- | --- |
 | :rocket: Quickstart | Calcium Imaging (Ophys) | [:eyes:][OphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysQuickstart.mlx) | 
@@ -25,7 +27,7 @@ Several **live script examples** are available to guide new users, including _de
 
 :construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
 
-Questions, suggestions, and other feedback are highly welcomed (in the **[Discussion forum](https://github.com/emeyers/Brain-Observatory-Toolbox/discussions/118)**).
+:speech_balloon:	Questions? Suggestions? Roadblocks? The developers are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
