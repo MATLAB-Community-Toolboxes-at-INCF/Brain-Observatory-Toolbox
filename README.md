@@ -3,7 +3,7 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
-🗺️ Get oriented and get started with **3 lines of code** in two ways:
+🗺️ Get oriented and get started with **3 lines of code**. You can:
 * [**Open in MATLAB Online**](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/%2binternal/README.mlx)
 * Enter `>>bot.README` on your own local/cloud [installation](#Installation)
 
