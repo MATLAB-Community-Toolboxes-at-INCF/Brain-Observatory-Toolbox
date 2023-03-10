@@ -47,31 +47,14 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 
 ![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/188445081-9971259e-a430-4036-a84b-bcd46c950a50.png)
 
-### Key Concepts
-* **Item tables** support all [tabular operations](https://www.mathworks.com/help/matlab/tables.html), including [**tabular indexing**](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) which enables specific dataset item selection for inspection and analysis as item objects
-* **Item objects** consist of numerous [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) which each return direct, derived, or file-linked values about a specific item
-  * Some item objects also have [methods](https://www.mathworks.com/help/matlab/methods-defining-operations.html?s_tid=CRUX_lftnav) to compute values requiring additional user-specified arguments 
-
-The basic workflow is illustrated by three lines of code: 
-```matlab
->> sessions = bot.listSessions('ephys')  % View table listing available ephys session items
->> session = bot.getSessions(sessions(1,:)) % Obtain & view object representing first available session item
->> methods(session) % Display methods (functions) available to access additional session item values
-```
-👉Try typing these three lines directly into the [MATLAB command window](https://www.mathworks.com/help/matlab/ref/commandwindow.html#:~:text=The%20Command%20Window%20is%20always,as%20the%20Editor%2C%20type%20commandwindow%20)
-
-### Technical Details
-* Local caching (of retrieved item information, object representation, and file contents) is implemented, to provide the fastest possible initial and repeat performance within and across MATLAB sessions.
-
 ## Installation
-
 The easiest way to install the Brain Observatory Toolbox is to use the [**Add-on Explorer**](https://www.mathworks.com/products/matlab/add-on-explorer.html): 
 1. Launch the Add-on Explorer ![image](https://user-images.githubusercontent.com/23032671/188336991-77ba49f1-d70d-4111-a265-3f9ba284bb8d.png)
 2. Search for "Brain Observatory Toolbox"
 3. Press the "Add" button. ![image](https://user-images.githubusercontent.com/23032671/188341517-6c2d372a-9eac-4aed-974a-a102880212da.png)
 
 #### Required products
-* MATLAB (R2021a)
+* MATLAB (R2021a or later)
 * Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
 
 ----
