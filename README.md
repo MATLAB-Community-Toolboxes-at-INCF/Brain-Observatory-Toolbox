@@ -3,19 +3,19 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
-Several **live script examples** are available to guide new users, including _demos_ of neural data science analysis & _tutorials_ covering Brain Observatory Toolbox concepts & operations.
+🗺️ [**Open in MATLAB Online**](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/README.mlx)  to get oriented and get started with **3 lines of code**.
 
-You can view (:eyes:) them or run (:arrow_forward:) them yourself on MATLAB Online:
-| Example Type | Data Type | View | Run | 
-| --- | --- | --- | --- |
-| :rocket: Quickstart | Calcium Imaging (Ophys) | [:eyes:][OphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysQuickstart.mlx) | 
-| :rocket: Quickstart | Neuropixels Probe (Ephys) | [:eyes:][EphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysQuickstart.mlx) | 
-| :microscope: Demo | Calcium Imaging (Ophys) | [:eyes:][OphysDemo] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysDemo.mlx) | 
-| :woman_teacher: Tutorial | Calcium Imaging (Ophys) | [:eyes:][OphysTutorial] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysTutorial.mlx) | 
-| :microscope: Demo | Neuropixels Probe (Ephys)| [:eyes:][EphysDemo] | (\*) | 
-| :woman_teacher: Tutorial |  Neuropixels Probe (Ephys) | [:eyes:][EphysTutorial] | (\*) | 
+Several **live script examples**  are available to guide new users, including **_demos_** of neural data analysis & **_tutorials_** covering Brain Observatory Toolbox concepts & operations. 
 
-<sub>(\*) These data-intensive examples are currently recommended for local machine or customer cloud instance workflows only, not for MATLAB Online</sub>
+You can also individually view (:eyes:) them or run (:arrow_forward:) the examples on MATLAB Online:
+| Example Type | Data Type | View | Run | Data Type | View | Run | 
+| --- | --- | --- | --- | --- | --- | --- |
+| :rocket: Quickstart | Calcium Imaging (Ophys) | [:eyes:][OphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysQuickstart.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysQuickstart.mlx) |
+| :microscope: Demo | Calcium Imaging (Ophys) | [:eyes:][OphysDemo] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysDemo.mlx) | Neuropixels Probe (Ephys)| [:eyes:][EphysDemo] | (\*) |
+| :woman_teacher: Tutorial | Calcium Imaging (Ophys) | [:eyes:][OphysTutorial] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysTutorial.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysTutorial] | (\*) | 
+
+<sub>(\*) These data-intensive examples are currently recommended for use on local machinse or customer cloud instances only, not for MATLAB Online</sub>
+
 
 [OphysQuickstart]: https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F3fa4ee4e-2d0d-476a-9593-01ab676c32bc%2Ffiles%2Fquickstarts%2FOphysQuickstart.mlx&embed=web
 [EphysQuickstart]: https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F3fa4ee4e-2d0d-476a-9593-01ab676c32bc%2Ffiles%2Fquickstarts%2FEphysQuickstart.mlx&embed=web
@@ -27,7 +27,7 @@ You can view (:eyes:) them or run (:arrow_forward:) them yourself on MATLAB Onli
 
 :construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
 
-:speech_balloon:	Questions? Suggestions? Roadblocks? The developers are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
+:speech_balloon:	Questions? Suggestions? Roadblocks? The code contributors are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
 
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
