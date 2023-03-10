@@ -14,7 +14,7 @@ This will orient you to several **live script examples** available to guide new 
 | :microscope: Demo | Calcium Imaging (Ophys) | [:eyes:][OphysDemo] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysDemo.mlx) | Neuropixels Probe (Ephys)| [:eyes:][EphysDemo] | (\*) |
 | :woman_teacher: Tutorial | Calcium Imaging (Ophys) | [:eyes:][OphysTutorial] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/quickstarts/OphysTutorial.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysTutorial] | (\*) | 
 
-<sub>(\*) These data-intensive examples are currently recommended for use on local machinse or customer cloud instances only, not for MATLAB Online</sub>
+<sub>(\*) These data-intensive examples are currently recommended for use on local machines or customer cloud instances only, not for MATLAB Online</sub>
 
 
 [OphysQuickstart]: https://viewer.mathworks.com/?viewer=live_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2F85a3255c-4ff5-42ef-9c10-b441318b4322%2F3fa4ee4e-2d0d-476a-9593-01ab676c32bc%2Ffiles%2Fquickstarts%2FOphysQuickstart.mlx&embed=web
