@@ -45,7 +45,7 @@ The Brain Observatory Toolbox (BOT) provides a uniform interface to access and u
 
 The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
 
-![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/188445081-9971259e-a430-4036-a84b-bcd46c950a50.png)
+![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
 
 ## Installation
 The easiest way to install the Brain Observatory Toolbox is to use the [**Add-on Explorer**](https://www.mathworks.com/products/matlab/add-on-explorer.html): 
