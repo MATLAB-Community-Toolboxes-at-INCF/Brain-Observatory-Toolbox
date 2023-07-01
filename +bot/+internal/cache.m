@@ -251,7 +251,7 @@ classdef cache < handle
             end
             
             function tMessages = cell_messages_to_table(cMessages)
-                import bot.internal.utility.structcat
+                import bot.internal.util.structcat
                 structArray = structcat(1, cMessages{:});
                 tMessages = struct2table(structArray);
             end
@@ -320,7 +320,7 @@ classdef cache < handle
             if ~force
                 message = 'This will clear the cache from memory, but will keep the cache on storage. Are you sure you want to continue?';
                 
-                switch bot.util.getPreferenceValue('DialogMode')
+                switch bot.internal.Preferences.getPreferenceValue('DialogMode')
                     case "Dialog Box"
                         answer = questdlg(message, 'Please Confirm');
                     case "Command Window"
@@ -384,7 +384,7 @@ classdef cache < handle
     methods (Static, Access = private)
         function tf = HasPreferredCacheDirectory()
         %HasPreferredCacheDirectory Check if a preferred cache directory exists
-            prefCacheDirectory = bot.util.getPreferenceValue('CacheDirectory');
+            prefCacheDirectory = bot.internal.Preferences.getPreferenceValue('CacheDirectory');
             tf = prefCacheDirectory ~= "";
         end
 
@@ -446,7 +446,7 @@ classdef cache < handle
 
         function strCacheDir = GetFactoryCacheDirectory()
         %GetFactoryCacheDirectory Get the BOT default (factory) cache directory    
-            strBOTDir = fileparts(which('bot.fetchSessions'));
+            strBOTDir = fileparts(which('bot.listSessions'));
             strCacheDir = fullfile(strBOTDir, 'Cache');
         end
 
@@ -454,7 +454,7 @@ classdef cache < handle
         %GetPreferredCacheDirectory Get the preferred cache directory from
         %the BrainObservatoryToolbox preferences.
 
-            strCacheDir = bot.util.getPreferenceValue('CacheDirectory');
+            strCacheDir = bot.internal.Preferences.getPreferenceValue('CacheDirectory');
             
             if ~isfolder(strCacheDir)
                 strCacheDir = bot.internal.cache.ResolveMissingCacheDirectory(strCacheDir);
@@ -501,7 +501,7 @@ classdef cache < handle
             end
             
             % - Store the selected cache directory to preferences
-            prefs = bot.getPreferences();
+            prefs = bot.util.getPreferences();
             prefs.CacheDirectory = strCacheDir;
         end
 

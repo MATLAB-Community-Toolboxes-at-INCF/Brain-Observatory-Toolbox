@@ -63,9 +63,9 @@ classdef Unit < bot.item.internal.abstract.Item & bot.item.internal.mixin.Metric
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
                 % Assign linked Item objects
-                obj.session = bot.session(obj.info.ephys_session_id, "ephys");
-                obj.channel = bot.channel(obj.info.ephys_channel_id);
-                obj.probe = bot.probe(obj.info.ephys_probe_id);
+                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys");
+                obj.channel = bot.getChannels(obj.info.ephys_channel_id);
+                obj.probe = bot.getProbes(obj.info.ephys_probe_id);
                 
                 % Handle metric properties
                 obj.init_metrics();

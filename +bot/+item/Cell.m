@@ -62,7 +62,7 @@ classdef Cell < bot.item.internal.abstract.Item & bot.item.internal.mixin.Metric
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
                 % Assign linked Item objects
-                obj.experiment = bot.experiment(obj.info.experiment_container_id);
+                obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
                 obj.sessions = obj.experiment.sessions;
                 
                 % Initialise Metrics

@@ -6,8 +6,8 @@
 % [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
 % [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
-%% function cellsTable = fetchCells(include_metrics)
-function cellsTable = fetchCells(include_metrics)
+%% function cellsTable = listCells(include_metrics)
+function cellsTable = listCells(include_metrics)
 arguments
     include_metrics logical = false;
 end

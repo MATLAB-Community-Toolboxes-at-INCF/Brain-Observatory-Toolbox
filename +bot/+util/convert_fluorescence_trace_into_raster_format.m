@@ -45,7 +45,7 @@ end
 
 
 % - Create a session object
-session = bot.session(session_id);
+session = bot.getSessions(session_id);
 
 % - Extract fluorescence traces from this experiment session
 switch fluorescence_trace_type

@@ -82,7 +82,7 @@ function convertEphysToRaster(ephysSession, stimulusSetName, ...
         
         
         % create a unit object corresponding to the current index
-        currUnit = bot.unit(unitsToUse(iUnit, :));
+        currUnit = bot.getUnits(unitsToUse(iUnit, :));
         
         % get a table of spike times for the current unit when shown the
         % stimulus presentation IDs

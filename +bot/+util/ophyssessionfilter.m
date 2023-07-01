@@ -1,6 +1,6 @@
 %% CLASS bot.util.ophyssessionfilter - Utility operations for filtering Visual Coding 2P dataset experimental sessions
 %
-% This class is deprecated. Use `bot.fetchSessions('ophys') to obtain the manifest for
+% This class is deprecated. Use `bot.listSessions('ophys') to obtain the manifest for
 % the Visual Coding 2P dataset [1], and filter the tables directly.
 %
 % This class implements a mechanism for searching the optical physiology
@@ -76,7 +76,7 @@ classdef ophyssessionfilter < handle
       
       function bosf = ophyssessionfilter()
          % - Display warning of deprecated class
-         warning('The `bot.util.ophyssessionfilter` class is deprecated. Use `bot.fetch...()` to obtain data manifests, and filter the tables directly.');
+         warning('The `bot.util.ophyssessionfilter` class is deprecated. Use `bot.list...()` to obtain data manifests, and filter the tables directly.');
          
          % - Get the unfiltered session table, clear all filters
          clear_filters(bosf);
@@ -259,7 +259,7 @@ classdef ophyssessionfilter < handle
          % Usage: vbsSessions = get_filtered_sessions(bosf)
          
          % - Get the current table of filtered sessions, construct objects
-         vbsSessions = bot.session(bosf.filtered_session_table.id);
+         vbsSessions = bot.getSessions(bosf.filtered_session_table.id);
       end
       
       %% -- Getter methods for dependent filtered sessions properties

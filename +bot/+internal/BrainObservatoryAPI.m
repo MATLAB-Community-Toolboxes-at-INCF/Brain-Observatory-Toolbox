@@ -38,7 +38,7 @@ classdef BrainObservatoryAPI < handle
         end
                 
         function rmaServiceUrl = get.RmaServiceUrl(obj)
-            rmaServiceUrl = bot.util.uriJoin( obj.ApiBaseUrl, ...
+            rmaServiceUrl = bot.internal.util.uriJoin( obj.ApiBaseUrl, ...
                  obj.RMA_SERVICE_PATH, obj.queryFormat );
         end
 

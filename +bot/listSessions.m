@@ -11,8 +11,8 @@
 % [3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
 % [4] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
-%% function sessionsTable = fetchSessions(dataset)
-function sessionsTable = fetchSessions(dataset)
+%% function sessionsTable = listSessions(dataset)
+function sessionsTable = listSessions(dataset)
 
 arguments
     dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys", "EPhys", "OPhys"])}    

@@ -132,17 +132,17 @@ classdef CloudCacher < handle
                   warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
                end
                
-               fileSizeWeb = bot.util.getWebFileSize(fileDownloadUrl);
+               fileSizeWeb = bot.internal.util.getWebFileSize(fileDownloadUrl);
                C = onCleanup( @(filename, filesize) ...
                    cleanUpFileDownload(strCacheFilename, fileSizeWeb) );
 
                % - Download data from the provided URL and save
               strCacheFilename = downloadFile(strCacheFilename, fileDownloadUrl, ...
-                  'DisplayMode', bot.util.getPreferenceValue('DialogMode'));
+                  'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'));
 
                % - Check that we got the complete file
-               fileSizeWeb = bot.util.getWebFileSize(strURL);
-               fileSizeLocal = bot.util.getLocalFileSize(strCacheFilename);
+               fileSizeWeb = bot.internal.util.getWebFileSize(strURL);
+               fileSizeLocal = bot.internal.util.getLocalFileSize(strCacheFilename);
                
                if fileSizeWeb == fileSizeLocal
                   % - Add URL to cache and save manifest
@@ -415,7 +415,7 @@ classdef CloudCacher < handle
 end
 
 function cleanUpFileDownload(strFilename, webFileSize)
-    fileSizeLocal = bot.util.getLocalFileSize(strFilename);
+    fileSizeLocal = bot.internal.util.getLocalFileSize(strFilename);
     if fileSizeLocal < webFileSize
         if isfile(strFilename)
             delete(strFilename)

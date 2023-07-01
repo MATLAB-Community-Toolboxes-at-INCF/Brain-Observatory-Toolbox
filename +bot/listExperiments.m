@@ -8,8 +8,8 @@
 % [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
 % [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
-%% function experimentsTable = fetchExperiments()
-function experimentsTable = fetchExperiments()
+%% function experimentsTable = listExperiments()
+function experimentsTable = listExperiments()
    manifest = bot.item.internal.Manifest.instance('ophys');
    experimentsTable = manifest.ophys_experiments;
 end

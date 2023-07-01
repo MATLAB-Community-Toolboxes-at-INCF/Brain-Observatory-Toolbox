@@ -39,8 +39,8 @@ classdef Channel < bot.item.internal.abstract.Item
                 obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_channel_id == obj.id, :);
                 
                 % Assign linked Item objects (upstream)
-                obj.probe = bot.probe(obj.info.ephys_probe_id);
-                obj.session = bot.session(obj.info.ephys_session_id, "ephys");
+                obj.probe = bot.getProbes(obj.info.ephys_probe_id);
+                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys");
             end
         end
     end
