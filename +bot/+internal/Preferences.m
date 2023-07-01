@@ -14,7 +14,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     %       AutoDownloadFiles   (logical) : Whether to automatically download files when creating item objects
     %       DownloadMode        (string)  : Download file or variable
 
-    properties
+    properties (SetObservable)
         % Where to download data from, i.e web api or S3 bucket (AWS)
         DownloadFrom        (1,1) string ...
             {mustBeMember(DownloadFrom, ["API" "S3"])} = "S3"
@@ -75,6 +75,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
                     warning('Could not load preferences, using defaults')
                 end
             end
+            addlistener(obj, 'CacheDirectory', 'PostSet', @(s,e) obj.onCacheDirectorySet);
         end
 
         function save(obj)
@@ -173,6 +174,14 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             end
 
             propertyNames = setdiff(propertyNames, namesToHide, 'stable');
+        end
+
+        function onCacheDirectorySet(~)
+            %onCacheDirectorySet Callback to execute if CacheDirectory changes
+            %
+            %   Need to reset the in-memory cache if this value is updated.
+            
+            bot.internal.cache.clearInMemoryCache(true)
         end
     end
 
