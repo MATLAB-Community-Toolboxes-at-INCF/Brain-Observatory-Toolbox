@@ -414,8 +414,14 @@ classdef cache < handle
 
             % Legacy factory cache directory did not exist, place factory
             % directory on the userpath.
-            factoryCacheDir = fullfile(userpath, 'Brain Observatory Toolbox Cache');
-            
+            if isempty(userpath) % Can occur on linux platforms
+                % Initialize the cache directory to the current working directory
+                % in order to get an absolute directory path.
+                factoryCacheDir = fullfile(pwd(), 'Brain Observatory Toolbox Cache');
+            else
+                factoryCacheDir = fullfile(userpath, 'Brain Observatory Toolbox Cache');
+            end
+
             % - Construct a question dialog box where user can select if 
             % he/she wants to configure a custom folder for downloaded
             % data.
