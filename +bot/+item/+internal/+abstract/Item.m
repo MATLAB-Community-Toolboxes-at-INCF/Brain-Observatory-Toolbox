@@ -47,12 +47,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             
             if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
                 for idx = 1:numel(itemIDSpec)
-                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx)); %#ok<AGROW>
+                   getItemFcn = str2func( sprintf("bot.get%ss", string(item_type)) ); %i.e @bot.getSessions
+                   obj(idx) = getItemFcn(itemIDSpec(idx)); %#ok<AGROW>
                 end
                 return;
             elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
                 for idx = 1:size(itemIDSpec, 1)
-                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx, :)); %#ok<AGROW>
+                   getItemFcn = str2func( sprintf("bot.get%ss", string(item_type)) ); %i.e @bot.getSessions
+                   obj(idx) = getItemFcn(itemIDSpec(idx, :)); %#ok<AGROW>
                 end
                 return;                
             end
