@@ -9,9 +9,9 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     %       S3MountDirectory    (string)  : Path to directory where S3 bucket is mounted locally
     %       UseCacheWithS3Mount (logical) : Whether to use cache if working on an AWS cloud computer
     %       DialogMode          (string)  : How to show dialogs with user. 'Dialog Box' (default) or 'Command Window'
+    %       AutoDownloadNwb     (logical) : Whether to automatically download files when creating item (session) objects
 
     %       Suggestions for new preferences (Todo)
-    %       AutoDownloadFiles   (logical) : Whether to automatically download files when creating item objects
     %       DownloadMode        (string)  : Download file or variable
 
     properties (SetObservable)
@@ -35,10 +35,10 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         DialogMode          (1,1) string ...
             {mustBeMember(DialogMode, ["Dialog Box" "Command Window"])} = "Dialog Box"
 
+        % Whether to automatically download nwb files when creating session objects
+        AutoDownloadNwb     (1,1) logical = true
+
         % %         Suggestions for new preferences (Todo):
-        % %
-        % %         % Whether to automatically download files when creating item objects
-        % %         AutoDownloadFiles   (1,1) logical = true
         % %
         % %         % Download file or variable (Work in progress).
         % %         DownloadMode        (1,1) string ...

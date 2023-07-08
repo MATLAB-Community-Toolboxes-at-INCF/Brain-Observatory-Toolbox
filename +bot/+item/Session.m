@@ -42,6 +42,8 @@ classdef Session < handle & bot.item.internal.abstract.LinkedFilesItem
     methods (Access=protected)
         function initSession(obj)
             % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+            obj.LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB", bot.internal.Preferences.getPreferenceValue('AutoDownloadNwb'));
+
             nwbIdx = find(contains(string({obj.info.well_known_files.path}),"nwb",'IgnoreCase',true));
             assert(isscalar(nwbIdx),"Expected to find exactly one NWB file ");
             obj.insertLinkedFileInfo("SessNWB",obj.info.well_known_files(nwbIdx));

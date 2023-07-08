@@ -147,7 +147,7 @@ classdef EphysSession < bot.item.Session
         
         function num_stimulus_presentations = get.num_stimulus_presentations(self)
             num_stimulus_presentations = self.fetch_cached('num_stimulus_presentations', ...
-                @() self.nwbLocal_.fetch_num_stimulus_presentations());
+                @() self.nwbLocal.fetch_num_stimulus_presentations());
         end
         
         function stimulus_names = get.stimulus_names(self)
@@ -274,6 +274,12 @@ classdef EphysSession < bot.item.Session
     methods
         
         function nwb = get.nwbLocal(obj)
+            if isempty(obj.nwbLocal_)
+                if ismissing(obj.linkedFiles{"SessNWB","LocalFile"})
+                    obj.downloadLinkedFile("SessNWB");
+                end
+                obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+            end
             nwb = obj.nwbLocal_;
         end
         
@@ -420,7 +426,9 @@ classdef EphysSession < bot.item.Session
                 obj.initLinkedFiles();
                 
                 % Local prop initializations
-                obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+                if ~ismissing( obj.linkedFiles{"SessNWB","LocalFile"} )
+                    obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+                end
             end
         end
     end

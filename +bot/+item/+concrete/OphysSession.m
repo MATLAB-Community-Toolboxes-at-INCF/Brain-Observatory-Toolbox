@@ -149,6 +149,9 @@ classdef OphysSession < bot.item.Session
         end
         
         function loc = get.nwbLocal(self)
+            if ismissing(self.linkedFiles{"SessNWB","LocalFile"})
+                self.downloadLinkedFile("SessNWB");
+            end
             loc = self.linkedFiles{"SessNWB","LocalFile"};
         end
         
