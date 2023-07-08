@@ -361,7 +361,7 @@ classdef EphysSession < bot.item.Session
             if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
                 % - Read stimulus presentations from NWB file
                 stimulus_presentations_raw = self.nwbLocal.fetch_stimulus_presentations();
-                
+
                 % - Build stimulus presentations tables
                 [stimulus_presentations_raw, stimulus_conditions_raw] = self.build_stimulus_presentations(stimulus_presentations_raw);
                 
@@ -1126,11 +1126,13 @@ for unit_index = 1:numel(unit_ids)
     unit_id = unit_ids(unit_index);
     data = spike_times(spike_times.unit_id == unit_id, :).spike_times{1};
     
-    start_positions = zlclSearchSorted(data, starts(:));
-    end_positions = zlclSearchSorted(data, ends(:), true);
-    
-    counts = end_positions - start_positions;
-    
+    counts = zlclFindSpikeCounts(data, starts(:), ends(:));
+
+% %     start_positions = zlclSearchSorted(data, starts(:));
+% %     end_positions = zlclSearchSorted(data, ends(:), true);
+% % 
+% %     counts = end_positions - start_positions;
+
     if binarize
         tiled_data(:, :, unit_index) = counts > 0;
     else
@@ -1174,6 +1176,81 @@ end
 % - Find insertion locations
 indices = arrayfun(fhFind, values);
 end
+
+
+function spikeCounts = zlclFindSpikeCounts(spikeTimes, tBinStart, tBinEnd)
+%zlclFindSpikeCounts Find spike counts in a set of time bins/intervals
+
+% Note: This function works with irregular time bins, so e.g histcounts is not
+% suitable.
+
+    % Does the same as zlclSearchSorted, but dynamically adjust search
+    % regions (i.e no need to search from beginning every time, and also no 
+    % need to search from end every time.)
+
+    % The main improvement to performance comes from assuming we only need to 
+    % search in a local window
+
+    spikeCounts = zeros(size(tBinStart));
+    
+    % Sort bins in order to use a moving window
+    [sortedTBinStart, sortedStartIdx] = sort(tBinStart);
+    
+    numSpikeTimes = numel(spikeTimes);
+
+    searchStartIndex = find(spikeTimes > min(tBinStart), 1, 'first');
+    
+    deltaT = tBinEnd(1)-tBinStart(1);
+    minSpikeInterval = min(diff(spikeTimes, 1,1));
+    
+    windowLengthFindFirst = 10; % Selected from observation. Is updated below if needed. 
+    windowLengthFindLast = ceil( deltaT / minSpikeInterval);
+
+    for iBin = 1:numel(tBinStart)
+        binStart = sortedTBinStart(iBin);
+        binEnd = tBinEnd(sortedStartIdx(iBin));
+        
+        searchEndIndex = min( [numSpikeTimes, searchStartIndex+windowLengthFindFirst] );
+        searchWindow = searchStartIndex:searchEndIndex;
+        
+        %iStartIdx = find(spikeTimes(searchStartIndex:end) > binStart, 1, 'first') + searchStartIndex - 1;
+        [found, iStartIdx] = matlab.internal.math.ismemberhelper(true, spikeTimes(searchWindow) > binStart);
+
+        if ~found
+            % This might occur when there is a big jump between two time intervals.
+            searchWindow = searchStartIndex:numSpikeTimes; % Expand search window
+            [found, iStartIdx] = matlab.internal.math.ismemberhelper(true, spikeTimes(searchWindow) > binStart);
+        end
+
+        iStartIdx = iStartIdx + searchStartIndex - 1;
+
+        if ~found 
+            iStartIdx = numel(spikeTimes) + 1;
+        else
+            searchStartIndex = iStartIdx;
+        end
+
+        lastSearchIndex = min([iStartIdx+windowLengthFindLast, numel(spikeTimes)]);
+        iEndIdx = find(spikeTimes(iStartIdx-1:lastSearchIndex) <= binEnd, 1, 'last') + iStartIdx - 1;
+        
+%         lastSearchIndex = min([iStartIdx+windowLengthFindLast, numel(spikeTimes)]);
+%         [found, foundIdx] = matlab.internal.math.ismemberhelper(true, spikeTimes(iStartIdx-1:lastSearchIndex) <= binEnd);
+%         
+%         iEndIdx = foundIdx + iStartIdx - 1;
+
+        if isempty(iEndIdx)
+            iEndIdx = numel(spikeTimes) + 1;
+        end
+
+        spikeCounts(sortedStartIdx(iBin)) = iEndIdx - iStartIdx;
+
+        % Adjust window size
+        if spikeCounts(sortedStartIdx(iBin)) > windowLengthFindFirst
+            windowLengthFindFirst = spikeCounts(sortedStartIdx(iBin));
+        end
+    end
+end
+
 
 %zlclBuildTimeWindowDomain
 function domain = zlclBuildTimeWindowWomain(bin_edges, offsets, callback)
