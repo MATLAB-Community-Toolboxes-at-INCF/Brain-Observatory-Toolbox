@@ -1,5 +1,5 @@
 % Brain Observatory Toolbox
-% Version 0.9.3 23-feb-2023
+% Version 0.9.4 09-jul-2023
 %
 % Copyright (c) 2017, Ethan Meyers
 % ----------------------------------
