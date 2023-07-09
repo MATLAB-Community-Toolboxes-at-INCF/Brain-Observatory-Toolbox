@@ -435,9 +435,7 @@ classdef nwb_ephys < handle
          units = units(units.isi_violations <= self.isi_violations_maximum, :);
          
          % - Remove invalid spikes and sort
-         for nIndex = 1:size(units, 1)
-            units(nIndex, :) = remove_invalid_spikes(units(nIndex, :));
-         end
+         units = remove_invalid_spikes_from_table(units);
       end
       
       function metadata = fetch_nwb_metadata(self)
@@ -503,29 +501,36 @@ function tRename = rename_variables(tRename, varargin)
       end
    end
 end
+  
+function units = remove_invalid_spikes_from_table(units, times_key, amps_key)
+%remove_invalid_spikes_from_table Remove data for spikes with invalid spike times   
 
-function row = remove_invalid_spikes(row, times_key, amps_key)
    arguments
-      row table;
+      units table;
       times_key char = 'spike_times';
       amps_key char = 'spike_amplitudes';
    end
+
+   selected_unit_data = units{:, {times_key, amps_key}};
    
-   % - Extract spike times and amplitudes
-   spike_times = row.(times_key){1};
-   amps = row.(amps_key){1};
-
-   % - Select valid times
-   valid = spike_times > 0;
-   spike_times = spike_times(valid);
-   amps = amps(valid);
-
-   % - Sort spike times
-   [~, order] = sort(spike_times);
-
-   % - Reassign valid spikes
-   row.(times_key) = {spike_times(order)};
-   row.(amps_key) = {amps(order)};
+   num_units = size(selected_unit_data, 1);
+   for i = 1:num_units % Loop through each unit
+      
+      % - Extract spike times and amplitudes for current unit
+      i_spike_times = selected_unit_data{i, 1};
+      i_amplitudes = selected_unit_data{i, 2};
+      
+      % - Select valid times
+      valid = i_spike_times > 0;
+      i_spike_times = i_spike_times(valid);
+      i_amplitudes = i_amplitudes(valid);
+      
+      % - Sort spike times
+      [i_sorted_spike_times, order] = sort(i_spike_times);
+      
+      selected_unit_data(i,:) = {i_sorted_spike_times, i_amplitudes(order)};
+   end
+   units{:, {times_key, amps_key}} = selected_unit_data;
 end
 
 function source_table = removevars_ifpresent(source_table, variables)
@@ -535,4 +540,3 @@ function source_table = removevars_ifpresent(source_table, variables)
       source_table = removevars(source_table, variables(vbHasVariable));
    end
 end
-
