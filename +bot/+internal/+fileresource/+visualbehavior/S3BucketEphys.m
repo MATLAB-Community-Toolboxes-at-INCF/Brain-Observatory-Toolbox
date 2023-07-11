@@ -1,4 +1,4 @@
-classdef S3Bucket < bot.internal.abstract.FileResource
+classdef S3BucketEphys < bot.internal.fileresource.abstract.S3Bucket
 %S3Bucket Builder of URIs for files that are part of the ABO S3 bucket
 %
 %   This class implements methods for retrieving URIs for data files and 
@@ -10,46 +10,26 @@ classdef S3Bucket < bot.internal.abstract.FileResource
 % variables to filenames / file expressions
 
     properties (Constant)
-        BucketName = "allen-brain-observatory"
-        %VBBucketName = "visual-behavior-ophys-data"
+        BucketName = "visual-behavior-neuropixels-data"
         RegionCode = "us-west-2"
     end
 
-    properties (Constant)
-
-        % Base URI for the Allen Brain Observatory S3 Bucket (s3 protocol)
-        S3BaseUri = "s3://allen-brain-observatory"
-        %S3BaseUriOVB = "s3://visual-behavior-ophys-data"
-
-        % Base URL for the Allen Brain Observatory S3 Bucket (https protocol)
-        S3BaseUrl = "https://allen-brain-observatory.s3.us-west-2.amazonaws.com"
-        
-        % Directory path if S3 bucket is mounted as a local file system     % Todo: Should this be a preference instead?
-        S3LocalMount = fullfile("/home", "ubuntu", "s3-allen") % Todo: Should get from preferences
-
+    properties (Access = protected)
         % Folder in the S3 bucket for ephys data or ophys
         S3DataFolder = struct(...
-            'Ephys', "visual-coding-neuropixels", ...
-            'Ophys', "visual-coding-2p", ...
-            'OphysVB', "visual-behavior-ophys")
+            'Ephys', "visual-behavior-neuropixels")
 
         % Filenames for item manifest tables 
         ItemTableFileNames = struct(...
-            'Ephys', struct(   'Session', "ecephys-cache/sessions.csv",...
-                                 'Probe', "ecephys-cache/probes.csv", ...
-                               'Channel', "ecephys-cache/channels.csv", ...
-                                  'Unit', "ecephys-cache/units.csv"), ...
-            'Ophys', struct('Experiment', "experiment_containers.json", ...
-                               'Session', "ophys_experiments.json", ...
-                                  'Cell', "cell_specimens.json") )
-    end
-
-    properties (Dependent)
-        PreferredScheme
+            'Ephys', struct('BehaviorSession', uriJoin("project_metadata", "behavior_sessions.csv"), ...
+                               'EphysSession', uriJoin("project_metadata", "ecephys_sessions.csv"), ...
+                                      'Probe', uriJoin("project_metadata", "probes.csv"), ...
+                                    'Channel', uriJoin("project_metadata", "channels.csv"), ...
+                                       'Unit', uriJoin("project_metadata", "units.csv")) )
     end
 
     methods (Access = private) % Constructor
-        function obj = S3Bucket()
+        function obj = S3BucketEphys()
             % Constructor is private in order to implement as singleton
         end
     end
@@ -72,33 +52,13 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         %getItemTableURI Get URI for item table
 
             datasetType = validatestring(datasetType, ["Ephys", "Ophys"]);
-            itemType = validatestring(itemType, ["Experiment", "Session", "Channel", "Probe", "Unit", "Cell"]);
+            %itemType = validatestring(itemType, ["Experiment", "Session", "Channel", "Probe", "Unit", "Cell"]);
+            itemType = validatestring(itemType, ["BehaviorSession", "EphysSession", "Channel", "Probe", "Unit"]);
 
             filename = obj.ItemTableFileNames.(datasetType).(itemType);
             baseURI = obj.getDataFolderUri(datasetType);
             strURI = uriJoin(baseURI, filename);
         end
-    end
-
-
-    methods % Set /get
-        
-        function preferredScheme = get.PreferredScheme(obj)
-            if obj.isMounted() && ~obj.useCloudCacher()
-                preferredScheme = "file";
-            else
-                preferredScheme = "https";
-            end
-
-            if obj.useS3Protocol() % Todo
-                preferredScheme = 's3';
-            end
-
-            % Note. The s3 scheme is currently not in use, but might be
-            % relevant if a mode is implemented where on demand properties
-            % are retrieved from a file on the s3 instead of a local file.
-        end
-        
     end
 
     methods % Could be methods of a potential abstract S3Bucket class
@@ -139,42 +99,42 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         end
     end
 
-    methods (Access = private)
-        
-        function folderURI = getDataFolderUri(obj, datasetType, currentScheme)
-            arguments
-                obj bot.internal.fileresource.S3Bucket % Object of this class
-                datasetType string {mustBeMember(datasetType, ["Ephys", "Ophys"])}
-                currentScheme string {mustBeMember(currentScheme, ["s3", "https", "file", ""])} = ""
-            end
-            
-            if currentScheme == ""
-                currentScheme = obj.PreferredScheme;
-            end
-
-            switch lower(currentScheme)
-                case 's3'
-                    baseURI = obj.S3BaseUri;
-                case 'https'
-                    baseURI = obj.S3BaseUrl;
-                case 'file'
-                    baseURI = "file://" + obj.S3LocalMount;
-            end
-
-            folderURI = uriJoin( baseURI, obj.S3DataFolder.(datasetType) );
-        end
-    
-        function relativePathURI = getRelativeFileUriPath(obj, itemObject, fileNickname, varargin) %#ok<INUSL> 
-            
-            itemClassName = class(itemObject);
-            itemClassNameSplit = strsplit(itemClassName, '.');
-
-            filenameLookupFcn = str2func(sprintf('%s.get%sFileRelativePath', class(obj), itemClassNameSplit{end}));
-
-            relativePathURI = filenameLookupFcn(itemObject, fileNickname, varargin{:});
-        end
-
-    end
+%     methods (Access = private)
+%         
+%         function folderURI = getDataFolderUri(obj, datasetType, currentScheme)
+%             arguments
+%                 obj bot.internal.fileresource.S3Bucket % Object of this class
+%                 datasetType string {mustBeMember(datasetType, ["Ephys", "Ophys"])}
+%                 currentScheme string {mustBeMember(currentScheme, ["s3", "https", "file", ""])} = ""
+%             end
+%             
+%             if currentScheme == ""
+%                 currentScheme = obj.PreferredScheme;
+%             end
+% 
+%             switch lower(currentScheme)
+%                 case 's3'
+%                     baseURI = obj.S3BaseUri;
+%                 case 'https'
+%                     baseURI = obj.S3BaseUrl;
+%                 case 'file'
+%                     baseURI = "file://" + obj.S3LocalMount;
+%             end
+% 
+%             folderURI = uriJoin( baseURI, obj.S3DataFolder.(datasetType) );
+%         end
+%     
+%         function relativePathURI = getRelativeFileUriPath(obj, itemObject, fileNickname, varargin) %#ok<INUSL> 
+%             
+%             itemClassName = class(itemObject);
+%             itemClassNameSplit = strsplit(itemClassName, '.');
+% 
+%             filenameLookupFcn = str2func(sprintf('%s.get%sFileRelativePath', class(obj), itemClassNameSplit{end}));
+% 
+%             relativePathURI = filenameLookupFcn(itemObject, fileNickname, varargin{:});
+%         end
+% 
+%     end
 
     methods (Static) % Static method for retrieving singleton instance
         function fileResource = instance(clearResource)
@@ -188,7 +148,7 @@ classdef S3Bucket < bot.internal.abstract.FileResource
             
             % - Construct the file resource if instance is not present
             if isempty(FILE_RESOURCE)
-                FILE_RESOURCE = bot.internal.fileresource.S3Bucket();
+                FILE_RESOURCE = bot.internal.fileresource.visualbehavior.S3BucketEphys();
             end
             
             % - Return the instance

@@ -332,6 +332,9 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             localMount (1,1) logical = true % Action used for retrieving file. Options: "Copy" or "Download"
          end
 
+         s3Filepath = obj.FileResource.getDataFileURI(obj, "SessNWB");
+         return 
+
          if localMount % S3 bucket is mounted.
             rootPath = obj.S3_ROOT_PATH;
          else

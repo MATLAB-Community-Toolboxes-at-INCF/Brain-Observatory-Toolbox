@@ -4,6 +4,8 @@
 classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixin.OnDemandProps
        
     properties (Abstract, Access=protected, Constant, Hidden)
+        DATASET_NAME
+
         % Enumeration for dataset type that a concrete manifest is part of
         DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType  
         
@@ -23,6 +25,10 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
     properties (Access = protected)
         MemoizedFetcher = struct % Memoized functions for fetching item tables
+    end
+
+    properties (Abstract, Access = protected)
+        FileResource
     end
 
     methods (Access = protected) % Constructor
@@ -185,9 +191,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             mustBeMember(itemType, manifest.ITEM_TYPES) % Sanity check
             datasetType = char(manifest.DATASET_TYPE);
 
-            strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
-            objURI = matlab.net.URI(strURI);
+            %strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
             
+            strURI = manifest.FileResource.getItemTableURI(datasetType, itemType);
+            objURI = matlab.net.URI(strURI);
+
             switch objURI.Scheme
                 case 'file'
                     strCachedFilepath = objURI.EncodedPath; % Uncached
@@ -241,10 +249,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
             warning('off', 'CloudCacher:URLNotInCache')
             
-            strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
+            strURI = manifest.FileResource.getItemTableURI(datasetType, itemType);
+            %strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
             diskCache.ccCache.RemoveURL(strURI)
-            strURI = URILookup.API.getItemTableURI(datasetType, itemType);
-            diskCache.ccCache.RemoveURLsMatchingSubstring(strURI)
+            %strURI = URILookup.API.getItemTableURI(datasetType, itemType);
+            %diskCache.ccCache.RemoveURLsMatchingSubstring(strURI)
 
             warning('on', 'CloudCacher:URLNotInCache')
         end
@@ -263,10 +272,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         %       ans =
         %           'allen_brain_observatory_ephys_sessions_manifest'
 
+            datasetName = char(manifest.DATASET_NAME);
             datasetType = char(manifest.DATASET_TYPE);
-
-            cacheKey = sprintf('allen_brain_observatory_%s_%ss_manifest', ...
-                lower(datasetType), lower(itemType));
+            
+            cacheKey = sprintf('allen_brain_observatory_%s_%s_%ss_manifest', ...
+                lower(datasetName), lower(datasetType), lower(itemType));
         end
     
     end

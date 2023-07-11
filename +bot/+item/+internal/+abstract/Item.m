@@ -164,7 +164,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 
                 eidTypeSuffix = "invalidItemTable";
                 
-                if ~ismember(val.Properties.VariableNames, 'id')
+                if ~any(ismember(val.Properties.VariableNames, 'id')) && ~any(ismember(val.Properties.VariableNames, 'behavior_session_id'))
                     msgType = "Table supplied not recognized as a valid BOT Item information table";
                 end
                 

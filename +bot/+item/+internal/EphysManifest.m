@@ -67,12 +67,17 @@ classdef EphysManifest < bot.item.internal.Manifest
 % %     end
         
     properties (Constant, Access=protected, Hidden)
+        DATASET_NAME = "VisualCoding"
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
         ITEM_TYPES = ["Session", "Probe", "Channel", "Unit"]
         DOWNLOAD_FROM = containers.Map(...
             bot.item.internal.EphysManifest.ITEM_TYPES, ...
             ["API", "", "", ""] )
     end
+
+    properties (Access = protected)
+        FileResource = bot.internal.fileresource.S3Bucket.instance()
+    end  
 
     %% Constructor
     methods (Access = private)

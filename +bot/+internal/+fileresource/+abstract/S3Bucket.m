@@ -9,50 +9,62 @@ classdef S3Bucket < bot.internal.abstract.FileResource
 % Todo: Use the manifest.json in the ABO S3 root dataset folder to map
 % variables to filenames / file expressions
 
-    properties (Constant)
-        BucketName = "allen-brain-observatory"
-        %VBBucketName = "visual-behavior-ophys-data"
-        RegionCode = "us-west-2"
-    end
+    properties (Constant, Abstract)
+        % Name of AWS S3 bucket
+        BucketName
 
-    properties (Constant)
-
-        % Base URI for the Allen Brain Observatory S3 Bucket (s3 protocol)
-        S3BaseUri = "s3://allen-brain-observatory"
-        %S3BaseUriOVB = "s3://visual-behavior-ophys-data"
-
-        % Base URL for the Allen Brain Observatory S3 Bucket (https protocol)
-        S3BaseUrl = "https://allen-brain-observatory.s3.us-west-2.amazonaws.com"
-        
-        % Directory path if S3 bucket is mounted as a local file system     % Todo: Should this be a preference instead?
-        S3LocalMount = fullfile("/home", "ubuntu", "s3-allen") % Todo: Should get from preferences
-
-        % Folder in the S3 bucket for ephys data or ophys
-        S3DataFolder = struct(...
-            'Ephys', "visual-coding-neuropixels", ...
-            'Ophys', "visual-coding-2p", ...
-            'OphysVB', "visual-behavior-ophys")
-
-        % Filenames for item manifest tables 
-        ItemTableFileNames = struct(...
-            'Ephys', struct(   'Session', "ecephys-cache/sessions.csv",...
-                                 'Probe', "ecephys-cache/probes.csv", ...
-                               'Channel', "ecephys-cache/channels.csv", ...
-                                  'Unit', "ecephys-cache/units.csv"), ...
-            'Ophys', struct('Experiment', "experiment_containers.json", ...
-                               'Session', "ophys_experiments.json", ...
-                                  'Cell', "cell_specimens.json") )
+        % Region code of AWS S3 bucket
+        RegionCode
     end
 
     properties (Dependent)
+
+        % Base URI for the Allen Brain Observatory S3 Bucket (s3 protocol)
+        S3BaseUri
+
+        % Base URL for the Allen Brain Observatory S3 Bucket (https protocol)
+        S3BaseUrl
+        
+        % Directory path if S3 bucket is mounted as a local file system     % Todo: Should this be a preference instead?
+        S3LocalMount
+    end
+
+    properties (Abstract, Access = protected)
+        % Folder in the S3 bucket for ephys data or ophys
+        S3DataFolder
+
+        % Filenames for item manifest tables 
+        ItemTableFileNames
+    end
+
+    properties (Access = private)
+        InternalName = 's3-abo-vbo' % Allen brain observatory, visual behavior ophys
+    end
+
+    properties (Dependent) % Todo: Access = protected
         PreferredScheme
     end
 
-    methods (Access = private) % Constructor
+    methods (Access = protected) % Constructor
         function obj = S3Bucket()
-            % Constructor is private in order to implement as singleton
+            % Constructor is protected in order to implement as singleton
         end
     end
+
+    methods % Dependent property get methods
+        function baseUri = get.S3BaseUri(obj)
+            baseUri = sprintf("s3://%s", obj.BucketName);
+        end
+
+        function baseUrl = get.S3BaseUrl(obj)
+            baseUrl = sprintf("https://%s.s3.%s.amazonaws.com", obj.BucketName, obj.RegionCode);
+        end
+                   
+        function pathStr = get.S3LocalMount(obj)
+            pathStr = fullfile("/home", "ubuntu", obj.InternalName); % Todo: Should get from preferences
+        end
+    end
+
 
     methods % Public methods
         function tf = isMounted(~)
@@ -79,7 +91,6 @@ classdef S3Bucket < bot.internal.abstract.FileResource
             strURI = uriJoin(baseURI, filename);
         end
     end
-
 
     methods % Set /get
         
@@ -139,11 +150,11 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         end
     end
 
-    methods (Access = private)
+    methods (Access = protected)
         
         function folderURI = getDataFolderUri(obj, datasetType, currentScheme)
             arguments
-                obj bot.internal.fileresource.S3Bucket % Object of this class
+                obj bot.internal.fileresource.abstract.S3Bucket % Object of this class
                 datasetType string {mustBeMember(datasetType, ["Ephys", "Ophys"])}
                 currentScheme string {mustBeMember(currentScheme, ["s3", "https", "file", ""])} = ""
             end
@@ -188,7 +199,7 @@ classdef S3Bucket < bot.internal.abstract.FileResource
             
             % - Construct the file resource if instance is not present
             if isempty(FILE_RESOURCE)
-                FILE_RESOURCE = bot.internal.fileresource.S3Bucket();
+                FILE_RESOURCE = bot.internal.fileresource.abstract.S3Bucket();
             end
             
             % - Return the instance
@@ -363,7 +374,7 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         function relativeFilePath = getProbeFileRelativePath(itemObject, nickname)
         %getProbeFileRelativePath Get subfolders and filename for file given nickname
         %
-        % See bot.internal.fileresource.S3Bucket/getEphysSessionFileRelativePath 
+        % See bot.internal.fileresource.abstract.S3Bucket/getEphysSessionFileRelativePath 
         % for details on the internal S3 bucket folder hierarchy.
 
             arguments
@@ -390,6 +401,8 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         end
     end
 
+    methods (Static)
+    end
 end
 
 function strURI = uriJoin(varargin)
