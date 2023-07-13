@@ -64,9 +64,12 @@ classdef cache < handle
             if ~exist(oCache.strCacheDir, 'dir')
                 mkdir(oCache.strCacheDir);
             end
+
+            % Use scratch directory?
+            strScratchDir = oCache.getScratchDirectory(oCache.strCacheDir);
             
             % - Set up cloud and object caches
-            oCache.ccCache = bot.internal.CloudCacher(oCache.strCacheDir);
+            oCache.ccCache = bot.internal.CloudCacher(strScratchDir);
             oCache.ocCache = bot.internal.ObjectCacher(oCache.strCacheDir);
             
             % - Assign the cache object to a global cache
@@ -520,6 +523,20 @@ classdef cache < handle
                 error('BOT:InitializeCacheDirectory', ...
                     'User canceled during selection of a preferred cache directory.')
             end
+        end
+
+        function strScratchDir = getScratchDirectory(cacheDirectory)
+        % Note: very specific to MATLAB ONLINE. Should be more generalized
+            [~, currentUsername] = system('whoami');
+            currentUsername = strtrim(currentUsername);
+
+            if string(currentUsername) == "mluser"
+                strScratchDir = "/Data/BOT_Cache_Temp";
+                if ~isfolder(strScratchDir); mkdir(strScratchDir); end
+            else
+                strScratchDir = cacheDirectory;
+            end
+            
         end
     end
 
