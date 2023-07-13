@@ -388,7 +388,7 @@ classdef nwb_ephys < handle
       
       function tos = fetch_optogenetic_stimulation(self)
          % - Read table from NWB file
-         tos = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/optotagging/optogenetic_stimuluation', ...
+         tos = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/optotagging/optogenetic_stimulation', ...
             {'tags', 'tags_index', 'timeseries', 'timeseries_index'});
       end
       
