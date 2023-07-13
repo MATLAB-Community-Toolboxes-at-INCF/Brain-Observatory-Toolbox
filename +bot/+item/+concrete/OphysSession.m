@@ -98,7 +98,10 @@ classdef OphysSession < bot.item.Session
     properties (Constant, Hidden)
         S3_PRIMARY_DATA_FOLDER = 'visual-coding-2p';
     end
-    
+        
+    properties (Access = public)
+        FileResource = bot.internal.fileresource.S3Bucket.instance()
+    end  
     
     %% PROPERTY ACCESS METHODS
     methods
