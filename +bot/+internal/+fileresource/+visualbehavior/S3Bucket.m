@@ -291,9 +291,12 @@ classdef S3Bucket < bot.internal.fileresource.abstract.S3Bucket
             assert(strcmp(nickname, 'SessNWB'), ...
                 'Currently only supports files with nickname SessNWB')
             
-            experimentId = num2str(itemObject.id);
-            sessionName = itemObject.session_type;
-             
+            %experimentId = num2str(itemObject.id);
+            %sessionName = itemObject.session_type;
+
+            exp_id = eval(itemObject.info.ophys_experiment_id);
+            experimentId = string(exp_id(1));
+
             switch nickname
         
                 case 'SessNWB'       
