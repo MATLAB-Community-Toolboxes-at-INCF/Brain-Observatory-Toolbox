@@ -12,9 +12,9 @@ Either will orient you to several **live script examples** available to guide ne
 You can also individually view (:eyes:) or run (:arrow_forward:) these examples on MATLAB Online:
 | Example Type | Data Type | View | Run | Data Type | View | Run | 
 | --- | --- | --- | --- | --- | --- | --- |
-| :rocket: Quickstart | Calcium Imaging (Ophys) | [:eyes:][OphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/OphysQuickstart.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/OphysQuickstart.mlx) |
-| :microscope: Demo | Calcium Imaging (Ophys) | [:eyes:][OphysDemo] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/OphysDemo.mlx) | Neuropixels Probe (Ephys)| [:eyes:][EphysDemo] | (\*) |
-| :woman_teacher: Tutorial | Calcium Imaging (Ophys) | [:eyes:][OphysTutorial] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/OphysTutorial.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysTutorial] | (\*) | 
+| :rocket: Quickstart | Calcium Imaging (Ophys) | [:eyes:][OphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/OphysQuickstart.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/EphysQuickstart.mlx) |
+| :microscope: Demo | Calcium Imaging (Ophys) | [:eyes:][OphysDemo] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=demos/OphysDemo.mlx) | Neuropixels Probe (Ephys)| [:eyes:][EphysDemo] | (\*) |
+| :woman_teacher: Tutorial | Calcium Imaging (Ophys) | [:eyes:][OphysTutorial] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=tutorials/OphysTutorial.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysTutorial] | (\*) | 
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or customer cloud instances only, not for MATLAB Online</sub>
 
