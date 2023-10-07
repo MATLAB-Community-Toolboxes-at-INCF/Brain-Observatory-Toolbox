@@ -66,6 +66,10 @@ classdef EphysManifest < bot.item.internal.Manifest
 % %         Units        % Table of all EPhys units
 % %     end
         
+    properties (Access = private)
+        EphysUnitFilter (1,1) bot.util.parameters.EphysUnitFilter
+    end
+
     properties (Constant, Access=protected, Hidden)
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
         ITEM_TYPES = ["Session", "Probe", "Channel", "Unit"]
@@ -76,9 +80,15 @@ classdef EphysManifest < bot.item.internal.Manifest
 
     %% Constructor
     methods (Access = private)
-        function eManifest = EphysManifest()
+        function eManifest = EphysManifest(ephysUnitFilter)
+
+            arguments
+                ephysUnitFilter = bot.util.parameters.EphysUnitFilter()
+            end
 
             eManifest@bot.item.internal.Manifest()
+
+            eManifest.EphysUnitFilter = ephysUnitFilter;
 
             % Memoize methods for fetching item tables at various stages
             eManifest.MemoizedFetcher.RawTable = ...
@@ -167,6 +177,8 @@ classdef EphysManifest < bot.item.internal.Manifest
 
             cache_key = eManifest.getManifestCacheKey(itemType);
 
+            cache_key = [cache_key, '_', eManifest.EphysUnitFilter.hash()];
+
             if eManifest.cache.IsObjectInCache(cache_key)
                 itemTable = eManifest.cache.RetrieveObject(cache_key);
 
@@ -187,7 +199,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             itemTable = eManifest.download_item_table(itemType);
 
             fcnName = sprintf('%s.preprocess_ephys_%s_table', class(eManifest), lower(itemType)); % Static method
-            itemTable = feval(fcnName, itemTable);
+            itemTable = feval(fcnName, itemTable, eManifest.EphysUnitFilter);
         end
             
         function itemTable = fetchJointItemTable(eManifest, itemType)
@@ -329,7 +341,7 @@ classdef EphysManifest < bot.item.internal.Manifest
 
     methods (Static, Access = private) % Preprocess tables (restructure)
 
-        function session_table = preprocess_ephys_session_table(session_table)
+        function session_table = preprocess_ephys_session_table(session_table, ~)
             
             num_sessions = size(session_table, 1);
 
@@ -372,7 +384,7 @@ classdef EphysManifest < bot.item.internal.Manifest
 
         end
 
-        function probe_table = preprocess_ephys_probe_table(probe_table)
+        function probe_table = preprocess_ephys_probe_table(probe_table, ~)
             
             % - Rename variables
             probe_table = rename_variables(probe_table, ...
@@ -419,7 +431,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             end
         end
 
-        function channel_table = preprocess_ephys_channel_table(channel_table)
+        function channel_table = preprocess_ephys_channel_table(channel_table, ~)
             
             % Todo: treat api and s3 result differently
 
@@ -467,7 +479,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             end
         end
 
-        function unit_table = preprocess_ephys_unit_table(unit_table)
+        function unit_table = preprocess_ephys_unit_table(unit_table, sFilterValues)
             
             % - Rename variables
             unit_table = rename_variables(unit_table, ...
@@ -483,30 +495,32 @@ classdef EphysManifest < bot.item.internal.Manifest
                 'l_ratio', 'L_ratio', ...
                 'ecephys_channel_id', 'ephys_channel_id');
             
-            % - Set default filter values
-            if ~exist('sFilterValues', 'var') || isempty(sFilterValues) %#ok<NODEF>
-                sFilterValues.amplitude_cutoff_maximum = 0.1;
-                sFilterValues.presence_ratio_minimum = 0.95;
-                sFilterValues.isi_violations_maximum = 0.5;
-            end
-            
-            % - Check filter values
-            assert(isstruct(sFilterValues), ...
-                'BOT:Usage', ...
-                '`sFilterValues` must be a structure with fields {''amplitude_cutoff_maximum'', ''presence_ratio_minimum'', ''isi_violations_maximum''}.')
-            
-            if ~isfield(sFilterValues, 'amplitude_cutoff_maximum')
-                sFilterValues.amplitude_cutoff_maximum = inf;
-            end
-            
-            if ~isfield(sFilterValues, 'presence_ratio_minimum')
-                sFilterValues.presence_ratio_minimum = -inf;
-            end
-            
-            if ~isfield(sFilterValues, 'isi_violations_maximum')
-                sFilterValues.isi_violations_maximum = inf;
-            end
-            
+% %             % - Set default filter values
+% %             if ~exist('sFilterValues', 'var') || isempty(sFilterValues) %#ok<NODEF>
+% %                 sFilterValues.amplitude_cutoff_maximum = 0.1;
+% %                 sFilterValues.presence_ratio_minimum = 0.95;
+% %                 sFilterValues.isi_violations_maximum = 0.5;
+% %             end
+% %             
+% %             % - Check filter values
+% %             assert(isstruct(sFilterValues), ...
+% %                 'BOT:Usage', ...
+% %                 '`sFilterValues` must be a structure with fields {''amplitude_cutoff_maximum'', ''presence_ratio_minimum'', ''isi_violations_maximum''}.')
+% %             
+% %             if ~isfield(sFilterValues, 'amplitude_cutoff_maximum')
+% %                 sFilterValues.amplitude_cutoff_maximum = inf;
+% %             end
+% %             
+% %             if ~isfield(sFilterValues, 'presence_ratio_minimum')
+% %                 sFilterValues.presence_ratio_minimum = -inf;
+% %             end
+% %             
+% %             if ~isfield(sFilterValues, 'isi_violations_maximum')
+% %                 sFilterValues.isi_violations_maximum = inf;
+% %             end
+% % 
+% %             sFilterValues = eManifest.EphysUnitFilter;
+% %             
             % - Filter units
             unit_table = ...
                 unit_table(unit_table.amplitude_cutoff <= sFilterValues.amplitude_cutoff_maximum & ...

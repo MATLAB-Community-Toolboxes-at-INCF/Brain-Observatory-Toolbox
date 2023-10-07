@@ -9,9 +9,10 @@
 % [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
 %% function units = listUnits(include_metrics)
-function unitsTable = listUnits(include_metrics)
+function unitsTable = listUnits(include_metrics, ephys_unit_filter)
 arguments
     include_metrics logical = false;
+    ephys_unit_filter bot.util.parameters.EphysUnitFilter = bot.util.parameters.EphysUnitFilter()
 end
 
 manifest = bot.item.internal.Manifest.instance('ephys');
