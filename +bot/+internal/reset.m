@@ -3,7 +3,7 @@ function reset(mode)
         % Extra layer of precaution
         mode (1,1) string = "ask" % "ask" || "force"
     end
-    bot.internal.cache.resetCache(mode)
+    bot.internal.Cache.resetCache(mode)
     prefs = bot.util.getPreferences();
     prefs.reset()
 end

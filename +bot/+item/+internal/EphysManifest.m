@@ -167,13 +167,13 @@ classdef EphysManifest < bot.item.internal.Manifest
 
             cache_key = eManifest.getManifestCacheKey(itemType);
 
-            if eManifest.cache.IsObjectInCache(cache_key)
-                itemTable = eManifest.cache.RetrieveObject(cache_key);
+            if eManifest.cache.isObjectInCache(cache_key)
+                itemTable = eManifest.cache.retrieveObject(cache_key);
 
             else
                 itemTable = eManifest.fetchAnnotatedItemTable(itemType);
 
-                eManifest.cache.InsertObject(cache_key, itemTable);
+                eManifest.cache.insertObject(cache_key, itemTable);
                 eManifest.clearTempTableFromCache(itemType)
             end
 

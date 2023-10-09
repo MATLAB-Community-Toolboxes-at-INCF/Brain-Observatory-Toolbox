@@ -5,7 +5,7 @@ classdef test < matlab.unittest.TestCase
    methods (Test)
       function testCreateCache(testCase) %#ok<*MANU>
          %% Test creating a BOT cache
-         boc = bot.internal.cache; %#ok<*NASGU>
+         boc = bot.internal.Cache.instance(); %#ok<*NASGU>
       end
       
       function testOphysTables(testCase)

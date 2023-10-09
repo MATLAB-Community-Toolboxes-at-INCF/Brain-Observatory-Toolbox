@@ -83,7 +83,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       
          fileInfo = obj.linkedFilesInfo(fileNickname,:); %table row
          
-         boc = bot.internal.cache;
+         boc = bot.internal.Cache.instance();
          strApiUrl = boc.strABOBaseUrl + fileInfo.download_link;
          assert(~boc.IsURLInCache(strApiUrl), "File has already been downloaded");
          %assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}),"File has already been downloaded");
@@ -213,7 +213,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          assert(~obj.initState);
          
          % Call API to get info about linked file or linked file group
-         boc = bot.internal.cache;
+         boc = bot.internal.Cache.instance();
          apiRespTbl = boc.CachedAPICall('criteria=model::WellKnownFile', apiReqStr);
          
          fileInfo.nickname = nickname;
@@ -271,7 +271,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          end
          
          % Reflect/revise linkedFiles download states
-         boc = bot.internal.cache;
+         boc = bot.internal.Cache.instance();
          
          for nickname = nicknames'
             fileInfo = obj.linkedFilesInfo(nickname,:); %table row
@@ -289,7 +289,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
 
             % Determine which linkedFiles have been downloaded
             if boc.IsURLInCache(url)
-               obj.linkedFiles{nickname,"LocalFile"} = string(boc.ccCache.CachedFileForURL(url));
+               obj.linkedFiles{nickname,"LocalFile"} = string(boc.CloudCacher.getCachedFilePathForKey(url));
                obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
             else
                % Automatically download linkedFiles where needed

@@ -144,8 +144,8 @@ classdef OphysManifest < bot.item.internal.Manifest
 
             cache_key = oManifest.getManifestCacheKey(itemType);
 
-            if oManifest.cache.IsObjectInCache(cache_key)
-                itemTable = oManifest.cache.RetrieveObject(cache_key);
+            if oManifest.cache.isObjectInCache(cache_key)
+                itemTable = oManifest.cache.retrieveObject(cache_key);
 
             else
                 itemTable = oManifest.download_item_table(itemType);
@@ -154,7 +154,7 @@ classdef OphysManifest < bot.item.internal.Manifest
                 fcnName = sprintf('%s.preprocess_ophys_%s_table', class(oManifest), lower(itemType)); % Static method
                 itemTable = feval(fcnName, itemTable);
                 
-                oManifest.cache.InsertObject(cache_key, itemTable);
+                oManifest.cache.insertObject(cache_key, itemTable);
                 oManifest.clearTempTableFromCache(itemType)
             end
 

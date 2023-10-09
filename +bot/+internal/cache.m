@@ -1,4 +1,4 @@
-%% CLASS bot.internal.cache - Cache and cloud access class for Brain Observatory Toolbox
+%% CLASS bot.internal.Cache - Cache and cloud access class for Brain Observatory Toolbox
 %
 % This class is used internally by the Brain Observatory Toolbox to access
 % data from the Allen Brain Observatory resource [1] via the Allen Brain
@@ -8,82 +8,106 @@
 % [2] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: brain-map.org/api/index.html
 
 %% Class definition
-classdef cache < handle
-    
-    properties (SetAccess = immutable)
-        strVersion = '0.5';              % Version string for cache class
-    end
+classdef Cache < handle
     
     properties (SetAccess = private)
-        strCacheDir;                     % Path to location of cached data from the Allen Brain Observatory resource
-        ccCache;                         % Cloud data cache
-        ocCache;                         % Object cache
+        % Path to location of cached data from the Allen Brain Observatory resource
+        CacheDirectory (1,1) string = ""
+        
+        % CloudCacher instance. This instance manages a map of cached data
+        % files for the Allen Brain Observatory resource.
+        CloudCacher (1,1) bot.internal.CloudCacher
+
+        % ObjectCacher instance. This instance manages a map for cached
+        % metadata files (item tables) for the Allen Brain Observatory resource
+        ObjectCacher (1,1) bot.internal.ObjectCacher % Object cache
     end
-    
-    properties
-        Api = bot.internal.BrainObservatoryAPI
+
+    properties (Access = private)
+        % Path to location of cached data from the Allen Brain Observatory 
+        % resource. The scratch directory will be used in situations
+        % where the CacheDirectory is unsuitable, i.e on MATLAB Online. See
+        % the Brain-Observatory-Toolbox Wiki for more details
+        ScratchDirectory (1,1) string = ""
+    end
+
+    properties (Access = private)
+        APIClient = bot.internal.BrainObservatoryAPI
         strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for the Allen Brain Observatory resource
     end
-    
-    %% Constructor
-    methods
-        function oCache = cache(strCacheDir)
-            % CONSTRUCTOR - Returns an object for managing data access from an Allen Brain Observatory dataset
-            %
-            % Usage: oCache = bot.internal.cache(<strCacheDir>)
+
+    properties (Constant, Access = private)
+        Version (1,1) string = "0.5"    % Version string for cache class
+    end
+
+    % Method for retrieving singleton instance
+    methods (Static) 
+        function obj = instance()
+        %instance Return a singleton instance of the BOT Cache
             
-            % - Find and return the global cache object, if one exists
-            sUserData = get(0, 'UserData');
-            if isfield(sUserData, 'BOT_GLOBAL_CACHE') && ...
-                    isa(sUserData.BOT_GLOBAL_CACHE, 'bot.internal.cache') && ...
-                    isequal(sUserData.BOT_GLOBAL_CACHE.strVersion, oCache.strVersion) && ...
-                    (~exist('strCacheDir', 'var') || isempty(strCacheDir))
-                
-                % - A global class instance exists, and is the correct version,
-                % and no "user" cache directory has been provided
-                oCache = sUserData.BOT_GLOBAL_CACHE;
-                return;
-            end
+            persistent cacheObject % Singleton instance
             
-            % - Check if a cache directory has been provided
-            if ~exist('strCacheDir', 'var') || isempty(strCacheDir)
-                if ~oCache.HasPreferredCacheDirectory()
-                    strCacheDir = oCache.InitializePreferredCacheDirectory();
-                else
-                    strCacheDir = oCache.GetPreferredCacheDirectory();
+            % - If cache object exists, check that version is correct
+            if ~isempty(cacheObject) && isvalid(cacheObject)
+                if cacheObject.Version ~= bot.internal.Cache.Version
+                    warning('BOT:Cache:NonMatchingVersion', ...
+                        ['The existing cache singleton instance does not ' ...
+                        'match the version of \nthe bot.internal.Cache ', ...
+                        'class. The cache will be reinitialized.'])
+                    delete(cacheObject)
+                    cacheObject = [];
                 end
-            else
-                % strCacheDir is provided and is not empty!
             end
 
-            oCache.strCacheDir = strCacheDir;
+            % - Construct the cache if singleton instance is not present
+            if isempty(cacheObject)
+                cacheObject = bot.internal.Cache();
+            end
+
+            % - Return the instance
+            obj = cacheObject; 
+        end
+    end
+
+    % Constructor
+    methods (Access = private)
+        function obj = Cache()
+            % CONSTRUCTOR - Returns an object for managing data access from an Allen Brain Observatory dataset
+            %
+            % Usage: obj = bot.internal.Cache(<strCacheDir>)
+            
+            
+            % - Check if a cache directory has been provided
+            if ~obj.hasPreferredCacheDirectory()
+                strCacheDir = obj.initializePreferredCacheDirectory();
+            else
+                strCacheDir = obj.getPreferredCacheDirectory();
+            end
+
+            obj.CacheDirectory = strCacheDir;
 
             %% - Set up a cache object, if no object exists
             
             % - Ensure the cache directory exists
-            if ~exist(oCache.strCacheDir, 'dir')
-                mkdir(oCache.strCacheDir);
+            if ~exist(obj.CacheDirectory, 'dir')
+                mkdir(obj.CacheDirectory);
             end
 
             % Use scratch directory?
-            strScratchDir = oCache.getScratchDirectory(oCache.strCacheDir);
+            strScratchDir = obj.getScratchDirectory(obj.CacheDirectory);
             
             % - Set up cloud and object caches
-            oCache.ccCache = bot.internal.CloudCacher(strScratchDir);
-            oCache.ocCache = bot.internal.ObjectCacher(oCache.strCacheDir);
-            
-            % - Assign the cache object to a global cache
-            sUserData.BOT_GLOBAL_CACHE = oCache;
-            set(0, 'UserData', sUserData);
+            obj.CloudCacher = bot.internal.CloudCacher(strScratchDir);
+            obj.ObjectCacher = bot.internal.ObjectCacher(obj.CacheDirectory);
         end
     end
     
-    %% Methods to manage manifests and caching
+    % Methods to manage manifests and caching
     methods
-        function InsertObject(oCache, strKey, object)
-            % InsertObject - METHOD Insert an object into the object cache
+        function insertObject(obj, strKey, object)
+            % insertObject - METHOD Insert an object into the object cache
             %
-            % Usage: oCache.Insert(strKey, object)
+            % Usage: obj.insertObject(strKey, object)
             %
             % `strKey` is a string, which will be associated with the object
             % in the cache. You should take care that the key is unique
@@ -95,77 +119,73 @@ classdef cache < handle
             % `object` will be inserted into the object cache, and can be
             % retrieved later using `strKey`.
             
-            oCache.ocCache.Insert(strKey, object);
+            obj.ObjectCacher.insert(strKey, object);
         end
         
-        function object = RetrieveObject(oCache, strKey)
-            % RetrieveObject - METHOD Retrieve an object (key) from the object cache
+        function object = retrieveObject(obj, strKey)
+            % retrieveObject - METHOD Retrieve an object (key) from the object cache
             %
-            % Usage: object = oCache.Retrieve(strKey)
+            % Usage: object = obj.retrieveObject(strKey)
             %
             % `strKey` is a string which identifies an object in the cache.
             %
             % If the key `strKey` exists in the cache, the corresponding
             % object will be retrieved. Otherwise an error will be raised.
             
-            object = oCache.ocCache.Retrieve(strKey);
+            object = obj.ObjectCacher.retrieve(strKey);
         end
         
-        function bIsInCache = IsObjectInCache(oCache, strKey)
-            % IsObjectInCache - METHOD Check if an object (key) is in the object cache
+        function bIsInCache = isObjectInCache(obj, strKey)
+            % isObjectInCache - METHOD Check if an object (key) is in the object cache
             %
-            % Usage: bIsInCache = oCache.IsObjectInCache(strKey)
+            % Usage: bIsInCache = obj.isObjectInCache(strKey)
             %
             % `strKey` is a string to be queried in the object cache. If the
             % key exists in the cache, then `True` is returned. Otherwise
             % `False` is returned.
             
-            bIsInCache = oCache.ocCache.IsInCache(strKey);
+            bIsInCache = obj.ObjectCacher.isInCache(strKey);
         end
         
-        function RemoveObject(oCache, strKey)
-            % RemoveObject - METHOD Remove an object (key) from the object cache
+        function removeObject(obj, strKey)
+            % removeObject - METHOD Remove an object (key) from the object cache
             %
-            % Usage: oCache.RemoveObject(strKey)
+            % Usage: obj.removeObject(strKey)
             %
             % `strKey` is a string identifying an object key. If the key
             % exists in the cache, then the corresponding object data will be
             % removed form the cache.
             
-            oCache.ocCache.Remove(strKey);
+            obj.ObjectCacher.remove(strKey);
         end
         
-        function ClearObjectCache(oCache)
-           keys = oCache.ocCache.mapCachedData.keys();
-           
-           for key = string(keys)
-               oCache.RemoveObject(key);
-           end
+        function clearObjectCache(obj)
+           obj.ObjectCacher.removeAll();
         end
         
-        function strFile = CacheFile(oCache, strFileURL, strLocalFile, strSecondaryFilePath, options)
+        function strFile = CacheFile(obj, strFileURL, strLocalFile, strSecondaryFilePath, options)
             % CacheFile - METHOD Check for cached version of Allen Brain Observatory dataset file, and return local location on disk
             %
             % Usage: 
-            %     strFile = oCache.CacheFile(strFileURL, strLocalFile)
+            %     strFile = obj.CacheFile(strFileURL, strLocalFile)
             %     get filepath (strFile) for a file in the local cache. 
             %     File is downloaded if from the specified file url 
             %     (strFileUrl) if it does not exist in the local cache.
             %
             % Extended usage:
-            %     strFile = oCache.CacheFile(strFileURL, strLocalFile, strSecondaryFileURL)
+            %     strFile = obj.CacheFile(strFileURL, strLocalFile, strSecondaryFileURL)
             %     file is downloaded from a secondary file url. This
             %     version is used if the file should be downloaded from the
             %     ABO S3 bucket using the https protocol.
             %   
-            %     strFile = oCache.CacheFile(strFileURL, strLocalFile, strSecondaryFileURL, options)
+            %     strFile = obj.CacheFile(strFileURL, strLocalFile, strSecondaryFileURL, options)
             %
             %     options:
             %       - RetrievalMode : Mode for file retrieval if file is not in cache. 
             %                         Options: "Download" (default) or "Copy"
             
             arguments
-                oCache                              % cache object 
+                obj                              % cache object 
                 strFileURL                          % Primary URL for downloading file 
                 strLocalFile                        % Path to local cache location of file
                 strSecondaryFilePath = ""           % Path or URL to retrieve file from secondary location (alternative to primary location)
@@ -173,29 +193,29 @@ classdef cache < handle
             end
             
             if options.RetrievalMode == "Copy" && strSecondaryFilePath ~= ""
-                strFile = oCache.ccCache.copyfile(strFileURL, strLocalFile, strSecondaryFilePath);
+                strFile = obj.CloudCacher.copyfile(strFileURL, strLocalFile, strSecondaryFilePath);
             else
                 if strSecondaryFilePath ~= ""
                     nvPairs = {'SecondaryFileUrl', strSecondaryFilePath};
                 else
                     nvPairs = {};
                 end
-                strFile = oCache.ccCache.websave(strLocalFile, strFileURL, nvPairs{:});
+                strFile = obj.CloudCacher.websave(strLocalFile, strFileURL, nvPairs{:});
             end
         end
         
-        function bIsURLInCache = IsURLInCache(oCache, strURL)
+        function bIsURLInCache = IsURLInCache(obj, strURL)
             % IsURLInCache - METHOD Is the provided URL already cached?
             %
-            % Usage: bIsURLInCache = oCache.IsURLInCache(strURL)
+            % Usage: bIsURLInCache = obj.IsURLInCache(strURL)
             
-            bIsURLInCache = oCache.ccCache.IsInCache(strURL);
+            bIsURLInCache = obj.CloudCacher.IsInCache(strURL);
         end
                     
-        function tResponse = CachedRMAQuery(oCache, rmaQueryUrl, options)
+        function tResponse = CachedRMAQuery(obj, rmaQueryUrl, options)
              
             arguments
-                oCache bot.internal.cache % Object of this class
+                obj bot.internal.Cache % Object of this class
                 rmaQueryUrl string
                 options.PageSize = 5000
                 options.SortingAttributeName = "id"
@@ -212,13 +232,13 @@ classdef cache < handle
             while isempty(nTotalRows) || nStartRow < nTotalRows
                 
                 % - Add page parameters                
-                queryOptions = oCache.Api.getRMAPagingOptions(nStartRow, ...
+                queryOptions = obj.APIClient.getRMAPagingOptions(nStartRow, ...
                     options.PageSize, options.SortingAttributeName);
 
                 strURLQueryPage = strjoin([rmaQueryUrl, queryOptions], ",");
                 
                 % - Perform query
-                response_raw = oCache.ccCache.webread(strURLQueryPage, [], requestOptions);
+                response_raw = obj.CloudCacher.webread(strURLQueryPage, [], requestOptions);
                 
                 % - Was there an error?
                 if ~response_raw.success
@@ -260,10 +280,10 @@ classdef cache < handle
             end
         end
         
-        function tResponse = CachedAPICall(oCache, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme, strID)
+        function tResponse = CachedAPICall(obj, strModel, strQueryString, nPageSize, strFormat, strRMAPrefix, strHost, strScheme, strID)
             % CachedAPICall - METHOD Return the (hopefully cached) contents of an Allen Brain Map API call
             %
-            % Usage: tResponse = CachedAPICall(oCache, strModel, strQueryString, ...)
+            % Usage: tResponse = CachedAPICall(obj, strModel, strQueryString, ...)
             %        tResponse = CachedAPICall(..., <nPageSize>, <strFormat>, <strRMAPrefix>, <strHost>, <strScheme>, <strID>)
 
             DEF_strScheme = "http";
@@ -307,12 +327,43 @@ classdef cache < handle
                 strURL = strURL + "," + strQueryString;
             end
 
-            tResponse = oCache.CachedRMAQuery(strURL, 'PageSize', nPageSize, ...
+            tResponse = obj.CachedRMAQuery(strURL, 'PageSize', nPageSize, ...
                 'SortingAttributeName', strID);
         end
     end
 
+    methods (Access = ?bot.internal.Preferences)
+
+        function changeCacheDirectory(obj, directoryPath)
+            
+            obj.CacheDirectory = directoryPath;
+            obj.CloudCacher.changeCacheDirectory(directoryPath)
+            obj.ObjectCacher.changeCacheDirectory(directoryPath)
+                        
+            % Need to reset the in-memory cache if this value is updated.
+            obj.clearMetadataManifests()
+        end
+
+        function changeScratchDirectory(obj, directoryPath)
+            obj.ScratchDirectory = directoryPath;
+            obj.CloudCacher.changeCacheDirectory(obj.CacheDirectory)
+        end
+
+        function resetScratchDirectory(obj)
+            obj.ScratchDirectory = "";
+            obj.CloudCacher.changeCacheDirectory(directoryPath)
+        end
+        
+    end
+
     methods (Static) % Methods for reseting or clearing cache
+        
+        function clearMetadataManifests()
+            % Clear the Ephys- and OphysManifest singleton instances
+            bot.item.internal.EphysManifest.instance("clear")
+            bot.item.internal.OphysManifest.instance("clear")
+        end
+        
         function clearInMemoryCache(force)
         %clearInMemoryCache Clear the cache from memory.
 
@@ -337,17 +388,12 @@ classdef cache < handle
             end
 
             if force
-                sUserData = get(0, 'UserData');
-                if isfield(sUserData, 'BOT_GLOBAL_CACHE')
-                    sUserData.BOT_GLOBAL_CACHE = [];
-                    set(0, 'UserData', sUserData)
-                end % Todo: separate method
 
                 bot.item.internal.EphysManifest.instance("clear") % clear singleton
                 bot.item.internal.OphysManifest.instance("clear") % clear singleton
-                clear bot.internal.cache
-                clear bot.internal.ObjectCacher
-                clear bot.internal.CloudCacher
+                % clear bot.internal.Cache
+                % clear bot.internal.ObjectCacher
+                % clear bot.internal.CloudCacher
             end
         end
         
@@ -370,9 +416,9 @@ classdef cache < handle
             % Remove cache folder from path
             switch answer
                 case 'Yes'
-                    bot.internal.cache.clearInMemoryCache(true)
+                    bot.internal.Cache.clearInMemoryCache(true)
 
-                    cacheDirectory = bot.internal.cache.GetPreferredCacheDirectory();
+                    cacheDirectory = bot.internal.Cache.getPreferredCacheDirectory();
                     warning('off', 'MATLAB:rmpath:DirNotFound')
                     rmpath(genpath(cacheDirectory)); savepath
                     warning('on', 'MATLAB:rmpath:DirNotFound')
@@ -383,16 +429,16 @@ classdef cache < handle
         end
     end
 
-    %% Methods to get preferred or default cache directory
+    %% Methods to get preferred or default cache directorygetPreferredCacheDirectory
     methods (Static, Access = private)
-        function tf = HasPreferredCacheDirectory()
-        %HasPreferredCacheDirectory Check if a preferred cache directory exists
+        function tf = hasPreferredCacheDirectory()
+        %hasPreferredCacheDirectory Check if a preferred cache directory exists
             prefCacheDirectory = bot.internal.Preferences.getPreferenceValue('CacheDirectory');
             tf = prefCacheDirectory ~= "";
         end
 
-        function strCacheDir = InitializePreferredCacheDirectory()
-        %InitializePreferredCacheDirectory Let user configure a cache directory
+        function strCacheDir = initializePreferredCacheDirectory()
+        %initializePreferredCacheDirectory Let user configure a cache directory
         %   
         %   A method that opens a question dialog box for a user to select
         %   whether to configure a preferred directory for downloaded data
@@ -405,7 +451,7 @@ classdef cache < handle
         %   compatibility; if a factory directory for cached data exists on
         %   the file system, this method returns immediately.
             
-            factoryCacheDir = bot.internal.cache.GetFactoryCacheDirectory();
+            factoryCacheDir = bot.internal.Cache.getFactoryCacheDirectory();
             
             % If the factory cache directory already exists, the Brain 
             % Observatory Toolbox has been used on this computer prior to the
@@ -433,10 +479,10 @@ classdef cache < handle
                 'and cache data in the following directory:' ...
                 '\n \\bf%s'], factoryCacheDir);
 
-            strCacheDir = bot.internal.cache.CreateCacheDirectory(factoryCacheDir, promptMessage);
+            strCacheDir = bot.internal.Cache.createCacheDirectory(factoryCacheDir, promptMessage);
         end
         
-        function strCacheDir = ResolveMissingCacheDirectory(strCacheDir)
+        function strCacheDir = resolveMissingCacheDirectory(strCacheDir)
 
             msg = sprintf([ 'Can''t find the preferred cache directory for ', ...
                 'the Brain Observatory Toolbox:\n%s'], strCacheDir);
@@ -445,7 +491,7 @@ classdef cache < handle
 
             switch answer
                 case 'Locate...'
-                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
+                    strCacheDir = bot.internal.Cache.uiGetCacheDirectory();
                 case 'Reinitialize'
                     mkdir(strCacheDir);
                 otherwise
@@ -453,20 +499,20 @@ classdef cache < handle
             end
         end
 
-        function strCacheDir = GetFactoryCacheDirectory()
-        %GetFactoryCacheDirectory Get the BOT default (factory) cache directory    
+        function strCacheDir = getFactoryCacheDirectory()
+        %getFactoryCacheDirectory Get the BOT default (factory) cache directory    
             strBOTDir = fileparts(which('bot.listSessions'));
             strCacheDir = fullfile(strBOTDir, 'Cache');
         end
 
-        function strCacheDir = GetPreferredCacheDirectory()
-        %GetPreferredCacheDirectory Get the preferred cache directory from
+        function strCacheDir = getPreferredCacheDirectory()
+        %getPreferredCacheDirectory Get the preferred cache directory from
         %the BrainObservatoryToolbox preferences.
 
             strCacheDir = bot.internal.Preferences.getPreferenceValue('CacheDirectory');
             
             if ~isfolder(strCacheDir)
-                strCacheDir = bot.internal.cache.ResolveMissingCacheDirectory(strCacheDir);
+                strCacheDir = bot.internal.Cache.resolveMissingCacheDirectory(strCacheDir);
                 
                 if isempty(strCacheDir)
                     error('BOT:PreferredCacheDirectoryMissing', ...
@@ -475,7 +521,7 @@ classdef cache < handle
             end
         end
         
-        function strCacheDir = CreateCacheDirectory(strInitCacheDir, promptMessage)
+        function strCacheDir = createCacheDirectory(strInitCacheDir, promptMessage)
    
             if nargin < 2 || isempty(promptMessage)
                 promptMessage = sprintf(['Download ' ...
@@ -503,7 +549,7 @@ classdef cache < handle
                 case 'Continue'
                     strCacheDir = strInitCacheDir;
                 case 'Change Cache Directory...'
-                    strCacheDir = bot.internal.cache.UiGetCacheDirectory();
+                    strCacheDir = bot.internal.Cache.uiGetCacheDirectory();
                 otherwise
                     error('BOT:InitializeCacheDirectory', ...
                         'User canceled during configuration of the preferred cache directory.')
@@ -514,8 +560,8 @@ classdef cache < handle
             prefs.CacheDirectory = strCacheDir;
         end
 
-        function strCacheDir = UiGetCacheDirectory()
-        %UiGetCacheDirectory Open folder selection dialog for selecting a  cache directory.
+        function strCacheDir = uiGetCacheDirectory()
+        %uiGetCacheDirectory Open folder selection dialog for selecting a  cache directory.
         
             strCacheDir = uigetdir();
 
@@ -536,7 +582,6 @@ classdef cache < handle
             else
                 strScratchDir = cacheDirectory;
             end
-            
         end
     end
 

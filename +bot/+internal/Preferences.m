@@ -37,13 +37,19 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
 
         % Whether to automatically download nwb files when creating session objects
         AutoDownloadNwb     (1,1) logical = true
+    end
+
+    properties (SetObservable, Hidden)
+        % A temporary directory for storing files when cache directory is
+        % suboptimal.
+        ScratchDirectory    (1,1) string = ""
+    end
 
         % %         Suggestions for new preferences (Todo):
         % %
         % %         % Download file or variable (Work in progress).
         % %         DownloadMode        (1,1) string ...
         % %             {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
-    end
 
     properties (Constant, Access = private)
         Filename = fullfile(prefdir, 'BrainObservatoryToolboxPreferences.mat')
@@ -67,6 +73,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     methods (Access = private) % Constructor
 
         function obj = Preferences()
+            
             if isfile(obj.Filename)
                 try
                     S = load(obj.Filename);
@@ -75,7 +82,8 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
                     warning('Could not load preferences, using defaults')
                 end
             end
-            addlistener(obj, 'CacheDirectory', 'PostSet', @(s,e) obj.onCacheDirectorySet);
+
+            obj.addListeners()
         end
 
         function save(obj)
@@ -147,6 +155,16 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     end
 
     methods (Access = private)
+        
+        function addListeners(obj)
+        %createListeners Create listeners for some preferences
+
+            addlistener(obj, 'CacheDirectory', 'PostSet', ...
+                @(s,e) obj.onCacheDirectorySet);
+
+            addlistener(obj, 'ScratchDirectory', 'PostSet', ...
+                @(s,e) obj.onScratchDirectorySet);
+        end
 
         function propertyNames = getActivePreferenceGroup(obj)
             %getCurrentPreferenceGroup Get current preference group
@@ -164,6 +182,9 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             propertyNames = properties(obj);
 
             namesToHide = {};
+            % Todo: Find hidden property names
+            %namesToHide = {'ScratchDirectory'};
+
 
             if ~obj.UseLocalS3Mount
                 namesToHide = [namesToHide, {'S3MountDirectory', 'UseCacheWithS3Mount'}];
@@ -180,9 +201,25 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             %onCacheDirectorySet Callback to execute if CacheDirectory changes
             %
             %   Need to reset the in-memory cache if this value is updated.
-            
-            bot.internal.cache.clearInMemoryCache(true)
+            botCache = bot.internal.Cache.instance();
+            botCache.changeCacheDirectory(obj.CacheDirectory)
+
+            bot.internal.Cache.clearInMemoryCache(true)
         end
+
+        function onScratchDirectorySet(~)
+            %onCacheDirectorySet Callback to execute if CacheDirectory changes
+            %
+            %   Need to reset the in-memory cache if this value is updated.
+            
+            botCache = bot.internal.Cache.instance();
+            if obj.ScratchDirectory == ""
+                botCache.resetScratchDirectory()
+            else
+                botCache.changeScratchDirectory(obj.ScratchDirectory)
+            end
+        end
+
     end
 
     %% STATIC METHODS
