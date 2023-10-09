@@ -6,7 +6,9 @@ classdef LocalFileCache < handle
     end
 
     properties (SetAccess = private)
-        % Directory on local file system in which data is cached
+        % Directory on local file system in which data is cached. This is
+        % specified as the absolute path pointing to a folder where 
+        % cached files are located
         CacheDirectory (1,1) string = ""
         
         % Flag for whether cache is temporary and should be deleted when 
@@ -15,7 +17,10 @@ classdef LocalFileCache < handle
     end
 
     properties (Dependent)
+        % Length (number of items) of the cache
         CacheLength
+
+        % A list (string array) of keys in the cache
         Keys
     end
 
@@ -37,20 +42,30 @@ classdef LocalFileCache < handle
     end
 
 
-    methods
-        
+    methods % Class constructor and destructor
         % CONSTRUCTOR Create a cache object
         function obj = LocalFileCache(cacheDirectory)
-        %LocalCacher Create a cache object, optionally reinitialise to an existing cache
+        % LocalFileCache - Create a cache object
         %
-        % Usage: cacher = LocalCacher()
+        %   Syntax: 
+        %   CACHE = LocalFileCache() creates a new temporary cache
         %
-        % The optional argument cacheDirectory can be used to force the
-        % location of a new cache directory, or reinitialise to an existing
-        % cache directory. If cacheDirectory is provided, then the cache
-        % will not be removed when the CloudCacher object is deleted.
+        %   CACHE = LocalFileCache(CACHEDIRECTORY) creates new or 
+        %   reinitialises an existing permanent cache.
+        %
+        %   Input arguments:
+        %       CACHEDIRECTORY - Path string for a cache directory.
+        %           If the specified directory does not exist, a new
+        %           directory is created. Otherwise the cache is
+        %           reinitialised based on the contents of the directory.
+        %
+        %   Output arguments:
+        %       CACHE - A newly created cache instance
+        %
+        %   Note: If a temporary cache is created, the cached files
+        %   are deleted when the cache instance is cleared from memory.
 
-        % - Should we initialise a temporary cache?
+            % - Should we initialise a temporary cache?
             if ~exist('cacheDirectory', 'var') || isempty(cacheDirectory)
                 obj.IsTemporaryCache = true;
                 obj.CacheDirectory = tempname();
@@ -61,13 +76,14 @@ classdef LocalFileCache < handle
 
         % DESTRUCTOR Delete a cache object
         function delete(obj)
-        % delete Delete the cache object and clean up
+        % delete - Delete the cache object and clean up
         %
-        % Usage: delete(obj)
+        %   Syntax: 
+        %   delete(obj)
         %
-        % If the flag obj.IsTemporaryCache is true, then the cache
-        % directory will be removed
-        
+        %   Note: If the flag obj.IsTemporaryCache is true, then the 
+        %   cache directory will be removed
+            
             % - Should the cache directory be removed?
             if obj.IsTemporaryCache
                 rmdir(obj.CacheDirectory, 's');
@@ -94,18 +110,29 @@ classdef LocalFileCache < handle
         function tf = isInCache(obj, key)
         % isInCache - Is the provided key in the cache?
         %
-        % Usage: tf = isInCache(obj, key)
+        %   Syntax: 
+        %   TF = isInCache(OBJ, KEY) checks if the provided key is in the
+        %   cache.
+        % 
+        %   Input arguments:
+        %       OBJ - An instance of the LocalFileCache class
         %
-        % key is a string to be queried in the object cache. If the
-        % key exists in the cache, then `True` is returned. Otherwise
-        % `False` is returned.
-        
+        %       KEY - A string to be queried in the file cache.
+        %
+        %   Output arguments:
+        %       TF - A logical scalar, indicating if the key exists in the
+        %           cache. If the key is in the cache, and the file for 
+        %           that key exists, the value of TF is true, otherwise it 
+        %           is false.
+    
             % - Check whether the key is in the cache
             if obj.CacheMap.isKey(key)
                 % - Check that the cache file actually exists
                 tf = isfile( obj.getCachedFilePathForKey(key) );
                 if ~tf
-                    warning("LocalFileCache:MissingFileForKey", "Key was detected but the corresponding file is not present in the file cache.")
+                    warning("LocalFileCache:MissingFileForKey", ...
+                        "Key was detected but the corresponding file " + ...
+                        "is not present in the file cache.")
                 end
             else
                 tf = false;
@@ -113,13 +140,14 @@ classdef LocalFileCache < handle
         end
       
         function remove(obj, key)
-        % remove - METHOD Remove a cached file from the cache
+        % remove - Remove a cached file from the cache
         %
-        % Usage: remove(obj, key)
+        %   Syntax: 
+        %   remove(obj, key)
         %
-        % key is a string identifying a file. If the key exists in the 
-        % cache, then the corresponding data file will be removed from 
-        % the cache, i.e deleted from the file system.
+        %   key is a string identifying a file. If the key exists in the 
+        %   cache, then the corresponding data file will be removed from 
+        %   the cache (i.e deleted from the file system).
         
             % - Is the object in the cache?
             if ~obj.isInCache(key)
@@ -134,11 +162,11 @@ classdef LocalFileCache < handle
                     delete(filePath);
                    
                 catch mE_Cause
-                   % - Raise a warning if we couldn't delete the file
-                   mE_Base = MException('LocalFileCache:CouldNotDeleteCacheFile', ...
-                                        'Cached file could not be deleted from the cache.');
-                   mE_Base.addCause(mE_Cause);
-                   warning(getReport(mE_Base, 'extended', 'hyperlinks', 'on'));
+                    % - Raise a warning if we couldn't delete the file
+                    mE_Base = MException('LocalFileCache:CouldNotDeleteCacheFile', ...
+                        'Cached file could not be deleted from the cache.');
+                    mE_Base.addCause(mE_Cause);
+                    warning(getReport(mE_Base, 'extended', 'hyperlinks', 'on'));
                 end
                 
                 % - Remove key from map
@@ -151,28 +179,30 @@ classdef LocalFileCache < handle
     methods (Access = protected)
         
         function filePath = getCachedFilename(obj, strFilename)
-            % getCachedFilename - Return the cache-mapped location of a given file
-            %
-            % Usage: filePath = CachedFilename(obj, strFilename)
-            %
-            % This method does NOT indicate whether the file exists in the
-            % cache.
+        % getCachedFilename - Return the cache-mapped location of a given file
+        %
+        %   Syntax: 
+        %   filePath = getCachedFilename(obj, strFilename) returns the
+        %   absolute filepath given the relative filepath of a file
+        %
+        %   Note: This method does NOT indicate whether the file exists in 
+        %   the cache.
             
             filePath = fullfile(obj.CacheDirectory, strFilename);
         end
 
         function filePath = getCachedFilePathForKey(obj, key)
-        % getCachedFilePathForKey - Return the full file path corresponding to a cached key
+        % getCachedFilePathForKey - Get full file path for a cached file
         %
-        % Usage: filePath = getCachedFilePathForKey(obj, key)
+        %   Syntax: 
+        %   filePath = getCachedFilePathForKey(obj, key)
         %
-        % key is a string identifying a key that exists in the cache.
-        % filePath will be the full file path containing the object data
-        % for the key.
+        %   key is a string identifying a key that exists in the cache.
+        %   filePath will be the full file path containing the object data
+        %   for the key.
         
             filePath = fullfile(obj.CacheDirectory, obj.CacheMap(key));
         end
-
     end
       
     methods % Set/get methods
@@ -199,30 +229,39 @@ classdef LocalFileCache < handle
     methods (Access = private)
         
         function saveCacheMap(obj)
-        %saveManifest Store the manifest for this cache object
+        %saveCacheMap - Store the cache map for this cache object
         %
-        %   Usage: saveManifest(obj)
+        %   Syntax: 
+        %   saveCacheMap(obj) saves the cache map to the cache directory.
         %   
-        %   This function writes the cache manifest to disk. Should not
+        %   Note: This function writes the cache map to disk. Should not
         %   need to be called by the end user.
          
             CacheMap = obj.CacheMap; %#ok<PROP>
-            strVersion = obj.Version; %#ok<PROP>
+            strVersion = obj.Version;
             save(obj.CacheMapFilePath, 'CacheMap', 'strVersion');
         end
 
         function loadCacheMap(obj)
-        %loadManifest Load the manifest for this cache object
-            sManifest = load(obj.CacheMapFilePath);
-            assert(isequal(sManifest.strVersion, obj.Version));
+        %loadCacheMap - Load the cache map for this cache object
+        %
+        %   Syntax: 
+        %   loadCacheMap(obj) loads the cache map from the cache directory.
+        %   
+        %   Note: This function reads the cache map from disk. Should not
+        %   need to be called by the end user.
+        
+            S = load(obj.CacheMapFilePath);
+            assert(isequal(S.strVersion, obj.Version));
             try
-                obj.CacheMap = sManifest.CacheMap;
+                obj.CacheMap = S.CacheMap;
             catch % Legacy
-                obj.CacheMap = sManifest.mapCachedData;
+                obj.CacheMap = S.mapCachedData;
             end
         end
       
         function onCacheDirectorySet(obj)
+        % Value changed callback for the CacheDirectory property
 
             % - Does the cache directory exist?
             if ~isfolder(obj.CacheDirectory)
@@ -237,8 +276,9 @@ classdef LocalFileCache < handle
                 try
                     obj.loadCacheMap()
                 catch
-                    warning('LocalFileCache:InvalidManifest', ...
-                       'Could not load saved manifest. Starting with an empty cache');
+                    warning("LocalFileCache:InvalidManifest", ...
+                       "Could not load saved manifest. " + ...
+                       "Starting with an empty cache");
                 end
             end
         end
@@ -246,6 +286,7 @@ classdef LocalFileCache < handle
 
     methods (Access = ?bot.internal.Cache)
         function changeCacheDirectory(obj, directoryPath)
+        % Lets bot.internal.Cache change cache directory
             obj.CacheDirectory = directoryPath;
         end
 
