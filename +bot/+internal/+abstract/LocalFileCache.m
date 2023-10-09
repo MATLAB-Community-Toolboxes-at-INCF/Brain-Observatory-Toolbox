@@ -6,13 +6,13 @@ classdef LocalFileCache < handle
     end
 
     properties (SetAccess = private)
-        % Directory on local file system in which data is cached. This is
-        % specified as the absolute path pointing to a folder where 
-        % cached files are located
+        % CacheDirectory - Directory on local file system where data is 
+        % cached. This is specified as the absolute path pointing to a 
+        % folder where cached files are located.
         CacheDirectory (1,1) string = ""
         
-        % Flag for whether cache is temporary and should be deleted when 
-        % an instance of this class is deleted
+        % IsTemporaryCache - Flag for whether cache is temporary and should 
+        % be deleted when an instance of this class is deleted
         IsTemporaryCache (1,1) logical = false
     end
 
@@ -25,9 +25,10 @@ classdef LocalFileCache < handle
     end
 
     properties (Access = protected)
-        % Dictionary containing data that have been cached, consisting of
-        % key-value pairs where the key is a "cache key" and the value is
-        % the relative filepath for the cached file in the cache directory.
+        % CacheMap - Dictionary containing data that have been cached, 
+        % consisting of key-value pairs where the key is a "cache key" and 
+        % the value is the relative filepath for the cached file in the 
+        % cache directory.
         CacheMap %dictionary = dictionary
     end
 
@@ -107,7 +108,7 @@ classdef LocalFileCache < handle
         
         % ?Todo: isKeyInCache
 
-        function tf = isInCache(obj, key)
+        function tf = isInCache(obj, key) % todo: rename to isFileInCache
         % isInCache - Is the provided key in the cache?
         %
         %   Syntax: 

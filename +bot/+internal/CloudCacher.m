@@ -1,4 +1,4 @@
-% CloudCacher - CLASS Manages a local cache of arbitrary URLs
+% CloudCacher - Manages a local file cache for arbitrary URLs
 %
 % CloudCacher is a class that provides replacements for `webread` and
 % `websave` that are cached locally. It is stateful, and can be
@@ -7,20 +7,31 @@
 classdef CloudCacher < bot.internal.abstract.LocalFileCache
 
     properties (Constant)
-        CacheName = 'CC' % Short name...
+        CacheName = 'CC' % (Short name)
     end
    
     methods
         function obj = CloudCacher(cacheDirectory)
-        % CloudCacher - CONSTRUCTOR Create a cache object, optionally reinitialise to an existing cache
+        % CloudCacher - Create a cloud cache instance
         %
-        % Usage: obj = ObjectCacher(<cacheDirectory>)
+        %   Syntax: 
+        %       CLOUDCACHE = CloudCache() creates a new temporary cloud 
+        %       cache.
         %
-        % The optional argument cacheDirectory can be used to force the
-        % location of a new cache directory, or reinitialise to an
-        % existing cache directory. If cacheDirectory is provided, then the
-        % cache will not be removed when the ObjectCacher object is
-        % deleted.
+        %       CLOUDCACHE = CloudCache(CACHEDIRECTORY) creates new or 
+        %       reinitialises an existing permanent cloud cache.
+        %
+        %   Input arguments:
+        %       CACHEDIRECTORY - Path string for a cache directory.
+        %           If the specified directory does not exist, a new
+        %           directory is created. Otherwise the cache is
+        %           reinitialised based on the contents of the directory.
+        %
+        %   Output arguments:
+        %       CLOUDCACHE - A newly created cloud cache instance.
+        %
+        %   See also bot.internal.abstract.LocalFileCache/LocalFileCache
+
             if nargin < 1; cacheDirectory = ''; end
             obj@bot.internal.abstract.LocalFileCache(cacheDirectory)
         end
@@ -29,7 +40,7 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
     methods
 
         function strCacheFilename = copyfile(obj, strURL, strRelativeFilename, strCloudFilepath)
-        % copyfile - METHOD Cached replacement for copyfile function
+        % copyfile - Cached replacement for copyfile function
         
         % Hint: Copy files from S3 bucket to EC2 local drive
         
@@ -50,16 +61,16 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
         end
         
         function strCacheFilename = websave(obj, strRelativeFilename, strURL, varargin)
-        % websave - METHOD Cached replacement for websave function
-            %
-            % Usage: strCacheFilename = obj.websave(strRelativeFilename, strURL, ...)
-            %
-            % Replaces the Matlab `websave` function, with a cached method.
-            
-            % Note: This feature (passing varargins to websave function) 
-            % was removed when replacing websave with downloadFile 
-            % (Todo: Consider to reimplement):
-            % Optional additional arguments are passed to `websave`.
+        % websave - Cached replacement for websave function
+        %
+        % Usage: strCacheFilename = obj.websave(strRelativeFilename, strURL, ...)
+        %
+        % Replaces the Matlab `websave` function, with a cached method.
+        
+        % Note: This feature (passing varargins to websave function) 
+        % was removed when replacing websave with downloadFile 
+        % (Todo: Consider to reimplement):
+        % Optional additional arguments are passed to `websave`.
             
             import bot.external.fex.filedownload.downloadFile
             
@@ -133,7 +144,7 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
         end
         
         function cstrCacheFilenames = pwebsave(obj, cstrRelativeFilenames, cstrURLs, bProgress, varargin)
-        % pwebsave - METHOD Parallel websave of several URLs
+        % pwebsave - Parallel websave of several URLs
         %
         % Usage: cstrCachedFilename = pwebsave(obj, cstrRelativeFilenames, cstrURLs, bProgress, varargin)
         %
@@ -214,12 +225,12 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
         end
         
         function data = webread(obj, strURL, strRelativeFilename, varargin)
-        % webread - METHOD - Cached replacement for webread function
-            %
-            % Usage: data = obj.webread(strURL, strRelativeFilename, ...)
-            %
-            % Replaces the Matlab `webread` function with a cached method.
-            % Optional arguments are passed to `webread`.
+        % webread - Cached replacement for webread function
+        %
+        % Usage: data = obj.webread(strURL, strRelativeFilename, ...)
+        %
+        % Replaces the Matlab `webread` function with a cached method.
+        % Optional arguments are passed to `webread`.
             
             try
                 % - Is the URL already in the cache?
@@ -273,7 +284,7 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
     methods
       
         function strFile = getRelativeFilepath(obj, strCachedFilename)
-        % getRelativeFilepath - METHOD Return the cache-relative location of a given cached file 
+        % getRelativeFilepath - Return the cache-relative location of a given cached file 
         %
         % Usage: strFile = RelativeFilename(obj, strCachedFilename)
         %
@@ -285,17 +296,18 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
             strFile = sscanf(strCachedFilename, [obj.CacheDirectory '%s']);
         end
       
-        function removeURLsMatchingSubstring(obj, strSubstring)
-        % removeURLsMatchingSubstring - METHOD Remove all URLs from the cache containing a specified substring
+        function removeURLsMatchingSubstring(obj, subString)
+        % removeURLsMatchingSubstring - Remove all URLs from the cache 
+        % containing a specified substring
         %
-        % Usage: obj.removeURLsMatchingSubstring(strSubstring)
+        % Usage: obj.removeURLsMatchingSubstring(subString)
         %
         % This method uses the `contains` function to test whether a URL 
-        % (cache key) contains the substring in `strSubstring`.
+        % (cache key) contains the substring in `subString`.
         
             % - Find keys matching the substring
             cstrAllKeys = obj.CacheMap.keys();
-            vbMatchingKeys = contains(cstrAllKeys, strSubstring);
+            vbMatchingKeys = contains(cstrAllKeys, subString);
             
             % - Remove matching URLs
             cellfun(@obj.remove, cstrAllKeys(vbMatchingKeys));

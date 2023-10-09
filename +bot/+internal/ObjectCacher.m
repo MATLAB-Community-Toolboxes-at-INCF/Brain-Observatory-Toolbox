@@ -1,51 +1,71 @@
-% ObjectCacher - CLASS Manages a local cache of arbitrary objects
+% ObjectCacher - Manages a local file cache of arbitrary objects
 %
-% ObjectCacher is a class that provides a local cache for arbitrary MATLAB
-% objects. It is stateful, and can be reinitialised by providing the
-% location of an extant cache dir.
+%   ObjectCacher is a class that provides a local cache for arbitrary 
+%   MATLAB objects. It is stateful, and can be reinitialised by providing 
+%   the location of an extant cache dir.
+%
+%   See also bot.internal.abstract.LocalFileCache
 
-% Note: In the Brain Observatory Toolbox, the ObjectCacher is used for
-% caching item tables of the Ephys- and OphysManifest classes.
+%   Note: In the Brain Observatory Toolbox, the ObjectCacher is used 
+%   internally for caching item tables of the Ephys- and OphysManifest 
+%   classes.
 
 classdef ObjectCacher < bot.internal.abstract.LocalFileCache
 
     properties (Constant)
-        CacheName = 'OC' %'ObjectCache'
+        CacheName = 'OC' % (Short name)
     end
 
     methods
         function obj = ObjectCacher(cacheDirectory)
-        % ObjectCacher - CONSTRUCTOR Create a cache object, optionally reinitialise to an existing cache
+        % ObjectCacher - Create an object cache instance
         %
-        % Usage: ccObj = ObjectCacher(<cacheDirectory>)
+        %   Syntax: 
+        %       OBJECTCACHE = ObjectCache() creates a new temporary object 
+        %       cache.
         %
-        % The optional argument cacheDirectory can be used to force the
-        % location of a new cache directory, or reinitialise to an
-        % existing cache directory. If cacheDirectory is provided, then the
-        % cache will not be removed when the ObjectCacher object is
-        % deleted.
+        %       OBJECTCACHE = ObjectCache(CACHEDIRECTORY) creates new or 
+        %       reinitialises an existing permanent object cache.
+        %
+        %   Input arguments:
+        %       CACHEDIRECTORY - Path string for a cache directory.
+        %           If the specified directory does not exist, a new
+        %           directory is created. Otherwise the cache is
+        %           reinitialised based on the contents of the directory.
+        %
+        %   Output arguments:
+        %       OBJECTCACHE - A newly created object cache instance.
+        %
+        %   See also bot.internal.abstract.LocalFileCache
+        
             if nargin < 1; cacheDirectory = ''; end
             obj@bot.internal.abstract.LocalFileCache(cacheDirectory)
         end
     end
 
     methods
-
         function objectFilepath = insert(obj, key, object)
-        % insert - METHOD Insert an object into the cache
+        % insert - Insert an object into the cache
         %
-        % Usage: strCacheFilename = obj.Insert(key, object)
+        %   Syntax:
+        %       OBJECTFILEPATH = obj.insert(KEY, OBJECT) inserts an object 
+        %       into the cache assigning it using the provided key. The 
+        %       object can be retrieved later using the same key.
         %
-        % key is a string, which will be associated with the object
-        % in the cache. You should take care that the key is unique
-        % enough.
+        %   Input arguments:
+        %       KEY - A string which will be associated with the object
+        %           in the cache. You should take care that the key is 
+        %           unique enough.
         %
-        % object is an arbitrary MATLAB object, that can be serialised
-        % and saved.
+        %       OBJECT - An arbitrary MATLAB object, that can be serialised
+        %           and saved.
+        %   
+        %   Output arguments:
+        %       OBJECTFILEPATH - An absolute path string to the file in the
+        %           cache containing the cached object.
         %
-        % object will be inserted into the object cache, and can be
-        % retrieved later using the key.
-         
+        %   See also: bot.internal.ObjectCacher/retrieve
+
             try
                 if obj.isInCache(key)
                     % - Get the existing data store for this object
@@ -90,15 +110,21 @@ classdef ObjectCacher < bot.internal.abstract.LocalFileCache
         end
         
         function object = retrieve(obj, key)
-        % Retrieve - METHOD Retrieve an object from the cache
+        % retrieve - Retrieve an object from the cache
         %
-        % Usage: object = obj.retrieve(key)
+        %   Syntax: 
+        %       OBJECT = obj.retrieve(KEY) retrieves an object from the 
+        %       cache which is asociated with the given key
         %
-        % key is a string which identifies an object in the cache.
+        %   Input arguments:
+        %       KEY - A string which identifies an object in the cache
         %
-        % If the key key exists in the cache, the corresponding
-        % object will be retrieved and returned. Otherwise an error will
-        % be raised.
+        %   Output arguments:
+        %       OBJECT - An arbitrary MATLAB object
+        %
+        %   Note: If the key key exists in the cache, the corresponding
+        %   object will be retrieved and returned. Otherwise an error will
+        %   be raised.
         
             if ~obj.isInCache(key)
                 error('ObjectCacher:NotInCache', ...
@@ -115,17 +141,19 @@ classdef ObjectCacher < bot.internal.abstract.LocalFileCache
         end
       
         function remove(obj, key)
-        % remove - METHOD Remove a cached file from the cache
+        % remove - Remove a cached file from the cache
         %
-        % Usage: remove(obj, key)
+        %   Syntax: 
+        %       obj.remove(KEY) removes the object for the given key from
+        %       the cache (the file containing the object is deleted).
         %
-        % key is a string identifying an object. If the key exists in the 
-        % cache, then the corresponding object will be removed from 
-        % the cache, i.e the file containing the object is deleted from 
-        % the file system.
+        %   Input arguments:
+        %       KEY - A string which identifies an object in the cache.
+        %           If the key exists in the cache, then the corresponding 
+        %           object will be removed from the cache, i.e the file 
+        %           containing the object is deleted from the file system.
+
             remove@bot.internal.abstract.LocalFileCache(obj, key)
         end
-        
     end
-
 end
