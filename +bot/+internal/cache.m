@@ -31,7 +31,7 @@ classdef Cache < handle
         ScratchDirectory (1,1) string = ""
     end
 
-    properties (Access = private)
+    properties (Access = public)
         APIClient = bot.internal.BrainObservatoryAPI
         strABOBaseUrl = 'http://api.brain-map.org';  % Base URL for the Allen Brain Observatory resource
     end
@@ -209,7 +209,7 @@ classdef Cache < handle
             %
             % Usage: bIsURLInCache = obj.IsURLInCache(strURL)
             
-            bIsURLInCache = obj.CloudCacher.IsInCache(strURL);
+            bIsURLInCache = obj.CloudCacher.isInCache(strURL);
         end
                     
         function tResponse = CachedRMAQuery(obj, rmaQueryUrl, options)

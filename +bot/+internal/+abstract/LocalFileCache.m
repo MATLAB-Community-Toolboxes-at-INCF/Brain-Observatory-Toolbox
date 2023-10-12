@@ -107,7 +107,20 @@ classdef LocalFileCache < handle
     methods
         
         % ?Todo: isKeyInCache
-
+        
+        function filePath = getCachedFilePathForKey(obj, key)
+        % getCachedFilePathForKey - Get full file path for a cached file
+        %
+        %   Syntax: 
+        %   filePath = getCachedFilePathForKey(obj, key)
+        %
+        %   key is a string identifying a key that exists in the cache.
+        %   filePath will be the full file path containing the object data
+        %   for the key.
+        
+            filePath = fullfile(obj.CacheDirectory, obj.CacheMap(key));
+        end
+        
         function tf = isInCache(obj, key) % todo: rename to isFileInCache
         % isInCache - Is the provided key in the cache?
         %
@@ -192,18 +205,6 @@ classdef LocalFileCache < handle
             filePath = fullfile(obj.CacheDirectory, strFilename);
         end
 
-        function filePath = getCachedFilePathForKey(obj, key)
-        % getCachedFilePathForKey - Get full file path for a cached file
-        %
-        %   Syntax: 
-        %   filePath = getCachedFilePathForKey(obj, key)
-        %
-        %   key is a string identifying a key that exists in the cache.
-        %   filePath will be the full file path containing the object data
-        %   for the key.
-        
-            filePath = fullfile(obj.CacheDirectory, obj.CacheMap(key));
-        end
     end
       
     methods % Set/get methods
