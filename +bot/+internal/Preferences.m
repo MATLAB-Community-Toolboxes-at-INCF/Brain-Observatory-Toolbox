@@ -213,11 +213,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             %   Need to reset the in-memory cache if this value is updated.
             
             botCache = bot.internal.Cache.instance();
-            if obj.ScratchDirectory == ""
-                botCache.resetScratchDirectory()
-            else
-                botCache.changeScratchDirectory(obj.ScratchDirectory)
-            end
+            botCache.changeScratchDirectory(obj.ScratchDirectory)
         end
 
     end

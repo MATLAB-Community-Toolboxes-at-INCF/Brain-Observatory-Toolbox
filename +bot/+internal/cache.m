@@ -348,11 +348,6 @@ classdef Cache < handle
             obj.ScratchDirectory = directoryPath;
             obj.CloudCacher.changeCacheDirectory(obj.CacheDirectory)
         end
-
-        function resetScratchDirectory(obj)
-            obj.ScratchDirectory = "";
-            obj.CloudCacher.changeCacheDirectory(directoryPath)
-        end
         
     end
 
