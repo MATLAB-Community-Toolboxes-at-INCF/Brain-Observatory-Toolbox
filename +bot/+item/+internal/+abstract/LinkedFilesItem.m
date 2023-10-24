@@ -114,7 +114,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             ME.rethrow();
          end
          
-         obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
+         % obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
          
          assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
          obj.linkedFiles{fileNickname,"LocalFile"} = string(localFilename);

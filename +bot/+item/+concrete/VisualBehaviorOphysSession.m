@@ -148,8 +148,11 @@ classdef VisualBehaviorOphysSession < bot.item.Session & matlab.mixin.indexing.R
                     fileNickname = obj.LinkedFiles.Name;
                     obj.downloadLinkedFile(fileNickname)
                 end
-
+                
                 [varargout{1:nargout}] = obj.LinkedFiles.fetchData(propName);
+            else
+                className = class(obj);
+                error("Unrecognized property '%s' for class '%s'.", propName, className)
             end
         end
             
