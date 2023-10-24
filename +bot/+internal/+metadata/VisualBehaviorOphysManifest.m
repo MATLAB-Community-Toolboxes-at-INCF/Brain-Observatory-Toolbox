@@ -105,21 +105,21 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
                     ["get", "clear", "reset"])} = "get";
             end
             
-            persistent ophysmanifest % singleton instance
+            persistent manifestInstance % singleton instance
             
             % - Clear the manifest if requested
             if ismember(action, ["clear", "reset"])
-                delete(ophysmanifest); ophysmanifest = [];
+                delete(manifestInstance); manifestInstance = [];
             end
 
             if ismember(action, ["get", "reset"])
                 % - Construct the manifest if singleton instance is not present
-                if isempty(ophysmanifest)
-                    ophysmanifest = bot.internal.metadata.VisualBehaviorOphysManifest();
+                if isempty(manifestInstance)
+                    manifestInstance = bot.internal.metadata.VisualBehaviorOphysManifest();
                 end
 
                 % - Return the instance
-                manifest = ophysmanifest; 
+                manifest = manifestInstance; 
             end
         end
     end
@@ -291,6 +291,14 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
                     table.(var{1}) = convert_cell_metric(table.(var{1}));
                 end
             end
+        end
+    end
+
+    methods (Static)
+
+        function tbl = applyUserDisplayLogic(tbl)
+            tbl = bot.item.internal.Manifest.applyUserDisplayLogic(tbl);
+            tbl.Properties.UserData.type = 'VisualBehaviorOphys';
         end
     end
 end

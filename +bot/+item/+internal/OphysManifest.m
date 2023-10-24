@@ -165,7 +165,7 @@ classdef OphysManifest < bot.item.internal.Manifest
             end
 
             % Apply standardized table display logic
-            itemTable = oManifest.applyUserDisplayLogic(itemTable); 
+            itemTable = oManifest.applyUserDisplayLogic(itemTable);
         end
 
     end

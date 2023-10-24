@@ -4,7 +4,8 @@
 % [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
 %
 
-classdef VisualBehaviorOphysSession < bot.item.Session
+
+classdef VisualBehaviorOphysSession < bot.item.Session & matlab.mixin.indexing.RedefinesDot
     
     %% PROPERTIES - VISIBLE
     
@@ -14,33 +15,12 @@ classdef VisualBehaviorOphysSession < bot.item.Session
         experiment;                   % Experiment object containing this session
         cells;                        % Table of cells in this session        
     end
-    
-    % Linked File Values
-    properties (Dependent, Transient)
-        nwb_metadata;                 % Metadata extracted from NWB data file
-        cell_specimen_ids;            % Vector of cell specimen IDs recorded in this session
-        fluorescence_timestamps;      % Vector of fluorescence timestamps corresponding to imaging frames
-        fluorescence_traces;          % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the fluorescence data for a single cell specimen.
-        fluorescence_traces_demixed;  % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the demixed fluorescence data for a single cell specimen.
-        neuropil_r;                   % vector of neuropil correction factors for each analysed cell
-        neuropil_traces;              % TxN matrix of neuropil fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the neuropil response for a single cell specimen.
-        fluorescence_traces_dff;      % TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the delta F/F0 fluorescence data for a single cell specimen.
-        spontaneous_activity_stimulus_table;   % Stimulus table describing spontaneous activity epochs
-        max_projection;               % Image contianing the maximum-intensity projection of the fluorescence stack obtained in this session
-        stimulus_epoch_table;         % table containing information about all stimulus epochs in this experiment session
-        stimulus_list;                % Cell array of strings, indicating which individual stimulus sets were presented in this session
-        pupil_location;               % Tx2 matrix, where each row contains the tracked location of the mouse pupil. Spherical coordinates [`altitude` `azimuth`] are returned in degrees for each row. (0,0) is the center of the monitor
-        pupil_size;                   % Tx1 vector, each element containing the instantaneous estimated pupil area in pixels
-        roi_ids;                      % Vector of all ROI IDs analysed in this experiment session
-        roi_mask;                     % Structure as returned from `bwconncomp`, defining a set of ROIs.[XxYxC] boolean tensor. Each C slice corresponds to a single imaged ROI, and indicates which pixels in the stack contain that ROI
-        roi_mask_array;               % [XxYxC] boolean tensor. Each C slice corresponds to a single imaged ROI, and indicates which pixels in the stack contain that ROI
-        running_speed;                % Timetable containing instantaneous running speeds for timestamps aligned to fluorescence frames
-        motion_correction;            % Table containing x/y motion correction information applied in this experimental session
-        
-        % Derived Properties
-        corrected_fluorescence_traces;% TxN matrix of fluorescence samples, with each row `t` contianing the data for the timestamp in the corresponding entry of `.fluorescence_timestamps`. Each column `n` contains the corrected fluorescence data for a single cell specimen.
+
+    properties
+        LinkedFiles
     end
-    
+
+
     
     %% PROPERTIES - HIDDEN
     
@@ -108,9 +88,9 @@ classdef VisualBehaviorOphysSession < bot.item.Session
         function obj = VisualBehaviorOphysSession(itemIDSpec)
             % bot.item.ophyssession - CONSTRUCTOR Construct an object containing an experimental session from an Allen Brain Observatory dataset
             %
-            % Usage: bsObj = bot.item.ophyssession(id)
+            % Usage: vbsObj = bot.item.ophyssession(id)
             %        vbsObj = bot.item.ophyssession(vids)
-            %        bsObj = bot.item.ophyssession(tSessionRow)
+            %        vbsObj = bot.item.ophyssession(tSessionRow)
             
             % Superclass construction
             obj = obj@bot.item.Session(itemIDSpec);
@@ -130,125 +110,89 @@ classdef VisualBehaviorOphysSession < bot.item.Session
                 %obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
                 %obj.cells = obj.experiment.cells;
             end
+
+            %if isfile(obj.linkedFiles.LocalFile('SessNWB'))
+                obj.LinkedFiles = bot.internal.nwb.visualbehavior.OphysNWBFile(obj.linkedFiles.LocalFile('SessNWB'));
+            %end
         end
     end
 
+    methods % Set/get methods
+        function session_type = get.session_type(obj)
+            % get.session_type - GETTER Return the name for the stimulus set used in this session
+            %
+            % Usage: strSessionType = obj.session_type
+            session_type = obj.info.session_type;
+        end
+    end
+        
     % INITIALIZER
     methods (Access=protected)
         function initSession(obj)
             % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
-             wellKnownFileInfo.path = string(obj.id);
+             wellKnownFileInfo.path = fullfile('data', 'visual_behavior', obj.getS3BranchPath("SessNWB") );
              wellKnownFileInfo.download_link =  string(obj.id);
-
+            
+             
             obj.insertLinkedFileInfo("SessNWB", wellKnownFileInfo);
         end
     end
     
-    
-    %% PROPERTY ACCESS METHODS
-    methods
-        
-        function cell_specimen_ids = get.cell_specimen_ids(bos)
-            cell_specimen_ids = bos.fetch_cached('cell_specimen_ids',@bos.fetch_cell_specimen_ids);
-        end
-        
-        function traces = get.corrected_fluorescence_traces(bos)
-            traces = bos.fetch_cached('corrected_fluorescence_traces',@bos.fetch_corrected_fluorescence_traces);
-        end
-        
-        function timestamps = get.fluorescence_timestamps(bos)
-            timestamps = bos.fetch_cached('fluorescence_timestamps',@bos.fetch_fluorescence_timestamps);
-        end
-        
-        function traces = get.fluorescence_traces(bos)
-            traces = bos.fetch_cached('fluorescence_traces',@bos.fetch_fluorescence_traces);
-        end
-        
-        function traces = get.fluorescence_traces_demixed(bos)
-            traces = bos.fetch_cached('fluorescence_traces_demixed',@bos.fetch_fluorescence_traces_demixed);
-        end
-        
-        function traces = get.fluorescence_traces_dff(bos)
-            traces = bos.fetch_cached('fluorescence_traces_dff',@bos.fetch_fluorescence_traces_dff);
-        end
-        
-        function val = get.max_projection(bos)
-            val = bos.fetch_cached('max_projection',bos.fetch_max_projection);
-        end
-        
-        function tbl = get.motion_correction(bos)
-            tbl = bos.fetch_cached('motion_correction',bos.fetch_motion_correction);
-        end
-        
-        function neuropil_r = get.neuropil_r(bos)
-            neuropil_r = bos.fetch_cached('neuropil_r',@bos.fetch_neuropil_r);
-        end
-        
-        function traces = get.neuropil_traces(bos)
-            traces = bos.fetch_cached('neuropil_traces',@bos.fetch_neuropil_traces);
-        end
-        
-        
-        function nwb_metadata = get.nwb_metadata(bos)
-            nwb_metadata = bos.fetch_cached('nwb_metadata',@bos.fetch_nwb_metadata);
-        end
-        
-        function loc = get.nwbLocal(self)
-            if ismissing(self.linkedFiles{"SessNWB","LocalFile"})
-                self.downloadLinkedFile("SessNWB");
+    methods (Access=protected) % matlab.mixin.indexing.RedefinesDot
+
+        function varargout = dotReference(obj, indexOp)
+            propName = indexOp.Name;
+            
+            if isprop(obj.LinkedFiles, propName)
+                if ~isfile(obj.LinkedFiles.FilePath)
+                    fileNickname = obj.LinkedFiles.Name;
+                    obj.downloadLinkedFile(fileNickname)
+                end
+
+                [varargout{1:nargout}] = obj.LinkedFiles.fetchData(propName);
             end
-            loc = self.linkedFiles{"SessNWB","LocalFile"};
+        end
+            
+        function obj = dotAssign(obj, indexOp, varargin)
+            propName = indexOp.Name;
+            if isprop(obj.LinkedFiles, propName)
+                error('Can not set linked file value')
+            else
+                className = class(obj);
+                error("Unrecognized property '%s' for class '%s'.", propName, className)
+            end
         end
         
-        function tt = get.pupil_location(bos)
-            tt = bos.fetch_cached('pupil_location', @bos.fetch_pupil_location);           
+        function n = dotListLength(obj,indexOp,indexContext)
+            %n = listLength(obj.(indexOp.Name),indexOp,indexContext);
+            n=1;
         end
-        
-        function tt = get.pupil_size(bos)
-            tt = bos.fetch_cached('pupil_size',@bos.fetch_pupil_size);
-        end
-        
-        function roi_ids = get.roi_ids(bos)
-            roi_ids = bos.fetch_cached('roi_ids',bos.fetch_roi_ids);
-        end
-        
-        function roi_masks = get.roi_mask(bos)
-            roi_masks = bos.fetch_cached('roi_mask',@bos.fetch_roi_mask);
-        end
-        
-        function roi_masks = get.roi_mask_array(bos)
-            roi_masks = bos.fetch_cached('roi_mask_array',@bos.fetch_roi_mask_array);
-        end
-        
-        function tt = get.running_speed(bos)
-            tt = bos.fetch_cached('running_speed',@bos.fetch_running_speed);
-        end
-        
-        function session_type = get.session_type(bos)
-            % get.session_type - GETTER Return the name for the stimulus set used in this session
-            %
-            % Usage: strSessionType = bos.session_type
-            session_type = bos.info.session_type;
-        end
-        
-        function tbl = get.spontaneous_activity_stimulus_table(bos)
-            tbl = bos.fetch_cached('spontaneous_activity_stimulus_table',@bos.fetch_spontaneous_activity_stimulus_table);
-        end
-        
-        function tbl = get.stimulus_epoch_table(bos)
-            tbl = bos.fetch_cached('stimulus_epoch_table',@bos.fetch_stimulus_epoch_table);
-        end
-        
-        function stimuli = get.stimulus_list(bos)
-            stimuli = bos.fetch_cached('stimulus_list',@bos.fetch_stimulus_list);
-        end
-        
-        
     end
     
+   % SUPERCLASS OVERRIDES (matlab.mixin.CustomDisplay)
+   methods (Hidden, Access = protected)
+      function groups = getPropertyGroups(obj)
+
+            groups = getPropertyGroups@bot.item.Session(obj);
+    
+            nickname  = 'SessNWB'; 
+            for i = 1:numel(obj.LinkedFiles)
+                propList = struct;
+                propNames = properties(obj.LinkedFiles);
+                for j = 1:numel(propNames)
+                    thisPropName = propNames{j};
+                    thisPropValue = obj.LinkedFiles(i).(thisPropName);
+                    propList.(thisPropName) = thisPropValue;
+                end
+              
+                groups(end+1) = matlab.mixin.util.PropertyGroup(propList, "Linked File Values ('" + nickname + "')"); %#ok<AGROW>
+            end
+        end
+    end
+
     %% PROPERTY ACCESS CACHING HELPERS
     % TODO: reconsider fetch prefix for these local caching methods
-    
+      
     methods (Access = protected)
         
         function cell_specimen_ids = fetch_cell_specimen_ids(bos)

@@ -182,12 +182,19 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
                
                % Compute reverse map of props to linked files
                propNames = obj.LINKED_FILE_PROP_BINDINGS.(fileNickname);
+               if isempty(propNames)
+                   propNames = string.empty;
+               end
                for propName = propNames
                   obj.prop2LinkedFileMap(propName) = fileNickname;
                end
-               
+
                % Mark linked file properties as on-demand properties
-               obj.ON_DEMAND_PROPERTIES = [obj.ON_DEMAND_PROPERTIES obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
+               try
+                obj.ON_DEMAND_PROPERTIES = [obj.ON_DEMAND_PROPERTIES obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
+               catch
+                   obj.ON_DEMAND_PROPERTIES = string.empty;
+               end
             end
             
             
@@ -290,7 +297,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             % Determine which linkedFiles have been downloaded
             if boc.IsURLInCache(url)
                obj.linkedFiles{nickname,"LocalFile"} = string(boc.ccCache.CachedFileForURL(url));
-               obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
+               %obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
             else
                % Automatically download linkedFiles where needed
                if obj.linkedFilesInfo{nickname,"autoDownload"}

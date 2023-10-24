@@ -141,7 +141,7 @@ classdef CloudCacher < handle
                   'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'));
 
                % - Check that we got the complete file
-               fileSizeWeb = bot.internal.util.getWebFileSize(strURL);
+               %fileSizeWeb = bot.internal.util.getWebFileSize(strURL);
                fileSizeLocal = bot.internal.util.getLocalFileSize(strCacheFilename);
                
                if fileSizeWeb == fileSizeLocal
