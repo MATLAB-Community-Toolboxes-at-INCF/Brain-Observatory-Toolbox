@@ -204,6 +204,12 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       end
    end
    
+   methods 
+       function uri = getCloudFileUri(obj, fileNickname)
+            uri = obj.getS3Filepath(fileNickname);
+       end
+   end
+
    % SUBCLASS CONSTRUCTOR API
    % Methods to populate linkedFileInfo table
    methods (Hidden, Access = protected)

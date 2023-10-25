@@ -130,10 +130,11 @@ classdef VisualBehaviorOphysSession < bot.item.Session & matlab.mixin.indexing.R
     methods (Access=protected)
         function initSession(obj)
             % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
-             wellKnownFileInfo.path = fullfile('data', 'visual_behavior', obj.getS3BranchPath("SessNWB") );
-             wellKnownFileInfo.download_link =  string(obj.id);
+            obj.LINKED_FILE_AUTO_DOWNLOAD = struct("SessNWB", bot.internal.Preferences.getPreferenceValue('AutoDownloadNwb'));
+
+            wellKnownFileInfo.path = fullfile('data', 'visual_behavior', obj.getS3BranchPath("SessNWB") );
+            wellKnownFileInfo.download_link =  string(obj.id);
             
-             
             obj.insertLinkedFileInfo("SessNWB", wellKnownFileInfo);
         end
     end

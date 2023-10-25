@@ -40,9 +40,9 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
 
         % %         Suggestions for new preferences (Todo):
         % %
-        % %         % Download file or variable (Work in progress).
-        % %         DownloadMode        (1,1) string ...
-        % %             {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
+        % Download file or variable (Work in progress).
+        DownloadMode        (1,1) string ...
+            {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
     end
 
     properties (Constant, Access = private)

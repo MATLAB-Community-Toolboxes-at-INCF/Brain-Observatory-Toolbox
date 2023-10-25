@@ -144,9 +144,11 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         end
 
         function tf = useS3Protocol(~)
-            tf = false; return
-            % Not implemented yet 
-            tf = strcmp( bot.internal.Preferences.getPreferenceValue('DownloadMode'), 'Variable'); %#ok<UNRCH> 
+            try
+                tf = strcmp( bot.internal.Preferences.getPreferenceValue('DownloadMode'), 'Variable'); %#ok<UNRCH> 
+            catch
+                tf = false;
+            end
         end
     end
 

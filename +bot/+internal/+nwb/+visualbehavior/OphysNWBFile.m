@@ -1,4 +1,4 @@
-classdef OphysNWBFile < bot.internal.nwb.NWBData
+classdef OphysNWBFile < bot.internal.nwb.LLNWBData
 
         
         % Maximum intensity image
