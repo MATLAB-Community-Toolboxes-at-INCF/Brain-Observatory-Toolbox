@@ -44,6 +44,11 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
         
         % Hint: Copy files from S3 bucket to EC2 local drive
         
+            % - Get a filename for the cache
+            if strRelativeFilename == ""
+                strRelativeFilename = generateTemporaryFilename(strURL); % local fcn
+            end    
+        
             strCacheFilename = obj.getCachedFilename(strRelativeFilename);
             
             targetFolder = fileparts(strCacheFilename);
@@ -92,12 +97,8 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
                     % - No, so we need to download and cache it
                     
                     % - Get a filename for the cache
-                    if isempty(strRelativeFilename)
-                        [~, strRelativeFilename] = fileparts(tempname());
-                        [~, ~, fileExtension] = fileparts(char(strURL));
-                        if ~isempty(fileExtension)
-                            strRelativeFilename = [strRelativeFilename fileExtension];
-                        end
+                    if strRelativeFilename == ""
+                        strRelativeFilename = generateTemporaryFilename(strURL); % local fcn
                     end
                    
                     % - Convert the filename to a file in the cache
@@ -323,4 +324,13 @@ function cleanUpFileDownload(strFilename, webFileSize)
             delete(strFilename)
         end
     end        
+end
+
+function strRelativeFilename = generateTemporaryFilename(strURL)
+    
+    [~, strRelativeFilename] = fileparts(tempname());
+    [~, ~, fileExtension] = fileparts(char(strURL));
+    if ~isempty(fileExtension)
+        strRelativeFilename = [strRelativeFilename fileExtension];
+    end
 end
