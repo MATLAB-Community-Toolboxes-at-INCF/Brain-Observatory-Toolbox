@@ -107,7 +107,7 @@ end
 %             success = false;
 %             while ~success && (num_tries > 0)
 %                try
-%                   cached_files = sess.bot_cache.ccCache.pwebsave(local_files, [urls{:}], true);
+%                   cached_files = sess.bot_cache.CloudCacher.pwebsave(local_files, [urls{:}], true);
 %                   success = true;
 %                catch
 %                   num_tries = num_tries - 1;

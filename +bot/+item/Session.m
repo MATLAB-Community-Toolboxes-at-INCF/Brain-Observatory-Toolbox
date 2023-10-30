@@ -22,7 +22,7 @@ classdef Session < handle & bot.item.internal.abstract.LinkedFilesItem
     
     % SUSPECTED CRUFT
     %     properties (Access = private)
-    %         bot_cache = bot.internal.cache();                            % Private handle to the BOT Cache
+    %         bot_cache = bot.internal.Cache.instance();                            % Private handle to the BOT Cache
     %         ophys_manifest = bot.item.internal.OphysManifest.instance();              % Private handle to the OPhys data manifest
     %         ephys_manifest = bot.item.internal.EphysManifest.instance();              % Private handle to the EPhys data manifest
     %     end

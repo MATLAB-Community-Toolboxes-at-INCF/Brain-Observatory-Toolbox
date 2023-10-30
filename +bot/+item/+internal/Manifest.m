@@ -20,7 +20,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
     end
 
     properties (Access = protected, Transient = true)
-        cache bot.internal.cache % BOT Cache object for caching of data to disk
+        cache bot.internal.Cache % BOT Cache object for caching of data to disk
     end
 
     properties (Access = protected)
@@ -36,7 +36,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         function manifest = Manifest()
 
             % Assign the disk cache
-            manifest.cache = bot.internal.cache();
+            manifest.cache = bot.internal.Cache.instance();
 
             % Assign on-demand properties
             manifest.ON_DEMAND_PROPERTIES = lower(string(manifest.DATASET_TYPE)) ...
@@ -100,7 +100,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
                     % - Remove complete item tables from disk cache
                     cacheKey = manifest.getManifestCacheKey(itemType);
-                    manifest.cache.RemoveObject(cacheKey)
+                    manifest.cache.removeObject(cacheKey)
                 end
             end
 
@@ -143,7 +143,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                   thisItemType = itemTypeList(i);
                   
                   if strcmp(propListing.(thisPropName), '[on demand]')
-                    if obj.cache.IsObjectInCache(obj.getManifestCacheKey(thisItemType))
+                    if obj.cache.isObjectInCache(obj.getManifestCacheKey(thisItemType))
                         propListing.(thisPropName) = '[on demand - available in cache]';
                     else
                         propListing.(thisPropName) = '[on demand - download required]';
@@ -249,11 +249,10 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
             warning('off', 'CloudCacher:URLNotInCache')
             
-            strURI = manifest.FileResource.getItemTableURI(datasetType, itemType);
-            %strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
-            diskCache.ccCache.RemoveURL(strURI)
-            %strURI = URILookup.API.getItemTableURI(datasetType, itemType);
-            %diskCache.ccCache.RemoveURLsMatchingSubstring(strURI)
+            strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
+            diskCache.CloudCacher.remove(strURI)
+            strURI = URILookup.API.getItemTableURI(datasetType, itemType);
+            diskCache.CloudCacher.removeURLsMatchingSubstring(strURI)
 
             warning('on', 'CloudCacher:URLNotInCache')
         end
