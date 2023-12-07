@@ -787,8 +787,7 @@ classdef OphysSession < bot.item.Session
             imaging_timestamps = bos.fluorescence_timestamps;
             
             tt = timetable;
-            
-            [strc.running_speed, strc.running_speed_timestamps] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
+            [tt.RunningSpeed, tt.Time] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
         end
         
         function tbl = fetch_spontaneous_activity_stimulus_table(bos)
