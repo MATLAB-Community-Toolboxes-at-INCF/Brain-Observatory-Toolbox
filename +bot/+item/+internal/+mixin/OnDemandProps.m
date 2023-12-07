@@ -35,7 +35,8 @@ classdef (Abstract) OnDemandProps < handle
                 % - Use the access function
                 try 
                     self.property_cache.(property) = fun_access();
-                catch
+                catch ME
+                    disp(getReport(ME, 'extended'))
                     self.property_cache.(property) = OnDemandState.Unavailable;
                 end
             end
