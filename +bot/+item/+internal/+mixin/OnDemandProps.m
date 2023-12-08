@@ -35,8 +35,9 @@ classdef (Abstract) OnDemandProps < handle
                 % - Use the access function
                 try 
                     self.property_cache.(property) = fun_access();
-                catch
+                catch ME
                     self.property_cache.(property) = OnDemandState.Unavailable;
+                    throwAsCaller(ME)
                 end
             end
             
