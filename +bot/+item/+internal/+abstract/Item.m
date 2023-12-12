@@ -155,7 +155,9 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     methods (Hidden, Static)        
         function  mustBeItemIDSpec(val)
             %MUSTBEITEMIDSPEC Validation function for items specified to BOT item factory functions for item object array construction
-                        
+                       
+            if isempty(val); return; end
+
             eidTypePrefix = "mustBeBOTItemId:";
             eidTypeSuffix = "";
             msgType = "";
@@ -186,6 +188,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 throwAsCaller(MException(eidTypePrefix + eidTypeSuffix,msgType));
             end
         end         
+    
+        function tf = isItemIDSpecScalar(itemIDSpec)
+            if istable(itemIDSpec)
+                tf = height(itemIDSpec) == 1;
+            else
+                tf = numel(itemIDSpec) == 1;
+            end
+        end
     end
     
     %    methods (Static)
