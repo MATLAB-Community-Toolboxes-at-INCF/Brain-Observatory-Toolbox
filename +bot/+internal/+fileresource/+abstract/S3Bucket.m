@@ -6,8 +6,17 @@ classdef S3Bucket < bot.internal.abstract.FileResource
 %
 %   The class is implemented as a singleton
 
-% Todo: Use the manifest.json in the ABO S3 root dataset folder to map
-% variables to filenames / file expressions
+    % Todo: 
+    % Use the manifest.json in the ABO S3 root dataset folder to map
+    % variables to filenames / file expressions
+
+    % Note. 
+    % The implementation of this fileresource is different from the api
+    % fileresource implementation by encapsulating only ephys or
+    % ophys data, whereas the api resource encapsulates both.
+    %
+    % This also implies that the getItemTable function does not need the
+    % data type input as is needed for the api/getItemTable method
 
     properties (Constant, Abstract)
         % Name of AWS S3 bucket
@@ -15,6 +24,9 @@ classdef S3Bucket < bot.internal.abstract.FileResource
 
         % Region code of AWS S3 bucket
         RegionCode
+
+        % Name of root folder containing dataset files
+        RootFolderName
     end
 
     properties (Dependent)
@@ -30,19 +42,27 @@ classdef S3Bucket < bot.internal.abstract.FileResource
     end
 
     properties (Abstract, Access = protected)
-        % Folder in the S3 bucket for ephys data or ophys
-        S3DataFolder
-
+        
         % Filenames for item manifest tables 
         ItemTableFileNames
     end
 
-    properties (Access = private)
+    properties (Access = protected, Dependent)
+        ItemTypes
+    end
+
+    properties (Access = private) % Todo: make dependent or abstract.
+        % For dependent, use the dataset and dataset type constant
+        % properties
         InternalName = 's3-abo-vbo' % Allen brain observatory, visual behavior ophys
     end
 
     properties (Dependent) % Todo: Access = protected
         PreferredScheme
+    end
+
+    methods (Abstract, Static)
+        relativePathURI = getRelativeFileUriPath(itemObject, fileNickname, varargin)
     end
 
     methods (Access = protected) % Constructor
@@ -76,18 +96,17 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         function strURI = getDataFileURI(obj, itemObject, fileNickname, varargin)
         %getDataFileURI Get URI for a data file (file belonging to item)
             filename = obj.getRelativeFileUriPath(itemObject, fileNickname, varargin{:});
-            baseURI = obj.getDataFolderUri(itemObject.getDatasetType);
+            baseURI = obj.getDataFolderUri();
             strURI = uriJoin(baseURI, filename);
         end
-
-        function strURI = getItemTableURI(obj, datasetType, itemType)
+        
+        function strURI = getItemTableURI(obj, itemType)
         %getItemTableURI Get URI for item table
 
-            datasetType = validatestring(datasetType, ["Ephys", "Ophys"]);
-            itemType = validatestring(itemType, ["Experiment", "Session", "Channel", "Probe", "Unit", "Cell"]);
+            itemType = validatestring(itemType, obj.ItemTypes);
 
-            filename = obj.ItemTableFileNames.(datasetType).(itemType);
-            baseURI = obj.getDataFolderUri(datasetType);
+            filename = obj.ItemTableFileNames(itemType);
+            baseURI = obj.getDataFolderUri();
             strURI = uriJoin(baseURI, filename);
         end
     end
@@ -112,7 +131,7 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         
     end
 
-    methods % Could be methods of a potential abstract S3Bucket class
+    methods (Access = protected)
         function baseUrl = getVirtualHostedStyleBaseUrl(obj)
         %getVirtualHostedStyleBaseUrl Get base url in virtual-hosted–style
 
@@ -130,6 +149,12 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         %       S3://bucket-name/key-name
             
             baseUrl = sprintf('s3://%s', obj.BucketName);
+        end
+    end
+
+    methods % Get protected dependent properties
+        function itemTypes = get.ItemTypes(obj)
+            itemTypes = keys(obj.ItemTableFileNames);
         end
     end
 
@@ -154,10 +179,9 @@ classdef S3Bucket < bot.internal.abstract.FileResource
 
     methods (Access = protected)
         
-        function folderURI = getDataFolderUri(obj, datasetType, currentScheme)
+        function folderURI = getDataFolderUri(obj, currentScheme)
             arguments
                 obj bot.internal.fileresource.abstract.S3Bucket % Object of this class
-                datasetType string {mustBeMember(datasetType, ["Ephys", "Ophys"])}
                 currentScheme string {mustBeMember(currentScheme, ["s3", "https", "file", ""])} = ""
             end
             
@@ -174,18 +198,18 @@ classdef S3Bucket < bot.internal.abstract.FileResource
                     baseURI = "file://" + obj.S3LocalMount;
             end
 
-            folderURI = uriJoin( baseURI, obj.S3DataFolder.(datasetType) );
+            folderURI = uriJoin( baseURI, obj.RootFolderName );
         end
     
-        function relativePathURI = getRelativeFileUriPath(obj, itemObject, fileNickname, varargin) %#ok<INUSL> 
-            
-            itemClassName = class(itemObject);
-            itemClassNameSplit = strsplit(itemClassName, '.');
-
-            filenameLookupFcn = str2func(sprintf('%s.get%sFileRelativePath', class(obj), itemClassNameSplit{end}));
-
-            relativePathURI = filenameLookupFcn(itemObject, fileNickname, varargin{:});
-        end
+        % function relativePathURI = getRelativeFileUriPath(obj, itemObject, fileNickname, varargin) %#ok<INUSL> 
+        % 
+        %     itemClassName = class(itemObject);
+        %     itemClassNameSplit = strsplit(itemClassName, '.');
+        % 
+        %     filenameLookupFcn = str2func(sprintf('%s.get%sFileRelativePath', class(obj), itemClassNameSplit{end}));
+        % 
+        %     relativePathURI = filenameLookupFcn(itemObject, fileNickname, varargin{:});
+        % end
 
     end
 
@@ -215,206 +239,9 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         end
     end
 
-    methods (Static)
-    
-        function relativeFilePath = getEphysSessionFileRelativePath(itemObject, nickname)%, varargin)
-        %getS3BranchPath Get subfolders and filename for file given nickname
-        %
-        % Bucket Organization for neuropixels data :
-        % 
-        % visual-coding-neuropixels
-        % +-- ecephys-cache                  # packaged processed ExtraCellular Electrophysiology data
-        % ¦   +-- manifest.json              # used by AllenSDK to look up file paths
-        % ¦   +-- sessions.csv               # metadata for each experiment session
-        % ¦   +-- probes.csv                 # metadata for each experiment probe
-        % ¦   +-- channels.csv               # metadata for each location on a probe
-        % ¦   +-- units.csv                  # metadata for each recorded signal
-        % ¦   +-- brain_observatory_1.1_analysis_metrics.csv         # pre-computed metrics for brain observatory stimulus set
-        % ¦   +-- functional_connectivity_analysis_metrics.csv       # pre-computed metrics for functional connectivity stimulus set
-        % ¦   +-- session_<experiment_id>
-        % ¦   ¦   +-- session_<experiment_id>.nwb                    # experiment session nwb
-        % ¦   ¦   +-- probe_<probe_id>_lfp.nwb                       # probe lfp nwb
-        % ¦   ¦   +-- session_<experiment_id>_analysis_metrics.csv   # pre-computed metrics for experiment
-        % ¦   +-- ...
-        % ¦   +-- natural_movie_templates
-        % ¦   ¦   +-- natural_movie_1.h5                    # stimulus movie
-        % ¦   ¦   +-- natural_movie_3.h5                    # stimulus movie
-        % ¦   +-- natural_scene_templates
-        % ¦   ¦   +-- natural_scene_<image_id>.tiff         # stimulus image
-        % ¦   ¦   +-- ...
-        % +-- raw-data                       # Sorted spike recordings and unprocessed data streams
-        % ¦   +-- <experiment_id>
-        % ¦   ¦   +-- sync.h5                # Information describing the synchronization of experiment data streams
-        % ¦   ¦   +-- <probe_id>
-        % ¦   ¦   ¦ +-- channel_states.npy   #
-        % ¦   ¦   ¦ +-- event_timestamps.npy #
-        % ¦   ¦   ¦ +-- lfp_band.dat         # Local field potential data
-        % ¦   ¦   ¦ +-- spike_band.dat       # Spike data
-        % ¦   ¦   +-- ...
-        % ¦   +-- ...
-
-            arguments
-                itemObject             % Class object
-                nickname char          % One of: SessNWB
-                %probeId = 1 % Todo
-                %movieNumber = 1 % Todo
-                %sceneNumber = 1 % Todo
-            end
-            
-            %assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'StimTemplatesGroup'), ...
-            %    'Currently only supports files with nickname SessNWB')
-
-            experimentId = num2str(itemObject.id);
-
-            % Hardcoded awaiting implementation 
-            probeId = 1;
-            movieNumber = 1;
-            sceneNumber = 2;
-
-            switch nickname
-
-                case 'SessNWB'
-                    folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
-                    fileName = sprintf('session_%s.nwb', experimentId);
-        
-                case 'StimTemplatesGroup'
-                    relativeFilePath = obj.getS3BranchPath('StimMovie'); return
-                    
-                case 'StimMovie'
-                    folderPath = fullfile('ecephys-cache', 'natural_movie_templates');
-                    fileName = sprintf('natural_movie_%d.h5', movieNumber);
-        
-                case 'StimScene'
-                    folderPath = fullfile('ecephys-cache', 'natural_scene_templates');
-                    fileName = sprintf('natural_scene_%d.tiff', sceneNumber);
-        
-                case 'SyncH5'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'sync.h5';
-                
-                case 'ChStatesNpy'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'channel_states.npy';
-                
-                case 'EventTsNpy'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'event_timestamps.npy';
-        
-                case 'LFPDAT'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'lfp_band.dat';
-        
-                case 'SPKDAT'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'spike_band.dat';
-            end
-            relativeFilePath = fullfile(folderPath, fileName);
-        end
-        
-        function relativeFilePath = getOphysSessionFileRelativePath(itemObject, nickname)
-        %getS3BranchPath Get subfolders and filename for file given nickname
-        %
-        % Bucket Organization for 2-photon data :
-        % 
-        % visual-coding-2p
-        % +-- ophys_experiment_data       # traces, running speed, etc per experiment session
-        % ¦   +-- <experiment_id>.nwb
-        % ¦   +-- ...
-        % +-- ophys_experiment_analysis   # analysis files per experiment session
-        % ¦   +-- <experiment_id>_<session_name>.h5 (*)
-        % ¦   +-- ...
-        % +-- ophys_movies                # motion-corrected video per experiment session
-        % ¦   +-- ophys_experiment_<experiment_id>.h5
-        % ¦   +-- ...
-        % +-- ophys_experiment_events     # neuron activity modeled as discrete events
-        % ¦   +-- <experiment_id>_events.npz
-        % ¦   +-- ...
-        % +-- ophys_eye_gaze_mapping      # subject eye position over the course of the experiment
-        % ¦   +-- <experiment_id>_<session_id>_eyetracking_dlc_to_screen_mapping.h5
-        % ¦   +-- ...
-        %
-        % Notes:
-        %  * Analysis files are named <experiment_id>_<session_name>_analysis.h5
-
-            arguments
-                itemObject      % Item object
-                nickname char   % One of : SessNWB
-            end
-            
-            assert(strcmp(nickname, 'SessNWB'), ...
-                'Currently only supports files with nickname SessNWB')
-            
-            experimentId = num2str(itemObject.id);
-            sessionName = itemObject.session_type;
-        
-            switch nickname
-        
-                case 'SessNWB'       
-                    folderPath = 'ophys_experiment_data';
-                    fileName = sprintf('%s.nwb', experimentId);
-        
-                case 'AnalH5' 
-                    folderPath = 'ophys_experiment_analysis';
-                    fileName = sprintf('%s_%s_analysis.h5', experimentId, sessionName);
-        
-                case 'Movie'
-                    folderPath = 'ophys_movies';
-                    fileName = sprintf('ophys_experiment_%s.h5', experimentId);
-        
-                case 'Events'
-                    folderPath = 'ophys_experiment_events';
-                    fileName = sprintf('%s_events.npz', experimentId);
-                
-                case 'EyeH5'
-                    error('File is not available')
-                    folderPath = 'ophys_eye_gaze_mapping';
-                    fileName = sprintf('%s_%s_eyetracking_dlc_to_screen_mapping.h5', experimentId, itemObject.sessionId);
-            end
-            relativeFilePath = fullfile(folderPath, fileName);
-        end
-
-        function relativeFilePath = getProbeFileRelativePath(itemObject, nickname)
-        %getProbeFileRelativePath Get subfolders and filename for file given nickname
-        %
-        % See bot.internal.fileresource.abstract.S3Bucket/getEphysSessionFileRelativePath 
-        % for details on the internal S3 bucket folder hierarchy.
-
-            arguments
-                itemObject      % Class object
-                nickname char   % One of: LFPNWB
-            end
-
-            assert(strcmp(nickname, 'LFPNWB'), ...
-                'Currently only supports files with nickname LFPNWB')
-
-            experimentId = num2str(itemObject.session.id);
-            probeId = num2str(itemObject.id);
-        
-            switch nickname
-        
-                case 'LFPNWB' % probe objects..
-                    folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
-                    fileName = sprintf('probe_%s_lfp.nwb', probeId);
-        
-                otherwise
-                    error('BOT:S3Bucket', '%s is not a valid nickname for linked files of a probe', nickname)
-            end
-            relativeFilePath = fullfile(folderPath, fileName);
-        end
-    end
-
-    methods (Static)
-    end
 end
 
 function strURI = uriJoin(varargin)
 %uriJoin Join segments of a URI using the forward slash (/)
-    if isa(varargin{1}, 'string')
-        listOfStrings = [varargin{:}];
-        strURI = join(listOfStrings, "/");
-    elseif isa(varargin{1}, 'char')
-        listOfStrings = varargin;
-        strURI = strjoin(listOfStrings, '/');
-    end
+    strURI = bot.internal.util.uriJoin(varargin{:});
 end
-

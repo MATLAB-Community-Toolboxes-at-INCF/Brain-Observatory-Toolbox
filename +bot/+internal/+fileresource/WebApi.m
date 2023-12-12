@@ -1,5 +1,20 @@
 classdef WebApi < bot.internal.abstract.FileResource
 
+    % Note 1. 
+    % The allen api only provides data for the visual coding dataset (as
+    % far as I know, 2023-12-11). Therefore this file resource can only
+    % handle data from the visual coding dataset. 
+    %
+    % Note 2. 
+    % The implementation of this fileresource is different from the s3
+    % bucket fileresource implementation by encapsulating both ephys and
+    % ophys data, whereas the s3 buckets have one class for each dataset
+    % type.
+    %
+    % Note 3. 
+    % No implementation for getting data file URIs. These are currently
+    % attached the the item info coming out of the item tables.
+
     properties (Constant)
         API = bot.internal.BrainObservatoryAPI
     end
