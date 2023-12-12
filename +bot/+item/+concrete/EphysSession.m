@@ -54,7 +54,7 @@ classdef EphysSession < bot.item.Session
         
         rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)
     end
-    
+
     % Linked File Values (StimTemplatesGroup files)
     properties (Dependent, Transient) % Transient used here as "tag" for linked file properties
         stimulus_templates;             % Stimulus template table
@@ -131,14 +131,10 @@ classdef EphysSession < bot.item.Session
         nwbLocal_;
     end
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
-    properties (Constant, Hidden)
-        S3_PRIMARY_DATA_FOLDER = 'visual-coding-neuropixels';
-    end
-
     properties (Access = public)
-        FileResource = bot.internal.fileresource.S3Bucket.instance()
-    end  
+        % Todo: make dependent on dataset the session belongs to:
+        FileResource = bot.internal.fileresource.visualcoding.VCEphysS3Bucket.instance()
+    end
     
     
     %% PROPERTY ACCESS METHODS
@@ -409,7 +405,7 @@ classdef EphysSession < bot.item.Session
             obj = obj@bot.item.Session(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
+            if obj.isItemIDSpecScalar( itemIDSpec )
                 % - Assign associated table rows
                 obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
                 obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);
@@ -436,6 +432,7 @@ classdef EphysSession < bot.item.Session
             end
         end
     end
+
     
     %% METHODS - VISIBLE
     
@@ -988,106 +985,10 @@ classdef EphysSession < bot.item.Session
         function s = getFooter(self)
             if self.warn_multiple_probes
                 s = 'Warning: Structure boundaries were calculated across channels from multiple probes.';
+            else
+                s = '';
             end
         end
-    end
-
-    methods (Hidden, Access = protected)
-        
-        function s3BranchPath = getS3BranchPath(obj, nickname)
-        %getS3BranchPath Get subfolders and filename for file given nickname
-        %
-        % Bucket Organization for neuropixels data :
-        % 
-        % visual-coding-neuropixels
-        % +-- ecephys-cache                  # packaged processed ExtraCellular Electrophysiology data
-        % ¦   +-- manifest.json              # used by AllenSDK to look up file paths
-        % ¦   +-- sessions.csv               # metadata for each experiment session
-        % ¦   +-- probes.csv                 # metadata for each experiment probe
-        % ¦   +-- channels.csv               # metadata for each location on a probe
-        % ¦   +-- units.csv                  # metadata for each recorded signal
-        % ¦   +-- brain_observatory_1.1_analysis_metrics.csv         # pre-computed metrics for brain observatory stimulus set
-        % ¦   +-- functional_connectivity_analysis_metrics.csv       # pre-computed metrics for functional connectivity stimulus set
-        % ¦   +-- session_<experiment_id>
-        % ¦   ¦   +-- session_<experiment_id>.nwb                    # experiment session nwb
-        % ¦   ¦   +-- probe_<probe_id>_lfp.nwb                       # probe lfp nwb
-        % ¦   ¦   +-- session_<experiment_id>_analysis_metrics.csv   # pre-computed metrics for experiment
-        % ¦   +-- ...
-        % ¦   +-- natural_movie_templates
-        % ¦   ¦   +-- natural_movie_1.h5                    # stimulus movie
-        % ¦   ¦   +-- natural_movie_3.h5                    # stimulus movie
-        % ¦   +-- natural_scene_templates
-        % ¦   ¦   +-- natural_scene_<image_id>.tiff         # stimulus image
-        % ¦   ¦   +-- ...
-        % +-- raw-data                       # Sorted spike recordings and unprocessed data streams
-        % ¦   +-- <experiment_id>
-        % ¦   ¦   +-- sync.h5                # Information describing the synchronization of experiment data streams
-        % ¦   ¦   +-- <probe_id>
-        % ¦   ¦   ¦ +-- channel_states.npy   #
-        % ¦   ¦   ¦ +-- event_timestamps.npy #
-        % ¦   ¦   ¦ +-- lfp_band.dat         # Local field potential data
-        % ¦   ¦   ¦ +-- spike_band.dat       # Spike data
-        % ¦   ¦   +-- ...
-        % ¦   +-- ...
-
-            arguments
-                obj             % Class object
-                nickname char   % One of: SessNWB
-                %probeId = 1 % Todo
-                %movieNumber = 1 % Todo
-                %sceneNumber = 1 % Todo
-            end
-            
-            %assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'StimTemplatesGroup'), ...
-            %    'Currently only supports files with nickname SessNWB')
-
-            experimentId = num2str(obj.id);
-
-            % Hardcoded awaiting implementation 
-            probeId = 1;
-            movieNumber = 1;
-            sceneNumber = 2;
-
-            switch nickname
-
-                case 'SessNWB'
-                    folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
-                    fileName = sprintf('session_%s.nwb', experimentId);
-        
-                case 'StimTemplatesGroup'
-                    s3BranchPath = obj.getS3BranchPath('StimMovie'); return
-                    
-                case 'StimMovie'
-                    folderPath = fullfile('ecephys-cache', 'natural_movie_templates');
-                    fileName = sprintf('natural_movie_%d.h5', movieNumber);
-        
-                case 'StimScene'
-                    folderPath = fullfile('ecephys-cache', 'natural_scene_templates');
-                    fileName = sprintf('natural_scene_%d.tiff', sceneNumber);
-        
-                case 'SyncH5'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'sync.h5';
-                
-                case 'ChStatesNpy'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'channel_states.npy';
-                
-                case 'EventTsNpy'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'event_timestamps.npy';
-        
-                case 'LFPDAT'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'lfp_band.dat';
-        
-                case 'SPKDAT'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'spike_band.dat';
-            end
-            s3BranchPath = fullfile(folderPath, fileName);
-        end
-
     end
 
     % MARK FOR DELETION - potential use case indeterminate

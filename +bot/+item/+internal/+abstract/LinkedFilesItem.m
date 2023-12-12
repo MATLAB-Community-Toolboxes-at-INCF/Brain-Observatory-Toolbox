@@ -42,23 +42,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       LINKED_FILE_AUTO_DOWNLOAD (1,1) struct % Structure of form s.<linked file nickname> = <logical>
    end
    
-   %% PROPERTIES - CONSTANT (S3 bucket url/path definitions)
-   
-   properties (Constant, Hidden)
-      % Path if ABO S3 bucket is mounted on AWS EC2 (cloud computer) 
-      S3_ROOT_PATH = fullfile('/home', 'ubuntu', 's3-allen') % Todo: get from preferences instead
-      
-      % Web URL for the ABO S3 bucket
-      S3_BASE_URL = "https://allen-brain-observatory.s3.us-west-2.amazonaws.com"
-   end
 
-   properties (Abstract, Constant, Hidden)
-      % Primary data folder is the name of the folder containing either 
-      % EPhys or OPhys data. Subclass must implement
-      S3_PRIMARY_DATA_FOLDER
-   end
-   
-   
    %% METHODS - HIDDEN
    
    % SUBCLASS API
@@ -203,12 +187,6 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          end
       end
    end
-   
-   methods 
-       function uri = getCloudFileUri(obj, fileNickname)
-            uri = obj.getS3Filepath(fileNickname);
-       end
-   end
 
    % SUBCLASS CONSTRUCTOR API
    % Methods to populate linkedFileInfo table
@@ -336,42 +314,25 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          end
       end
 
-      function s3Filepath = getS3Filepath(obj, nickname, localMount)
+      function s3Filepath = getS3Filepath(obj, nickname, action)
       %getS3Filepath Get filepath of file in s3 bucket given nickname
          
          arguments
             obj                             % An object of the LinkedFilesItem class
             nickname (1,1) string           % Nickname of file to get filepath for
-            localMount (1,1) logical = true % Action used for retrieving file. Options: "Copy" or "Download"
+            %action (1,1) string = "Download" % Action used for retrieving file. Options: "Copy" or "Download"
          end
+    
 
-         s3Filepath = obj.FileResource.getDataFileURI(obj, "SessNWB");
-         return 
+        
+        % Todo: 
+        % [ ] Determine which file resource to use. This will depend on
+        %     which dataset (VisCoding/VisBehavior) and which dataset type
+        %     (Ephys/Ophys) the item is part of
+        %
 
-         if localMount % S3 bucket is mounted.
-            rootPath = obj.S3_ROOT_PATH;
-         else
-            rootPath = obj.S3_BASE_URL; % Use S3 web 
-         end
-         
-         % Build the full filepath for the file
-         s3TrunkPath = fullfile(rootPath, obj.S3_PRIMARY_DATA_FOLDER);
-         s3BranchPath = obj.getS3BranchPath(nickname);
-         s3Filepath = fullfile(s3TrunkPath, s3BranchPath);
-
-         % Ensure the url protocol is correct (fullfile removes double //)
-         if strncmp(s3Filepath, 'https', 5)
-             if ispc
-                % On windows, fix from file system slash to url slash
-                s3Filepath = replace(s3Filepath, '\', '/');
-             end
-             s3Filepath = replace(s3Filepath, 'https:/', 'https://');
-         end
+         s3Filepath = obj.FileResource.getDataFileURI(obj, nickname);
       end
 
-      function [] = getS3BranchPath(obj, varargin)
-      %getS3BranchPath Get subfolders and and filename for file in s3 bucket
-         error('Linked files in S3 bucket is not implemented for item of type "%s"', class(obj))
-      end
    end
 end

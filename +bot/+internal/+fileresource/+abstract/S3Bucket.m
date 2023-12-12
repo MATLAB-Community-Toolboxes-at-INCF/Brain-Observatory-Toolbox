@@ -51,10 +51,9 @@ classdef S3Bucket < bot.internal.abstract.FileResource
         ItemTypes
     end
 
-    properties (Access = private) % Todo: make dependent or abstract.
-        % For dependent, use the dataset and dataset type constant
-        % properties
-        InternalName = 's3-abo-vbo' % Allen brain observatory, visual behavior ophys
+    properties (Abstract, Access = protected) % Todo: consider making dependent.
+        % For dependent, use the dataset and dataset type constant properties
+        InternalName
     end
 
     properties (Dependent) % Todo: Access = protected

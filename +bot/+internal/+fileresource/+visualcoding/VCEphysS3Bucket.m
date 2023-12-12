@@ -30,6 +30,10 @@ classdef VCEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
     end
 
+    properties (Access = protected)
+        InternalName = 's3-allen' % Allen brain observatory (visual coding)
+    end
+
     methods (Access = private) % Constructor
         function obj = VCEphysS3Bucket()
             % Constructor is private in order to implement as singleton
