@@ -68,7 +68,7 @@ classdef VBOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
     methods (Static)
         
         function relativeFilePath = getRelativeFileUriPath(itemObject, nickname, options)
-        %getS3BranchPath Get subfolders and filename for file given nickname
+        %getRelativeFileUriPath Get subfolders and filename for file given nickname
         %
         % Bucket Organization for 2-photon data : todo
 

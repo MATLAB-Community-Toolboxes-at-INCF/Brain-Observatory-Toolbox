@@ -67,7 +67,7 @@ classdef VCEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
     methods (Static)
         
         function relativeFilePath = getRelativeFileUriPath(itemObject, nickname)%, varargin)
-        %getS3BranchPath Get subfolders and filename for file given nickname
+        %getRelativeFileUriPath Get subfolders and filename for file given nickname
         %
         % Bucket Organization for neuropixels data :
         % 
@@ -135,11 +135,8 @@ classdef VCEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
                 case {'LFPNWB', 'ProbeNWB'} % probe items..
                     folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
                     fileName = sprintf('probe_%s_lfp.nwb', probeId);
-        
-                case 'StimTemplatesGroup'
-                    relativeFilePath = obj.getS3BranchPath('StimMovie'); return
-                    
-                case 'StimMovie'
+
+                case {'StimMovie', 'StimTemplatesGroup'}
                     folderPath = fullfile('ecephys-cache', 'natural_movie_templates');
                     fileName = sprintf('natural_movie_%d.h5', movieNumber);
         
