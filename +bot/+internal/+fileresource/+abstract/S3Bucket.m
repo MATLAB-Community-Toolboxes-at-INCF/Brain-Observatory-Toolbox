@@ -1,4 +1,4 @@
-classdef S3Bucket < bot.internal.abstract.FileResource
+classdef S3Bucket < bot.internal.abstract.FileResource & matlab.mixin.Heterogeneous
 %S3Bucket Builder of URIs for files that are part of the ABO S3 bucket
 %
 %   This class implements methods for retrieving URIs for data files and 

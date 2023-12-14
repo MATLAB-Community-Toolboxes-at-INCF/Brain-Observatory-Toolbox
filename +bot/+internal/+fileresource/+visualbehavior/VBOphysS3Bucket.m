@@ -86,7 +86,7 @@ classdef VBOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             if ~isempty(itemObject)
                 if isfield(itemObject.info, 'ophys_experiment_id')
                     if isnumeric(itemObject.info.ophys_experiment_id)
-                        ophysExperimentId = itemObject.info.ophys_experiment_id;
+                        ophysExperimentId = string(itemObject.info.ophys_experiment_id);
                     else
                         exp_id = eval(itemObject.info.ophys_experiment_id); % For session items, this is a character vector represending a list of ids
                         ophysExperimentId = string(exp_id(1));

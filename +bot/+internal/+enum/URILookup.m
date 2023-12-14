@@ -1,6 +1,9 @@
 classdef URILookup
 %URILookup Enumeration class wrapping available file resources
-    
+
+% Todo: Remove this, as it will be / is being replaced by  HasFileResource
+% mixin class
+
     properties
         % An instance of a file resource for the Allen Brain Observatory
         FileResourceInstance bot.internal.abstract.FileResource = ...

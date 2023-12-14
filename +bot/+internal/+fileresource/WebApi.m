@@ -58,9 +58,31 @@ classdef WebApi < bot.internal.abstract.FileResource
         end
 
         function strURI = getDataFileURI(obj, itemObject, fileNickname, varargin)
-            error('Not implemented yet')
-            % Todo: 
-            % Get linked file path (or well known file info) from itemObject
+            
+            wellKnownFilepaths = {itemObject.info.well_known_files.path};
+
+            switch fileNickname
+                case 'SessNWB'
+                    fileIdx = findFileIndex("nwb", wellKnownFilepaths);
+                    
+                case 'SessH5'
+                    fileIdx = findFileIndex("h5", wellKnownFilepaths);
+
+                case 'LFPNWB'
+
+            end
+            
+            assert(isscalar(fileIdx), "Expected to find exactly one %s file ", fileNickName);
+
+            fileInfo = itemObject.info.well_known_files(fileIdx);
+            strURI = obj.API.ApiBaseUrl + fileInfo.download_link;
+            
+            warning('Not tested yet')
+
+            function fileIdx = findFileIndex(fileType, filePaths)
+                fileIdx = find(contains(string(filePaths), fileType, ...
+                    'IgnoreCase', true));
+            end
         end
 
         function strURI = getItemTableURI(obj, datasetType, itemType)
