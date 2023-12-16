@@ -60,7 +60,7 @@ classdef HasLinkedFile < dynamicprops & handle
 
     methods
         function linkedFilesMap = get.LinkedFilesInfo(obj)
-            keys = string( {obj.LinkedFiles.Name} );
+            keys = string( {obj.LinkedFiles.Nickname} );
             values = string( {obj.LinkedFiles.FilePath} );
             values(values=="")=missing;
             linkedFilesMap = dictionary(keys, values);
@@ -87,7 +87,7 @@ classdef HasLinkedFile < dynamicprops & handle
         function data = getLinkedFilePropertyValue(obj, linkedFile, propertyName)
         % getLinkedFilePropertyValue - Get value for a linked file property
             if ~linkedFile.exists()
-                obj.downloadLinkedFile(linkedFile.Name);
+                obj.downloadLinkedFile(linkedFile.Nickname);
             end
 
             data = linkedFile.fetchData(propertyName);
@@ -102,7 +102,6 @@ classdef HasLinkedFile < dynamicprops & handle
             propertyGroups = matlab.mixin.util.PropertyGroup.empty;
 
             for i = 1:numel(obj.LinkedFiles)
-                nickname = obj.LinkedFiles.Name;
                 propList = struct;
                 propNames = properties(obj.LinkedFiles(i));
                 
@@ -113,16 +112,17 @@ classdef HasLinkedFile < dynamicprops & handle
                     % Customize the property display if the value is empty.
                     if isempty(thisPropValue)
                         if obj.LinkedFiles(i).isInitialized()
-                            thisPropValue = categorical({'<unknown> (unavailable)'});
+                            thisPropValue = categorical({'<unknown>  (unavailable)'});
                         else
-                            thisPropValue = categorical({'<unknown> (download required)'});
+                            thisPropValue = categorical({'<unknown>  (download required)'});
                         end
                     end
 
                     propList.(thisPropName) = thisPropValue;
                 end
 
-                groupTitle = "Linked File Values ('" + nickname + "')";
+                displayName = obj.LinkedFiles.DisplayName;
+                groupTitle = "Linked File Values ('" + displayName + "')";
                 propertyGroups(i) = PropertyGroup(propList, groupTitle);
             end
         end
@@ -152,7 +152,7 @@ classdef HasLinkedFile < dynamicprops & handle
             % assert(~datasetCache.IsFileInCache(fileKey), "File has already been downloaded");
             
             filePath = datasetCache.getPathForFile(fileNickname, obj, 'AutoDownload', true);
-            isCurrentLinkedFile = find(strcmp({obj.LinkedFiles.Name}, fileNickname));
+            isCurrentLinkedFile = find(strcmp({obj.LinkedFiles.Nickname}, fileNickname));
 
             obj.LinkedFiles(isCurrentLinkedFile).updateFilePath(filePath);
         end

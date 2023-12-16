@@ -1,12 +1,19 @@
-classdef (Abstract) LinkedFile < bot.item.internal.mixin.OnDemandProps
+classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
+% LinkedFile - Represent a linked file of a Brain Observatory item
 
     % Implementations of this class should make data which is available in
-    % the file accessible from properies.
+    % a file accessible from properies.
 
-    properties (Abstract, Constant, Hidden)
-        % This is the nickname of the file as needed by the file resource
-        % classes to resolve the remove file location of a file.
-        Name
+    properties (Hidden, Dependent)
+        % DisplayName - A variation of the class name to use as display name
+        DisplayName
+    end
+
+    properties (SetAccess = immutable, GetAccess=?bot.behavior.internal.mixin.HasLinkedFile)
+        % Nickname - This is the name of a linked file instance as it is
+        % referred to in a FileResource class and it is used to resolve the
+        % remote file location for the file.
+        Nickname char
     end
 
     properties (Access = protected, Hidden)
@@ -21,11 +28,12 @@ classdef (Abstract) LinkedFile < bot.item.internal.mixin.OnDemandProps
         IsInitialized = false
     end
 
-    methods
-        function obj = LinkedFile(filePath)
+    methods % Constructor
+        function obj = LinkedFile(filePath, nickname)
             obj.ON_DEMAND_PROPERTIES = properties(obj);
 
             obj.FilePath = filePath;
+            obj.Nickname = nickname;
             
             if nargin < 1; return; end
             if isempty(char(obj.FilePath)); return; end
@@ -58,6 +66,12 @@ classdef (Abstract) LinkedFile < bot.item.internal.mixin.OnDemandProps
             else
                 obj.FilePath = newFilePath;
             end
+        end
+
+        function displayName = get.DisplayName(obj)
+            classNameSplit = strsplit( class(obj), '.') ;
+            displayName = classNameSplit{end};
+            displayName = strrep(displayName, 'File', '');
         end
     end
 
