@@ -1,25 +1,26 @@
-%% CLASS VisualBehaviorOphysManifest
+%% CLASS VisualBehaviorEphysManifest
 %
 % This class can be used to obtain various `tables of items´ from the 
-% Visual Behavior 2P dataset [1] obtained with the Allen Brain Observatory 
-% platform [2].
+% Visual Behavior neuropixels dataset [1] obtained with the Allen Brain 
+% Observatory platform [2].
 %
 % Item tables contain overview information about individual items belonging 
 % to the dataset and tables for the following item types are available:
 %
-%       ophys_experiments  : Container for multiple experimenal sessions
-%       ophys_sessions     : Experimental sessions
-%       ophys_cells        : Recorded neurons
+%       BehaviorSessions   % Table of all Behavior-only sessions
+%       EphysSessions      % Table of all EPhys sessions
+%       Probes             % Table of all EPhys probes
+%       Channels           % Table of all EPhys channels
+%       Units              % Table of all EPhys units
 %   
-%
 % USAGE:
 %
 % Construction:
-% >> bom = bot.item.internal.Manifest.instance('ophys-vb')
-% >> bom = bot.item.internal.VisualBehaviorOphysManifest.instance()
+% >> vbem = bot.internal.Manifest.instance('Ephys', 'VisualBehavior')
+% >> vbem = bot.internal.metadata.VisualBehaviorEphysManifest.instance()
 %
-% Get information about all OPhys experimental sessions:
-% >> bom.ophys_sessions
+% Get information about all EPhys experimental sessions:
+% >> vbem.EphysSessions
 % ans =
 %      date_of_acquisition      experiment_container_id    fail_eye_tracking  ...
 %     ______________________    _______________________    _________________  ...
@@ -29,44 +30,36 @@
 %
 % Force an update of the manifest representing Allen Brain Observatory 
 % dataset contents:
-% >> bom.UpdateManifests()
+% >> vbem.updateManifest()
 %
 % Access data from an experimental session:
-% >> nSessionID = bom.ophys_sessions(1, 'id');
-% >> bos = bot.getSessions(nSessionID)
-% bos =
-%   ophyssession with properties:
+% >> nSessionID = vbem.ephys_sessions(1, 'id');
+% >> vbes = bot.getSessions(nSessionID)
+% vbes =
+%   ephyssession with properties:
 %
 %                sSessionInfo: [1x1 struct]
 %     local_nwb_file_location: []
 %
-% (See documentation for the `bot.item.concrete.OphysSession` class for more information)
+% (See documentation for the `bot.item.concrete.EphysSession` class for more information)
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. 
-%       Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Behavior 2P dataset. 
+%       Available from: portal.brain-map.org/explore/circuits/visual-behavior-neuropixels.
 % [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. 
 %       Available from: portal.brain-map.org/explore/circuits
 
-% Todo
-%   Include CellIdMappingId?
 
 %% Class definition
 
 classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
 
     properties (SetAccess = private, Dependent = true)
-        BehaviorSessions   % Table of all Behavior session
-        EphysSessions      % Table of all OPhys sessions
-        Probes
-        Channels           % Table of all OPhys experiments
-        Units              % Table of all OPhys cells
+        BehaviorSessions   % Table of all Behavior-only sessions
+        EphysSessions      % Table of all EPhys sessions
+        Probes             % Table of all EPhys probes
+        Channels           % Table of all EPhys channels
+        Units              % Table of all EPhys units
     end
-
-% %     properties (SetAccess = private, Dependent = true) % Todo: rename?
-% %         Experiments   % Table of all OPhys experiment containers
-% %         Sessions      % Table of all OPhys experimental sessions
-% %         Cells         % Table of all OPhys cells
-% %     end
 
     properties (Constant, Access = protected, Hidden)
         DATASET_NAME = "VisualBehavior"
@@ -78,7 +71,7 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     end
 
     properties (Access = protected)
-        FileResource = bot.internal.fileresource.visualbehavior.S3BucketEphys.instance()
+        FileResource = bot.internal.fileresource.visualbehavior.VBEphysS3Bucket.instance()
     end  
 
     
@@ -93,12 +86,12 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     %% Method for interacting with singleton instance
     methods (Static = true)
         function manifest = instance(action)
-            % instance Get or clear singleton instance of the OPhys manifest
+            % instance Get or clear singleton instance of the EPhys manifest
             %
-            %   manifest = bot.item.internal.OphysManifest.instance()
-            %   returns a singleton instance of the OphysManifest class
+            %   manifest = bot.internal.metadata.VisualBehaviorEphysManifest.instance()
+            %   returns a singleton instance of the VisualBehaviorEphysManifest class
             %        
-            %   bot.item.internal.OphysManifest.instance("clear") will 
+            %   bot.internal.metadata.VisualBehaviorEphysManifest.instance("clear") will 
             %   clear the singleton instance from memory
             
             arguments
@@ -128,57 +121,70 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     %% Getters for manifest item tables (on-demand properties)
     methods
 
-        function sessionTable = get.BehaviorSessions(oManifest)
-            sessionTable = oManifest.fetch_cached('BehaviorSessions', ...
-                    @(itemType) oManifest.fetch_item_table('BehaviorSession') );
+        function sessionTable = get.BehaviorSessions(obj)
+            sessionTable = obj.fetch_cached('BehaviorSessions', ...
+                    @(itemType) obj.fetch_item_table('BehaviorSession') );
         end
         
-        function sessionTable = get.EphysSessions(oManifest)
-            sessionTable = oManifest.fetch_cached('EphysSessions', ...
-                    @(itemType) oManifest.fetch_item_table('EphysSession') );
+        function sessionTable = get.EphysSessions(obj)
+            sessionTable = obj.fetch_cached('EphysSessions', ...
+                    @(itemType) obj.fetch_item_table('EphysSession') );
         end
 
-        function experimentTable = get.Probes(oManifest)
-            experimentTable = oManifest.fetch_cached('Probes', ...
-                    @(itemType) oManifest.fetch_item_table('Probe') );
+        function experimentTable = get.Probes(obj)
+            experimentTable = obj.fetch_cached('Probes', ...
+                    @(itemType) obj.fetch_item_table('Probe') );
         end
 
-        function cellTable = get.Channels(oManifest)
-            cellTable = oManifest.fetch_cached('Channels', ...
-                    @(itemType) oManifest.fetch_item_table('Channel') );
+        function cellTable = get.Channels(obj)
+            cellTable = obj.fetch_cached('Channels', ...
+                    @(itemType) obj.fetch_item_table('Channel') );
         end
 
-        function cellTable = get.Units(oManifest)
-            cellTable = oManifest.fetch_cached('Units', ...
-                    @(itemType) oManifest.fetch_item_table('Unit') );
+        function cellTable = get.Units(obj)
+            cellTable = obj.fetch_cached('Units', ...
+                    @(itemType) obj.fetch_item_table('Unit') );
         end
 
     end
 
-    %% Low-level getter method for OPhys manifest item tables
+    methods
+        function fetchAll(manifest)
+        %fetchAll Fetches all of the item tables of the manifest
+        %
+        %   fetchAll(manifest) will fetch all item tables of the concrete
+        %   manifest.
+
+            for itemType = manifest.ITEM_TYPES
+                manifest.(itemType+"s");
+            end
+        end
+    end
+
+    %% Low-level getter method for EPhys manifest item tables
     methods (Access = public)
 
-        function itemTable = fetch_item_table(oManifest, itemType)
+        function itemTable = fetch_item_table(obj, itemType)
         %fetch_item_table Fetch item table (get from cache or download)
 
-            cache_key = oManifest.getManifestCacheKey(itemType);
+            cache_key = obj.getManifestCacheKey(itemType);
 
-            if oManifest.cache.IsObjectInCache(cache_key)
-                itemTable = oManifest.cache.RetrieveObject(cache_key);
+            if obj.cache.isObjectInCache(cache_key)
+                itemTable = obj.cache.retrieveObject(cache_key);
 
             else
-                itemTable = oManifest.download_item_table(itemType);
+                itemTable = obj.download_item_table(itemType);
                 
                 % Process downloaded item table
-                fcnName = sprintf('%s.preprocess_%s_table', class(oManifest), lower(itemType)); % Static method
-                %itemTable = feval(fcnName, itemTable);
+                fcnName = sprintf('%s.preprocess_%s_table', class(obj), lower(itemType)); % Static method
+                itemTable = feval(fcnName, itemTable);
                 
-                oManifest.cache.InsertObject(cache_key, itemTable);
-                oManifest.clearTempTableFromCache(itemType)
+                obj.cache.insertObject(cache_key, itemTable);
+                obj.clearTempTableFromCache(itemType)
             end
 
             % Apply standardized table display logic
-            itemTable = oManifest.applyUserDisplayLogic(itemTable); 
+            itemTable = obj.applyUserDisplayLogic(itemTable); 
         end
 
     end
@@ -188,7 +194,7 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
         function itemTable = readS3ItemTable(cacheFilePath)
         %readS3ItemTable Read table from file downloaded from S3 bucket
         %
-        %   Ophys item tables are stored in json files
+        %   Ephys item tables are stored in json files
             itemTable = readtable(cacheFilePath);
             return
 
@@ -208,95 +214,44 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     end
 
     methods (Static, Access = private) % Postprocess manifest item tables
-        function ophys_cell_table = preprocess_ophyssession_table(ophys_cell_table)
+        function ephys_session_table = preprocess_ephyssession_table(ephys_session_table)
+
+            import bot.item.internal.Manifest.recastTableVariables
+            import bot.item.internal.Manifest.renameTableVariables
+
+            dateFormat = 'yyyy-MM-dd HH:mm:ss.SSSSSSZ';
+
+            ephys_session_table.date_of_acquisition = ...
+                 datetime(ephys_session_table.date_of_acquisition, 'InputFormat', dateFormat, 'TimeZone','UTC');
+
+            ephys_session_table = renameTableVariables(ephys_session_table);
+            ephys_session_table = recastTableVariables(ephys_session_table);
+
+            % Assign the item id.
+            ephys_session_table.id = ephys_session_table.ecephys_session_id;
+        end
+
     
-        end
-
-        function ophys_experiment_table = preprocess_ophysexperiment_table(ophys_experiment_table)
-            return
-            % - Convert variables to useful types
-            ophys_experiment_table.id = uint32(ophys_experiment_table.id);
-            ophys_experiment_table.failed_facet = uint32(ophys_experiment_table.failed_facet);
-            ophys_experiment_table.isi_experiment_id = uint32(ophys_experiment_table.isi_experiment_id);
-            ophys_experiment_table.specimen_id = uint32(ophys_experiment_table.specimen_id);
-        end
+        function behavior_session_table = preprocess_behaviorsession_table(behavior_session_table)
+            import bot.item.internal.Manifest.recastTableVariables
     
-        function ophys_session_table = preprocess_behaviorsession_table(ophys_session_table)
-            
-            num_sessions = size(ophys_session_table, 1);
-            
-% % %             % - Label as ophys sessions
-% % %             ophys_session_table = addvars(ophys_session_table, ...
-% % %                 repmat(categorical({'OPhys'}, {'EPhys', 'OPhys'}), num_sessions, 1), ...
-% % %                 'NewVariableNames', 'type', ...
-% % %                 'before', 1);
-% % %             
-% % %             % - Create `cre_line` variable from specimen field of session
-% % %             %  table and append it back to session table.
-% % %             % `cre_line` is important, makes life easier if it's explicit
-% % %             cre_line = cell(num_sessions, 1);
-% % %             for i = 1:num_sessions
-% % %                 donor_info = ophys_session_table(i, :).specimen.donor;
-% % %                 transgenic_lines_info = struct2table(donor_info.transgenic_lines);
-% % %                 cre_line(i, 1) = transgenic_lines_info.name(not(cellfun('isempty', strfind(transgenic_lines_info.transgenic_line_type_name, 'driver')))...
-% % %                     & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
-% % %             end
-% % %             
-% % %             ophys_session_table = addvars(ophys_session_table, cre_line, ...
-% % %                 'NewVariableNames', 'cre_line');
-            
-            % - Convert variables to useful types
-            ophys_session_table.behavior_session_id = uint32(ophys_session_table.behavior_session_id);
-            ophys_session_table.file_id = uint32(ophys_session_table.file_id);
-            %ophys_session_table.date_of_acquisition = datetime(ophys_session_table.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-            ophys_session_table.mouse_id = uint32(ophys_session_table.mouse_id);
-            
-            ophys_session_table.session_type = string(ophys_session_table.session_type);
-            ophys_session_table.indicator = categorical(string(ophys_session_table.indicator)); 
-            ophys_session_table.sex = string(ophys_session_table.sex);
-            ophys_session_table.reporter_line = string(ophys_session_table.reporter_line);  
-            ophys_session_table.cre_line = string(ophys_session_table.cre_line);  
+            behavior_session_table.date_of_acquisition = datetime(behavior_session_table.date_of_acquisition, ...
+                'InputFormat','yyyy-MM-dd HH:mm:ss.SSSSSSZZZZZ','TimeZone','UTC');
 
+            behavior_session_table = recastTableVariables(behavior_session_table);
+            behavior_session_table.id = behavior_session_table.behavior_session_id;
         end
 
-        function ophys_cell_table = preprocess_ophyscell_table(ophys_cell_table)
-            return
-            % - Convert variables to useful types
-            ophys_cell_table.experiment_container_id = uint32(ophys_cell_table.experiment_container_id);
-            ophys_cell_table.id = uint32(ophys_cell_table.cell_specimen_id); % consider renaming on query
-            ophys_cell_table = removevars(ophys_cell_table, 'cell_specimen_id');
-            ophys_cell_table.specimen_id = uint32(ophys_cell_table.specimen_id);
-            
-            ophys_cell_table.tlr1_id = uint32(ophys_cell_table.tlr1_id);
-            ophys_cell_table.tld1_id = uint32(ophys_cell_table.tld1_id);            
+        function ephys_probe_table = preprocess_probe_table(ephys_probe_table)
+           %todo
+        end        
+        
+        function ephys_channel_table = preprocess_channel_table(ephys_channel_table)
+           %todo
+        end
 
-            % - Convert metric (replace empty with nan)
-            metric_varnames = {'reliability_dg', 'reliability_nm1_a', 'reliability_nm1_b', ...
-                'reliability_nm2', 'reliability_nm3', 'reliability_ns', 'reliability_sg', ...
-                'dsi_dg', 'g_dsi_dg', 'g_osi_dg', 'g_osi_sg', 'image_sel_ns', 'osi_dg', ...
-                'osi_sg', 'p_dg', 'p_ns', 'p_run_mod_dg', 'p_run_mod_ns', 'p_run_mod_sg', ...
-                'p_sg', 'peak_dff_dg', 'peak_dff_ns', 'peak_dff_sg', 'pref_dir_dg', 'pref_image_ns', ...
-                'pref_ori_sg', 'pref_phase_sg', 'pref_sf_sg', 'pref_tf_dg', 'rf_area_off_lsn', ...
-                'rf_area_on_lsn', 'rf_center_off_x_lsn', 'rf_center_off_y_lsn', 'rf_center_on_x_lsn', ...
-                'rf_center_on_y_lsn', 'rf_chi2_lsn', 'rf_distance_lsn', 'rf_overlap_index_lsn', ...
-                'run_mod_dg', 'run_mod_ns', 'run_mod_sg', 'sfdi_sg', 'tfdi_dg', 'time_to_peak_ns', ...
-                'time_to_peak_sg', 'tld2_id', 'reliability_nm1_c'};
-                
-            ophys_cell_table = convert_metric_vars(ophys_cell_table, metric_varnames);  
-            
-            ophys_cell_table.tld2_id = uint32(ophys_cell_table.tld2_id);
-
-            function table = convert_metric_vars(table, varnames)
-
-                function metric = convert_cell_metric(metric)
-                    metric(cellfun(@isempty, metric)) = {nan};
-                    metric = [metric{:}]';
-                end
-                
-                for var = varnames
-                    table.(var{1}) = convert_cell_metric(table.(var{1}));
-                end
-            end
+        function ephys_unit_table = preprocess_unit_table(ephys_unit_table)
+           %todo
         end
     end
 end

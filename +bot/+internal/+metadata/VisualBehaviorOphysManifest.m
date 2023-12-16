@@ -7,43 +7,47 @@
 % Item tables contain overview information about individual items belonging 
 % to the dataset and tables for the following item types are available:
 %
-%       ophys_experiments  : Container for multiple experimenal sessions
-%       ophys_sessions     : Experimental sessions
-%       ophys_cells        : Recorded neurons
+%       BehaviorSessions   % Behavior only session
+%       OphysSessions      % OPhys session 
+%       OphysExperiments   % OPhys experiments (single imaging planes)
+%       OphysCells         % Detected cell (region of interest)
 %   
 %
 % USAGE:
 %
 % Construction:
-% >> bom = bot.item.internal.Manifest.instance('ophys-vb')
-% >> bom = bot.item.internal.VisualBehaviorOphysManifest.instance()
+% >> vbom = bot.internal.Manifest.instance('Ophys', 'VisualBehavior')
+% >> vbom = bot.internal.metadata.VisualBehaviorOphysManifest.instance()
 %
 % Get information about all OPhys experimental sessions:
-% >> bom.ophys_sessions
+% >> vbom.OphysSessions
 % ans =
-%      date_of_acquisition      experiment_container_id    fail_eye_tracking  ...
-%     ______________________    _______________________    _________________  ...
-%     '2016-03-31T20:22:09Z'    5.1151e+08                 true               ...
-%     '2016-07-06T15:22:01Z'    5.2755e+08                 false              ...
+%        id        behavior_session_id    mouse_id  ...
+%    __________    ___________________    ________  ...
+%
+%     951410079         951520319          457841   ...
+%     952430817         952554548          457841   ...
 %     ...
 %
 % Force an update of the manifest representing Allen Brain Observatory 
 % dataset contents:
-% >> bom.UpdateManifests()
+% >> vbom.updateManifest()
 %
 % Access data from an experimental session:
-% >> nSessionID = bom.ophys_sessions(1, 'id');
-% >> bos = bot.getSessions(nSessionID)
-% bos =
-%   ophyssession with properties:
+% >> nSessionID = vbom.OphysSessions(1, 'id');
+% >> vbos = bot.getSessions(nSessionID)
+% vbos =
+%   OphysSession with properties:
+% 
+%                       id: 951410079
+%                     info: [1×1 struct]
+%              SessionType: OPHYS_1_images_A
+%                       ...
 %
-%                sSessionInfo: [1x1 struct]
-%     local_nwb_file_location: []
+% (See documentation for the `bot.behavior.item.OphysSession` class for more information)
 %
-% (See documentation for the `bot.item.concrete.OphysSession` class for more information)
-%
-% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. 
-%       Available from: portal.brain-map.org/explore/circuits/visual-coding-2p.
+% [1] Copyright 2016 Allen Institute for Brain Science. Visual Behavior 2P dataset. 
+%       Available from: portal.brain-map.org/explore/circuits/visual-behavior-2p.
 % [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. 
 %       Available from: portal.brain-map.org/explore/circuits
 
@@ -58,14 +62,8 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
         BehaviorSessions   % Table of all Behavior session
         OphysSessions      % Table of all OPhys sessions
         OphysExperiments   % Table of all OPhys experiments
-        OphysCells        % Table of all OPhys cells
+        OphysCells         % Table of all OPhys cells
     end
-
-% %     properties (SetAccess = private, Dependent = true) % Todo: rename?
-% %         Experiments   % Table of all OPhys experiment containers
-% %         Sessions      % Table of all OPhys experimental sessions
-% %         Cells         % Table of all OPhys cells
-% %     end
 
     properties (Constant, Access = protected, Hidden)
         DATASET_NAME = "VisualBehavior"
@@ -77,15 +75,15 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
     end
 
     properties (Access = protected)
-        FileResource = bot.internal.fileresource.visualbehavior.S3Bucket.instance()
+        FileResource = bot.internal.fileresource.visualbehavior.VBOphysS3Bucket.instance()
     end  
 
     
     %% Constructor
     methods (Access = private)
-        function oManifest = VisualBehaviorOphysManifest()
-            oManifest@bot.item.internal.Manifest()
-            oManifest.ON_DEMAND_PROPERTIES = oManifest.ITEM_TYPES + "s";     % Property names are plural
+        function obj = VisualBehaviorOphysManifest()
+            obj@bot.item.internal.Manifest()
+            obj.ON_DEMAND_PROPERTIES = obj.ITEM_TYPES + "s";     % Property names are plural
         end
     end
     
@@ -94,10 +92,10 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
         function manifest = instance(action)
             % instance Get or clear singleton instance of the OPhys manifest
             %
-            %   manifest = bot.item.internal.OphysManifest.instance()
-            %   returns a singleton instance of the OphysManifest class
+            %   manifest = bot.internal.metadata.VisualBehaviorOphysManifest.instance()
+            %   returns a singleton instance of the VisualBehaviorOphysManifest class
             %        
-            %   bot.item.internal.OphysManifest.instance("clear") will 
+            %   bot.internal.metadata.VisualBehaviorOphysManifest.instance("clear") will 
             %   clear the singleton instance from memory
             
             arguments
@@ -127,52 +125,68 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
     %% Getters for manifest item tables (on-demand properties)
     methods
 
-        function sessionTable = get.BehaviorSessions(oManifest)
-            sessionTable = oManifest.fetch_cached('BehaviorSessions', ...
-                    @(itemType) oManifest.fetch_item_table('BehaviorSession') );
+        function sessionTable = get.BehaviorSessions(obj)
+            sessionTable = obj.fetch_cached('BehaviorSessions', ...
+                    @(itemType) obj.fetch_item_table('BehaviorSession') );
         end
         
-        function sessionTable = get.OphysSessions(oManifest)
-            sessionTable = oManifest.fetch_cached('OphysSessions', ...
-                    @(itemType) oManifest.fetch_item_table('OphysSession') );
+        function sessionTable = get.OphysSessions(obj)
+            sessionTable = obj.fetch_cached('OphysSessions', ...
+                    @(itemType) obj.fetch_item_table('OphysSession') );
         end
 
-        function experimentTable = get.OphysExperiments(oManifest)
-            experimentTable = oManifest.fetch_cached('OphysExperiments', ...
-                    @(itemType) oManifest.fetch_item_table('OphysExperiment') );
+        function experimentTable = get.OphysExperiments(obj)
+            experimentTable = obj.fetch_cached('OphysExperiments', ...
+                    @(itemType) obj.fetch_item_table('OphysExperiment') );
         end
 
-        function cellTable = get.OphysCells(oManifest)
-            cellTable = oManifest.fetch_cached('OphysCells', ...
-                    @(itemType) oManifest.fetch_item_table('OphysCell') );
+        function cellTable = get.OphysCells(obj)
+            cellTable = obj.fetch_cached('OphysCells', ...
+                    @(itemType) obj.fetch_item_table('OphysCell') );
         end
 
+    end
+
+    methods
+        function fetchAll(obj)
+        %fetchAll Fetches all of the item tables of the manifest
+        %
+        %   fetchAll(manifest) will fetch all item tables of the concrete
+        %   manifest.
+
+            for itemType = obj.ITEM_TYPES
+                obj.(itemType+"s");
+            end
+        end
     end
 
     %% Low-level getter method for OPhys manifest item tables
     methods (Access = public)
 
-        function itemTable = fetch_item_table(oManifest, itemType)
+        function itemTable = fetch_item_table(obj, itemType)
         %fetch_item_table Fetch item table (get from cache or download)
 
-            cache_key = oManifest.getManifestCacheKey(itemType);
+            cache_key = obj.getManifestCacheKey(itemType);
 
-            if oManifest.cache.IsObjectInCache(cache_key)
-                itemTable = oManifest.cache.RetrieveObject(cache_key);
+            if obj.cache.isObjectInCache(cache_key)
+                itemTable = obj.cache.retrieveObject(cache_key);
 
             else
-                itemTable = oManifest.download_item_table(itemType);
+                itemTable = obj.download_item_table(itemType);
                 
                 % Process downloaded item table
-                fcnName = sprintf('%s.preprocess_%s_table', class(oManifest), lower(itemType)); % Static method
+                fcnName = sprintf('%s.preprocess_%s_table', class(obj), lower(itemType)); % Static method
                 itemTable = feval(fcnName, itemTable);
                 
-                oManifest.cache.InsertObject(cache_key, itemTable);
-                oManifest.clearTempTableFromCache(itemType)
+                fcnName = sprintf('postprocess_%s_table', lower(itemType)); % Static method
+                itemTable = feval(fcnName, obj, itemTable);
+                
+                obj.cache.insertObject(cache_key, itemTable);
+                obj.clearTempTableFromCache(itemType)
             end
 
             % Apply standardized table display logic
-            itemTable = oManifest.applyUserDisplayLogic(itemTable); 
+            itemTable = obj.applyUserDisplayLogic(itemTable); 
         end
 
     end
@@ -182,115 +196,80 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
         function itemTable = readS3ItemTable(cacheFilePath)
         %readS3ItemTable Read table from file downloaded from S3 bucket
         %
-        %   Ophys item tables are stored in json files
-            itemTable = readtable(cacheFilePath);
-            return
-
-            import bot.internal.util.structcat
-
-            fprintf('Reading table from file...')
-            data = jsondecode(fileread(cacheFilePath));
-
-            if isa(data, 'cell')
-                itemTable = struct2table( structcat(1, data{:}) );
-            else
-                itemTable = struct2table(data);
-            end
-            fprintf('done\n')
+        %   Visual behavior ophys item tables are stored in csv files
+            % opts = detectImportOptions(cacheFilePath)
+            itemTable = readtable(cacheFilePath, "Delimiter", ',');
         end
 
     end
 
+    methods(Access=private)
+        function ophys_session_table = postprocess_ophyssession_table(obj, ophys_session_table)
+
+            ophys_session_table = fetch_grouped_uniques(ophys_session_table, obj.OphysExperiments, ...
+                'id', 'ophys_session_id', 'targeted_structure', 'targeted_structure_acronyms'); 
+            %ophys_session_table.targeted_structure_acronyms = cellfun(@(e) strjoin(e,'; '), ophys_session_table.targeted_structure_acronyms, 'UniformOutput', false);
+            %ophys_session_table.targeted_structure_acronyms = string(ophys_session_table.targeted_structure_acronyms);
+        end
+        
+        function ophys_experiment_table = postprocess_ophysexperiment_table(obj, ophys_experiment_table)
+        end
+
+        function ophys_session_table = postprocess_behaviorsession_table(obj, ophys_session_table)
+        end
+   
+        function ophys_cell_table = postprocess_ophyscell_table(obj, ophys_cell_table)
+        end
+   
+    end
+
     methods (Static, Access = private) % Postprocess manifest item tables
         function ophys_session_table = preprocess_ophyssession_table(ophys_session_table)
-            ophys_session_table.id = uint32(ophys_session_table.behavior_session_id);
+            
+            import bot.item.internal.Manifest.recastTableVariables
+            ophys_session_table = recastTableVariables(ophys_session_table);
+
+            % Assign the item id.
+            ophys_session_table.id = ophys_session_table.ophys_session_id;
         end
 
         function ophys_experiment_table = preprocess_ophysexperiment_table(ophys_experiment_table)
-            return
-            % - Convert variables to useful types
-            ophys_experiment_table.id = uint32(ophys_experiment_table.id);
-            ophys_experiment_table.failed_facet = uint32(ophys_experiment_table.failed_facet);
-            ophys_experiment_table.isi_experiment_id = uint32(ophys_experiment_table.isi_experiment_id);
-            ophys_experiment_table.specimen_id = uint32(ophys_experiment_table.specimen_id);
+            import bot.item.internal.Manifest.recastTableVariables
+            
+            varNamesToInt = {'ophys_experiment_id'};
+
+            ophys_experiment_table = bot.internal.util.castTableVariables(...
+                ophys_experiment_table, varNamesToInt, 'uint32');
+
+            ophys_experiment_table = recastTableVariables(ophys_experiment_table);
+
+            % Assign the item id.
+            ophys_experiment_table.id = ophys_experiment_table.ophys_experiment_id;
         end
     
         function ophys_session_table = preprocess_behaviorsession_table(ophys_session_table)
+            import bot.item.internal.Manifest.recastTableVariables
             
-            num_sessions = size(ophys_session_table, 1);
-            
-% % %             % - Label as ophys sessions
-% % %             ophys_session_table = addvars(ophys_session_table, ...
-% % %                 repmat(categorical({'OPhys'}, {'EPhys', 'OPhys'}), num_sessions, 1), ...
-% % %                 'NewVariableNames', 'type', ...
-% % %                 'before', 1);
-% % %             
-% % %             % - Create `cre_line` variable from specimen field of session
-% % %             %  table and append it back to session table.
-% % %             % `cre_line` is important, makes life easier if it's explicit
-% % %             cre_line = cell(num_sessions, 1);
-% % %             for i = 1:num_sessions
-% % %                 donor_info = ophys_session_table(i, :).specimen.donor;
-% % %                 transgenic_lines_info = struct2table(donor_info.transgenic_lines);
-% % %                 cre_line(i, 1) = transgenic_lines_info.name(not(cellfun('isempty', strfind(transgenic_lines_info.transgenic_line_type_name, 'driver')))...
-% % %                     & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
-% % %             end
-% % %             
-% % %             ophys_session_table = addvars(ophys_session_table, cre_line, ...
-% % %                 'NewVariableNames', 'cre_line');
-            
-            % - Convert variables to useful types
-            ophys_session_table.behavior_session_id = uint32(ophys_session_table.behavior_session_id);
-            ophys_session_table.file_id = uint32(ophys_session_table.file_id);
-            %ophys_session_table.date_of_acquisition = datetime(ophys_session_table.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-            ophys_session_table.mouse_id = uint32(ophys_session_table.mouse_id);
-            
-            ophys_session_table.session_type = string(ophys_session_table.session_type);
-            ophys_session_table.indicator = categorical(string(ophys_session_table.indicator)); 
-            ophys_session_table.sex = string(ophys_session_table.sex);
-            ophys_session_table.reporter_line = string(ophys_session_table.reporter_line);  
-            ophys_session_table.cre_line = string(ophys_session_table.cre_line);  
+            ophys_session_table.date_of_acquisition = datetime(ophys_session_table.date_of_acquisition, ...
+                'InputFormat','yyyy-MM-dd HH:mm:ss.SSSSSSZZZZZ','TimeZone','UTC');
 
+            ophys_session_table = recastTableVariables(ophys_session_table);
+            ophys_session_table.id = ophys_session_table.behavior_session_id;
         end
 
         function ophys_cell_table = preprocess_ophyscell_table(ophys_cell_table)
-            return
-            % - Convert variables to useful types
-            ophys_cell_table.experiment_container_id = uint32(ophys_cell_table.experiment_container_id);
-            ophys_cell_table.id = uint32(ophys_cell_table.cell_specimen_id); % consider renaming on query
-            ophys_cell_table = removevars(ophys_cell_table, 'cell_specimen_id');
-            ophys_cell_table.specimen_id = uint32(ophys_cell_table.specimen_id);
             
-            ophys_cell_table.tlr1_id = uint32(ophys_cell_table.tlr1_id);
-            ophys_cell_table.tld1_id = uint32(ophys_cell_table.tld1_id);            
-
-            % - Convert metric (replace empty with nan)
-            metric_varnames = {'reliability_dg', 'reliability_nm1_a', 'reliability_nm1_b', ...
-                'reliability_nm2', 'reliability_nm3', 'reliability_ns', 'reliability_sg', ...
-                'dsi_dg', 'g_dsi_dg', 'g_osi_dg', 'g_osi_sg', 'image_sel_ns', 'osi_dg', ...
-                'osi_sg', 'p_dg', 'p_ns', 'p_run_mod_dg', 'p_run_mod_ns', 'p_run_mod_sg', ...
-                'p_sg', 'peak_dff_dg', 'peak_dff_ns', 'peak_dff_sg', 'pref_dir_dg', 'pref_image_ns', ...
-                'pref_ori_sg', 'pref_phase_sg', 'pref_sf_sg', 'pref_tf_dg', 'rf_area_off_lsn', ...
-                'rf_area_on_lsn', 'rf_center_off_x_lsn', 'rf_center_off_y_lsn', 'rf_center_on_x_lsn', ...
-                'rf_center_on_y_lsn', 'rf_chi2_lsn', 'rf_distance_lsn', 'rf_overlap_index_lsn', ...
-                'run_mod_dg', 'run_mod_ns', 'run_mod_sg', 'sfdi_sg', 'tfdi_dg', 'time_to_peak_ns', ...
-                'time_to_peak_sg', 'tld2_id', 'reliability_nm1_c'};
-                
-            ophys_cell_table = convert_metric_vars(ophys_cell_table, metric_varnames);  
+            import bot.item.internal.Manifest.recastTableVariables
             
-            ophys_cell_table.tld2_id = uint32(ophys_cell_table.tld2_id);
+            varNamesToInt = {'ophys_experiment_id'};
 
-            function table = convert_metric_vars(table, varnames)
 
-                function metric = convert_cell_metric(metric)
-                    metric(cellfun(@isempty, metric)) = {nan};
-                    metric = [metric{:}]';
-                end
-                
-                for var = varnames
-                    table.(var{1}) = convert_cell_metric(table.(var{1}));
-                end
-            end
+            ophys_cell_table.id = ophys_cell_table.cell_specimen_id;
+
+            ophys_cell_table = bot.internal.util.castTableVariables(...
+                ophys_cell_table, varNamesToInt, 'uint64');
+
+            ophys_cell_table = recastTableVariables(ophys_cell_table);
         end
     end
 
@@ -301,4 +280,66 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
             tbl.Properties.UserData.type = 'VisualBehaviorOphys';
         end
     end
+end
+
+function return_table = fetch_grouped_uniques(source_table, scan_table, source_grouping_var, scan_grouping_var, scan_var, source_new_var)
+% fetch_grouped_uniques - FUNCTION Find unique values in a table, grouped by a particular key
+%
+% return_table = fetch_grouped_uniques(source_table, scan_table, strGroupingVarSource, scan_grouping_var, scan_var, source_new_var)
+%
+% `source_table` and `scan_table` are both tables, which can be joined by matching
+% variables `source_table.(strGroupingVarSource)` with
+% `scan_table.(strGroupingVarScan)`.
+%
+% This function finds all `scan_table` rows that match `source_table` rows
+% (essentially a join on source_grouping_var ==> scan_grouping_var),
+% then collects all unique values of `scan_table.(scan_var)` in those rows.
+% The collection of unique values is then copied to the new variable
+% `source_table.(source_new_var)` for all those matching source rows in
+% `source_table`.
+
+% - Get list of keys in `scan_table`.(`scan_grouping_var`)
+all_keys_scan = scan_table.(scan_grouping_var);
+
+% - Get list of keys in `source_table`.(`source_grouping_var`)
+all_keys_source = source_table.(source_grouping_var);
+
+% - Make a new cell array for `source_table` to contain unique values
+groups = cell(size(source_table, 1), 1);
+
+% - Loop over unique scan keys
+for source_row_index = 1:numel(all_keys_source)
+    % - Get the key for this row
+    this_key = all_keys_source(source_row_index);
+    
+    % - Find rows in scan matching this group (can be cells; `==` doesn't work)
+    if iscell(all_keys_scan)
+        vbScanGroupRows = arrayfun(@(o)isequal(o, this_key), all_keys_scan);
+    else
+        vbScanGroupRows = all_keys_scan == this_key;
+    end
+    
+    % - Extract all values in `scan_table`.(`scan_var`) for the matching rows
+    all_values = reshape(scan_table{vbScanGroupRows, scan_var}, [], 1);
+    
+    % - Find unique values for this group
+    if iscell(all_values)
+        % - Handle "empty" values
+        is_empty_value = cellfun(@isempty, all_values);
+        if any(is_empty_value)
+            unique_values = [unique(all_values(~is_empty_value)); {[]}];
+        else
+            unique_values = unique(all_values);
+        end
+    else
+        unique_values = unique(all_values);
+        if iscolumn(unique_values); unique_values = unique_values'; end
+    end
+    
+    % - Assign these unique values to row in `source_Table`
+    groups(source_row_index) = {unique_values};
+end
+
+% - Add the groups to `source_table`
+return_table = addvars(source_table, groups, 'NewVariableNames', source_new_var);
 end
