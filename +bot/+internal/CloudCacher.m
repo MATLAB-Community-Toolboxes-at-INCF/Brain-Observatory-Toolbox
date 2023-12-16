@@ -137,11 +137,10 @@ classdef CloudCacher < handle
                    cleanUpFileDownload(strCacheFilename, fileSizeWeb) );
 
                % - Download data from the provided URL and save
-              strCacheFilename = downloadFile(strCacheFilename, fileDownloadUrl, ...
+               strCacheFilename = downloadFile(strCacheFilename, fileDownloadUrl, ...
                   'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'));
 
                % - Check that we got the complete file
-               fileSizeWeb = bot.internal.util.getWebFileSize(strURL);
                fileSizeLocal = bot.internal.util.getLocalFileSize(strCacheFilename);
                
                if fileSizeWeb == fileSizeLocal
