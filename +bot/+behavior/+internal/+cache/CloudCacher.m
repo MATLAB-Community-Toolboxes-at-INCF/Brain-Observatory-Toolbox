@@ -129,8 +129,8 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
                     
                     % - Download data from the provided URL and save
                     absoluteFilePath = downloadFile(absoluteFilePath, downloadUrl, ...
-                       'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'), ...
-                        'Title', options.FileNickname);
+                        'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'), ...
+                        'Title', sprintf('Downloading file (%s)...', options.FileNickname));
                 
                     % - Check that we got the complete file
                     fileSizeLocal = bot.internal.util.getLocalFileSize(absoluteFilePath);
