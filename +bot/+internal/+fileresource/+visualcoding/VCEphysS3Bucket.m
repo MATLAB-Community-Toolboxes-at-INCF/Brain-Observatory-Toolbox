@@ -70,7 +70,7 @@ classdef VCEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
 
     methods (Static)
         
-        function relativeFilePath = getRelativeFileUriPath(itemObject, nickname)%, varargin)
+        function relativeFilePath = getRelativeFileUriPath(itemObject, nickname, options)
         %getRelativeFileUriPath Get subfolders and filename for file given nickname
         %
         % Bucket Organization for neuropixels data :
@@ -109,6 +109,8 @@ classdef VCEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             arguments
                 itemObject             % Class object
                 nickname char          % One of: SessNWB
+                options.ExperimentId (1,1) string = ""
+
                 %probeId = 1 % Todo
                 %movieNumber = 1 % Todo
                 %sceneNumber = 1 % Todo
@@ -128,6 +130,10 @@ classdef VCEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             elseif isa(itemObject, 'bot.item.Probe')
                 experimentId = num2str(itemObject.session.id);
                 probeId = num2str(itemObject.id);
+            end
+
+            if isempty(itemObject) && options.ExperimentId ~= ""
+                experimentId = options.ExperimentId;
             end
 
             switch nickname
