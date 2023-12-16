@@ -70,7 +70,7 @@ classdef VCOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
 
     methods (Static)
         
-        function relativeFilePath = getRelativeFileUriPath(itemObject, nickname)
+        function relativeFilePath = getRelativeFileUriPath(itemObject, nickname, options)
         %getRelativeFileUriPath Get subfolders and filename for file given nickname
         %
         % Bucket Organization for 2-photon data :
@@ -98,10 +98,17 @@ classdef VCOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             arguments
                 itemObject      % Item object
                 nickname char   % One of : SessNWB
+                options.ExperimentID = []
             end
 
-            experimentId = num2str(itemObject.id);
-            sessionName = itemObject.session_type;
+            if ~isempty(itemObject)
+                experimentId = num2str(itemObject.id);
+                sessionName = itemObject.session_type;
+            end
+
+            if isempty(itemObject) && ~isempty(options.ExperimentID)
+                experimentId = string( options.ExperimentID );
+            end
         
             switch nickname
         
