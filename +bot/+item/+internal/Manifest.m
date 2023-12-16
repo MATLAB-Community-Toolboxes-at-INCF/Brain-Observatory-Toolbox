@@ -1,5 +1,6 @@
 % Manifest — Create or download a manifest from the Allen Brain Observatory
 
+% Todo: rename to MetadataTables.
 
 classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixin.OnDemandProps
        
@@ -76,7 +77,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             manifest.fetchAll()
         end
     
-        function clearManifest(manifest, clearMemoOnly)
+        function clearManifest(manifest, clearMemoOnly, itemTypeToClear)
         %clearManifest Clear the manifest contents (item tables)
         %
         %   clearManifest(manifest) clears the manifest from memory.
@@ -90,10 +91,15 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             arguments
                 manifest (1,1) bot.item.internal.Manifest
                 clearMemoOnly (1,1) logical = true
+                itemTypeToClear (:, 1) string = "all"
+            end
+
+            if itemTypeToClear == "all"
+                itemTypeToClear = manifest.ITEM_TYPES;
             end
 
             if ~clearMemoOnly
-                for itemType = manifest.ITEM_TYPES
+                for itemType = itemTypeToClear
                     
                     % - Remove temporary item table data from disk cache
                     manifest.clearTempTableFromCache(itemType)
@@ -112,7 +118,6 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             % - Reset singleton instance
             manifest.instance("clear");
         end
-
     end
 
     methods (Abstract, Access = protected)
@@ -168,6 +173,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         %   itemType must be a character vector or a string and must be a
         %   member of one of the ITEM_TYPES of the concrete manifest.
             
+        %   Todo: This should be managed by the cache
             downloadFrom = manifest.DOWNLOAD_FROM(itemType);
 
             if strcmp(downloadFrom, "")
@@ -186,14 +192,9 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         function dataTable = download_table_from_s3(manifest, itemType)
         %download_table_from_s3 download item table from ABO S3 bucket
 
-            import bot.internal.enum.URILookup
-
             mustBeMember(itemType, manifest.ITEM_TYPES) % Sanity check
-            datasetType = char(manifest.DATASET_TYPE);
-
-            %strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
             
-            strURI = manifest.FileResource.getItemTableURI(datasetType, itemType);
+            strURI = manifest.FileResource.getItemTableURI(itemType);
             objURI = matlab.net.URI(strURI);
 
             switch objURI.Scheme
@@ -204,17 +205,13 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                 case 'https'
                     strCachedFilepath = manifest.cache.CacheFile(strURI, '');
             end
-            % Todo: Consider to move the logic above into cache/CacheFile,
-            % but need to also adapt LinkedFilesItem to use URILookup first
-
+            % Todo: Move the logic above into cache/CacheFile
             dataTable = manifest.readS3ItemTable(strCachedFilepath);
         end
 
         function dataTable = download_table_from_api(manifest, itemType)
         %download_table_from_api download item table from ABO api
 
-            import bot.internal.enum.URILookup
-                               
             mustBeMember(itemType, manifest.ITEM_TYPES) % Sanity check
             datasetType = char(manifest.DATASET_TYPE);
 
@@ -223,11 +220,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             else
                 nvPairs = {'SortingAttributeName', "id"};
             end
-
-            strURL = URILookup.API.getItemTableURI(datasetType, itemType);
+            
+            fileResource = bot.internal.fileresource.WebApi.instance();
+            strURL = fileResource.getItemTableURI(datasetType, itemType);
             dataTable = manifest.cache.CachedRMAQuery(strURL, nvPairs{:});
         end
-
     end
     
     methods (Access = protected) % Utility methods for subclasses
@@ -241,17 +238,16 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         
         %   Note: Try to clear table data as retrieved from both S3 bucket
         %   and web API.
-
-            import bot.internal.enum.URILookup
-            
+        
             datasetType = char(manifest.DATASET_TYPE);
             diskCache = manifest.cache;
 
             warning('off', 'CloudCacher:URLNotInCache')
-            
-            strURI = URILookup.S3.getItemTableURI(datasetType, itemType);
+            strURI = manifest.FileResource.getItemTableURI(itemType);
             diskCache.CloudCacher.remove(strURI)
-            strURI = URILookup.API.getItemTableURI(datasetType, itemType);
+
+            apiFileResource = bot.internal.fileresource.WebApi.instance();
+            strURI = apiFileResource.getItemTableURI(datasetType, itemType);
             diskCache.CloudCacher.removeURLsMatchingSubstring(strURI)
 
             warning('on', 'CloudCacher:URLNotInCache')
@@ -279,25 +275,39 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         end
     
     end
-
+    
     %% STATIC METHODS - PUBLIC
     methods (Static)
 
-        function manifest = instance(type)
+        function manifest = instance(type, dataset)
             
             arguments
-                type (1,1) string {mustBeMember(type, ["ephys" "ophys"])}
+                type (1,1) string {mustBeMember(type, ["Ephys" "Ophys"])}
+                dataset (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
             end
             
-            switch(lower(type))
-                case 'ophys'
-                    manifest = bot.item.internal.OphysManifest.instance();
-                    
-                case 'ephys'
-                    manifest = bot.item.internal.EphysManifest.instance();
-                    
+            switch dataset.Name
+                case "VisualCoding"
+                    switch(lower(type))
+                        case 'ophys'
+                            manifest = bot.item.internal.OphysManifest.instance();
+                        case 'ephys'
+                            manifest = bot.item.internal.EphysManifest.instance();
+                    end
+
+                case "VisualBehavior"
+                    switch(lower(type))
+                        case 'ophys'
+                            manifest = bot.internal.metadata.VisualBehaviorOphysManifest.instance();
+                        case 'ephys'
+                            manifest = bot.internal.metadata.VisualBehaviorEphysManifest.instance();
+                    end
+
+                case "All"
+                    error('Can only return one manifest, please specify one dataset')
+
                 otherwise
-                    error('`manifest_type` must be one of {''ophys'', ''ephys''}');
+                    error('Dataset "%s" does not have any associated item tables', dataset.Name)
             end
         end         
         
@@ -355,6 +365,9 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                         assert(all(cellfun(@(x)isempty(x{end}),var))); % all the cell string arrays end with an empty double array, for reason TBD
                         tbl.(varNames(varIdx)) = cellfun(@(x)join(string(x(1:end-1))',"; "),var); % convert each cell element to string, skipping the ending empty double array
                         
+                    elseif iscategorical(var{1})
+                        % pass
+
                     else % case of: 'almost' cell string arrays, w/ empty values represented as numerics
                         assert(all(cellfun(@isempty,var(cellfun(@(x)~ischar(x),var)))));
                         
@@ -363,7 +376,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                         tbl.(varNames(varIdx)) = categorical(string(var2)); % strings are scalars in this case --> convert to categorical
                     end
                 end
-            end   
+            end
             
             %% Convert ophys area from cell types to string/cateorical type
             % TODO: refactor to generalize this for all cell2str convers (some of which is currently implemented in ephysmanifest)
@@ -447,7 +460,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             countVars = refinedVars(refinedVars.contains("count")); % counts of linked items
             dateVars = refinedVars(refinedVars.contains("date"));
             typeVars = refinedVars(refinedVars.contains("_type")); % specifies some type of the item, i.e. a categorical
-            genotypeVars = refinedVars(refinedVars.endsWith(["genotype" "cre_line"])); % specifies the various transgenic lines crossed, can become a long string
+            genotypeVars = refinedVars(refinedVars.endsWith(["genotype" "cre_line", "driver_line", "reporter_line"])); % specifies the various transgenic lines crossed, can become a long string
             stimVars = refinedVars(refinedVars.contains("stimulus")); % specifies which named external stimulus set is applied for the item, i.e. a categorical           
             
             structVars = refinedVars(refinedVars.contains("structure")); %& ~refinedVars.endsWith("id")); % lists out brain structure(s) associated to the item in a stringish way
@@ -502,6 +515,44 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             
         end
 
+        function tbl = renameTableVariables(tbl)
+        % renameTableVariables - Rename table variables
+
+            import bot.internal.metadata.utility.itemTableVariableRenameMap
+
+            nameMap = itemTableVariableRenameMap();
+            tableVarNames = tbl.Properties.VariableNames;
+
+            for iName = nameMap.keys()'
+                isMatched = strcmp(tableVarNames, iName);
+                if any(isMatched)
+                    newName = nameMap(iName);
+                    tbl.Properties.VariableNames(isMatched) = string(newName);
+                end
+            end
+        end
+    
+        function T = recastTableVariables(T)
+        % recastTableVariables - Change types of table variables
+
+            import bot.internal.metadata.utility.itemTableTypeConversionMap
+
+            % Load a map of conversion functions for variable names.
+            recastFcnMap = itemTableTypeConversionMap();
+            
+            varNames = string(T.Properties.VariableNames);
+
+            for iVarName = varNames
+                if isKey(recastFcnMap, iVarName)
+                    recastFcn = recastFcnMap(iVarName);
+                    try
+                        T.(iVarName) = recastFcn( T.(iVarName) );
+                    catch ME
+                        warning(ME.identifier, 'Could not convert "%s". Cause by: %s', iVarName, ME.message)
+                    end
+                end
+            end
+        end
     end
 
 end

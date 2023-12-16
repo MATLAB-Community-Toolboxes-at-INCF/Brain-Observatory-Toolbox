@@ -59,6 +59,10 @@ classdef EphysManifest < bot.item.internal.Manifest
         ephys_units        % Table of all EPhys units
     end
 
+    properties (Dependent)
+        EphysSessions
+    end
+
 % %     properties (SetAccess = private, Dependent = true) % Todo: rename?
 % %         Sessions     % Table of all EPhys experimental sessions
 % %         Probes       % Table of all EPhys probes
@@ -76,7 +80,7 @@ classdef EphysManifest < bot.item.internal.Manifest
     end
 
     properties (Access = protected)
-        FileResource = bot.internal.fileresource.S3Bucket.instance()
+        FileResource = bot.internal.fileresource.visualcoding.VCEphysS3Bucket.instance()
     end  
 
     %% Constructor
@@ -153,7 +157,13 @@ classdef EphysManifest < bot.item.internal.Manifest
         end
 
     end
-    
+        
+    methods % Getters for alias property names
+        function sessionTable = get.EphysSessions(oManifest)
+            sessionTable = oManifest.fetch_cached('ephys_sessions', ...
+                    @(itemType) oManifest.fetch_item_table('Session') );
+        end
+    end 
 
     %% Low-level getter method for EPhys item tables
     methods (Access = protected)
@@ -248,7 +258,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             
             % - Get structure acronyms Todo?
             session_table = fetch_grouped_uniques(session_table, joint_channel_table, ...
-                'id', 'ephys_session_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
+                'id', 'ephys_session_id', 'ephys_structure_acronym', 'structure_acronyms');
         end
 
         function probe_table = add_linked_item_counts_to_probe_table(eManifest, probe_table)
