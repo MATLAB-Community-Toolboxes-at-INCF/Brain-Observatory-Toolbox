@@ -85,7 +85,10 @@ classdef VBOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             
             if ~isempty(itemObject)
                 if isfield(itemObject.info, 'ophys_experiment_id')
-                    if isnumeric(itemObject.info.ophys_experiment_id)
+                       
+                    if isempty(itemObject.info.ophys_experiment_id)
+                        %pass
+                    elseif isnumeric(itemObject.info.ophys_experiment_id)
                         ophysExperimentId = string(itemObject.info.ophys_experiment_id);
                     else
                         exp_id = eval(itemObject.info.ophys_experiment_id); % For session items, this is a character vector represending a list of ids
@@ -113,6 +116,9 @@ classdef VBOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
                         ophysExperimentId);
                 
                 case 'BehaviorNWB'
+                    if ~isempty(itemObject)
+                        behaviorSessionId = string(itemObject.id);
+                    end
                     folderPath = 'behavior_sessions';
                     fileName = sprintf('behavior_session_%s.nwb', behaviorSessionId);
             end
@@ -120,7 +126,6 @@ classdef VBOphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             relativeFilePath = fullfile(folderPath, fileName);
         end
     end
-
 end
 
 function strURI = uriJoin(varargin)

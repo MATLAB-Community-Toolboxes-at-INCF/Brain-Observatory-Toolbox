@@ -1,6 +1,13 @@
 classdef LocalFileCache < handle
 %LocalCacher Abstract class for managing a local file cache.
 
+    % Idea:
+    % Make CacheManifest SetAccess = private and add an insert method for
+    % subclasses.
+    %
+    %   The insert method should validate that inserted values are indeed
+    %   relative filepaths of existing files?
+
     properties (Abstract, Constant)
         CacheName
     end
@@ -25,16 +32,16 @@ classdef LocalFileCache < handle
     end
 
     properties (Access = protected)
-        % CacheMap - Dictionary containing data that have been cached, 
+        % CacheManifest - Dictionary containing data that have been cached, 
         % consisting of key-value pairs where the key is a "cache key" and 
         % the value is the relative filepath for the cached file in the 
         % cache directory.
-        CacheMap %dictionary = dictionary
+        CacheManifest dictionary = dictionary
     end
 
     properties (Dependent, Access = private)
         % Filepath for a .mat file containing the cache manifest / map
-        CacheMapFilePath (1,1) string
+        CacheManifestFilePath (1,1) string
     end
 
     properties (SetAccess = immutable)
@@ -89,7 +96,7 @@ classdef LocalFileCache < handle
             if obj.IsTemporaryCache
                 rmdir(obj.CacheDirectory, 's');
             else
-                %obj.saveCacheMap()
+                %obj.saveCacheManifest()
             end
         end
     end
@@ -117,8 +124,14 @@ classdef LocalFileCache < handle
         %   key is a string identifying a key that exists in the cache.
         %   filePath will be the full file path containing the object data
         %   for the key.
-        
-            filePath = fullfile(obj.CacheDirectory, obj.CacheMap(key));
+            
+            if ~contains(obj.CacheManifest(key), obj.CacheDirectory)
+                filePath = fullfile(obj.CacheDirectory, obj.CacheManifest(key));
+            else
+                filePath = obj.CacheManifest(key);
+            end
+            % Todo: Fix filesep if they are wrong. I.e cache may have
+            % been created on one platform and opened on a second.
         end
         
         function tf = isInCache(obj, key) % todo: rename to isFileInCache
@@ -140,7 +153,7 @@ classdef LocalFileCache < handle
         %           is false.
     
             % - Check whether the key is in the cache
-            if obj.CacheMap.isKey(key)
+            if obj.CacheManifest.isKey(key)
                 % - Check that the cache file actually exists
                 tf = isfile( obj.getCachedFilePathForKey(key) );
                 if ~tf
@@ -183,10 +196,10 @@ classdef LocalFileCache < handle
                     warning(getReport(mE_Base, 'extended', 'hyperlinks', 'on'));
                 end
                 
-                % - Remove key from map
-                obj.CacheMap.remove(key);
+                % - Remove key from manifest
+                obj.CacheManifest.remove(key);
             end
-            obj.saveCacheMap()
+            obj.saveCacheManifest()
         end
     end
 
@@ -201,10 +214,22 @@ classdef LocalFileCache < handle
         %
         %   Note: This method does NOT indicate whether the file exists in 
         %   the cache.
+
+        % Todo: Rename to getAbsolutePathname
             
             filePath = fullfile(obj.CacheDirectory, strFilename);
         end
 
+        function relativePathName = getRelativePathname(obj, pathName)
+        % getRelativePathname - Get pathname relative to cache location
+
+            if contains( pathName, obj.CacheDirectory )
+                relativePathName = replace(pathName, obj.CacheDirectory, '');
+                if strncmp(relativePathName, filesep, 1)
+                    % pass, todo?
+                end
+            end
+        end
     end
       
     methods % Set/get methods
@@ -214,51 +239,61 @@ classdef LocalFileCache < handle
             obj.onCacheDirectorySet()
         end
 
-        function filePath = get.CacheMapFilePath(obj)
+        function filePath = get.CacheManifestFilePath(obj)
             fileName = sprintf('%s_manifest.mat', obj.CacheName);
             filePath = fullfile(obj.CacheDirectory, fileName); %'OC_manifest.mat');
         end
 
         function size = get.CacheLength(obj)
-            size = length(obj.CacheMap);
+            size = length(obj.CacheManifest);
         end
 
         function keys = get.Keys(obj)
-            keys = string(obj.CacheMap.keys());
+            keys = string(obj.CacheManifest.keys());
         end
     end
 
-    methods (Access = private)
+    methods (Access = protected)
         
-        function saveCacheMap(obj)
-        %saveCacheMap - Store the cache map for this cache object
+        function saveCacheManifest(obj)
+        %saveCacheManifest - Store the cache manifest for this cache object
         %
         %   Syntax: 
-        %   saveCacheMap(obj) saves the cache map to the cache directory.
+        %   saveCacheManifest(obj) saves the cache manifest to the cache directory.
         %   
-        %   Note: This function writes the cache map to disk. Should not
+        %   Note: This function writes the cache manifest to disk. Should not
         %   need to be called by the end user.
          
-            CacheMap = obj.CacheMap; %#ok<PROP>
+            CacheManifest = obj.CacheManifest; %#ok<PROP>
             strVersion = obj.Version;
-            save(obj.CacheMapFilePath, 'CacheMap', 'strVersion');
+            save(obj.CacheManifestFilePath, 'CacheManifest', 'strVersion');
         end
 
-        function loadCacheMap(obj)
-        %loadCacheMap - Load the cache map for this cache object
+        function loadCacheManifest(obj)
+        %loadCacheManifest - Load the cache manifest for this cache object
         %
         %   Syntax: 
-        %   loadCacheMap(obj) loads the cache map from the cache directory.
+        %   loadCacheManifest(obj) loads the cache manifest from the cache directory.
         %   
-        %   Note: This function reads the cache map from disk. Should not
+        %   Note: This function reads the cache manifest from disk. Should not
         %   need to be called by the end user.
         
-            S = load(obj.CacheMapFilePath);
+            S = load(obj.CacheManifestFilePath);
             assert(isequal(S.strVersion, obj.Version));
             try
-                obj.CacheMap = S.CacheMap;
+                try
+                    obj.CacheManifest = S.CacheManifest;
+                catch
+                    obj.CacheManifest = S.CacheMap;
+                    obj.saveCacheManifest()
+                end
             catch % Legacy
-                obj.CacheMap = S.mapCachedData;
+                obj.CacheManifest = S.mapCachedData;
+            end
+
+            if isa(obj.CacheManifest, 'containers.Map') % Convert to dictionary
+                keys = string(obj.CacheManifest.keys()); values = string(obj.CacheManifest.values());
+                obj.CacheManifest = dictionary(keys, values);
             end
         end
       
@@ -269,18 +304,16 @@ classdef LocalFileCache < handle
             if ~isfolder(obj.CacheDirectory)
                 mkdir(obj.CacheDirectory);
             end
-
-            % - Initialize manifest
-            % obj.CacheMap = containers.Map();
          
             % - Does a saved cache manifest exist?
-            if isfile(obj.CacheMapFilePath)
+            if isfile(obj.CacheManifestFilePath)
                 try
-                    obj.loadCacheMap()
+                    obj.loadCacheManifest()
                 catch
                     warning("LocalFileCache:InvalidManifest", ...
                        "Could not load saved manifest. " + ...
                        "Starting with an empty cache");
+                    obj.CacheManifest = dictionary();
                 end
             end
         end
@@ -293,7 +326,7 @@ classdef LocalFileCache < handle
         end
 
         function removeAll(obj)
-           keys = obj.CacheMap.keys();
+           keys = obj.CacheManifest.keys();
            
            for key = string(keys)
                obj.remove(key);

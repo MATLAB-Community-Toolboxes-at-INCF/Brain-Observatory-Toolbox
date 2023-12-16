@@ -4,6 +4,10 @@
 % `websave` that are cached locally. It is stateful, and can be
 % reinitialised by providing the location of an extant cache dir.
 
+% Note: This is a duplicate of bot.internal.CloudCacher, but with support
+% for a custom cache key, i.e not using api urls. Bot should be upgraded
+% to use this version
+
 classdef CloudCacher < bot.internal.abstract.LocalFileCache
 
     properties (Constant)
@@ -65,7 +69,7 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
             end
         end
         
-        function strCacheFilename = websave(obj, strRelativeFilename, strURL, varargin)
+        function absoluteFilePath = websave(obj, relativeFilePath, downloadUrl, options)
         % websave - Cached replacement for websave function
         %
         % Usage: strCacheFilename = obj.websave(strRelativeFilename, strURL, ...)
@@ -77,59 +81,66 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
         % (Todo: Consider to reimplement):
         % Optional additional arguments are passed to `websave`.
             
+            arguments
+                obj
+                relativeFilePath (1,1) string
+                downloadUrl (1,1) string
+                options.CacheKey (1,1) string = string.empty
+                options.FileNickname (1,1) string = string.empty
+            end
+
             import bot.external.fex.filedownload.downloadFile
             
-            % Check varargin for optional SecondaryFileUrl (Todo: Add documentation)
-            isSecondaryFileArg = cellfun(@(arg) ischar(arg) && strcmp(arg, 'SecondaryFileUrl'), varargin);
-            if any( isSecondaryFileArg )
-                fileDownloadUrl = varargin{ find(isSecondaryFileArg) + 1};
-                %varargin(find(isSecondaryFileArg) + 0:1) = []; Placeholder
+            if isempty( options.CacheKey )
+                cacheKey = downloadUrl;
             else
-                fileDownloadUrl = strURL;
+                cacheKey = options.CacheKey;
             end
-            
+
             try
                 % - Is the URL already in the cache?
-                if obj.isInCache(strURL) && exist(obj.getCachedFilePathForKey(strURL), 'file')
+                if obj.isInCache(cacheKey) && isfile(obj.getCachedFilePathForKey(cacheKey))
                     % - Yes, so read the cached file
-                    strCacheFilename = obj.getCachedFilePathForKey(strURL);
+                    absoluteFilePath = obj.getCachedFilePathForKey(cacheKey);
                 else
                     % - No, so we need to download and cache it
                     
                     % - Get a filename for the cache
-                    if strRelativeFilename == ""
-                        strRelativeFilename = generateTemporaryFilename(strURL); % local fcn
+                    if relativeFilePath == ""
+                        relativeFilePath = generateTemporaryFilename(downloadUrl); % local fcn
                     end
                    
                     % - Convert the filename to a file in the cache
-                    strCacheFilename = obj.getCachedFilename(strRelativeFilename);
+                    absoluteFilePath = obj.getCachedFilename(relativeFilePath);
                     
                     % - Ensure any required cache subdirectories exist
                     w = warning('off', 'MATLAB:MKDIR:DirectoryExists');
-                    mkdir(fileparts(strCacheFilename));
+                    mkdir(fileparts(absoluteFilePath));
                     warning(w);
                    
                     % - Check if the filename exists and warn
-                    if exist(strCacheFilename, 'file')
+                    if exist(absoluteFilePath, 'file')
                         warning('CloudCacher:FileExists', 'The specified file already exists; overwriting.');
                     end
                    
-                    fileSizeWeb = bot.internal.util.getWebFileSize(fileDownloadUrl);
+                    fileSizeWeb = bot.internal.util.getWebFileSize(downloadUrl);
                     C = onCleanup( @(filename, filesize) ...
-                        cleanUpFileDownload(strCacheFilename, fileSizeWeb) );
-                
+                        cleanUpFileDownload(absoluteFilePath, fileSizeWeb) );
+                    
                     % - Download data from the provided URL and save
-                    strCacheFilename = downloadFile(strCacheFilename, fileDownloadUrl, ...
-                       'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode') );
+                    absoluteFilePath = downloadFile(absoluteFilePath, downloadUrl, ...
+                       'DisplayMode', bot.internal.Preferences.getPreferenceValue('DialogMode'), ...
+                        'Title', options.FileNickname);
                 
                     % - Check that we got the complete file
-                    fileSizeLocal = bot.internal.util.getLocalFileSize(strCacheFilename);
+                    fileSizeLocal = bot.internal.util.getLocalFileSize(absoluteFilePath);
+                   
                     if fileSizeWeb == fileSizeLocal
                         % - Add URL to cache and save manifest
-                        obj.CacheManifest(strURL) = strRelativeFilename;
+                        obj.CacheManifest(cacheKey) = relativeFilePath;
                         obj.saveCacheManifest();
                     else
-                        delete(strCacheFilename) % Delete file if incomplete
+                        delete(absoluteFilePath) % Delete file if incomplete
                         error('CloudCacher:DownloadFailed', 'Something went wrong during download. Please try again.')
                     end
                 end

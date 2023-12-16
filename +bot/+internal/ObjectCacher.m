@@ -70,7 +70,7 @@ classdef ObjectCacher < bot.internal.abstract.LocalFileCache
                 if obj.isInCache(key)
                     % - Get the existing data store for this object
                     objectFilepath = obj.getCachedFilePathForKey(key);
-                   
+                    strRelativeFilename = obj.CacheManifest(key);
                 else
                     % - Get a new filename for the cache object store
                     if numel(char(key)) > 128 || ~strcmp(key, matlab.lang.makeValidName(key))
@@ -98,8 +98,8 @@ classdef ObjectCacher < bot.internal.abstract.LocalFileCache
                 save(objectFilepath, 'object');
                 
                 % - Add URL to cache and save manifest
-                obj.CacheMap(key) = strRelativeFilename;
-                obj.saveManifest();
+                obj.CacheManifest(key) = strRelativeFilename;
+                obj.saveCacheManifest();
             
             catch mErr_Cause
                 % - Throw an exception

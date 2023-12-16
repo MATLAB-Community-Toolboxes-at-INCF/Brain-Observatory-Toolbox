@@ -116,6 +116,9 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
                         ephysExperimentId);
 
                 case 'BehaviorNWB'
+                    if ~isempty(itemObject)
+                        behaviorSessionId = string(itemObject.id);
+                    end
                     folderPath = fullfile('behavior_only_sessions', behaviorSessionId);
                     fileName = sprintf('behavior_session_%s.nwb', behaviorSessionId);
 
