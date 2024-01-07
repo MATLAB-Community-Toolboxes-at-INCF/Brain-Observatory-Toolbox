@@ -13,19 +13,19 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
         % Nickname - This is the name of a linked file instance as it is
         % referred to in a FileResource class and it is used to resolve the
         % remote file location for the file.
-        Nickname char
+        Nickname char % Todo: string
     end
 
     properties (Access = protected, Hidden)
-        AutoDownload = false
+        AutoDownload (1,1) logical = false
     end
 
     properties (SetAccess = private, Hidden)
-        FilePath
+        FilePath % Todo: string
     end
 
     properties (Access = protected, Hidden)
-        IsInitialized = false
+        IsInitialized (1,1) logical = false
     end
 
     methods % Constructor
@@ -35,6 +35,8 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
             obj.FilePath = filePath;
             obj.Nickname = nickname;
             
+            obj.initializeProperties()
+
             if nargin < 1; return; end
             if isempty(char(obj.FilePath)); return; end
 
@@ -58,7 +60,7 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
         end
     end
 
-    methods
+    methods % Set/get methods
         function set.FilePath(obj, newFilePath)
             if ~isempty(char(newFilePath)) && ~isfile(newFilePath)
                 error('BOT:LinkedFile:FileDoesNotExist', ...
@@ -77,11 +79,28 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
 
     methods (Access = protected)
 
+        function initializeProperties(obj)
+            propertyNames = string( properties(obj) );
+            for propertyName = propertyNames'
+                % Initialize an OnDemandProperty object if necessary
+                if isempty(obj.(propertyName))
+                    obj.(propertyName) = bot.internal.OnDemandProperty();
+                end
+                if ~isfile(obj.FilePath)
+                     obj.(propertyName).OnDemandState = 'download required';
+                end
+            end
+        end
+
         function parseFile(obj)
             % Subclass may implement
         end
 
         function openFile(obj)
+            % Todo: If opening a file directly from s3, consider whether to
+            % skip parsing the file as this can be time consuming.
+            % if strncmp(obj.FilePath, 's3', 2); return; end
+            
             try
                 obj.parseFile()
                 obj.IsInitialized = true;
@@ -89,6 +108,36 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
                 throw(ME)
                 %pass (File not available)
             end
+        end
+    end
+
+    methods (Access = {?bot.behavior.internal.mixin.HasLinkedFile, ?bot.behavior.internal.LinkedFile})
+        function propertyGroups = getPropertyGroups(obj)
+            
+            import matlab.mixin.util.PropertyGroup
+
+            propList = struct;
+            propNames = properties(obj);
+            
+            for j = 1:numel(propNames)
+                thisPropName = propNames{j};
+                thisPropValue = obj.(thisPropName);
+
+                % Customize the property display if the value is empty.
+                if isempty(thisPropValue)
+                    if obj.isInitialized()
+                        thisPropValue = categorical({'<unknown>  (unavailable)'});
+                    else
+                        thisPropValue = categorical({'<unknown>  (download required)'});
+                    end
+                end
+
+                propList.(thisPropName) = thisPropValue;
+            end
+
+            displayName = obj.DisplayName;
+            groupTitle = "Linked File Values ('" + displayName + "')";
+            propertyGroups = PropertyGroup(propList, groupTitle);
         end
     end
 end

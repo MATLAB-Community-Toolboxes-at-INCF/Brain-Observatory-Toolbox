@@ -9,7 +9,7 @@ classdef HasLinkedFile < dynamicprops & handle
     properties (Dependent)
         % LinkedFilesInfo - A dictionary with file nicknames as keys and
         % the local cached filepath of the corresponding file as values
-        LinkedFilesInfo
+        LinkedFilesInfo dictionary
     end
 
     properties (Abstract, Access = protected)
@@ -60,6 +60,7 @@ classdef HasLinkedFile < dynamicprops & handle
 
     methods
         function linkedFilesMap = get.LinkedFilesInfo(obj)
+        % get.LinkedFilesInfo - Get mapping for file nicknames to pathnames
             keys = string( {obj.LinkedFiles.Nickname} );
             values = string( {obj.LinkedFiles.FilePath} );
             values(values=="")=missing;
@@ -69,16 +70,30 @@ classdef HasLinkedFile < dynamicprops & handle
 
     methods (Access = private)
         function embeddLinkedFileProperties(obj)
-            for i = 1:numel(obj)
+        % embeddLinkedFileProperties - Embedd linked file's properties on object
+        %
+        %   This method will embedd all the public (non-hidden) properties
+        %   from each of the linked file objects to the object of a class
+        %   that inherits from this mixin class.
+
+            for i = 1:numel(obj) % <- Todo: Is this necessary? Seems like no from the constructor
 
                 for linkedFile = obj(i).LinkedFiles % Loop over each linked file
-                    
                     propertyNameList = string( properties( linkedFile ) );
                     propertyNameList = reshape(propertyNameList, 1, []);
+
                     for propertyName = propertyNameList % Loop over each property
                         dynamicProperty = obj(i).addprop(propertyName);
                         dynamicProperty.GetMethod = @(obj, file, name) ...
                             obj.getLinkedFilePropertyValue(linkedFile, propertyName);
+                        
+                        % Add a hidden property with a pythonic name to
+                        % allow users to access data using same names that
+                        % are used in the allen sdk.
+                        pythonicName = pascal2snake(propertyName);
+                        dynamicPropertyPythonic = obj(i).addprop(pythonicName);
+                        dynamicPropertyPythonic.Hidden = true;
+                        dynamicPropertyPythonic.GetMethod = dynamicProperty.GetMethod;
                     end
                 end
             end
@@ -90,7 +105,11 @@ classdef HasLinkedFile < dynamicprops & handle
                 obj.downloadLinkedFile(linkedFile.Nickname);
             end
 
-            data = linkedFile.fetchData(propertyName);
+            try
+                data = linkedFile.fetchData(propertyName);
+            catch ME
+                throwAsCaller(ME)
+            end
         end
     end
     
@@ -102,28 +121,8 @@ classdef HasLinkedFile < dynamicprops & handle
             propertyGroups = matlab.mixin.util.PropertyGroup.empty;
 
             for i = 1:numel(obj.LinkedFiles)
-                propList = struct;
-                propNames = properties(obj.LinkedFiles(i));
-                
-                for j = 1:numel(propNames)
-                    thisPropName = propNames{j};
-                    thisPropValue = obj.LinkedFiles(i).(thisPropName);
-
-                    % Customize the property display if the value is empty.
-                    if isempty(thisPropValue)
-                        if obj.LinkedFiles(i).isInitialized()
-                            thisPropValue = categorical({'<unknown>  (unavailable)'});
-                        else
-                            thisPropValue = categorical({'<unknown>  (download required)'});
-                        end
-                    end
-
-                    propList.(thisPropName) = thisPropValue;
-                end
-
-                displayName = obj.LinkedFiles.DisplayName;
-                groupTitle = "Linked File Values ('" + displayName + "')";
-                propertyGroups(i) = PropertyGroup(propList, groupTitle);
+                propertyGroups = [propertyGroups, ...
+                    obj.LinkedFiles(i).getPropertyGroups()]; %#ok<AGROW>
             end
         end
 
@@ -157,4 +156,34 @@ classdef HasLinkedFile < dynamicprops & handle
             obj.LinkedFiles(isCurrentLinkedFile).updateFilePath(filePath);
         end
     end
+end
+
+function snakeCaseStr = pascal2snake(pascalCaseStr)
+%pascal2snake Convert pascalcase string to snakecase string
+%
+%   snakeCaseStr = pascal2snake(pascalCaseStr) will convert a string of
+%   pascal case to a string of snake case.
+%
+%   Example
+%       pascalCaseStr = 'BrainObservatory'
+%       snakeCaseStr = pascal2snake(pascalCaseStr)
+%        
+%       snakeCaseStr =
+%        
+%            'brain_observatory'
+       
+    % Note: Does not work if abbreviations as uppercased in a pascal case
+    % string, e.g NWBData would return n_w_b_data
+
+    pascalCaseStr = char(pascalCaseStr);
+    capitalLetterStrIdx = regexp(pascalCaseStr, '[A-Z, 1-9]');
+
+    % Work from tail to head, since we are inserting underscores and 
+    % changing the length of the string
+    for i = fliplr(capitalLetterStrIdx) 
+        if i ~= 1
+            pascalCaseStr = insertBefore(pascalCaseStr, i , '_');
+        end
+    end
+    snakeCaseStr = lower(pascalCaseStr);
 end
