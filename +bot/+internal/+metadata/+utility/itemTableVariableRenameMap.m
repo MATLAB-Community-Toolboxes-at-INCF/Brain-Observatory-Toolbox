@@ -11,5 +11,14 @@ function nameMap = itemTableVariableRenameMap()
 
     % Visual behavior Ephys
     nameMap('genotype') = 'full_genotype';
+
+    nameMap('ecephys_session_id') = 'ephys_session_id';
+    nameMap('ecephys_probe_id') = 'ephys_probe_id';
+    nameMap('use_lfp_data') = 'has_lfp_data';
+
+    nameMap('ecephys_channel_id') = 'ephys_channel_id';
+
+    
+
 end
     

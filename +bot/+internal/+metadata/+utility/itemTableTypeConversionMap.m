@@ -13,7 +13,8 @@ function map = itemTableTypeConversionMap()
     dict('id')                      = @uint32;
     dict('behavior_session_id')     = @uint32;
     dict('ophys_session_id')        = @uint32;
-    dict('ecephys_session_id')        = @uint32;
+    dict('ecephys_session_id')      = @uint32;
+    dict('ephys_session_id')        = @uint32;
     %dict('ophys_experiment_id')    = @uint32; % Resolve. Sometimes this is an array, sometimes not
     %dict('ophys_container_id')     = @uint32; % Resolve. Sometimes this is an array, sometimes not
     dict('mouse_id')                = @uint32;
@@ -22,6 +23,9 @@ function map = itemTableTypeConversionMap()
     dict('file_id')                 = @uint32;
     dict('cell_roi_id')             = @uint32;
     dict('cell_specimen_id')        = @uint32;
+    dict('ephys_probe_id')          = @uint32;
+    dict('ephys_channel_id')        = @uint32;
+    dict('unit_id')                 = @uint32;
     
     % Categoricals
     dict('sex')                     = @categorical;
@@ -35,6 +39,8 @@ function map = itemTableTypeConversionMap()
     dict('targeted_structure')      = @categorical;
     dict('experience_level')        = @categorical;
 
+    dict('phase')                   = @categorical;
+
     % Genotypes
     dict('full_genotype')           = @string;
     dict('cre_line')                = @string;
@@ -44,6 +50,8 @@ function map = itemTableTypeConversionMap()
     dict('storage_directory')       = @string;
     dict('name')                    = @string;
     dict('passive')                 = @(x) strcmp(x, "True");
+    dict('has_lfp_data')            = @(x) strcmp(x, "True");
+    dict('valid_data')              = @(x) strcmp(x, "True");
 
     % Character vector to numeric arrays
     dict('ophys_experiment_id') = @(x) cellfun(@(c) uint32(eval(c)), x, 'uni', 0);
