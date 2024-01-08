@@ -10,7 +10,6 @@ classdef Dataset
     % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
 
     enumeration
-        All("All")
         VisualCoding("VisualCoding");
         VisualBehavior("VisualBehavior")
     end
@@ -22,18 +21,10 @@ classdef Dataset
 
     methods % Constructor
         function obj = Dataset(name)
-
-            switch name
-                case "All"
-                    obj.Name = ["VisualCoding", "VisualBehavior"];
-                    %obj.Label = ["Visual Coding", "Visual Behavior"];
-                otherwise
-                    obj.Name = name;
-                    
-                    upperIdx = isstrprop(obj.Name, 'upper');
-                    obj.ShortName = obj.Name{1}(upperIdx);
-                    %obj.Label = pascal2label(name);
-            end
+            obj.Name = name;
+            
+            upperIdx = isstrprop(obj.Name, 'upper');
+            obj.ShortName = obj.Name{1}(upperIdx);
         end
     end
 end
