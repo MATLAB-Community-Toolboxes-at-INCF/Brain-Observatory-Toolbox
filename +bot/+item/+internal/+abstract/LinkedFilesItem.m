@@ -67,8 +67,9 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       
          fileInfo = obj.linkedFilesInfo(fileNickname,:); %table row
          
+         strApiUrl = obj.resolveDownloadUrl(fileInfo);
+         
          boc = bot.internal.Cache.instance();
-         strApiUrl = boc.strABOBaseUrl + fileInfo.download_link;
          assert(~boc.IsURLInCache(strApiUrl), "File has already been downloaded");
          %assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}),"File has already been downloaded");
          
@@ -80,7 +81,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
              end
              
              if obj.retrieveFileFromS3Bucket()
-                strS3Filepath = obj.getS3Filepath(fileNickname, action=="Copy");
+                strS3Filepath = obj.getS3Filepath(fileNickname);
                 strSourcePath = strS3Filepath;
              else
                 strS3Filepath = "";
@@ -181,7 +182,6 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
                end
             end
             
-            
             % Add linkedFile prop to Item core property display
             obj.CORE_PROPERTIES = [obj.CORE_PROPERTIES "linkedFiles"];
          end
@@ -266,13 +266,14 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          
          for nickname = nicknames'
             fileInfo = obj.linkedFilesInfo(nickname,:); %table row
-            url = boc.strABOBaseUrl + fileInfo.download_link;
+
+            url = obj.resolveDownloadUrl(fileInfo);
             
             % Check if the Allen S3 bucket is mounted on the local file system
             if obj.isS3BucketMounted() && ~obj.useCloudCacher() % Download-free mode
                 % Generate filename from nickname and use this for local
                 % file to bypass download through api and subsequent caching
-                filepath = obj.getS3Filepath(nickname, true);
+                filepath = obj.getS3Filepath(nickname);
                 obj.linkedFiles{nickname,"LocalFile"} = string(filepath);
                 obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(nickname)];
                 continue
@@ -297,6 +298,26 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
    %% METHODS - S3 FILE RETRIEVAL
    
    methods (Hidden, Access = protected)
+
+      function downloadUrl = resolveDownloadUrl(~, fileInfo)
+        
+         % This method was added post hoc when adding support for the
+         % Visual Behavior dataset. The VB dataset is not available from
+         % the API, only from the S3 bucket. The download link might
+         % therefore be a fully resolved s3 bucket url, or an unresolved
+         % api url. If the latter is the case, we add the api base URL.
+        
+         boc = bot.internal.Cache.instance();
+
+         uriObj = matlab.net.URI( fileInfo.download_link );
+
+         if isempty(uriObj.Scheme)
+            downloadUrl = boc.strABOBaseUrl + fileInfo.download_link;
+         else
+            downloadUrl = fileInfo.download_link;
+         end
+      end
+
       function tf = isS3BucketMounted(~)
          tf = bot.internal.Preferences.getPreferenceValue('UseLocalS3Mount') && ...
              isfolder( bot.internal.Preferences.getPreferenceValue('S3MountDirectory') );
@@ -314,25 +335,18 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          end
       end
 
-      function s3Filepath = getS3Filepath(obj, nickname, action)
+      function s3Filepath = getS3Filepath(obj, nickname)
       %getS3Filepath Get filepath of file in s3 bucket given nickname
          
          arguments
             obj                             % An object of the LinkedFilesItem class
             nickname (1,1) string           % Nickname of file to get filepath for
-            %action (1,1) string = "Download" % Action used for retrieving file. Options: "Copy" or "Download"
          end
-    
-
-        
-        % Todo: 
-        % [ ] Determine which file resource to use. This will depend on
-        %     which dataset (VisCoding/VisBehavior) and which dataset type
-        %     (Ephys/Ophys) the item is part of
-        %
 
          s3Filepath = obj.FileResource.getDataFileURI(obj, nickname);
       end
 
    end
+    
+
 end
