@@ -25,7 +25,8 @@ function cell_specimen_table = read_cell_specimen_table(nwbFilePath)
     % Convert each image mask to a cell and rename image_mask to roi_mask
     roi_mask = cell_specimen_table.image_mask;
     roi_mask = mat2cell(roi_mask, ones(height(cell_specimen_table),1),512,512);
-    roi_mask = cellfun(@(c) squeeze(c), roi_mask, 'UniformOutput', false);
+    % Note: Squeeze and transpose mask to get dimensions in the right order
+    roi_mask = cellfun(@(c) squeeze(c)', roi_mask, 'UniformOutput', false);
     cell_specimen_table.roi_mask = roi_mask;
     cell_specimen_table = removevars(cell_specimen_table, 'image_mask');
 end
