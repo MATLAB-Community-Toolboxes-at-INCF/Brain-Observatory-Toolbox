@@ -8,7 +8,7 @@ classdef (Abstract) OnDemandProps < handle
     
     properties (SetAccess = protected, Hidden)
         ON_DEMAND_PROPERTIES (1,:) string = string.empty();
-    end       
+    end
     
     
     %% METHODS - HIDDEN
@@ -109,6 +109,10 @@ classdef (Abstract) OnDemandProps < handle
                     end                                           
                 end
             end
+        end
+    
+        function clear_on_demand_cache(obj)
+            obj.property_cache = struct();
         end
     end
 end

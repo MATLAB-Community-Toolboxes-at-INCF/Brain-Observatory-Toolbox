@@ -66,7 +66,7 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
     end
 
     properties (Constant, Access = protected, Hidden)
-        DATASET_NAME = "VisualBehavior"
+        DATASET_NAME = bot.item.internal.enum.Dataset("VisualBehavior")
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
         ITEM_TYPES = ["BehaviorSession", "OphysSession", "OphysExperiment", "OphysCell"]
         DOWNLOAD_FROM = containers.Map(...
@@ -76,9 +76,8 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
 
     properties (Access = protected)
         FileResource = bot.internal.fileresource.visualbehavior.VBOphysS3Bucket.instance()
-    end  
+    end
 
-    
     %% Constructor
     methods (Access = private)
         function obj = VisualBehaviorOphysManifest()
@@ -144,7 +143,6 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
             cellTable = obj.fetch_cached('OphysCells', ...
                     @(itemType) obj.fetch_item_table('OphysCell') );
         end
-
     end
 
     methods
@@ -186,7 +184,9 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
             end
 
             % Apply standardized table display logic
-            itemTable = obj.applyUserDisplayLogic(itemTable); 
+            itemTable = obj.applyUserDisplayLogic(itemTable);
+                        
+            itemTable = obj.addDatasetInformation(itemTable);
         end
 
     end
@@ -228,6 +228,9 @@ classdef VisualBehaviorOphysManifest < bot.item.internal.Manifest
             
             import bot.item.internal.Manifest.recastTableVariables
             ophys_session_table = recastTableVariables(ophys_session_table);
+
+            % - Label as OPhys sessions
+            [ophys_session_table.type(:)] = deal( categorical("Ophys", ["Ephys", "Ophys"]) );
 
             % Assign the item id.
             ophys_session_table.id = ophys_session_table.ophys_session_id;

@@ -5,10 +5,10 @@
 classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixin.OnDemandProps
        
     properties (Abstract, Access=protected, Constant, Hidden)
-        DATASET_NAME
+        DATASET_NAME (1,1) bot.item.internal.enum.Dataset
 
         % Enumeration for dataset type that a concrete manifest is part of
-        DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType  
+        DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType
         
         % Names of available item types for a manifest of a given dataset type
         ITEM_TYPES (1,:) string
@@ -45,7 +45,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
             % Suggested upgrade:
             %manifest.ON_DEMAND_PROPERTIES = manifest.ITEM_TYPES + "s";     % Property names are plural
-
+            
+            doClear = manifest.checkRequiresUpdate();
+            if doClear
+                manifest.clearManifest(false); manifest.logClearedManifest()
+            end
         end
     end
 
@@ -73,7 +77,6 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             end
             
             manifest.clearManifest(updateMemoOnly)
-            manifest = manifest.instance(); % Create new instance
             manifest.fetchAll()
         end
     
@@ -115,8 +118,8 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                 manifest.MemoizedFetcher.(strField{1}).clearCache();
             end
 
-            % - Reset singleton instance
-            manifest.instance("clear");
+            % - Clear the ondemand property cache
+            manifest.clear_on_demand_cache()
         end
     end
 
@@ -228,6 +231,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
     end
     
     methods (Access = protected) % Utility methods for subclasses
+        
+        function itemTable = addDatasetInformation(obj, itemTable)
+            itemTable.Properties.UserData.DatasetType = string(obj.DATASET_TYPE);
+            itemTable.Properties.UserData.DatasetName = string(obj.DATASET_NAME);
+        end
 
         function clearTempTableFromCache(manifest, itemType)
         %clearTempTableFromCache Clear temporary item table from disk cache
@@ -246,9 +254,11 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             strURI = manifest.FileResource.getItemTableURI(itemType);
             diskCache.CloudCacher.remove(strURI)
 
-            apiFileResource = bot.internal.fileresource.WebApi.instance();
-            strURI = apiFileResource.getItemTableURI(datasetType, itemType);
-            diskCache.CloudCacher.removeURLsMatchingSubstring(strURI)
+            if manifest.DATASET_NAME == bot.item.internal.enum.Dataset.VisualCoding
+                apiFileResource = bot.internal.fileresource.WebApi.instance();
+                strURI = apiFileResource.getItemTableURI(datasetType, itemType);
+                diskCache.CloudCacher.removeURLsMatchingSubstring(strURI)
+            end
 
             warning('on', 'CloudCacher:URLNotInCache')
         end
@@ -276,6 +286,52 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
     
     end
     
+    methods (Access = private)
+        function doUpdate = checkRequiresUpdate(obj)
+            
+            % Latest version to trigger a reset of manifest tables.
+            MIN_BOT_VERSION = '0.9.4';
+
+            classNameSplit = strsplit(class(obj), '.');
+            simpleClassName = classNameSplit{end};
+
+            botCache = bot.internal.Cache.instance();
+
+            if botCache.isObjectInCache('BOTVersionForCachedManifest')
+                versionMap = botCache.retrieveObject('BOTVersionForCachedManifest');
+                if isKey(versionMap, simpleClassName)
+                    lastVersion = versionMap(simpleClassName);
+                    doUpdate = bot.internal.util.isVerLessThan(lastVersion, MIN_BOT_VERSION);
+                else
+                    doUpdate = true;
+                end
+            else
+                doUpdate = true;
+            end
+        end
+
+        function logClearedManifest(obj)
+        % logClearedManifest - Logs that manifest has been cleared for
+        % current BOT version
+            classNameSplit = strsplit(class(obj), '.');
+            simpleClassName = classNameSplit{end};
+            currentVersion = bot.internal.util.getToolboxVersion();
+            
+            botCache = bot.internal.Cache.instance();
+
+            if botCache.isObjectInCache('BOTVersionForCachedManifest')
+                versionMap = botCache.retrieveObject('BOTVersionForCachedManifest');
+            else
+                versionMap = dictionary();
+            end
+
+            versionMap(simpleClassName) = currentVersion;
+            warning('off', 'ObjectCacher:FileExists')
+            botCache.insertObject('BOTVersionForCachedManifest', versionMap)
+            warning('on', 'ObjectCacher:FileExists')
+        end
+    end
+
     %% STATIC METHODS - PUBLIC
     methods (Static)
 
@@ -352,7 +408,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             containsDirVars = varNames(varNames.contains("directory"));
             tbl = removevars(tbl, containsDirVars);
             
-            %% Convert ephys_structure_acronym from cell types to string/cateorical type
+            %% Convert ephys_structure_acronym from cell types to string/categorical type
             % TODO: refactor to generalize this for all cell2str convers (some of which is currently implemented in ephysmanifest)
             varIdx = find(varNames.contains("structure_acronym"));
             if varIdx
@@ -378,8 +434,8 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                 end
             end
             
-            %% Convert ophys area from cell types to string/cateorical type
-            % TODO: refactor to generalize this for all cell2str convers (some of which is currently implemented in ephysmanifest)
+            %% Convert ophys area from cell types to string/categorical type
+            % TODO: refactor to generalize this for all cell2str converts (some of which is currently implemented in ephysmanifest)
             varIdx = find(varNames == "area");
             if varIdx
                 var = tbl.(varNames(varIdx));
@@ -436,14 +492,9 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                 end
             end
             
-            
             %% Initialize refined variable lists (names, values)
             refinedVars = setdiff(string(tbl.Properties.VariableNames),[redundantVarNames containsDirVars],"stable");
-            
-  
-            
 
-            
             %% Reorder columns
             
             %TODO: reimplement the mapping of string patterns to variable types programatically as a containers.Map
@@ -511,8 +562,6 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             
             % Do reorder in one step
             tbl = tbl(:,newVarOrder);
-            
-            
         end
 
         function tbl = renameTableVariables(tbl)

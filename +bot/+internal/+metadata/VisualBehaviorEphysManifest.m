@@ -62,8 +62,8 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     end
 
     properties (Constant, Access = protected, Hidden)
-        DATASET_NAME = "VisualBehavior"
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        DATASET_NAME = bot.item.internal.enum.Dataset("VisualBehavior")
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys");
         ITEM_TYPES = ["BehaviorSession", "EphysSession", "Probe", "Channel", "Unit"]
         DOWNLOAD_FROM = containers.Map(...
             bot.internal.metadata.VisualBehaviorEphysManifest.ITEM_TYPES, ...
@@ -184,7 +184,9 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
             end
 
             % Apply standardized table display logic
-            itemTable = obj.applyUserDisplayLogic(itemTable); 
+            itemTable = obj.applyUserDisplayLogic(itemTable);
+
+            itemTable = obj.addDatasetInformation(itemTable);
         end
 
     end
@@ -227,8 +229,11 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
             ephys_session_table = renameTableVariables(ephys_session_table);
             ephys_session_table = recastTableVariables(ephys_session_table);
 
+            % - Label as EPhys sessions
+            [ephys_session_table.type(:)] = deal( categorical("Ephys", ["Ephys", "Ophys"]) );
+
             % Assign the item id.
-            ephys_session_table.id = ephys_session_table.ecephys_session_id;
+            ephys_session_table.id = ephys_session_table.ephys_session_id;
         end
 
     
@@ -243,15 +248,34 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
         end
 
         function ephys_probe_table = preprocess_probe_table(ephys_probe_table)
-           %todo
+            import bot.item.internal.Manifest.recastTableVariables
+            import bot.item.internal.Manifest.renameTableVariables
+
+            ephys_probe_table = renameTableVariables(ephys_probe_table);
+            ephys_probe_table = recastTableVariables(ephys_probe_table);
+                        
+            ephys_probe_table.name= categorical(ephys_probe_table.name);
+            ephys_probe_table.id = ephys_probe_table.ephys_probe_id;
         end        
         
         function ephys_channel_table = preprocess_channel_table(ephys_channel_table)
-           %todo
+            import bot.item.internal.Manifest.recastTableVariables
+            import bot.item.internal.Manifest.renameTableVariables
+
+            ephys_channel_table = renameTableVariables(ephys_channel_table);
+            ephys_channel_table = recastTableVariables(ephys_channel_table);
+
+            ephys_channel_table.id = ephys_channel_table.ephys_channel_id;
         end
 
         function ephys_unit_table = preprocess_unit_table(ephys_unit_table)
-           %todo
+            import bot.item.internal.Manifest.recastTableVariables
+            import bot.item.internal.Manifest.renameTableVariables
+
+            ephys_unit_table = renameTableVariables(ephys_unit_table);
+            ephys_unit_table = recastTableVariables(ephys_unit_table);
+
+            ephys_unit_table.id = ephys_unit_table.unit_id;
         end
     end
 end

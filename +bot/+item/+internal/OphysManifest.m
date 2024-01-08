@@ -60,7 +60,7 @@ classdef OphysManifest < bot.item.internal.Manifest
         ophys_cells         % Table of all OPhys cells
     end
 
-    properties (Dependent)
+    properties (Dependent, Hidden)
         OphysSessions
     end
 
@@ -71,7 +71,7 @@ classdef OphysManifest < bot.item.internal.Manifest
 % %     end
 
     properties (Constant, Access = protected, Hidden)
-        DATASET_NAME = "VisualCoding"
+        DATASET_NAME = bot.item.internal.enum.Dataset("VisualCoding")
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
         ITEM_TYPES = ["Experiment", "Session", "Cell"]
         DOWNLOAD_FROM = containers.Map(...
@@ -177,6 +177,8 @@ classdef OphysManifest < bot.item.internal.Manifest
 
             % Apply standardized table display logic
             itemTable = oManifest.applyUserDisplayLogic(itemTable);
+
+            itemTable = oManifest.addDatasetInformation(itemTable);
         end
 
     end

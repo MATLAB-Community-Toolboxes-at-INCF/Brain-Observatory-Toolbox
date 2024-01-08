@@ -59,7 +59,7 @@ classdef EphysManifest < bot.item.internal.Manifest
         ephys_units        % Table of all EPhys units
     end
 
-    properties (Dependent)
+    properties (Dependent, Hidden)
         EphysSessions
     end
 
@@ -71,7 +71,7 @@ classdef EphysManifest < bot.item.internal.Manifest
 % %     end
         
     properties (Constant, Access=protected, Hidden)
-        DATASET_NAME = "VisualCoding"
+        DATASET_NAME = bot.item.internal.enum.Dataset("VisualCoding")
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
         ITEM_TYPES = ["Session", "Probe", "Channel", "Unit"]
         DOWNLOAD_FROM = containers.Map(...
@@ -193,7 +193,9 @@ classdef EphysManifest < bot.item.internal.Manifest
             end
 
             % Apply standardized table display logic
-            itemTable = eManifest.applyUserDisplayLogic(itemTable); 
+            itemTable = eManifest.applyUserDisplayLogic(itemTable);
+            
+            itemTable = eManifest.addDatasetInformation(itemTable);
         end
 
         function itemTable = fetchRawItemTable(eManifest, itemType)
@@ -416,7 +418,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             
             ltsf = probe_table.lfp_temporal_subsampling_factor;
             if iscell(ltsf)
-                [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this shoudl be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
+                [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this should be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
                 ltsf = cell2mat(ltsf);
             else
                 % missing values are already nan
