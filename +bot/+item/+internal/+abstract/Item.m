@@ -106,6 +106,12 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
     methods (Hidden, Access = protected)
+
+        function str = getHeader(obj)
+            str = getHeader@matlab.mixin.CustomDisplay(obj);
+            str = replace(str, 'with properties', sprintf('(%s) with properties', obj.getDatasetName()));
+        end
+
         function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
