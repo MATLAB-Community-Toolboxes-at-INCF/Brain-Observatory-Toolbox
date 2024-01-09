@@ -12,23 +12,94 @@
 % [4] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
 %% function sessionsTable = listSessions(dataset)
-function sessionsTable = listSessions(dataset)
+function sessionsTable = listSessions(datasetType, options)
 
-arguments
-    dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys", "EPhys", "OPhys"])}    
-end
+    arguments
+        %dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys", "EPhys", "OPhys"])} 
+        datasetType (1,1) bot.item.internal.enum.DatasetType
+        options.Dataset (:,1) bot.item.internal.enum.Dataset = ["VisualCoding", "VisualBehavior"]
+        options.Id (1,:) = [];
+    end
    
-   switch lower(dataset)
-      case 'ephys'
-         manifest = bot.item.internal.Manifest.instance('ephys');
-         sessionsTable = manifest.ephys_sessions;
-         
-      case 'ophys'
-         manifest = bot.item.internal.Manifest.instance('ophys');
-         sessionsTable = manifest.ophys_sessions;
-   end
+    datasetNames = [options.Dataset.Name];
+    datasetType = string(datasetType);
+
+    % Initialize a cell array for unmerged tables (i.e tables from 
+    % different datasets)
+    unmergedTables = cell(1, numel(datasetNames));
+
+    % Gather tables from requested datasets
+    for i = 1:numel(datasetNames)
+        tableName = datasetType+"Sessions";
+        manifest = bot.item.internal.Manifest.instance(datasetType, datasetNames(i));
+        unmergedTables{i} = manifest.(tableName); % E.g manifest.EphysSessions
+        if ~isempty(options.Id)
+            unmergedTables{i} = unmergedTables{i}(ismember(unmergedTables{i}.id, options.Id),:);
+        end
+        unmergedTables{i}.dataset_name = repmat(datasetNames(i), height( unmergedTables{i} ), 1);
+    end
+    
+    % Return if there is only one dataset table
+    if numel(unmergedTables) == 1
+        sessionsTable = unmergedTables{1}; return
+    end
+
+    % Find common set of table variable names for merging
+    tableVariableNames = cellfun(@(t) t.Properties.VariableNames, unmergedTables, 'uni', 0);
+
+    % Handle special case (ophys (VC) and ophys (VB)):
+    if any( strcmp( [tableVariableNames{:}], 'targeted_structure_acronym') )
+        unmergedTables = scalarColumnToCell(unmergedTables, 'targeted_structure_acronym');
+    end
+    tableVariableNames = cellfun(@(t) t.Properties.VariableNames, unmergedTables, 'uni', 0);
+
+    finalVariableNames = intersect(tableVariableNames{1}, tableVariableNames{2}, 'stable');
+    for i = 2:numel(unmergedTables)
+        finalVariableNames = intersect(finalVariableNames, tableVariableNames{i}, 'stable');
+    end
+
+    % Keep only the common set of variables for each table
+    for i = 1:numel(unmergedTables)
+        unmergedTables{i} = unmergedTables{i}(:, finalVariableNames);
+    end
+
+    % Merge tables and return
+    sessionsTable = cat(1, unmergedTables{:});
+
+
+   % % switch string(datasetType)
+   % %    case "Ephys"
+   % %       manifest = bot.item.internal.Manifest.instance('ephys');
+   % %       sessionsTable = manifest.ephys_sessions;
+   % % 
+   % %    case "Ophys"
+   % %       manifest = bot.item.internal.Manifest.instance('ophys');
+   % %       sessionsTable = manifest.ophys_sessions;
+   % % end
 
 end
+
+function unmergedTables = scalarColumnToCell(unmergedTables, name)
+    
+    for i = 1:numel(unmergedTables)
+        tableVariableNames = unmergedTables{i}.Properties.VariableNames;
+        if any( strcmp( tableVariableNames, name) )
+            data = unmergedTables{i}.(name);
+            data = num2cell(data);
+            unmergedTables{i} = removevars(unmergedTables{i}, name);
+            unmergedTables{i}.([name, 's']) = data; % Make column name plural
+        end
+    end
+end
+
+% Notes: 
+% For the Visual Coding ophys manifest, targeted structure acronym is
+% always a scalar, as imaging was done in one plane. For the Visual
+% Behavior dataset, imaging was done in multiple planes. In the VC ophys
+% table, the variable for this data is called "targeted_structure_acronym",
+% while for the VB datasets it is called "targeted_structure_acronyms" 
+% (plural) and the data is wrapped in cell arrays. When merging these
+% tables the scalar column is made into cell and renamed to plural name
 
 
 % Retained code previously in Session class which previously implemented
