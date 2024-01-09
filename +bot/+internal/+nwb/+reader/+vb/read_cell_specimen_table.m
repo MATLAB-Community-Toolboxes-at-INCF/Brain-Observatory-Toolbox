@@ -10,12 +10,15 @@ function cell_specimen_table = read_cell_specimen_table(nwbFilePath)
     end
     
     % Read cell specimen data as a table:
-    cell_specimen_table = bot.internal.nwb.table_from_datasets_new_ll(...
+    cell_specimen_table = bot.internal.nwb.reader.readDynamicTable(...
         nwbFilePath,  nwbDatasetPath );
 
     % Convert data types to logicals
     cell_specimen_table.valid_roi = logical(cell_specimen_table.valid_roi);
     cell_specimen_table.image_mask = logical(cell_specimen_table.image_mask);
+
+    %cell_specimen_table.valid_roi = strcmpi(cell_specimen_table.valid_roi, 'TRUE');
+    %cell_specimen_table.image_mask = strcmpi(cell_specimen_table.image_mask, 'TRUE');
 
     % Rename id to cell_roi_id
     cell_roi_id = cell_specimen_table.id;

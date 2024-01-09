@@ -1,19 +1,24 @@
 function trial_data = read_trials_timetable(nwbFilePath)
 % read_trials_timetable - Read table with trials data
 
-    import bot.internal.nwb.table_from_datasets_new
+    % Todo:
+    % [ ] Consider different name for trial length, i.e trial_duration?
 
-    trial_data = table_from_datasets_new(nwbFilePath, '/intervals/trials');
+    import bot.internal.nwb.reader.readDynamicTable
+
+    trial_data = readDynamicTable(nwbFilePath, '/intervals/trials');
     
     % Process some of the columns for better representation
-
     time_variables = [ ...
         "start_time", ...
-        "stop_time" ...
-        ];
-
+        "stop_time", ...
+        "trial_length"];
     % Todo: include change_time / change_time_no_display_delay and
-    % trial_length?
+    % lick_times?
+
+    categorical_variables = [...
+        "initial_image_name", ...
+        "change_image_name"];
 
     boolean_variables = [ ...
         "aborted", ...
@@ -31,7 +36,12 @@ function trial_data = read_trials_timetable(nwbFilePath)
     end
 
     for boolean_variable = boolean_variables
-        trial_data.(boolean_variable) = strcmpi( trial_data.(boolean_variable), 'true' );
+        %trial_data.(boolean_variable) = strcmpi( trial_data.(boolean_variable), 'true' );
+        trial_data.(boolean_variable) = logical( trial_data.(boolean_variable) );
+    end
+
+    for categorical_variable = categorical_variables
+        trial_data.(categorical_variable) = categorical( trial_data.(categorical_variable) );
     end
     
     % Specify column order
