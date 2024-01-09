@@ -1,5 +1,7 @@
-classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
+classdef (Abstract) LLNWBData < bot.behavior.internal.LinkedFile
 % NWBData - Abstract class providing an object interface to data in NWB file
+%
+%   Note: This class uses primarily low-level H5 library functions.
 %
 %   Subclasses of this class should define properties representing datasets
 %   in an NWB file, and a map to bind property names to group/dataset names
@@ -8,62 +10,80 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
 %   This class subclasses the OnDemandProps mixin, so once data is loaded
 %   from file, it will stay in memory.
 
-%   Todo: add support for adding processorFcn function handle on fetch. 
+%   Todo:
+%       Make NWBData / NWB File class, and make nwb readers (most of the
+%       functionality in this class should be in a reader class) Note: the
+%       reader class should be assigned on a property of the NWBData class.
 
-    properties (Abstract, Hidden)
-        Name
-    end
 
     properties (Abstract, Access = protected)
-        PropertyGroupMapping
+        % PropertyToDatasetMap - Dictionary with mapping from property name 
+        % to dataset name/path in h5 file
+        PropertyToDatasetMap dictionary
+
+        % PropertyToDatasetMap - Dictionary with mapping from property name
+        % to the name of a data processing function. The function should be
+        % a method of the defining class and it should accept two input 
+        % arguments, an object of the class and a data value (which is 
+        % read using the PropertyToDatasetMap)
+        PropertyProcessingFcnMap dictionary
     end
 
-    properties (SetAccess = private, Hidden)
-        FilePath
-    end
-
-    properties (Access = private)
+    properties (Access = private, Dependent)
         H5FileID
     end
 
+    properties (Access = private)
+        H5FileID_
+    end
+
     methods % Constructor
-    
-        function obj = LLNWBData(filePath)
-            obj.FilePath = filePath;
-        
-            try 
-                obj.parseFile()
-            catch ME
-                throw(ME)
-                %pass (File not available)
-            end
+        function obj = LLNWBData(filePath, nickName)
             
-            obj.ON_DEMAND_PROPERTIES = properties(obj);
+            assert(exist('nwbRead', 'file')==2, ...
+                'Matnwb is unavailable!')
+
+            obj = obj@bot.behavior.internal.LinkedFile(filePath, nickName)
         end
 
         function delete(obj)
-            if ~isempty(obj.H5FileID)
-                H5F.close(obj.H5FileID)
+            if ~isempty(obj.H5FileID_)
+                H5F.close(obj.H5FileID_)
             end
         end
     end
 
     methods % Public
-
         function data = fetchData(obj, propertyName)
         %fetchData - Fetch data for given property
-            
-            if isempty(obj.H5FileID)
-                try
-                    obj.parseFile()
-                catch ME
-                    throw(ME)
-                    %pass (File not available)
-                end
-            end
-            
-            accessFcn = @(name) obj.loadDataset(propertyName);
+            accessFcn = @(name) obj.getProcessedData(propertyName);
             data = obj.fetch_cached(propertyName, accessFcn);
+        end
+    end
+
+    methods % Get
+        function h5FileID = get.H5FileID(obj)
+            if isempty(obj.H5FileID_)            
+                obj.H5FileID_ = H5F.open(obj.FilePath);
+            end
+            h5FileID = obj.H5FileID_;
+        end
+    end
+    
+    methods (Access = private)
+        function data = getProcessedData(obj, propertyName)
+            % Load dataset from file
+            data = obj.loadDataset(propertyName);
+
+            % Process data / use custom reader functions
+            if isKey(obj.PropertyProcessingFcnMap, propertyName)
+                processingFcn = obj.PropertyProcessingFcnMap(propertyName);
+                data = feval(processingFcn, obj, data);
+            end
+
+            % Update on-demand property
+            obj.(propertyName).OnDemandState = 'in-memory';
+            obj.(propertyName) = obj.(propertyName).updateFromData(data);
         end
     end
 
@@ -72,33 +92,48 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
         function parseFile(obj)
         % parseFile - Get information about data properties from file.
 
-            obj.H5FileID = H5F.open(obj.FilePath); % Question : remove?
+            propertyNames = obj.PropertyToDatasetMap.keys();
+            propertyNames = reshape(propertyNames, 1, []);
 
-            fields = fieldnames(obj.PropertyGroupMapping);
+            for thisPropName = propertyNames
 
-            for i = 1:numel(fields)
-                thisPropName = fields{i};
-
-                [groupName, datasetName] = obj.getMappedNamesForProperty(thisPropName);
-                         
+                h5PathName = char( obj.PropertyToDatasetMap(thisPropName) );
+                [groupName, datasetName] = obj.splitH5PathName(h5PathName);
+                                         
                 if contains(groupName, '*')
                     groupName = obj.resolveGroupNameWithWildcard(groupName);
-                    obj.updateGroupNameForProperty(thisPropName, groupName)
+                    newPathName = h5path(groupName, datasetName);
+                    obj.PropertyToDatasetMap(thisPropName) = newPathName;
                 end
 
-                % Todo: If group name is empty, need to add an unavailable
-                % ondemand property.
-
-                if isempty(datasetName)
-                    [neurodataType, dataSize] = obj.parseGroup(groupName);
-                else
-                    [neurodataType, dataSize] = obj.parseDataset(groupName, datasetName);
+                % Initialize on-demand property if property is empty
+                if isempty(obj.(thisPropName))
+                    obj.(thisPropName) = bot.internal.OnDemandProperty();
                 end
 
+                % Continue to next if group name is empty.
+                if isempty(groupName) %|| ~obj.existsGroup(groupName)
+                    obj.(thisPropName).OnDemandState = 'unavailable';
+                    continue
+                end
+
+                [neurodataType, dataType, dataSize] = ...
+                    obj.parseDataset(groupName, datasetName);
+            
                 if ~isempty(neurodataType)
-                    obj.(thisPropName) = bot.internal.OnDemandProperty(dataSize, neurodataType, 'on-demand');
+                    obj.(thisPropName).NeuroDataType = neurodataType;
+                end
+                if ~isempty(dataType)
+                    obj.(thisPropName).DataType = dataType;
+                end
+                if ~isempty(dataSize)
+                    obj.(thisPropName).DataSize = dataSize;
+                end
+                
+                if all(cellfun(@(c) isempty(c), {neurodataType, dataType, dataSize}))
+                    obj.(thisPropName).OnDemandState = 'unavailable';
                 else
-                    obj.(thisPropName) = bot.internal.OnDemandProperty('N/A', '', 'missing');
+                    obj.(thisPropName).OnDemandState = 'on-demand';
                 end
             end
         end
@@ -113,77 +148,70 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
                 if ~tf; break; end
             end
         end
-
-        function [neurodataType, dataSize] = parseGroup(obj, groupName)
+        
+        function [neurodataType, dataType, dataSize] = parseDataset(obj, groupName, datasetName)
             
-            [neurodataType, dataSize] = deal([]);
-
-% % %             if ~obj.existsGroup(groupName)
-% % %                 return
-% % %             end
+            [neurodataType, dataType, dataSize] = deal([]);
             
-            try
-
-                gid = H5G.open(obj.H5FileID, groupName);
-                
-                % Check for attributes
-                neurodataType = obj.getNeurodataType(gid);
-    
-                dataSize = obj.getDataSize(gid, neurodataType);
-    
-                H5G.close(gid)
-            end
-        end
-
-        function [neurodataType, dataSize] = parseDataset(obj, groupName, datasetName)
-            
-            [neurodataType, dataSize] = deal([]);
-% % %             if ~obj.existsGroup(groupName)
-% % %                 return
-% % %             end
-
             try
                 % Get group info
                 gid = H5G.open(obj.H5FileID, groupName);
     
                 % Check for neurodata type attribute
                 neurodataType = obj.getNeurodataType(gid);
-    
-                dataSize = obj.getDatasetSize(gid, datasetName);
+                
+                %dataType = obj.getDataType(gid, datasetName);
+                [dataSize, dataType] = obj.getDatasetSize(gid, datasetName);
+
                 H5G.close(gid)
+            catch ME
+                % Todo: collect error message...
             end
         end
     
         function data = loadDataset(obj, propertyName)
             
-            [groupName, datasetName] = obj.getMappedNamesForProperty(propertyName);
-            
-            switch obj.(propertyName).DataType
-                
-                case {'TimeSeries', 'RoiResponseSeries', 'IndexSeries'}
-                    data = h5read(obj.FilePath, [groupName, '/data']);
-                    time = h5read(obj.FilePath, [groupName, '/timestamps']);
-                
-                    if ismatrix(data) % Is this general?
-                        data = data'; 
-                    end
-                    
-                    timestampsUnit = obj.getTimeSeriesUnit(groupName);
-                    
-                    if strcmp(timestampsUnit, 'seconds')
-                        data = timetable(seconds(time), data, 'VariableNames', {'Data'});
-                    else
-                        error('Time unit %s is not implemented yet', timestampsUnit)
-                    end
-                otherwise
-                    if ~isempty(datasetName)
-                        data = h5read(obj.FilePath, [groupName, ['/',datasetName]]);
-                    else
-                        warning('Data loading for %s is not supported yet', propertyName)
-                    end
+            h5PathName = obj.PropertyToDatasetMap(propertyName);
+            [groupName, datasetName] = obj.splitH5PathName(h5PathName);
+
+            groupID = H5G.open(obj.H5FileID, groupName);
+            datasetID = H5D.open(groupID, datasetName);
+            data = H5D.read(datasetID);
+            H5D.close(datasetID)
+
+            if ismissing( obj.(propertyName).NeuroDataType )
+                neurodataType = obj.getNeurodataType(groupID);
+                obj.(propertyName).NeuroDataType = neurodataType;
             end
 
-            obj.(propertyName).OnDemandState = '';
+            switch obj.(propertyName).NeuroDataType
+            
+                case {'TimeSeries', 'RoiResponseSeries', 'IndexSeries', 'OphysEventDetection', 'EllipseSeries'}
+                    
+                    tsDatasetID = H5D.open(groupID, 'timestamps');
+                    timestamps = H5D.read(tsDatasetID);
+                    H5D.close(tsDatasetID)
+
+                    %timestamps = h5read(obj.FilePath, [groupName, '/timestamps']);
+                    
+                    if ismatrix(data) && ~isvector(data) % Is this general?
+                        data = data';
+                    end
+                    
+                    timestamps = obj.convertToDurationVector(timestamps, groupName);
+                    data = timetable(timestamps, data, 'VariableNames', propertyName);
+                
+                 otherwise
+                    % Pass for now 
+            end
+            
+            H5G.close(groupID)
+
+            if strcmp(datasetName, 'timestamps')
+                data = obj.convertToDurationVector(data, groupName);
+            end
+            
+            obj.(propertyName).OnDemandState = 'in-memory';
         end
 
         function groupName = resolveGroupNameWithWildcard(obj, groupName)
@@ -221,7 +249,7 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
                 hasMatch = cellfun(@(c) ~isempty(c), matchInd);
 
                 if ~any(hasMatch)
-                    warning('No match found for given wildcard group "%s"', tmpGroupName)
+                    %warning('No match found for given wildcard group "%s"', tmpGroupName)
                     groupName = '';
                     return
                 else
@@ -241,53 +269,33 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
             H5G.close(gid)
         end
 
-        function [groupName, datasetName] = getMappedNamesForProperty(obj, propertyName)
-        
-            mappedNames = obj.PropertyGroupMapping.(propertyName);
-            if isa(mappedNames, 'cell')
-                groupName = mappedNames{1};
-                datasetName = mappedNames{2};
-            else
-                groupName = mappedNames;
-                datasetName = '';
-            end
-        end
-        
-        function updateGroupNameForProperty(obj, propertyName, groupName)
-        % updateGroupNameForProperty - Update PropertyGroupMapping
-        %
-        %   Note: This function is useful if a group name had wildcards
-        %   which has been resolved.
-        
-            mappedNames = obj.PropertyGroupMapping.(propertyName);
-            if isa(mappedNames, 'cell')
-                mappedNames{1} = groupName;
-            else
-                mappedNames = groupName;
-            end
-            obj.PropertyGroupMapping.(propertyName) = mappedNames;
-        end
-
-        function dataSize = getDataSize(obj, groupID, neurodataType)
+        function [groupName, datasetName] = splitH5PathName(obj, h5PathName)
+            h5sep = '/';
+            splitPathName = strsplit(h5PathName, h5sep);
             
-            switch neurodataType
-                case {'TimeSeries', 'RoiResponseSeries', 'IndexSeries'}
-                    dataSize = obj.getDatasetSize(groupID, 'data');
-                case ''
-                
-                otherwise
-                    dataSize = 'N/A';
-                    disp('NotImplementedYet')
-            end
-            %groupInfo.Datasets.Name
+            datasetName = splitPathName{end};
+            groupName = strjoin(splitPathName(1:end-1), h5sep);
 
+            datasetName = char(datasetName);
+            groupName = char(groupName);
         end
     
         function timeseriesUnit = getTimeSeriesUnit(obj, groupName)
             groupName = h5path(groupName, 'timestamps');
+            % Todo: use H5A
             timeseriesUnit = h5readatt(obj.FilePath, groupName, 'unit');
         end
-    
+
+        function time = convertToDurationVector(obj, time, groupName)
+            
+            timestampsUnit = obj.getTimeSeriesUnit(groupName);
+            
+            if strcmp(timestampsUnit, 'seconds')
+                time = seconds(time);
+            else
+                error('Time unit %s is not implemented yet', timestampsUnit)
+            end
+        end
     end
 
     methods (Static, Access=private)
@@ -316,9 +324,6 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
                 neurodataType = 'N/A';
             end
 
-            %fcn = @(a,b) disp(b)
-
-
 %             if H5L.exists(gid, attributeName, 'H5P_DEFAULT')
 %             % The subgroup exists, so you can open it.
 %                 aid = H5A.open(group_id, attributeName);
@@ -326,33 +331,44 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
 %                 % The subgroup does not exist.
 %                 disp(['Attribute "', attributeName, '" does not exist.']);
 %             end
-
-            if strcmp(neurodataType, 'Images')
-                neurodataType = 'Image';
-            end
         end
     
-        function dataSize = getDatasetSize(groupID, datasetName)
-                        
+        function dataType = getDataType(groupID, datasetName)
+            datasetID = H5D.open(groupID, datasetName);
+            typeId = H5D.get_type(datasetID);
+            dataType = io.getMatType(typeId);
+            H5T.close(typeId);
+            H5D.close(datasetID)
+        end
+
+        function [dataSize, dataType] = getDatasetSize(groupID, datasetName)
+            %Todo?: Get dataType in separate function 
+
             datasetNames = bot.internal.nwb.LLNWBData.listLinkNames(groupID);
 
             isMatch = strcmp(datasetNames, datasetName);
 
             if any(isMatch)
-                %dataSize = groupInfo.Datasets(isMatch).Dataspace.Size;
-                
+                % Get data size:
                 datasetID = H5D.open(groupID, datasetName);
                 spaceID = H5D.get_space(datasetID);
                 [~, h5Dims, ~] = H5S.get_simple_extent_dims(spaceID);
-                dataSize = fliplr(h5Dims);
+                %dataSize = fliplr(h5Dims);
+                dataSize = h5Dims;
                 H5S.close(spaceID);
+
+                % Get data type:
+                typeId = H5D.get_type(datasetID);
+                dataType = io.getMatType(typeId);
+                H5T.close(typeId);
+
                 H5D.close(datasetID)
             else
                 error('No dataset named "%s" in group "%s".', datasetName, groupInfo.Name)
             end
 
             if numel(dataSize) == 1
-                dataSize = [1, dataSize];
+                dataSize = [dataSize, 1];
             end
         end
 
@@ -377,17 +393,10 @@ classdef (Abstract) LLNWBData <  bot.item.internal.mixin.OnDemandProps
             [~, ~, cdataOut] = H5L.iterate(groupId, "H5_INDEX_NAME", "H5_ITER_INC", 0, @collectLinkNames, {});
             linkNameList = cdataOut;
         end
-    
-    
     end
 end
 
 function pathStr = h5path(varargin)
     pathStr = strjoin(varargin, '/');
     if isempty(pathStr);pathStr='/'; end
-end
-
-function status = disp_attr_name(id, name)
-    disp(name)
-    status = 0;
 end

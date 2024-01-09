@@ -17,7 +17,8 @@ classdef OphysNWBFile < bot.internal.nwb.file.vb.BehaviorNWBFile
     
         % Todo?
         % CellSpecimenIds            % Vector of cell specimen IDs recorded in this session
-        % RoiMasks
+        % RoiMasks ( They are available in the CellSpecimenTable, but
+        % should they be directy accessible?)
     end
 
     properties (Hidden) % Properties that are not shown to users.
@@ -31,7 +32,7 @@ classdef OphysNWBFile < bot.internal.nwb.file.vb.BehaviorNWBFile
         % expandPropertyMaps - Expand propertymaps with ophys properties
         %
         %   % Expand the property maps defined for the behavior NWB file
-        %   with ophys specific properties
+        %   with ophys specific properties / data variables.
 
             rootGroup = "/processing/ophys";
             

@@ -1,7 +1,8 @@
 classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
 % BehaviorNWBFile - Provides the data from a Visual Behavior session
 %
-%   This class provides data from the behavior only sessions.
+%   A selection of the data from the NWB file of a Visual Behavior session 
+%   is available as on demand properties of this class. 
 
 
 %   Todo: 
@@ -140,52 +141,64 @@ classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
         end
     end
 
-    % % methods (Access = {?bot.behavior.internal.mixin.HasLinkedFile, ?bot.behavior.internal.LinkedFile})
-    % %     function propertyGroups = getPropertyGroups(obj)
-    % % 
-    % %         import matlab.mixin.util.PropertyGroup
-    % %         propertyGroups = matlab.mixin.util.PropertyGroup.empty;
-    % % 
-    % %         grouping = obj.getPropertyGroupingMap();
-    % %         groupNames = grouping.keys()';
-    % % 
-    % %         for groupName = groupNames
-    % %             propList = struct;
-    % % 
-    % %             propertyNames = grouping{groupName};
-    % % 
-    % %             for j = 1:numel(propertyNames)
-    % %                 thisPropName = propertyNames{j};
-    % %                 thisPropValue = obj.(thisPropName);
-    % % 
-    % %                 % Customize the property display if the value is empty.
-    % %                 if isempty(thisPropValue)
-    % %                     if obj.isInitialized()
-    % %                         thisPropValue = categorical({'<unknown>  (unavailable)'});
-    % %                     else
-    % %                         thisPropValue = categorical({'<unknown>  (download required)'});
-    % %                     end
-    % %                 end
-    % % 
-    % %                 propList.(thisPropName) = thisPropValue;
-    % %             end
-    % % 
-    % %             %displayName = obj.DisplayName;
-    % %             groupTitle = "Linked NWB Data (" + groupName + ")";
-    % %             %groupTitle = sprintf('<strong>%s:</strong>', groupTitle);
-    % %             propertyGroups(end+1) = PropertyGroup(propList, groupTitle); %#ok<AGROW>
-    % %         end
-    % %     end
-    % % end
+    methods (Access = {?bot.behavior.internal.mixin.HasLinkedFile, ?bot.behavior.internal.LinkedFile})
+        function propertyGroups = getPropertyGroups(obj)
+        % getPropertyGroups - Get property groups for display of properties
+        %
+        %   Based on preferences, either the properties of this linked file
+        %   will be grouped according to "data modality", i.e behavior or
+        %   physiology, or they will be provided as one group.
+
+            import matlab.mixin.util.PropertyGroup
+
+            prefs = bot.util.getPreferences();
+            if prefs.GroupItemProperties
+
+                propertyGroups = matlab.mixin.util.PropertyGroup.empty;
+    
+                grouping = obj.getPropertyGroupingMap();
+                groupNames = grouping.keys()';
+    
+                for groupName = groupNames
+                    propList = struct;
+    
+                    propertyNames = grouping{groupName};
+    
+                    for j = 1:numel(propertyNames)
+                        thisPropName = propertyNames{j};
+                        thisPropValue = obj.(thisPropName);
+    
+                        % Customize the property display if the value is empty.
+                        if isempty(thisPropValue)
+                            if obj.isInitialized()
+                                thisPropValue = categorical({'<unknown>  (unavailable)'});
+                            else
+                                thisPropValue = categorical({'<unknown>  (download required)'});
+                            end
+                        end
+    
+                        propList.(thisPropName) = thisPropValue;
+                    end
+    
+                    %displayName = obj.DisplayName;
+                    groupTitle = "Linked NWB Data (" + groupName + ")";
+                    %groupTitle = sprintf('<strong>%s:</strong>', groupTitle);
+                    propertyGroups(end+1) = PropertyGroup(propList, groupTitle); %#ok<AGROW>
+                end
+            else
+                propertyGroups = getPropertyGroups@bot.internal.nwb.LLNWBData(obj);
+            end
+        end
+    end
 
     methods (Access = protected)
 
-        function map = getPropertyGroupingMap(obj)
+        function map = getPropertyGroupingMap(~)
             map = dictionary(...
                 'NWB Metadata', {{'Metadata', 'SubjectDetails', 'TaskParameters', 'EyeTrackingRigGeometry'}}, ...
-                'Behavior', {{'Licks', 'Rewards', 'EyeTracking', 'RunningSpeed'}}, ...
-                'Intervals', {{'StimulusTimes', 'StimulusPresentation', 'Trials'}}, ...
-                'Stimulus', {{'StimulusTemplates'}} );
+                    'Behavior', {{'Licks', 'Rewards', 'EyeTracking', 'RunningSpeed'}}, ...
+                   'Intervals', {{'StimulusTimes', 'StimulusPresentation', 'Trials'}}, ...
+                    'Stimulus', {{'StimulusTemplates'}} );
         end
     end
 
