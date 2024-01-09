@@ -52,7 +52,7 @@ function sessionObj = getSessions(sessionIDSpec, sessionType, datasetName)
         end
     end
     
-    switch datasetName + sessionType
+    switch string(datasetName) + string(sessionType)
         case "VisualCodingOphys"
             sessionObj = bot.item.concrete.OphysSession(sessionIDSpec);
         case "VisualCodingEphys"

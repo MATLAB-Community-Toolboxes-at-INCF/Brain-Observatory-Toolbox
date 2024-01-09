@@ -86,7 +86,9 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
                 if isempty(obj.(propertyName))
                     obj.(propertyName) = bot.internal.OnDemandProperty();
                 end
-                if ~isfile(obj.FilePath)
+                if isfile(obj.FilePath)
+                     obj.(propertyName).OnDemandState = 'on-demand';
+                else
                      obj.(propertyName).OnDemandState = 'download required';
                 end
             end
@@ -99,8 +101,9 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
         function openFile(obj)
             % Todo: If opening a file directly from s3, consider whether to
             % skip parsing the file as this can be time consuming.
-            % if strncmp(obj.FilePath, 's3', 2); return; end
-            
+            if strncmp(obj.FilePath, 's3', 2); return; end
+            if obj.FilePath == ""; return; end
+
             try
                 obj.parseFile()
                 obj.IsInitialized = true;

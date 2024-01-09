@@ -87,12 +87,12 @@ classdef OnDemandProperty < matlab.mixin.CustomCompactDisplayProvider
                 return
             end
 
-            if ~obj.assertSetDataSizeAllowed()
+            if ~obj.assertSetDataSizeAllowed(newValue)
                 return
             end
 
             % try
-            %     obj.assertSetDataSizeAllowed();
+            %     obj.assertSetDataSizeAllowed(newValue);
             % catch ME
             %     warning(ME.message); return
             % end
@@ -177,12 +177,16 @@ classdef OnDemandProperty < matlab.mixin.CustomCompactDisplayProvider
             end
         end
 
-        function tf = assertSetDataSizeAllowed(obj)
+        function tf = assertSetDataSizeAllowed(obj, newValue)
             tf = true;
             if ~isempty(obj.DataSizeImmutable)
                 if ~any( isnan(obj.DataSizeImmutable) )
-                    tf = false;
-                    %error('Can not change size of OnDemandProperty because it''s size is immutable')
+                    if ~isequal(obj.DataSizeImmutable, newValue)
+                        tf = false;
+                        %error('Can not change size of OnDemandProperty because it''s size is immutable')
+                    else
+                        tf = true;
+                    end
                 end
             end
         end

@@ -42,6 +42,10 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
         LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB",false);
     end
 
+    properties (Access = public)
+        FileResource = bot.internal.fileresource.visualcoding.VCEphysS3Bucket.instance()
+    end
+
     %% PROPERTY ACCESS METHODS
 
     % VISIBLE PROPERTIES
@@ -149,7 +153,7 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
                 obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);
 
                 % Assign linked Item objects (upstream)
-                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys");
+                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys", "VisualCoding");
 
                 % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
                 obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));

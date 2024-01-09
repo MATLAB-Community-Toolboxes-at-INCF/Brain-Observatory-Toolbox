@@ -129,7 +129,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
 
         function str = getHeader(obj)
             str = getHeader@matlab.mixin.CustomDisplay(obj);
-            str = replace(str, 'with properties', sprintf('(%s) with properties', obj.getDatasetName()));
+            str = replace(str, 'with properties', sprintf('(%s) with properties', obj(1).getDatasetName()));
         end
 
         function groups = getPropertyGroups(obj)
