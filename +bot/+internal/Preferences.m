@@ -37,6 +37,8 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
 
         % Whether to automatically download nwb files when creating session objects
         AutoDownloadNwb     (1,1) logical = true
+
+        GroupItemProperties (1,1) logical = false
     end
 
     properties (SetObservable, Hidden)

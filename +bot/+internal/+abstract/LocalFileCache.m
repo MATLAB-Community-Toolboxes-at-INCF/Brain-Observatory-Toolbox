@@ -160,6 +160,8 @@ classdef LocalFileCache < handle
                     warning("LocalFileCache:MissingFileForKey", ...
                         "Key was detected but the corresponding file " + ...
                         "is not present in the file cache.")
+                    obj.CacheManifest = obj.CacheManifest.remove(key);
+                    obj.saveCacheManifest()
                 end
             else
                 tf = false;
@@ -180,8 +182,8 @@ classdef LocalFileCache < handle
             if ~obj.isInCache(key)
                 % - No, so raise a warning
                 warning('LocalFileCache:FileNotInCache', ...
-                        'The file for the provided key does not exist in the cache.');
-                
+                       'The file for the provided key does not exist in the cache.');
+                obj.CacheManifest = obj.CacheManifest.remove(key);
             else
                 % - Try to delete the file from the cache
                 try
@@ -197,7 +199,7 @@ classdef LocalFileCache < handle
                 end
                 
                 % - Remove key from manifest
-                obj.CacheManifest.remove(key);
+                obj.CacheManifest = obj.CacheManifest.remove(key);
             end
             obj.saveCacheManifest()
         end

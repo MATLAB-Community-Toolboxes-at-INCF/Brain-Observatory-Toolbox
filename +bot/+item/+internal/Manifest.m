@@ -250,7 +250,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             datasetType = char(manifest.DATASET_TYPE);
             diskCache = manifest.cache;
 
-            warning('off', 'CloudCacher:URLNotInCache')
+            warning('off', 'LocalFileCache:FileNotInCache')
             strURI = manifest.FileResource.getItemTableURI(itemType);
             diskCache.CloudCacher.remove(strURI)
 
@@ -260,7 +260,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                 diskCache.CloudCacher.removeURLsMatchingSubstring(strURI)
             end
 
-            warning('on', 'CloudCacher:URLNotInCache')
+            warning('on', 'LocalFileCache:FileNotInCache')
         end
     
         function cacheKey = getManifestCacheKey(manifest, itemType)

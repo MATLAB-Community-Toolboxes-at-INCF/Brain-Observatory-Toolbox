@@ -2,8 +2,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% PROPERTIES
     properties (SetAccess = public)
-        info;         % Struct containing info about this item
         id;           % ID of this item
+        info;         % Struct containing info about this item
     end
     
     %% HIDDEN PROPERTIES
@@ -13,6 +13,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     end
     
     properties (Abstract, Hidden, Access = protected, Constant)
+        DATASET (1,1) bot.item.internal.enum.Dataset
         DATASET_TYPE(1,1) bot.item.internal.enum.DatasetType
         ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
     end
@@ -58,29 +59,26 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 end
                 return;                
             end
-            
-            % Identify associated manifest containing all Items of this class
-            switch obj.DATASET_TYPE
-                case "Ephys"
-                    obj.manifest = bot.item.internal.EphysManifest.instance();
-                case "Ophys"
-                    obj.manifest = bot.item.internal.OphysManifest.instance();
-                otherwise
-                    assert(false);
-            end                       
-            
-            
+
+            obj.manifest = bot.item.internal.Manifest.instance(...
+                obj.DATASET_TYPE, obj.DATASET);
+
             % Identify the manifest table row(s) associated to itemIDSpec
             if istable(itemIDSpec)                
                 manifestTableRow = itemIDSpec;
             elseif isnumeric(itemIDSpec)
                 itemIDSpec = uint32(round(itemIDSpec));
                 
-                manifestTablePrefix = lower(string(obj.DATASET_TYPE));
-                manifestTableSuffix = lower(string(obj.ITEM_TYPE)) + "s";
-                
-                manifestTable = obj.manifest.([manifestTablePrefix + "_" + manifestTableSuffix]); %#ok<NBRAK>
-                             
+                manifestTablePrefix = string(obj.DATASET_TYPE);
+                manifestTableSuffix = string(obj.ITEM_TYPE) + "s";
+                try
+                    manifestTable = obj.manifest.(lower(manifestTablePrefix + "_" + manifestTableSuffix));
+                catch
+                    % This should be consolidated, but for VB Manifest
+                    % tables the names are coded in MATLAB-style
+                    manifestTable = obj.manifest.(manifestTablePrefix + manifestTableSuffix);
+                end
+
                 matchingRow = manifestTable.id == itemIDSpec;
                 manifestTableRow = manifestTable(matchingRow, :);                          
             else
@@ -98,6 +96,10 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     methods
         function datasetType = getDatasetType(obj)
             datasetType = char(obj.DATASET_TYPE);
+        end
+
+        function datasetName = getDatasetName(obj)
+            datasetName = char(obj.DATASET);
         end
     end
     

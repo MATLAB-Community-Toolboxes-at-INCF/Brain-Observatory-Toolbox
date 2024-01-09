@@ -110,7 +110,8 @@ classdef EphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        DATASET = bot.item.internal.enum.Dataset("VisualCoding")
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys");
     end
     
     properties (Hidden)
@@ -157,7 +158,8 @@ classdef EphysSession < bot.item.Session
         end
         
         function structure_acronyms = get.structure_acronyms(self)
-            structure_acronyms = strip(split(self.info.ephys_structure_acronyms,";"))';
+            info_field_name = 'structure_acronyms';
+            structure_acronyms = strip(split(self.info.(info_field_name),";"))';
         end
         
         
@@ -181,7 +183,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function tbl = get.channel_structure_intervals(self)
-            
+            tic
             %structure_id_key = "ephys_structure_id";
             structure_label_key = "ephys_structure_acronym";
             
@@ -198,6 +200,7 @@ classdef EphysSession < bot.item.Session
             tbl = table;
             tbl.intervals = zlclDiffIntervals(channels_selected.(structure_label_key))';
             tbl.labels = channels_selected.(structure_label_key)(tbl.intervals);
+            toc
         end
        
         function raise_MultipleProbes_warning(self)

@@ -88,7 +88,7 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             end
             
             if ~isempty(itemObject)
-                exp_id = itemObject.info.ecephys_session_id; %??
+                exp_id = itemObject.info.ephys_session_id; %??
                 ephysExperimentId = string(exp_id);
             end
 

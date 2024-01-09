@@ -81,7 +81,8 @@ classdef OphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
+        DATASET = bot.item.internal.enum.Dataset("VisualCoding")
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ophys");
     end
     
     properties (Hidden)

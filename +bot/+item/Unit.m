@@ -17,7 +17,8 @@ classdef Unit < bot.item.internal.abstract.Item & bot.item.internal.mixin.Metric
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        DATASET = bot.item.internal.enum.Dataset("VisualCoding")
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys");
         ITEM_TYPE = bot.item.internal.enum.ItemType.Unit;
     end
     
