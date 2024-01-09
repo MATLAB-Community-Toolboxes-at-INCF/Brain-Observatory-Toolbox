@@ -90,6 +90,22 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
     end
 
     methods (Access = protected)
+
+        function filePath = getLinkedFilePath(obj, fileNickName, autoDownload)
+            % Get filepath from cache.
+            datasetCache = bot.behavior.internal.Cache.instance();
+            if fileNickName == "SessNWB"
+                % Note: As an ophys session can have one or multiple
+                % experiments associated with it, the NWB file of the first
+                % experiment is used by default (the behavior data content
+                % should be the same across all experiments).
+                filePath = datasetCache.getPathForFile(fileNickName, obj.Experiment(1), ...
+                    'AutoDownload', autoDownload);
+            else
+                error('Unsupported file nickname for Visual Behavior ophys session')
+            end
+        end
+
         function initLinkedFiles(obj)
         % initLinkedFiles - Initialize linked files for item
             
@@ -101,11 +117,9 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
             autoDownload = prefs.AutoDownloadNwb;
             
             fileNickName = obj.LinkedFileTypes.keys;
-        
-            % Get filepath from cache.
-            datasetCache = bot.behavior.internal.Cache.instance();
-            filePath = datasetCache.getPathForFile(fileNickName, obj.Experiment(1), ...
-                'AutoDownload', autoDownload);
+            
+            % Get the filepath for the linked file
+            filePath = obj.getLinkedFilePath(fileNickName, autoDownload);
 
             % Note: If autodownload is false and the file does not exist in
             % the cache, the filePath will be empty.
@@ -113,27 +127,7 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
             linkedFileFcn = obj.LinkedFileTypes(fileNickName);
             obj.LinkedFiles = linkedFileFcn(filePath, fileNickName);
         end
-
-        function downloadLinkedFile(obj, fileNickname)
-        %downloadLinkedFile - Retrieve a linked file (from cache or api/s3)
-
-            % Get filepath from cache.
-            datasetCache = bot.behavior.internal.Cache.instance();
-
-            % Todo
-            % assert(~datasetCache.IsFileInCache(fileKey), "File has already been downloaded");
-            
-            % Note: As an ophys session can have one or multiple
-            % experiments associated with it, the NWB file of the first
-            % experiment is used by default (the behavior data content
-            % should be the same across all experiments).
-
-            filePath = datasetCache.getPathForFile(fileNickname, obj.Experiment(1), 'AutoDownload', true);
-            isMatchedLinkedFile = find(strcmp({obj.LinkedFiles.Nickname}, fileNickname));
-
-            obj.LinkedFiles(isMatchedLinkedFile).updateFilePath(filePath);
-        end
-
+        
         function initLinkedItems(obj)
         % initLinkedItems - Initialize the linked item properties.
 

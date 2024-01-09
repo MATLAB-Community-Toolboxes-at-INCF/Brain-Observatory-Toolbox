@@ -136,13 +136,12 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
 
             isCached = obj.IsURLInCache(fileKey);
 
-            % % if ~isCached && strcmp(bot.internal.Preferences.getPreferenceValue("DownloadMode"), "Variable")
-            % %     setenv("AWS_DEFAULT_REGION", "us-west-2");
-            % %     filePath = obj.getFileUrl(itemObject, fileNickname);
-
-            if ~isCached && options.AutoDownload
+            if ~isCached && obj.prefersToReadRemoteFile()
+                setenv("AWS_DEFAULT_REGION", "us-west-2");
+                filePath = obj.getFileUrl(itemObject, fileNickname);
+            
+            elseif ~isCached && obj.prefersToDownloadRemoteFile() && options.AutoDownload
                 downloadUrl = obj.getFileUrl(itemObject, fileNickname);
-                %if strncmp(downloadUrl, 's3', 2)
                 targetFilePath = obj.getTargetPath(downloadUrl);
                 filePath = obj.CacheFile(downloadUrl, targetFilePath, ...
                     'CacheKey', fileKey, 'FileNickname', fileNickname);
@@ -439,8 +438,16 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
                 error('BOT:Cache', 'Unsupported url')
             end
         end
+    
+        function tf = prefersToReadRemoteFile()
+            prefs = bot.util.getPreferences();
+            tf = strcmp(prefs.DownloadMode, "Variable");
+        end
 
-
+        function tf = prefersToDownloadRemoteFile()
+            prefs = bot.util.getPreferences();
+            tf = strcmp(prefs.DownloadMode, "File");
+        end
     end
 
     methods (Static) % Methods for reseting or clearing cache

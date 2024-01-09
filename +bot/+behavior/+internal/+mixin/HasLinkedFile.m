@@ -33,8 +33,15 @@ classdef HasLinkedFile < dynamicprops & handle
             % creation and so if numel(obj)>1 the HasLinkedFile constructor
             % has already been initialized.
 
+            if isempty(obj.id); return; end
+
             obj.initLinkedFiles()
             obj.embeddLinkedFileProperties()
+
+            prefs = bot.util.getPreferences();
+
+            addlistener(prefs, 'DownloadMode', 'PostSet', ...
+                @(s, e) obj.refreshLinkedFilePath);
         end
     end
 
@@ -69,6 +76,23 @@ classdef HasLinkedFile < dynamicprops & handle
     end
 
     methods (Access = private)
+
+        function refreshLinkedFilePath(obj)
+            
+            % Check preferences if file should be downloaded
+            prefs = bot.util.getPreferences();
+            autoDownload = prefs.AutoDownloadNwb;
+
+            fileNicknames = obj.LinkedFileTypes.keys;
+             
+            for fileNickname = fileNicknames
+                filePath = obj.getLinkedFilePath(fileNickname, autoDownload);
+
+                isMatchedLinkedFile = find(strcmp({obj.LinkedFiles.Nickname}, fileNickname));
+                obj.LinkedFiles(isMatchedLinkedFile).updateFilePath(filePath);
+            end
+        end
+
         function embeddLinkedFileProperties(obj)
         % embeddLinkedFileProperties - Embedd linked file's properties on object
         %
@@ -143,17 +167,20 @@ classdef HasLinkedFile < dynamicprops & handle
         %    3) If an S3 bucket is not mounted locally, and the preference is
         %    set to download from API, the file will be downloaded from the
         %    Allen Brain Observatory API
+            
+            filePath = obj.getLinkedFilePath(fileNickname, true);
+            isMatchedLinkedFile = find(strcmp({obj.LinkedFiles.Nickname}, fileNickname));
 
+            obj.LinkedFiles(isMatchedLinkedFile).updateFilePath(filePath);
+        end
+
+        function filePath = getLinkedFilePath(obj, fileNickname, autoDownload)
+        %getLinkedFilePath - Get filepath for a linked file
+                    
             % Get filepath from cache.
             datasetCache = bot.behavior.internal.Cache.instance();
-
-            % Todo
-            % assert(~datasetCache.IsFileInCache(fileKey), "File has already been downloaded");
-            
-            filePath = datasetCache.getPathForFile(fileNickname, obj, 'AutoDownload', true);
-            isCurrentLinkedFile = find(strcmp({obj.LinkedFiles.Nickname}, fileNickname));
-
-            obj.LinkedFiles(isCurrentLinkedFile).updateFilePath(filePath);
+            filePath = datasetCache.getPathForFile(fileNickname, obj, ...
+                'AutoDownload', autoDownload);
         end
     end
 end

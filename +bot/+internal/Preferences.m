@@ -41,17 +41,22 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         GroupItemProperties (1,1) logical = false
     end
 
+    properties (SetObservable)
+        % Download file or variable (Work in progress).
+        DownloadMode        (1,1) string ...
+            {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
+    end
+
     properties (SetObservable, Hidden)
         % A temporary directory for storing files when cache directory is
         % suboptimal.
         ScratchDirectory    (1,1) string = ""
+
     end
 
         % %         Suggestions for new preferences (Todo):
         % %
-        % %         % Download file or variable (Work in progress).
-        % %         DownloadMode        (1,1) string ...
-        % %             {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
+
 
     properties (Constant, Access = private)
         Filename = fullfile(prefdir, 'BrainObservatoryToolboxPreferences.mat')
