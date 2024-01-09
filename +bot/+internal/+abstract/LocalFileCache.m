@@ -283,19 +283,17 @@ classdef LocalFileCache < handle
             S = load(obj.CacheManifestFilePath);
             assert(isequal(S.strVersion, obj.Version));
             try
-                try
-                    obj.CacheManifest = S.CacheManifest;
-                catch
-                    obj.CacheManifest = S.CacheMap;
-                    obj.saveCacheManifest()
-                end
-            catch % Legacy
-                obj.CacheManifest = S.mapCachedData;
+                cacheManifest = S.CacheManifest;
+            catch % Legacy (v0.9.3 and below)
+                cacheManifest = S.mapCachedData;
             end
 
-            if isa(obj.CacheManifest, 'containers.Map') % Convert to dictionary
-                keys = string(obj.CacheManifest.keys()); values = string(obj.CacheManifest.values());
+            if isa(cacheManifest, 'containers.Map') % Convert to dictionary % Legacy (v0.9.3 and below)
+                keys = string(cacheManifest.keys()); values = string(cacheManifest.values());
                 obj.CacheManifest = dictionary(keys, values);
+                obj.saveCacheManifest()
+            else
+                obj.CacheManifest = cacheManifest;
             end
         end
       
