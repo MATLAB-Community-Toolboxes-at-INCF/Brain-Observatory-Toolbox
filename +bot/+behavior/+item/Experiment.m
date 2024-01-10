@@ -1,5 +1,5 @@
 classdef Experiment < bot.behavior.item.internal.abstract.Item & ...
-                        bot.behavior.internal.mixin.HasLinkedFile
+                        bot.internal.behavior.mixin.HasLinkedFile
 % An experiment refers to a single imaging plane acquired in a single session
 
 % Note: An experiment of the Visual Behavior Dataset is defined very
@@ -49,7 +49,7 @@ classdef Experiment < bot.behavior.item.internal.abstract.Item & ...
             
             % Superclass construction
             obj = obj@bot.behavior.item.internal.abstract.Item(varargin{:});
-            obj = obj@bot.behavior.internal.mixin.HasLinkedFile()
+            obj = obj@bot.internal.behavior.mixin.HasLinkedFile()
 
             if ~isempty(varargin)
                 itemIDSpec = varargin{1};
@@ -100,7 +100,7 @@ classdef Experiment < bot.behavior.item.internal.abstract.Item & ...
             fileNickName = obj.LinkedFileTypes.keys;
 
             % Get filepath from cache.
-            datasetCache = bot.behavior.internal.Cache.instance();
+            datasetCache = bot.internal.behavior.Cache.instance();
             filePath = datasetCache.getPathForFile(fileNickName, obj, ...
                 'AutoDownload', autoDownload);
 

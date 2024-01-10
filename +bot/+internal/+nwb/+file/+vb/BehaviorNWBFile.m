@@ -141,7 +141,7 @@ classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
         end
     end
 
-    methods (Access = {?bot.behavior.internal.mixin.HasLinkedFile, ?bot.behavior.internal.LinkedFile})
+    methods (Access = {?bot.internal.behavior.mixin.HasLinkedFile, ?bot.internal.behavior.LinkedFile})
         function propertyGroups = getPropertyGroups(obj)
         % getPropertyGroups - Get property groups for display of properties
         %

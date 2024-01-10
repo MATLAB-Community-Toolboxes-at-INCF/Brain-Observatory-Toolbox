@@ -9,7 +9,7 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
         DisplayName
     end
 
-    properties (SetAccess = immutable, GetAccess=?bot.behavior.internal.mixin.HasLinkedFile)
+    properties (SetAccess = immutable, GetAccess=?bot.internal.behavior.mixin.HasLinkedFile)
         % Nickname - This is the name of a linked file instance as it is
         % referred to in a FileResource class and it is used to resolve the
         % remote file location for the file.
@@ -114,7 +114,7 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
         end
     end
 
-    methods (Access = {?bot.behavior.internal.mixin.HasLinkedFile, ?bot.behavior.internal.LinkedFile})
+    methods (Access = {?bot.internal.behavior.mixin.HasLinkedFile, ?bot.internal.behavior.LinkedFile})
         function propertyGroups = getPropertyGroups(obj)
             
             import matlab.mixin.util.PropertyGroup

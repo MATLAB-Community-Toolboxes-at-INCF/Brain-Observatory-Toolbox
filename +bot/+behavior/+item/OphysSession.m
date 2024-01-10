@@ -11,7 +11,7 @@
 
 
 classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
-                        bot.behavior.internal.mixin.HasLinkedFile
+                        bot.internal.behavior.mixin.HasLinkedFile
     
     % Direct Item Values
     properties (SetAccess = private)
@@ -53,7 +53,7 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
             
             % Superclass construction
             obj = obj@bot.behavior.item.internal.abstract.Item(varargin{:});
-            obj = obj@bot.behavior.internal.mixin.HasLinkedFile()
+            obj = obj@bot.internal.behavior.mixin.HasLinkedFile()
 
             if ~isempty(varargin)
                 itemIDSpec = varargin{1};
@@ -93,7 +93,7 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
 
         function filePath = getLinkedFilePath(obj, fileNickName, autoDownload)
             % Get filepath from cache.
-            datasetCache = bot.behavior.internal.Cache.instance();
+            datasetCache = bot.internal.behavior.Cache.instance();
             if fileNickName == "SessNWB"
                 % Note: As an ophys session can have one or multiple
                 % experiments associated with it, the NWB file of the first

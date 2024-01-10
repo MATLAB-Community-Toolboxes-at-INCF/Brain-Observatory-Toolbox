@@ -1,4 +1,4 @@
-classdef (Abstract) LLNWBData < bot.behavior.internal.LinkedFile
+classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
 % NWBData - Abstract class providing an object interface to data in NWB file
 %
 %   Note: This class uses primarily low-level H5 library functions.
@@ -43,7 +43,7 @@ classdef (Abstract) LLNWBData < bot.behavior.internal.LinkedFile
             assert(exist('nwbRead', 'file')==2, ...
                 'Matnwb is unavailable!')
 
-            obj = obj@bot.behavior.internal.LinkedFile(filePath, nickName)
+            obj = obj@bot.internal.behavior.LinkedFile(filePath, nickName)
         end
 
         function delete(obj)

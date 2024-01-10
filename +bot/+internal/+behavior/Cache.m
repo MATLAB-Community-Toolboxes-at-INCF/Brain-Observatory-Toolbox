@@ -1,4 +1,4 @@
-%% CLASS bot.behavior.internal.Cache - Cache and cloud access class for Brain Observatory Toolbox
+%% CLASS bot.internal.behavior.Cache - Cache and cloud access class for Brain Observatory Toolbox
 %
 % This class is used internally by the Brain Observatory Toolbox to access
 % data from the Allen Brain Observatory resource [1] via the Allen Brain
@@ -8,8 +8,8 @@
 % [2] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: brain-map.org/api/index.html
 
 % Changes from bot.internal.cache:
-% - Inherits from bot.behavior.internal.cache.CloudCacher
-% - Use modified bot.behavior.internal.cache.CloudCacher
+% - Inherits from bot.internal.fileresource.mixin.HasFileResource
+% - Use modified bot.internal.behavior.cache.CloudCacher
 % - Add getPathForFile, getCacheKeyForFile, getTargetPath,
 %   detectRetrievalMode methods
 
@@ -31,7 +31,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
         
         % CloudCacher instance. This instance manages a map of cached data
         % files for the Allen Brain Observatory resource.
-        CloudCacher (1,1) bot.behavior.internal.cache.CloudCacher
+        CloudCacher (1,1) bot.internal.behavior.cache.CloudCacher
 
         % ObjectCacher instance. This instance manages a map for cached
         % metadata files (item tables) for the Allen Brain Observatory resource
@@ -64,10 +64,10 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
             
             % - If cache object exists, check that version is correct
             if ~isempty(cacheObject) && isvalid(cacheObject)
-                if cacheObject.Version ~= bot.behavior.internal.Cache.Version
+                if cacheObject.Version ~= bot.internal.behavior.Cache.Version
                     warning('BOT:Cache:NonMatchingVersion', ...
                         ['The existing cache singleton instance does not ' ...
-                        'match the version of \nthe bot.behavior.internal.Cache ', ...
+                        'match the version of \nthe bot.internal.behavior.Cache ', ...
                         'class. The cache will be reinitialized.'])
                     delete(cacheObject)
                     cacheObject = [];
@@ -76,7 +76,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
 
             % - Construct the cache if singleton instance is not present
             if isempty(cacheObject)
-                cacheObject = bot.behavior.internal.Cache();
+                cacheObject = bot.internal.behavior.Cache();
             end
 
             % - Return the instance
@@ -89,7 +89,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
         function obj = Cache()
             % CONSTRUCTOR - Returns an object for managing data access from an Allen Brain Observatory dataset
             %
-            % Usage: obj = bot.behavior.internal.Cache(<strCacheDir>)
+            % Usage: obj = bot.internal.behavior.Cache(<strCacheDir>)
             
             
             % - Check if a cache directory has been provided
@@ -112,7 +112,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
             strScratchDir = obj.getScratchDirectory(obj.CacheDirectory);
             
             % - Set up cloud and object caches
-            obj.CloudCacher = bot.behavior.internal.cache.CloudCacher(strScratchDir);
+            obj.CloudCacher = bot.internal.behavior.cache.CloudCacher(strScratchDir);
             obj.ObjectCacher = bot.internal.ObjectCacher(obj.CacheDirectory);
         end
     end
@@ -265,7 +265,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
         function tResponse = CachedRMAQuery(obj, rmaQueryUrl, options)
              
             arguments
-                obj bot.behavior.internal.Cache % Object of this class
+                obj bot.internal.behavior.Cache % Object of this class
                 rmaQueryUrl string
                 options.PageSize = 5000
                 options.SortingAttributeName = "id"
@@ -485,7 +485,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
 
                 bot.item.internal.EphysManifest.instance("clear") % clear singleton
                 bot.item.internal.OphysManifest.instance("clear") % clear singleton
-                % clear bot.behavior.internal.Cache
+                % clear bot.internal.behavior.Cache
                 % clear bot.internal.ObjectCacher
                 % clear bot.internal.CloudCacher
             end
@@ -510,9 +510,9 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
             % Remove cache folder from path
             switch answer
                 case 'Yes'
-                    bot.behavior.internal.Cache.clearInMemoryCache(true)
+                    bot.internal.behavior.Cache.clearInMemoryCache(true)
 
-                    cacheDirectory = bot.behavior.internal.Cache.getPreferredCacheDirectory();
+                    cacheDirectory = bot.internal.behavior.Cache.getPreferredCacheDirectory();
                     warning('off', 'MATLAB:rmpath:DirNotFound')
                     rmpath(genpath(cacheDirectory)); savepath
                     warning('on', 'MATLAB:rmpath:DirNotFound')
@@ -545,7 +545,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
         %   compatibility; if a factory directory for cached data exists on
         %   the file system, this method returns immediately.
             
-            factoryCacheDir = bot.behavior.internal.Cache.getFactoryCacheDirectory();
+            factoryCacheDir = bot.internal.behavior.Cache.getFactoryCacheDirectory();
             
             % If the factory cache directory already exists, the Brain 
             % Observatory Toolbox has been used on this computer prior to the
@@ -573,7 +573,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
                 'and cache data in the following directory:' ...
                 '\n \\bf%s'], factoryCacheDir);
 
-            strCacheDir = bot.behavior.internal.Cache.createCacheDirectory(factoryCacheDir, promptMessage);
+            strCacheDir = bot.internal.behavior.Cache.createCacheDirectory(factoryCacheDir, promptMessage);
         end
         
         function strCacheDir = resolveMissingCacheDirectory(strCacheDir)
@@ -585,7 +585,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
 
             switch answer
                 case 'Locate...'
-                    strCacheDir = bot.behavior.internal.Cache.uiGetCacheDirectory();
+                    strCacheDir = bot.internal.behavior.Cache.uiGetCacheDirectory();
                 case 'Reinitialize'
                     mkdir(strCacheDir);
                 otherwise
@@ -606,7 +606,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
             strCacheDir = bot.internal.Preferences.getPreferenceValue('CacheDirectory');
             
             if ~isfolder(strCacheDir)
-                strCacheDir = bot.behavior.internal.Cache.resolveMissingCacheDirectory(strCacheDir);
+                strCacheDir = bot.internal.behavior.Cache.resolveMissingCacheDirectory(strCacheDir);
                 
                 if isempty(strCacheDir)
                     error('BOT:PreferredCacheDirectoryMissing', ...
@@ -643,7 +643,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
                 case 'Continue'
                     strCacheDir = strInitCacheDir;
                 case 'Change Cache Directory...'
-                    strCacheDir = bot.behavior.internal.Cache.uiGetCacheDirectory();
+                    strCacheDir = bot.internal.behavior.Cache.uiGetCacheDirectory();
                 otherwise
                     error('BOT:InitializeCacheDirectory', ...
                         'User canceled during configuration of the preferred cache directory.')

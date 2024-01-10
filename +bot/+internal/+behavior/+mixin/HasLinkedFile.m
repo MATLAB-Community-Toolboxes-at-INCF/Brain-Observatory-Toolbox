@@ -3,7 +3,7 @@ classdef HasLinkedFile < dynamicprops & handle
 
     properties (Access = protected)
         % LinkedFiles - An array of LinkedFile objects
-        LinkedFiles (1,:) bot.behavior.internal.LinkedFile
+        LinkedFiles (1,:) bot.internal.behavior.LinkedFile
     end
     
     properties (Dependent)
@@ -178,7 +178,7 @@ classdef HasLinkedFile < dynamicprops & handle
         %getLinkedFilePath - Get filepath for a linked file
                     
             % Get filepath from cache.
-            datasetCache = bot.behavior.internal.Cache.instance();
+            datasetCache = bot.internal.behavior.Cache.instance();
             filePath = datasetCache.getPathForFile(fileNickname, obj, ...
                 'AutoDownload', autoDownload);
         end

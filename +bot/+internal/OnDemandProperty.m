@@ -9,7 +9,7 @@ classdef OnDemandProperty < matlab.mixin.CustomCompactDisplayProvider
 %       Save data value on this object and use this class instead of the
 %       OnDemandProps mixin?
 
-    properties %(Access = {?bot.behavior.internal.LinkedFile, ?bot.internal.OnDemandProperty})
+    properties %(Access = {?bot.internal.behavior.LinkedFile, ?bot.internal.OnDemandProperty})
         DataSize double                       % Size of data (e.g., [256 256] for an image).
         DataType (1,1) string = missing       % Type of data (e.g., 'uint8').
         NeuroDataType (1,1) string = missing  % Name of NWB Neurodata type
