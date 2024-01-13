@@ -38,12 +38,14 @@ classdef nwb_ephys < handle
             return;
          end
          
-%          try
-%             % - Attempt to access the file
-            h5info(strFile);
-%          catch
-%             error('BOT:AccessNotPossible', 'Cannot access NWB file [%s]', strFile);
-%          end
+         try
+            % - Attempt to access the file
+            if ~strncmp(strFile, 's3', 2) % Skip for remote file as this is an expensive read operation.
+                h5info(strFile);
+            end
+         catch
+            error('BOT:AccessNotPossible', 'Cannot access NWB file [%s]', strFile);
+         end
          
          % - Record file location
          self.strFile = strFile;
@@ -83,6 +85,10 @@ classdef nwb_ephys < handle
          strRoot = '/intervals';
          sEpochsInfo = h5info(self.strFile, strRoot);
          all_epoch_names = string({sEpochsInfo.Groups.Name});
+
+         % If there is a dataset names trials (visual behavior), lets
+         % ignore it.
+         all_epoch_names = setdiff(all_epoch_names, '/intervals/trials', 'stable');
 
          % - Read each epoch as a table
          cstrIgnoreKeys = {'tags', 'timeseries', 'tags_index', 'timeseries_index'};
@@ -124,6 +130,9 @@ classdef nwb_ephys < handle
          presentation_names = replace(presentation_names, '_presentations', '');
          presentation_names = replace(presentation_names, 'invalid_times', 'invalid_presentation');
          presentation_names = transpose(presentation_names);
+
+         % Skip trials (field introduced in Visual Behavior):
+         presentation_names = setdiff(presentation_names, 'trials', 'stable');
       end
 
       function num_stimulus_presentations = fetch_num_stimulus_presentations(self)
@@ -162,6 +171,7 @@ classdef nwb_ephys < handle
          if ismember('color', stimulus_presentations.Properties.VariableNames)
             % - Find rows with color triplets
             strTripletRegexp = '\[(-{0,1}\d*\.\d*,\s*)*(-{0,1}\d*\.\d*)\]';
+            stimulus_presentations.color = string(stimulus_presentations.color);
             vbMatches = ~cellfun(@isempty, regexp(stimulus_presentations.color, strTripletRegexp));
             
             % - Pull out those color triplets
@@ -183,6 +193,57 @@ classdef nwb_ephys < handle
          end
       end 
       
+      function trial_data = fetch_trials_data(self)
+        
+          trial_data = bot.internal.nwb.reader.vb.read_trials_timetable(self.strFile);
+          return
+
+          % Todo: Remove:
+          trial_data = bot.internal.nwb.table_from_datasets_new(self.strFile, ...
+               '/intervals/trials', {});
+
+          % Process some of the columns for better representation
+          trial_data.aborted = strcmp( trial_data.aborted, 'TRUE' );
+          trial_data.auto_rewarded = strcmp( trial_data.auto_rewarded, 'TRUE' );
+          trial_data.catch = strcmp( trial_data.catch, 'TRUE' );
+          trial_data.correct_reject = strcmp( trial_data.correct_reject, 'TRUE' );
+          trial_data.false_alarm = strcmp( trial_data.false_alarm, 'TRUE' );
+          trial_data.go = strcmp( trial_data.go, 'TRUE' );
+          trial_data.hit = strcmp( trial_data.hit, 'TRUE' );
+          trial_data.is_change = strcmp( trial_data.is_change, 'TRUE' );
+          trial_data.miss = strcmp( trial_data.miss, 'TRUE' );
+
+          trial_data.start_time = seconds(trial_data.start_time);
+          trial_data.stop_time = seconds(trial_data.stop_time);
+
+          % Specify column order
+          column_order = {...
+              'id', ...
+              'start_time', ...
+              'stop_time', ...
+              'initial_image_name', ...
+              'change_image_name', ...
+              'is_change', ...
+              'change_time_no_display_delay', ...
+              'go', ...
+              'catch', ...
+              'lick_times', ...
+              'response_time', ...
+              'reward_time', ...
+              'reward_volume', ...
+              'hit', ...
+              'false_alarm', ...
+              'miss', ...
+              'correct_reject', ...
+              'aborted', ...
+              'auto_rewarded', ...
+              'change_frame', ...
+              'trial_length' ...
+              };
+
+          trial_data = trial_data(:, column_order);
+      end
+
       function probes = fetch_probes(self)
          % - Retrieve the electrode groups (probes) from the NWB file
          sElectrodes = h5info(self.strFile, '/general/extracellular_ephys');
@@ -294,6 +355,19 @@ classdef nwb_ephys < handle
          end
       end
       
+      function running_speed = fetch_running_speed_visual_behavior(self)
+         arguments
+            self;
+         end
+
+         nwbDatasetPath = '/processing/running/speed';
+         running_speed = bot.internal.nwb.table_from_datasets(self.strFile, nwbDatasetPath);         
+         timestamps = seconds(running_speed.timestamps);
+         speed = running_speed.data;
+         running_speed = timetable(timestamps, speed);
+         %running_speed = timetable(seconds(running_speed.timestamps), running_speed.data, 'VariableNames',{'RunningSpeed'});
+      end
+
       function raw_running_data = fetch_raw_running_data(self)
          % - Read from the cached NWB file, return as a table
          rotation_series = bot.internal.nwb.table_from_datasets(self.strFile, '/acquisition/raw_running_wheel_rotation');
@@ -310,7 +384,9 @@ classdef nwb_ephys < handle
             error('BOT:DataNotPresent', 'This session has no rig geometry data.');
          end
          
-         rig_metadata.rig_geometry_data = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking_rig_metadata/rig_geometry_data');
+         % As of december 2023, this field does not appear to exist in any
+         % nwb ephys file:
+         %rig_metadata.rig_geometry_data = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/eye_tracking_rig_metadata/rig_geometry_data');
          rig_metadata.rig_equipment = h5readatt(self.strFile, '/processing/eye_tracking_rig_metadata/eye_tracking_rig_metadata', 'equipment');
       end
       
@@ -380,6 +456,18 @@ classdef nwb_ephys < handle
          end
       end
       
+      function pupil_data = fetch_pupil_data_visual_behavior(self)
+         pupil_data = bot.internal.nwb.reader.vb.read_eyetracking_timetable(self.strFile);
+      end 
+      
+      function lick_data = fetch_lick_data_visual_behavior(self)
+         lick_data = bot.internal.nwb.reader.vb.read_lick_timetable(self.strFile);
+      end
+
+      function rewards_data = fetch_rewards_visual_behavior(self)
+         rewards_data = bot.internal.nwb.reader.vb.read_rewards_timetable(self.strFile);
+      end
+      
       function id = fetch_ecephys_session_id(self)
          % - Read the identifier from the NWB file
          id = h5read(self.strFile, '/identifier');
@@ -390,23 +478,47 @@ classdef nwb_ephys < handle
          % - Read table from NWB file
          tos = bot.internal.nwb.table_from_datasets(self.strFile, '/processing/optotagging/optogenetic_stimulation', ...
             {'tags', 'tags_index', 'timeseries', 'timeseries_index'});
+         
+         variable_order = {'start_time', 'id', 'condition', 'level', 'stop_time', 'stimulus_name', 'duration'};
+         tos = tos(:, variable_order);
+
+         tos.start_time = seconds(tos.start_time);
+         tos.stop_time = seconds(tos.stop_time);
+         tos.duration = seconds(tos.duration);
+
+         tt = table2timetable(tos);
+        
+         %variable_order = {'id', 'condition', 'level', 'stop_time', 'stimulus_name', 'duration'};
+         %tos = tt(:, variable_order);
+
+         et = eventtable(tt);
+         et.Properties.EventEndsVariable = 'stop_time';
+         et.Properties.EventLabelsVariable = 'condition';
+         tos = et;
       end
       
       function units = fetch_full_units_table(self)
          % - Read base units table
-         units = bot.internal.nwb.table_from_datasets(self.strFile, '/units', ...
+         
+         units = bot.internal.nwb.reader.readDynamicTable(self.strFile, '/units', ...
             {'spike_amplitudes', 'spike_amplitudes_index', ...
             'waveform_mean', 'waveform_mean_index',  ...
             'spike_times', 'spike_times_index'});
-         
+        
+         % Todo: These can be read with the function above instead of
+         % reading them individually like here:
+
          % - Read additional wrapped data entries
          units.spike_amplitudes = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/units/spike_amplitudes', '/units/spike_amplitudes_index');
+
          units.waveform_mean = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/units/waveform_mean', '/units/waveform_mean_index');
+
          units.spike_times = bot.internal.nwb.deindex_table_from_datasets(self.strFile, ...
             '/units/spike_times', '/units/spike_times_index');
-         
+
+
          % - Filter units
          if self.filter_by_validity || self.filter_out_of_brain_units
             channels = self.fetch_channels();
