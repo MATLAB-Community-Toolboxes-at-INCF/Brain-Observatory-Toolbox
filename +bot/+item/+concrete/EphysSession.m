@@ -281,7 +281,7 @@ classdef EphysSession < bot.item.Session
             % Reset linked file if remote file is set and preference to
             % download remote file:
             if strncmp( obj.linkedFiles{"SessNWB","LocalFile"}, 's3', 2) && ~obj.prefersToReadRemoteFile()
-               obj.linkedFiles{"SessNWB","LocalFile"} = missing;
+               obj.resetLinkedFile("SessNWB")
                obj.nwbLocal_ = [];
             end
 

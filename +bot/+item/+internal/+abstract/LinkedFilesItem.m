@@ -319,6 +319,10 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          
          obj.initState = true;
       end
+   
+      function resetLinkedFile(obj, fileNickname)
+         obj.linkedFiles{fileNickname,"LocalFile"} = missing;
+      end
    end
 
    %% METHODS - S3 FILE RETRIEVAL
