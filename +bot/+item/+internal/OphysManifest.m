@@ -249,8 +249,7 @@ classdef OphysManifest < bot.item.internal.Manifest
             
             % - Rename variables
             ophys_session_table = bot.item.internal.Manifest.renameTableVariables(ophys_session_table);
-            %ophys_session_table = rename_variables(ophys_session_table, "stimulus_name", "session_type");
-
+            
             % Recast / convert data types
             ophys_session_table = bot.item.internal.Manifest.recastTableVariables(ophys_session_table);
 

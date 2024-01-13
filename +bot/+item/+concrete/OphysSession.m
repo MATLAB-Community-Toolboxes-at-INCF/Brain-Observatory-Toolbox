@@ -151,7 +151,7 @@ classdef OphysSession < bot.item.Session
             if ismissing(self.linkedFiles{"SessNWB","LocalFile"})
                 self.downloadLinkedFile("SessNWB");
             end
-            
+
             obj.checkIfRemoteFileRequiresDownload("SessNWB")
 
             loc = self.linkedFiles{"SessNWB","LocalFile"};
@@ -185,7 +185,7 @@ classdef OphysSession < bot.item.Session
             % get.session_type - GETTER Return the name for the stimulus set used in this session
             %
             % Usage: strSessionType = bos.session_type
-            session_type = bos.info.stimulus_name;
+            session_type = bos.info.session_type;
         end
         
         function tbl = get.spontaneous_activity_stimulus_table(bos)
@@ -996,8 +996,7 @@ classdef OphysSession < bot.item.Session
                 stimulus_template = reshape(stimulus_template, stim_template_size);
             end
         end
-        
-        
+
     end
     
     %% METHODS - VISIBLE
