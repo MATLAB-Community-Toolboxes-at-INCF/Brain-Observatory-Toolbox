@@ -168,11 +168,12 @@ classdef S3Bucket < bot.internal.abstract.FileResource & matlab.mixin.Heterogene
         end
 
         function tf = useS3Protocol(~)
-            try
-                tf = strcmp( bot.internal.Preferences.getPreferenceValue('DownloadMode'), 'Variable'); %#ok<UNRCH> 
-            catch
-                tf = false;
-            end
+        % useS3Protocol - Whether to use S3 protocol to read remote files.
+        %
+        % This is equivalent to the no-download mode.
+            
+            prefs = bot.util.getPreferences();
+            tf = prefs.DownloadFrom == "S3" && ~prefs.DownloadRemoteFiles;
         end
     end
 
