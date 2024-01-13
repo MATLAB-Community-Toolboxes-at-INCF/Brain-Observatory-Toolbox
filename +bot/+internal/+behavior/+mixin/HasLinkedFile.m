@@ -37,11 +37,6 @@ classdef HasLinkedFile < dynamicprops & handle
 
             obj.initLinkedFiles()
             obj.embeddLinkedFileProperties()
-
-            prefs = bot.util.getPreferences();
-
-            addlistener(prefs, 'DownloadMode', 'PostSet', ...
-                @(s, e) obj.refreshLinkedFilePath);
         end
     end
 
@@ -68,10 +63,27 @@ classdef HasLinkedFile < dynamicprops & handle
     methods
         function linkedFilesMap = get.LinkedFilesInfo(obj)
         % get.LinkedFilesInfo - Get mapping for file nicknames to pathnames
+
+            % Build a dictionary with file nicknames as keys and filepaths 
+            % as values.
             keys = string( {obj.LinkedFiles.Nickname} );
             values = string( {obj.LinkedFiles.FilePath} );
             values(values=="")=missing;
             linkedFilesMap = dictionary(keys, values);
+        end
+    end
+
+    methods (Hidden)
+        function url = getRemoteFilePath(obj, fileNickname)
+            arguments
+                obj (1,1) bot.internal.behavior.mixin.HasLinkedFile
+                fileNickname (1,1) string
+            end
+            % Consider whether HasLinkedFile should subclass HasFileResource
+            % However, this method is more of a debugging method and will
+            % likely only be used occasionally.
+            fileResource = bot.internal.fileresource.mixin.HasFileResource();
+            url = fileResource.getFileUrl(obj, fileNickname);
         end
     end
 
@@ -125,6 +137,14 @@ classdef HasLinkedFile < dynamicprops & handle
 
         function data = getLinkedFilePropertyValue(obj, linkedFile, propertyName)
         % getLinkedFilePropertyValue - Get value for a linked file property
+            
+            if linkedFile.isRemote()
+                prefs = bot.util.getPreferences();
+                if prefs.DownloadFrom == "S3" && prefs.DownloadRemoteFiles
+                    obj.downloadLinkedFile(linkedFile.Nickname);
+                end
+            end
+
             if ~linkedFile.exists()
                 obj.downloadLinkedFile(linkedFile.Nickname);
             end

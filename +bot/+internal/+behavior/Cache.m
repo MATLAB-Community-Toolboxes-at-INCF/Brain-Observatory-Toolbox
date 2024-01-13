@@ -441,12 +441,12 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
     
         function tf = prefersToReadRemoteFile()
             prefs = bot.util.getPreferences();
-            tf = strcmp(prefs.DownloadMode, "Variable");
+            tf = not( prefs.DownloadRemoteFiles );
         end
 
         function tf = prefersToDownloadRemoteFile()
             prefs = bot.util.getPreferences();
-            tf = strcmp(prefs.DownloadMode, "File");
+            tf = prefs.DownloadRemoteFiles;
         end
     end
 

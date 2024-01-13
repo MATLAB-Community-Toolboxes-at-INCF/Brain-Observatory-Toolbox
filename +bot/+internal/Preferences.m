@@ -12,7 +12,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     %       AutoDownloadNwb     (logical) : Whether to automatically download files when creating item (session) objects
 
     %       Suggestions for new preferences (Todo)
-    %       DownloadMode        (string)  : Download file or variable
+    %       DownloadRemoteFiles (logical) : Whether to download remote files (true) or read data directly from remote location (false)
 
     properties (SetObservable)
         % Where to download data from, i.e web api or S3 bucket (AWS)
@@ -38,25 +38,19 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         % Whether to automatically download nwb files when creating session objects
         AutoDownloadNwb     (1,1) logical = true
 
-        GroupItemProperties (1,1) logical = false
+        GroupNwbProperties (1,1) logical = false
     end
 
     properties (SetObservable)
-        % Download file or variable (Work in progress).
-        DownloadMode        (1,1) string ...
-            {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
+        % Download file or read data from remote file (Work in progress).
+        DownloadRemoteFiles (1,1) logical = true
     end
 
     properties (SetObservable, Hidden)
         % A temporary directory for storing files when cache directory is
         % suboptimal.
         ScratchDirectory    (1,1) string = ""
-
     end
-
-        % %         Suggestions for new preferences (Todo):
-        % %
-
 
     properties (Constant, Access = private)
         Filename = fullfile(prefdir, 'BrainObservatoryToolboxPreferences.mat')
@@ -198,7 +192,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             end
 
             if ~isequal(obj.DownloadFrom, "S3")
-                namesToHide = [namesToHide, {'DownloadMode'}];
+                namesToHide = [namesToHide, {'DownloadRemoteFiles'}];
             end
 
             propertyNames = setdiff(propertyNames, namesToHide, 'stable');
@@ -264,6 +258,22 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         end
 
     end
-
-
 end
+
+% Details on Preferences (for developers):
+
+% DownloadFrom : Which file resource to use to resolve remote file paths.
+
+% DownloadRemoteFiles : 
+%
+%   Note: This option is only available if the DownloadFrom preference is 
+%   set to "S3".
+% 
+%   If value is changed to true:
+%       When requesting data, check if the filepath is remote,
+%       and if yes, get the "cached" filepath instead.
+% 
+%   If value is changed to false:
+%       If the filepath is already a locally cached file, we continue to 
+%       use that one.
+%       If the filepath is missing, we get the remote filepath...

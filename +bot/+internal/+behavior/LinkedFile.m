@@ -21,7 +21,7 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
     end
 
     properties (SetAccess = private, Hidden)
-        FilePath % Todo: string
+        FilePath % Todo: string. (1,1) string = missing
     end
 
     properties (Access = protected, Hidden)
@@ -47,7 +47,16 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
     methods (Hidden)
 
         function tf = exists(obj) % Access = ?Cache ?
-            tf = ~isempty( obj.FilePath ) && isfile( obj.FilePath );
+            if obj.isRemote()
+                tf = true; % Skip check and assume exists 
+            else
+                tf = ~isempty( obj.FilePath ) && isfile( obj.FilePath );
+            end
+        end
+
+        function tf = isRemote(obj)
+            fileURI = matlab.net.URI( obj.FilePath );
+            tf = fileURI.Scheme == "s3";
         end
 
         function tf = isInitialized(obj)
@@ -68,6 +77,15 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
             else
                 obj.FilePath = newFilePath;
             end
+
+            % Todo:
+            % if newFilePath == ""
+            %     newFilePath = missing;
+            % end
+
+            % Consider:
+            % If file is remote, check if file exists and save result
+            % internally, as this check is expensive.
         end
 
         function displayName = get.DisplayName(obj)
@@ -86,7 +104,9 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
                 if isempty(obj.(propertyName))
                     obj.(propertyName) = bot.internal.OnDemandProperty();
                 end
-                if isfile(obj.FilePath)
+                if obj.isRemote()
+                     obj.(propertyName).OnDemandState = 'on-demand <remote>';
+                elseif isfile(obj.FilePath)
                      obj.(propertyName).OnDemandState = 'on-demand';
                 else
                      obj.(propertyName).OnDemandState = 'download required';

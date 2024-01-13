@@ -152,7 +152,7 @@ classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
             import matlab.mixin.util.PropertyGroup
 
             prefs = bot.util.getPreferences();
-            if prefs.GroupItemProperties
+            if prefs.GroupNwbProperties
 
                 propertyGroups = matlab.mixin.util.PropertyGroup.empty;
     

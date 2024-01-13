@@ -105,9 +105,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         % assignManifest - Assign item manifest for specified object.  
             datasetName = obj.DATASET;
             datasetType = obj.DATASET_TYPE;
-
-            manifestClassName = sprintf("%s%sManifest", datasetName, datasetType);
-            fullManifestClassName = sprintf('bot.internal.metadata.%s.instance', manifestClassName);
+            
+            if datasetName == bot.item.internal.enum.Dataset.VisualBehavior
+                manifestClassName = sprintf("%s%sManifest", datasetName, datasetType);
+                fullManifestClassName = sprintf('bot.internal.metadata.%s.instance', manifestClassName);
+            elseif datasetName == bot.item.internal.enum.Dataset.VisualCoding
+                manifestClassName = sprintf("%sManifest", datasetType);
+                fullManifestClassName = sprintf('bot.item.internal.%s.instance', manifestClassName);
+            end
 
             obj.manifest = feval(fullManifestClassName);                  
         end

@@ -847,7 +847,7 @@ classdef OphysSession < bot.item.Session
             
             % - Get needed session properties
             stimuli = bos.stimulus_list();
-            sessionType = string(bos.session_type);
+            sessionType = string(bos.info.session_type);
             
             % - Loop over stimuli to get stimulus tables
             stimulus_epochs = table();

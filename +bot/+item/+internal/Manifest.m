@@ -338,13 +338,13 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
         function manifest = instance(type, dataset)
             
             arguments
-                type (1,1) string {mustBeMember(type, ["Ephys" "Ophys"])}
+                type (1,1) bot.item.internal.enum.DatasetType
                 dataset (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
             end
             
             switch dataset.Name
                 case "VisualCoding"
-                    switch(lower(type))
+                    switch lower(string(type))
                         case 'ophys'
                             manifest = bot.item.internal.OphysManifest.instance();
                         case 'ephys'
@@ -352,7 +352,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                     end
 
                 case "VisualBehavior"
-                    switch(lower(type))
+                    switch lower(string(type))
                         case 'ophys'
                             manifest = bot.internal.metadata.VisualBehaviorOphysManifest.instance();
                         case 'ephys'
