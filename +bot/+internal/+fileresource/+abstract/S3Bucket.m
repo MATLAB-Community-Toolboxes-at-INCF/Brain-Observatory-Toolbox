@@ -105,7 +105,8 @@ classdef S3Bucket < bot.internal.abstract.FileResource & matlab.mixin.Heterogene
             itemType = validatestring(itemType, obj.ItemTypes);
 
             filename = obj.ItemTableFileNames(itemType);
-            baseURI = obj.getDataFolderUri();
+            % Note: Ensure we get url with https scheme for tables:
+            baseURI = obj.getDataFolderUri("https");
             strURI = uriJoin(baseURI, filename);
         end
     end

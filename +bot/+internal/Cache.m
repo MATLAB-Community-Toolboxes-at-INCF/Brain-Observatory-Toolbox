@@ -42,9 +42,13 @@ classdef Cache < handle
 
     % Method for retrieving singleton instance
     methods (Static) 
-        function obj = instance()
+        function obj = instance(mode)
         %instance Return a singleton instance of the BOT Cache
             
+            arguments
+                mode (1,1) string {mustBeMember(mode, ["create", "nocreate"])} = "create"
+            end
+
             persistent cacheObject % Singleton instance
             
             % - If cache object exists, check that version is correct
@@ -60,7 +64,7 @@ classdef Cache < handle
             end
 
             % - Construct the cache if singleton instance is not present
-            if isempty(cacheObject)
+            if isempty(cacheObject) && mode ~= "nocreate"
                 cacheObject = bot.internal.Cache();
             end
 
@@ -572,8 +576,9 @@ classdef Cache < handle
             [~, currentUsername] = system('whoami');
             currentUsername = strtrim(currentUsername);
 
-            if string(currentUsername) == "mluser"
-                strScratchDir = "/Data/BOT_Cache_Temp";
+            % Note: Special case for MATLAB Online
+            if string(currentUsername) == "mluser" || string(currentUsername) == "matlab"
+                strScratchDir = "/tmp/BOT_Cache_Temp";
                 if ~isfolder(strScratchDir); mkdir(strScratchDir); end
             else
                 strScratchDir = cacheDirectory;

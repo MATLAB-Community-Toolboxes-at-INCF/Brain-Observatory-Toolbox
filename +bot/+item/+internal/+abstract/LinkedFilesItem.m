@@ -77,6 +77,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          if obj.prefersToReadRemoteFile()
             strS3Filepath = obj.getS3Filepath(fileNickname);
             obj.linkedFiles{fileNickname,"LocalFile"} = string(strS3Filepath);
+            obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
             return
          end
 

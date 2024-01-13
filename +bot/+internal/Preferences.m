@@ -49,7 +49,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     properties (SetObservable, Hidden)
         % A temporary directory for storing files when cache directory is
         % suboptimal.
-        ScratchDirectory    (1,1) string = ""
+        % ScratchDirectory    (1,1) string = ""
     end
 
     properties (Constant, Access = private)
@@ -163,8 +163,8 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             addlistener(obj, 'CacheDirectory', 'PostSet', ...
                 @(s,e) obj.onCacheDirectorySet);
 
-            addlistener(obj, 'ScratchDirectory', 'PostSet', ...
-                @(s,e) obj.onScratchDirectorySet);
+            % % addlistener(obj, 'ScratchDirectory', 'PostSet', ...
+            % %     @(s,e) obj.onScratchDirectorySet);
         end
 
         function propertyNames = getActivePreferenceGroup(obj)
@@ -198,17 +198,25 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             propertyNames = setdiff(propertyNames, namesToHide, 'stable');
         end
 
-        function onCacheDirectorySet(~)
+        function onCacheDirectorySet(obj)
             %onCacheDirectorySet Callback to execute if CacheDirectory changes
             %
             %   Need to reset the in-memory cache if this value is updated.
-            botCache = bot.internal.Cache.instance();
-            botCache.changeCacheDirectory(obj.CacheDirectory)
+            botCache = bot.internal.Cache.instance('nocreate');
+            if isempty(botCache); return; end % Skip if cache singleton is not properly initialized
 
+            botCache.changeCacheDirectory(obj.CacheDirectory)
             bot.internal.Cache.clearInMemoryCache(true)
+
+            % Todo: Merge Cache classes
+            botCache = bot.internal.behavior.Cache.instance('nocreate');
+            if isempty(botCache); return; end % Skip if cache singleton is not properly initialized
+
+            botCache.changeCacheDirectory(obj.CacheDirectory)
+            bot.internal.behavior.Cache.clearInMemoryCache(true)
         end
 
-        function onScratchDirectorySet(~)
+        function onScratchDirectorySet(obj)
             %onCacheDirectorySet Callback to execute if CacheDirectory changes
             %
             %   Need to reset the in-memory cache if this value is updated.

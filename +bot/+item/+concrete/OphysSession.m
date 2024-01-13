@@ -152,7 +152,7 @@ classdef OphysSession < bot.item.Session
                 self.downloadLinkedFile("SessNWB");
             end
 
-            obj.checkIfRemoteFileRequiresDownload("SessNWB")
+            self.checkIfRemoteFileRequiresDownload("SessNWB")
 
             loc = self.linkedFiles{"SessNWB","LocalFile"};
         end

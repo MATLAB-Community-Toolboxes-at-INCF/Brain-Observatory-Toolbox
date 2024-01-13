@@ -599,7 +599,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
                     try
                         T.(iVarName) = recastFcn( T.(iVarName) );
                     catch ME
-                        warning(ME.identifier, 'Could not convert "%s". Cause by: %s', iVarName, ME.message)
+                        warning(ME.identifier, 'Could not convert "%s". Caused by: %s', iVarName, ME.message)
                     end
                 end
             end
