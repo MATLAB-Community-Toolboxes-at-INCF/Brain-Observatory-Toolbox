@@ -73,7 +73,14 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
     methods (Access = private)
         function data = getProcessedData(obj, propertyName)
             % Load dataset from file
-            data = obj.loadDataset(propertyName);
+            try
+                data = obj.loadDataset(propertyName);
+            catch MECause
+                ME = MException('BOT:FailedToLoadDataset', ...
+                    sprintf('Could not load dataset for property "%s"', propertyName));
+                ME = ME.addCause(MECause);
+                throw(ME)
+            end
 
             % Process data / use custom reader functions
             if isKey(obj.PropertyProcessingFcnMap, propertyName)
@@ -193,12 +200,15 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
                     H5D.close(tsDatasetID)
 
                     %timestamps = h5read(obj.FilePath, [groupName, '/timestamps']);
-                    
+                    timestamps = obj.convertToDurationVector(timestamps, groupName);
+
                     if ismatrix(data) && ~isvector(data) % Is this general?
-                        data = data';
+                        numTimesteps = numel(timestamps);
+                        if size(data, 2) == numTimesteps
+                            data = data';
+                        end
                     end
                     
-                    timestamps = obj.convertToDurationVector(timestamps, groupName);
                     data = timetable(timestamps, data, 'VariableNames', propertyName);
                 
                  otherwise
@@ -290,7 +300,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
             
             timestampsUnit = obj.getTimeSeriesUnit(groupName);
             
-            if strcmp(timestampsUnit, 'seconds')
+            if strcmpi(timestampsUnit, 'seconds')
                 time = seconds(time);
             else
                 error('Time unit %s is not implemented yet', timestampsUnit)
