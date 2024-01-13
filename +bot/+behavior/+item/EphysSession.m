@@ -245,8 +245,23 @@ classdef EphysSession < bot.item.Session
         end
         
         function spike_amplitudes = get.spike_amplitudes(self)
-            n = self.nwbLocal;
-            spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.fetch_spike_amplitudes);
+            spike_amplitudes = self.fetch_cached('spike_amplitudes', @self.fetch_spike_amplitudes);
+        end
+                
+        function spike_times = get.spike_times(self)
+            if ~self.in_cache('checked_spike_times')
+                self.warn_invalid_spike_intervals();
+                self.property_cache.checked_spike_times = true;
+            end
+            
+            spike_times = self.fetch_cached('spike_times', @self.fetch_spike_times);
+            
+            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case
+            %             if ~self.in_cache('spike_times')
+            %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
+            %             end
+            %
+            %             spike_times = self.property_cache.spike_times;
         end
         
         function invalid_times = get.invalid_times(self)
@@ -265,8 +280,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function mean_waveforms = get.mean_waveforms(self)
-            n = self.nwbLocal;
-            mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
+            mean_waveforms = self.fetch_cached('mean_waveforms', @self.fetch_mean_waveforms);
         end
         
         function stimulus_conditions = get.stimulus_conditions(self)
@@ -309,23 +323,6 @@ classdef EphysSession < bot.item.Session
                 obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
             end
             nwb = obj.nwbLocal_;
-        end
-        
-        function spike_times = get.spike_times(self)
-            if ~self.in_cache('checked_spike_times')
-                self.warn_invalid_spike_intervals();
-                self.property_cache.checked_spike_times = true;
-            end
-            
-            n = self.nwbLocal;
-            spike_times = self.fetch_cached('spike_times', @n.fetch_spike_times);
-            
-            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case
-            %             if ~self.in_cache('spike_times')
-            %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
-            %             end
-            %
-            %             spike_times = self.property_cache.spike_times;
         end
         
         function metadata = get.nwb_metadata(self)
@@ -989,7 +986,27 @@ classdef EphysSession < bot.item.Session
             % - Allen SDK ecephys_session.units
             units_table = self.build_units_table(self.nwbLocal.fetch_units());
         end
-        
+
+        function spike_amplitudes = fetch_spike_amplitudes(self)
+            n = self.nwbLocal;
+            units_table = self.fetch_cached('units_table', @n.fetch_full_units_table);
+            spike_amplitudes = units_table(:, {'id', 'spike_amplitudes'});
+            spike_amplitudes.Properties.VariableNames(1) = "unit_id";
+        end
+
+        function spike_times = fetch_spike_times(self)
+            n = self.nwbLocal;
+            units_table = self.fetch_cached('units_table', @n.fetch_full_units_table);
+            spike_times = units_table(:, {'id', 'spike_times'});
+            spike_times.Properties.VariableNames(1) = "unit_id";
+        end
+
+        function mean_waveforms = fetch_mean_waveforms(self)
+            n = self.nwbLocal;
+            units_table = self.fetch_cached('units_table', @n.fetch_full_units_table);
+            mean_waveforms = units_table(:, {'id', 'waveform_mean'});
+            mean_waveforms.Properties.VariableNames(1) = "unit_id";
+        end
         
         function df = filter_owned_df(self, key, ids)
             arguments
