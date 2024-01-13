@@ -150,6 +150,7 @@ classdef OphysSession < bot.item.Session
         function loc = get.nwbLocal(self)
             if ismissing(self.linkedFiles{"SessNWB","LocalFile"})
                 self.downloadLinkedFile("SessNWB");
+                self.updateCellTable()
             end
 
             self.checkIfRemoteFileRequiresDownload("SessNWB")
@@ -1258,7 +1259,17 @@ classdef OphysSession < bot.item.Session
                 
                 obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
                 obj.cells = obj.experiment.cells;
+                if ~ismissing(obj.linkedFiles{"SessNWB","LocalFile"})
+                    obj.updateCellTable()
+                end
             end
+        end
+    end
+
+    methods (Access = protected)
+        function updateCellTable(obj)
+            cellSpecimenIds = obj.cell_specimen_ids;
+            obj.cells = obj.cells(ismember(obj.cells.id, uint32(cellSpecimenIds)), :);
         end
     end
 
