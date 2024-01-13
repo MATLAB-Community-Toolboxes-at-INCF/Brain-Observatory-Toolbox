@@ -17,8 +17,5 @@ function nameMap = itemTableVariableRenameMap()
     nameMap('use_lfp_data') = 'has_lfp_data';
 
     nameMap('ecephys_channel_id') = 'ephys_channel_id';
-
-    
-
 end
     

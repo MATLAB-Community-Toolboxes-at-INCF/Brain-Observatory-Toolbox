@@ -103,13 +103,15 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
             if ~clearMemoOnly
                 for itemType = itemTypeToClear
-                    
+
                     % - Remove temporary item table data from disk cache
                     manifest.clearTempTableFromCache(itemType)
 
                     % - Remove complete item tables from disk cache
+                    warning('off', 'LocalFileCache:FileNotInCache')
                     cacheKey = manifest.getManifestCacheKey(itemType);
                     manifest.cache.removeObject(cacheKey)
+                    warning('on', 'LocalFileCache:FileNotInCache')
                 end
             end
 
@@ -296,7 +298,7 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
             simpleClassName = classNameSplit{end};
 
             botCache = bot.internal.Cache.instance();
-
+            
             if botCache.isObjectInCache('BOTVersionForCachedManifest')
                 versionMap = botCache.retrieveObject('BOTVersionForCachedManifest');
                 if isKey(versionMap, simpleClassName)

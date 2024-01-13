@@ -303,7 +303,9 @@ classdef CloudCacher < bot.internal.abstract.LocalFileCache
         %
         % This method uses the `contains` function to test whether a URL 
         % (cache key) contains the substring in `subString`.
-        
+            
+            if ~obj.CacheManifest.isConfigured(); return; end
+
             % - Find keys matching the substring
             cstrAllKeys = obj.CacheManifest.keys();
             vbMatchingKeys = contains(cstrAllKeys, subString);

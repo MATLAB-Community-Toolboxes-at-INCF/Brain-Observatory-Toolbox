@@ -106,7 +106,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
             ME.rethrow();
          end
          
-         % obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
+         obj.downloadedFileProps = [obj.downloadedFileProps obj.LINKED_FILE_PROP_BINDINGS.(fileNickname)];
          
          assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}));
          obj.linkedFiles{fileNickname,"LocalFile"} = string(localFilename);
@@ -140,7 +140,7 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       % downloaded if the preference value for "DownloadRemoteFile" is 
       % changed to true.
        
-         if strncmp( self.linkedFiles{fileNickname,"LocalFile"}, 's3', 2) && ~self.prefersToReadRemoteFile()
+         if strncmp( obj.linkedFiles{fileNickname,"LocalFile"}, 's3', 2) && ~obj.prefersToReadRemoteFile()
             obj.linkedFiles{fileNickname,"LocalFile"} = missing;
             obj.downloadLinkedFile(fileNickname);
          end

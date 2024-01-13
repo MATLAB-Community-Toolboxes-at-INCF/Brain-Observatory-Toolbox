@@ -153,7 +153,7 @@ classdef LocalFileCache < handle
         %           is false.
     
             % - Check whether the key is in the cache
-            if obj.CacheManifest.isKey(key)
+            if obj.CacheManifest.isConfigured && obj.CacheManifest.isKey(key)
                 % - Check that the cache file actually exists
                 tf = isfile( obj.getCachedFilePathForKey(key) );
                 if ~tf
@@ -183,7 +183,9 @@ classdef LocalFileCache < handle
                 % - No, so raise a warning
                 warning('LocalFileCache:FileNotInCache', ...
                        'The file for the provided key does not exist in the cache.');
-                obj.CacheManifest = obj.CacheManifest.remove(key);
+                if obj.CacheManifest.isConfigured()
+                    obj.CacheManifest = obj.CacheManifest.remove(key);
+                end
             else
                 % - Try to delete the file from the cache
                 try
@@ -247,11 +249,15 @@ classdef LocalFileCache < handle
         end
 
         function size = get.CacheLength(obj)
-            size = length(obj.CacheManifest);
+            size = obj.CacheManifest.numEntries;
         end
 
         function keys = get.Keys(obj)
-            keys = string(obj.CacheManifest.keys());
+            if obj.CacheManifest.isConfigured()
+                keys = string(obj.CacheManifest.keys());
+            else
+                keys = string.empty;
+            end
         end
     end
 
@@ -326,11 +332,13 @@ classdef LocalFileCache < handle
         end
 
         function removeAll(obj)
-           keys = obj.CacheManifest.keys();
-           
-           for key = string(keys)
-               obj.remove(key);
-           end
+            if ~obj.CacheManifest.isConfigured(); return; end
+            
+            keys = obj.CacheManifest.keys();
+            
+            for key = string(keys)
+                obj.remove(key);
+            end
         end
     end
     
