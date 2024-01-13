@@ -73,6 +73,13 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
          assert(~boc.IsURLInCache(strApiUrl), "File has already been downloaded");
          %assert(ismissing(obj.linkedFiles{fileNickname,"LocalFile"}),"File has already been downloaded");
          
+         % Special case:
+         if obj.prefersToReadRemoteFile()
+            strS3Filepath = obj.getS3Filepath(fileNickname);
+            obj.linkedFiles{fileNickname,"LocalFile"} = string(strS3Filepath);
+            return
+         end
+
          try % Retrieve file based on current strategy
              if obj.isS3BucketMounted() && obj.retrieveFileFromS3Bucket()
                 action = "Copy";
@@ -106,6 +113,9 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       end
 
       function ensurePropFileDownloaded(obj,propName)
+         fileNickname = obj.prop2LinkedFileMap(propName);
+         obj.checkIfRemoteFileRequiresDownload(fileNickname)
+         
          if ~ismember(propName,obj.downloadedFileProps)
             obj.downloadLinkedFile(obj.prop2LinkedFileMap(propName));
          end
@@ -114,9 +124,25 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       function lclFilename = whichPropFile(obj,propName)
          fileNickname = obj.prop2LinkedFileMap(propName);
          if ismember(propName,obj.downloadedFileProps)
+            obj.checkIfRemoteFileRequiresDownload(fileNickname)
             lclFilename = obj.linkedFiles{fileNickname,"LocalFile"};
          else
             lclFilename = missing;
+         end
+      end
+
+      function checkIfRemoteFileRequiresDownload(obj, fileNickname)
+      % Method added to support preference to read remote files instead of
+      % downloading. 
+      %
+      % This method will ensure that a linked file which is initialized
+      % with a remote file path (i.e DownloadRemoteFile = false) will be 
+      % downloaded if the preference value for "DownloadRemoteFile" is 
+      % changed to true.
+       
+         if strncmp( self.linkedFiles{fileNickname,"LocalFile"}, 's3', 2) && ~self.prefersToReadRemoteFile()
+            obj.linkedFiles{fileNickname,"LocalFile"} = missing;
+            obj.downloadLinkedFile(fileNickname);
          end
       end
    end
@@ -321,6 +347,11 @@ classdef LinkedFilesItem < bot.item.internal.abstract.Item & bot.item.internal.m
       function tf = isS3BucketMounted(~)
          tf = bot.internal.Preferences.getPreferenceValue('UseLocalS3Mount') && ...
              isfolder( bot.internal.Preferences.getPreferenceValue('S3MountDirectory') );
+      end
+
+      function tf = prefersToReadRemoteFile(~)
+          prefs = bot.util.getPreferences();
+          tf = prefs.DownloadFrom == "S3" && ~prefs.DownloadRemoteFiles;
       end
 
       function tf = retrieveFileFromS3Bucket(~)

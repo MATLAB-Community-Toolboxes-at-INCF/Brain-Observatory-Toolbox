@@ -24,7 +24,6 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
     %   for remote files.
 
 
-
     properties (SetAccess = private)
         % Path to location of cached data from the Allen Brain Observatory resource
         CacheDirectory (1,1) string = ""
@@ -91,6 +90,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
             %
             % Usage: obj = bot.internal.behavior.Cache(<strCacheDir>)
             
+            setenv("AWS_DEFAULT_REGION", "us-west-2");
             
             % - Check if a cache directory has been provided
             if ~obj.hasPreferredCacheDirectory()

@@ -277,6 +277,14 @@ classdef EphysSession < bot.item.Session
     methods
         
         function nwb = get.nwbLocal(obj)
+            
+            % Reset linked file if remote file is set and preference to
+            % download remote file:
+            if strncmp( obj.linkedFiles{"SessNWB","LocalFile"}, 's3', 2) && ~obj.prefersToReadRemoteFile()
+               obj.linkedFiles{"SessNWB","LocalFile"} = missing;
+               obj.nwbLocal_ = [];
+            end
+
             if isempty(obj.nwbLocal_)
                 if ismissing(obj.linkedFiles{"SessNWB","LocalFile"})
                     obj.downloadLinkedFile("SessNWB");

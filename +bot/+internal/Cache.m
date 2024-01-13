@@ -76,6 +76,7 @@ classdef Cache < handle
             %
             % Usage: obj = bot.internal.Cache(<strCacheDir>)
             
+            setenv("AWS_DEFAULT_REGION", "us-west-2");
             
             % - Check if a cache directory has been provided
             if ~obj.hasPreferredCacheDirectory()
