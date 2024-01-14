@@ -1,5 +1,5 @@
 classdef LocalFileCache < handle
-%LocalCacher Abstract class for managing a local file cache.
+%LocalFileCache Abstract class for managing a local file cache.
 
     % Idea:
     % Make CacheManifest SetAccess = private and add an insert method for
@@ -48,7 +48,6 @@ classdef LocalFileCache < handle
         % Class version string, used to verify saved cache
         Version (1,1) string = "0.01"
     end
-
 
     methods % Class constructor and destructor
         % CONSTRUCTOR Create a cache object
