@@ -2,7 +2,7 @@ classdef LinkedFile < bot.item.internal.mixin.OnDemandProps
 % LinkedFile - Represent a linked file of a Brain Observatory item
 
     % Implementations of this class should make data which is available in
-    % a file accessible from properies.
+    % a file accessible from properties.
 
     properties (Hidden, Dependent)
         % DisplayName - A variation of the class name to use as display name

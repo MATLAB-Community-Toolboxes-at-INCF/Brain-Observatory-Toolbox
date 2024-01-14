@@ -55,6 +55,25 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
     methods % Methods fetchAll & clearManifest
 
+        function table = getItemTable(obj, itemType)
+            arguments 
+                obj (1,1) bot.item.internal.Manifest
+                itemType (1,1) bot.item.internal.enum.ItemType
+            end
+
+            manifestTablePrefix = string(obj.DATASET_TYPE);
+            manifestTableSuffix = string(itemType) + "s";
+                
+            switch obj.DATASET_NAME
+                case bot.item.internal.enum.Dataset.VisualCoding
+                    tableName = sprintf('%s_%s', manifestTablePrefix, manifestTableSuffix);
+                    tableName = lower(tableName);
+                case bot.item.internal.enum.Dataset.VisualBehavior
+                    tableName = manifestTablePrefix + manifestTableSuffix;
+            end
+            table = obj.(tableName);
+        end
+
         function fetchAll(manifest)
         %fetchAll Fetches all of the item tables of the manifest
         %

@@ -130,6 +130,12 @@ classdef Experiment < bot.behavior.item.internal.abstract.Item & ...
             obj.Cells = cells(cells.ophys_experiment_id == obj.id, :);
             obj.Cells = sortrows(obj.Cells, 'cell_roi_id');
         end
+
+        function str = getItemAnnotation(obj)
+        % getItemAnnotation - Provide a custom item annotation for display
+        % purposes.
+            str = obj.getLinkedFilesStatus();
+        end
     end
 
     methods (Access = ?bot.behavior.item.OphysSession)

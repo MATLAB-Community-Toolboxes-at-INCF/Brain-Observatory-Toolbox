@@ -12,15 +12,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     end
     
     %% HIDDEN PROPERTIES
-    
     properties (Hidden, Access = protected)
         manifest; % Handle to pertinent manifest containing all available Items of this class
     end
     
     properties (Abstract, Hidden, Access = public, Constant)
         DATASET (1,1) bot.item.internal.enum.Dataset
-        DATASET_TYPE(1,1) bot.item.internal.enum.DatasetType
-        ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
+        DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType
+        ITEM_TYPE (1,1) bot.item.internal.enum.ItemType
     end
     
     properties (Abstract, SetAccess = protected, Hidden)
@@ -34,7 +33,6 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     end
 
     %% CONSTRUCTOR
-    
     methods
         
         function obj = Item(itemIDSpec)
@@ -71,11 +69,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 manifestTableRow = itemIDSpec;
             elseif isnumeric(itemIDSpec)
                 itemIDSpec = uint32(round(itemIDSpec));
-                
-                manifestTablePrefix = string(obj.DATASET_TYPE);
-                manifestTableSuffix = string(obj.ITEM_TYPE) + "s";
-                
-                manifestTable = obj.manifest.(manifestTablePrefix + manifestTableSuffix);
+
+                manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
                              
                 matchingRow = manifestTable.id == itemIDSpec;
                 manifestTableRow = manifestTable(matchingRow, :);                          
@@ -96,6 +91,12 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     methods (Access = protected)
         function initLinkedItems(obj)
             % Subclasses may implement
+        end
+
+        function str = getItemAnnotation(obj)
+        % getItemAnnotation - Provide a custom item annotation for display
+        % purposes.
+            str = missing;
         end
     end
 
@@ -127,7 +128,6 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             datasetName = char(obj.DATASET);
         end
     end
-    
     
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
     methods (Hidden, Access = protected)
@@ -184,8 +184,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             stringRep = cell(1, numObjects);
 
             for i = 1:numObjects
-                status = obj(i).getLinkedFilesStatus();
-                stringRep{i} = sprintf('    Experiment (%d) of type "%s" [%s]', obj(i).id, obj(i).SessionType, status);
+                stringRep{i} = sprintf('    %s (%d) of type "%s"', ...
+                    string(obj(i).ITEM_TYPE), obj(i).id, obj(i).SessionType);
+                % Todo: Is session type available for cells, probes etc?
+
+                annotation = obj(i).getItemAnnotation();
+                if ~ismissing(annotation)
+                    stringRep{i} = sprintf('%s [%s]', stringRep{i}, annotation);
+                end
             end
 
             str = obj.getHeader;
@@ -195,10 +201,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         end
     end
 
-    
     %% HIDDEN METHODS - STATIC
-    
-    methods (Hidden, Static)        
+    methods (Hidden, Static)
         function  mustBeItemIDSpec(val)
             %MUSTBEITEMIDSPEC Validation function for items specified to BOT item factory functions for item object array construction
                         
