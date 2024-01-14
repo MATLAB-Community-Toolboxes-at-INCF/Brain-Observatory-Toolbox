@@ -39,10 +39,6 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
 
     methods % Constructor
         function obj = LLNWBData(filePath, nickName)
-            
-            assert(exist('nwbRead', 'file')==2, ...
-                'Matnwb is unavailable!')
-
             obj = obj@bot.internal.behavior.LinkedFile(filePath, nickName)
         end
 
@@ -346,7 +342,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
         function dataType = getDataType(groupID, datasetName)
             datasetID = H5D.open(groupID, datasetName);
             typeId = H5D.get_type(datasetID);
-            dataType = io.getMatType(typeId);
+            dataType = bot.external.matnwb.io.getMatType(typeId);
             H5T.close(typeId);
             H5D.close(datasetID)
         end
@@ -369,7 +365,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
 
                 % Get data type:
                 typeId = H5D.get_type(datasetID);
-                dataType = io.getMatType(typeId);
+                dataType = bot.external.matnwb.io.getMatType(typeId);
                 H5T.close(typeId);
 
                 H5D.close(datasetID)
