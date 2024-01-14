@@ -78,7 +78,7 @@ classdef OphysNWBFile < bot.internal.nwb.file.vb.BehaviorNWBFile
         end
     end
     
-    methods (Access = ?bot.internal.nwb.LLNWBData)
+    methods (Access = ?bot.internal.nwb.LinkedNWBFile)
         function metadata = readOphysMetadata(obj, ~)
             metadata = bot.internal.nwb.reader.readOphysMetadata(obj.FilePath);
         end

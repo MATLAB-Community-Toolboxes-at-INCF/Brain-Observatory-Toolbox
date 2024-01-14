@@ -1,4 +1,4 @@
-classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
+classdef BehaviorNWBFile < bot.internal.nwb.LinkedNWBFile
 % BehaviorNWBFile - Provides the data from a Visual Behavior session
 %
 %   A selection of the data from the NWB file of a Visual Behavior session 
@@ -74,7 +74,7 @@ classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
                                 'Trials', 'readTrialsTable' )
     end
     
-    methods (Access = ?bot.internal.nwb.LLNWBData)
+    methods (Access = ?bot.internal.nwb.LinkedNWBFile)
             
         function metadata = readNwbMetadata(obj, ~)
             metadata = bot.internal.nwb.reader.readGeneralMetadata(obj.FilePath);
@@ -186,7 +186,7 @@ classdef BehaviorNWBFile < bot.internal.nwb.LLNWBData
                     propertyGroups(end+1) = PropertyGroup(propList, groupTitle); %#ok<AGROW>
                 end
             else
-                propertyGroups = getPropertyGroups@bot.internal.nwb.LLNWBData(obj);
+                propertyGroups = getPropertyGroups@bot.internal.nwb.LinkedNWBFile(obj);
             end
         end
     end

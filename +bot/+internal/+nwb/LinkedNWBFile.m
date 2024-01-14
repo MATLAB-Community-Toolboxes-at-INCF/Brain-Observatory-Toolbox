@@ -1,7 +1,9 @@
-classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
-% NWBData - Abstract class providing an object interface to data in NWB file
+classdef (Abstract) LinkedNWBFile < bot.internal.behavior.LinkedFile
+% LinkedNWBFile - Abstract class providing an object interface to data in NWB file
 %
-%   Note: This class uses primarily low-level H5 library functions.
+%   Note: This class uses primarily low-level H5 library functions. This
+%   seems to give better performance, especially when reading files
+%   directly from remote locations.
 %
 %   Subclasses of this class should define properties representing datasets
 %   in an NWB file, and a map to bind property names to group/dataset names
@@ -11,10 +13,12 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
 %   from file, it will stay in memory.
 
 %   Todo:
-%       Make NWBData / NWB File class, and make nwb readers (most of the
-%       functionality in this class should be in a reader class) Note: the
-%       reader class should be assigned on a property of the NWBData class.
-
+%       Make nwb reader class/classes for customizing how to read data from 
+%       NWB files (most of the functionality in this class should be in a 
+%       reader class) Note: the reader class should then be assigned as a 
+%       property of the LinkedNWBFile class. This would allow to change
+%       readers if necessary, i.e if different requirements are necessary
+%       for NWB files of different versions.
 
     properties (Abstract, Access = protected)
         % PropertyToDatasetMap - Dictionary with mapping from property name 
@@ -38,7 +42,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
     end
 
     methods % Constructor
-        function obj = LLNWBData(filePath, nickName)
+        function obj = LinkedNWBFile(filePath, nickName)
             obj = obj@bot.internal.behavior.LinkedFile(filePath, nickName)
         end
 
@@ -249,7 +253,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
                     continue
                 end
 
-                subGroupNames = bot.internal.nwb.LLNWBData.listLinkNames(gid);
+                subGroupNames = bot.internal.nwb.LinkedNWBFile.listLinkNames(gid);
 
                 matchInd = regexp(subGroupNames, tmpGroupName);
                 hasMatch = cellfun(@(c) ~isempty(c), matchInd);
@@ -321,7 +325,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
         function neurodataType = getNeurodataType(gid)
                      
             attributeName = 'neurodata_type';
-            %bot.internal.nwb.LLNWBData.listAttributeNames(gid)
+            %bot.internal.nwb.LinkedNWBFile.listAttributeNames(gid)
             try
                 aid = H5A.open(gid, attributeName);
                 neurodataType = H5A.read(aid);
@@ -350,7 +354,7 @@ classdef (Abstract) LLNWBData < bot.internal.behavior.LinkedFile
         function [dataSize, dataType] = getDatasetSize(groupID, datasetName)
             %Todo?: Get dataType in separate function 
 
-            datasetNames = bot.internal.nwb.LLNWBData.listLinkNames(groupID);
+            datasetNames = bot.internal.nwb.LinkedNWBFile.listLinkNames(groupID);
 
             isMatch = strcmp(datasetNames, datasetName);
 
