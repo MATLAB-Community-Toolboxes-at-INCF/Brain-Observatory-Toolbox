@@ -15,8 +15,6 @@ function map = itemTableTypeConversionMap()
     dict('ophys_session_id')        = @uint32;
     dict('ecephys_session_id')      = @uint32;
     dict('ephys_session_id')        = @uint32;
-    %dict('ophys_experiment_id')    = @uint32; % Resolve. Sometimes this is an array, sometimes not
-    %dict('ophys_container_id')     = @uint32; % Resolve. Sometimes this is an array, sometimes not
     dict('mouse_id')                = @uint32;
     dict('experiment_container_id') = @uint32;
     dict('isi_experiment_id')       = @uint32;
@@ -26,7 +24,11 @@ function map = itemTableTypeConversionMap()
     dict('ephys_probe_id')          = @uint32;
     dict('ephys_channel_id')        = @uint32;
     dict('unit_id')                 = @uint32;
-    
+        
+    % Id variable that can be list of ids:
+    dict('ophys_experiment_id')     = @bot.internal.metadata.utility.convertStringArrayIdToInteger;
+    dict('ophys_container_id')      = @bot.internal.metadata.utility.convertStringArrayIdToInteger;
+
     % Categoricals
     dict('sex')                     = @categorical;
     dict('session_type')            = @categorical;
@@ -52,10 +54,6 @@ function map = itemTableTypeConversionMap()
     dict('passive')                 = @(x) strcmp(x, "True");
     dict('has_lfp_data')            = @(x) strcmp(x, "True");
     dict('valid_data')              = @(x) strcmp(x, "True");
-
-    % Character vector to numeric arrays
-    dict('ophys_experiment_id') = @(x) cellfun(@(c) uint32(eval(c)), x, 'uni', 0);
-    dict('ophys_container_id')  = @(x) cellfun(@(c) uint32(eval(c)), x, 'uni', 0);
 
     % Character vector to string arrays 
     dict('driver_line')  = @(x) cellfun(@(c) eval( strrep(c, '''', '"') ), x, 'uni', 0);
