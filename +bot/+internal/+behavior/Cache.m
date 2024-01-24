@@ -676,7 +676,7 @@ classdef Cache < handle & bot.internal.fileresource.mixin.HasFileResource
 
             % Note: Special case for MATLAB Online
             if string(currentUsername) == "mluser" || string(currentUsername) == "matlab"
-                strScratchDir = "/Data/BOT_Cache_Temp";
+                strScratchDir = "/tmp/BOT_Cache_Temp";
                 if ~isfolder(strScratchDir); mkdir(strScratchDir); end
             else
                 strScratchDir = cacheDirectory;
