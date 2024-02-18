@@ -257,10 +257,12 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     
         function behavior_session_table = preprocess_behaviorsession_table(behavior_session_table)
             import bot.item.internal.Manifest.recastTableVariables
-    
+            import bot.item.internal.Manifest.renameTableVariables
+
             behavior_session_table.date_of_acquisition = datetime(behavior_session_table.date_of_acquisition, ...
                 'InputFormat','yyyy-MM-dd HH:mm:ss.SSSSSSZZZZZ','TimeZone','UTC');
-
+            
+            behavior_session_table = renameTableVariables(behavior_session_table);
             behavior_session_table = recastTableVariables(behavior_session_table);
             behavior_session_table.id = behavior_session_table.behavior_session_id;
         end
