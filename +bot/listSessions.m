@@ -60,6 +60,10 @@ function sessionsTable = listSessions(dataset, datasetType, options)
             'Behavior only sessions are only present for the Visual Behavior dataset')
     end
 
+    if ~nargout
+        fprintf('Listing "%s" sessions from the "%s" dataset\n', datasetType, dataset)
+    end
+
     % Initialize a cell array for unmerged tables (i.e tables from 
     % different datasets)
     unmergedTables = cell(1, numel(datasetNames));
@@ -106,7 +110,6 @@ function sessionsTable = listSessions(dataset, datasetType, options)
 
     % Merge tables and return
     sessionsTable = cat(1, unmergedTables{:});
-
 
    % % switch string(datasetType)
    % %    case "Ephys"
