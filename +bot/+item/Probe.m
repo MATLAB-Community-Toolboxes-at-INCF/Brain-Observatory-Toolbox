@@ -26,9 +26,8 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
 
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET = bot.item.internal.enum.Dataset("VisualCoding")
         DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys");
-        ITEM_TYPE= bot.item.internal.enum.ItemType.Probe;
+        ITEM_TYPE = bot.item.internal.enum.ItemType.Probe;
     end
     
     properties (Hidden)
@@ -135,8 +134,6 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
             virtual_electrode_y_positions = h5read(nwbLocalFile, ...
                 '/processing/current_source_density/ecephys_csd/virtual_electrode_y_positions');
         end
-
-
     end
 
 
@@ -149,20 +146,51 @@ classdef Probe < bot.item.internal.abstract.LinkedFilesItem
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
                 % Assign linked Item tables (downstream)
-                obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_probe_id == obj.id, :);
-                obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);
+                %obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_probe_id == obj.id, :);
+                %obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_probe_id == obj.id, :);
+
+                channelsTable = bot.listChannels(obj.DATASET);
+                obj.channels = channelsTable(channelsTable.ephys_probe_id == obj.id, :);
+
+                unitsTable =  bot.listUnits(obj.DATASET, true);
+                obj.units = unitsTable(unitsTable.ephys_probe_id == obj.id, :);
 
                 % Assign linked Item objects (upstream)
-                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys", "VisualCoding");
+                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys", obj.DATASET);
+
+                switch obj.DATASET
+                    case bot.item.internal.enum.Dataset.VisualCoding
+                        %obj.FileResource = bot.internal.fileresource.visualcoding.VCEphysS3Bucket.instance(); (Assigned in property definition)
+                        obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));
+
+                    case bot.item.internal.enum.Dataset.VisualBehavior
+                        obj.FileResource = bot.internal.fileresource.visualbehavior.VBEphysS3Bucket.instance();
+                        obj.initLfpNwb()
+                end
 
                 % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
-                obj.fetchLinkedFileInfo("LFPNWB", sprintf('rma::criteria,well_known_file_type[name$eq''EcephysLfpNwb''],[attachable_type$eq''EcephysProbe''],[attachable_id$eq%d]', obj.id));
                 obj.initLinkedFiles();
             end
         end
     end
 
     methods (Access = protected)
+        function initLfpNwb(obj)
+            % Custom initialization for Visual Behavior probe
+            
+            % Superclass initialization (bot.item.internal.abstract.LinkedFilesItem)
+            obj.LINKED_FILE_AUTO_DOWNLOAD = struct("LFPNWB", ...
+                bot.internal.Preferences.getPreferenceValue('AutoDownloadNwb'));
+
+            url = obj.getS3Filepath("LFPNWB");
+            uriObj = matlab.net.URI(url);
+
+            fileInfo.path = fullfile(uriObj.Path{:});
+            fileInfo.download_link = url;
+            
+            obj.insertLinkedFileInfo("LFPNWB", fileInfo);
+        end
+        
         function displayNonScalarObject(obj)
             displayNonScalarObject@bot.item.internal.abstract.Item(obj)
 

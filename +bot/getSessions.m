@@ -1,8 +1,16 @@
-% Obtain object array representing identified session item(s) from an Allen Brain Observatory dataset
+% Obtain object array representing identified session item(s) from an Allen Brain Observatory [1] dataset
 % 
-% Can return experiment sessions from either of the Allen Brain Observatory [1] datasets:
-%   * Visual Coding 2P [2] ("ophyssession")
-%   * Visual Coding Neuropixels [3] ("ephyssession") 
+% Can return experimental sessions from either of the Allen Brain 
+% Observatory [1] datasets:
+%   * Visual Coding 2P [2] ("ophys")
+%   * Visual Coding Neuropixels [3] ("ephys")
+%   * Visual Behavior 2P [4] ("ophys")
+%   * Visual Behavior Neuropixels [5] ("ephys")
+%
+% Usage:
+%   sessionObj = bot.getSessions(sessionIDSpec) returns a session item 
+%       object given a sessionIDSpec. See below for more details on 
+%       sessionIDSpec.
 %
 % Can specify item(s) by unique numeric IDs for item. These can be obtained via:
 %   * table returned by bot.listSessions(...) 
@@ -13,11 +21,9 @@
 % been "filtered" to one or a few rows of interest via table indexing
 % operations. 
 %   
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
-% [3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
-% 
-%% function sessionObj = getSessions(sessionSpec) 
+% For references [#]:
+%   See also bot.util.showReferences
+
 function sessionObj = getSessions(sessionIDSpec, sessionType, datasetName)
 
     arguments
@@ -36,7 +42,7 @@ function sessionObj = getSessions(sessionIDSpec, sessionType, datasetName)
         % Try to determine sessionType if possible
         
         if istable(sessionIDSpec)  
-            sessionType = sessionIDSpec.Properties.UserData.DatasetType;
+            sessionType = sessionIDSpec.Properties.CustomProperties.DatasetType;
         else
             % No hint available --> resolve by checking all item manifests
             [datasetName, sessionType] = resolveSessionType(sessionIDSpec); % Local function
@@ -45,8 +51,8 @@ function sessionObj = getSessions(sessionIDSpec, sessionType, datasetName)
     
     if isempty(datasetName) || string(datasetName) == "None"
         if istable(sessionIDSpec)  
-            sessionType = sessionIDSpec.Properties.UserData.DatasetType;
-            datasetName = sessionIDSpec.Properties.UserData.DatasetName;
+            sessionType = sessionIDSpec.Properties.CustomProperties.DatasetType;
+            datasetName = sessionIDSpec.Properties.CustomProperties.DatasetName;
         else
             error('Please specify the name of the dataset this session belongs to, i.e "VisualCoding" or "VisualBehavior"')
         end

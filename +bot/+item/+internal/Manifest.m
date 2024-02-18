@@ -63,7 +63,9 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
 
             manifestTablePrefix = string(obj.DATASET_TYPE);
             manifestTableSuffix = string(itemType) + "s";
-                
+           
+            % This should be consolidated, but for VB Manifest
+            % tables the names are coded in MATLAB-style
             switch obj.DATASET_NAME
                 case bot.item.internal.enum.Dataset.VisualCoding
                     tableName = sprintf('%s_%s', manifestTablePrefix, manifestTableSuffix);
@@ -253,9 +255,12 @@ classdef Manifest < handle & matlab.mixin.CustomDisplay & bot.item.internal.mixi
     
     methods (Access = protected) % Utility methods for subclasses
         
-        function itemTable = addDatasetInformation(obj, itemTable)
-            itemTable.Properties.UserData.DatasetType = string(obj.DATASET_TYPE);
-            itemTable.Properties.UserData.DatasetName = string(obj.DATASET_NAME);
+        function itemTable = addDatasetInformation(obj, itemTable)    
+            % Add dataset information using custom table properties.
+            itemTable = addprop(itemTable, 'DatasetType', 'table');
+            itemTable = addprop(itemTable, 'DatasetName', 'table');
+            itemTable.Properties.CustomProperties.DatasetType = string(obj.DATASET_TYPE);
+            itemTable.Properties.CustomProperties.DatasetName = string(obj.DATASET_NAME);
         end
 
         function clearTempTableFromCache(manifest, itemType)

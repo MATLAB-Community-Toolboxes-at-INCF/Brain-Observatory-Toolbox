@@ -12,10 +12,13 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         manifest; % Handle to pertinent manifest containing all available Items of this class
     end
     
-    properties (Abstract, Hidden, Access = protected, Constant)
+    properties (SetAccess = immutable, GetAccess = protected)
         DATASET (1,1) bot.item.internal.enum.Dataset
-        DATASET_TYPE(1,1) bot.item.internal.enum.DatasetType
-        ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
+    end
+
+    properties (Abstract, Constant, Access = protected)
+        DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType
+        ITEM_TYPE (1,1) bot.item.internal.enum.ItemType
     end
     
     properties (Abstract, Hidden)
@@ -60,6 +63,13 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 return;                
             end
 
+            % Assign the dataset (name) enumeration
+            if istable(itemIDSpec)
+                obj.DATASET = itemIDSpec.Properties.CustomProperties.DatasetName;
+            else
+                obj.DATASET = bot.internal.util.resolveDataset(itemIDSpec, obj.DATASET_TYPE, obj.ITEM_TYPE);
+            end
+
             obj.manifest = bot.item.internal.Manifest.instance(...
                 obj.DATASET_TYPE, obj.DATASET);
 
@@ -69,23 +79,15 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             elseif isnumeric(itemIDSpec)
                 itemIDSpec = uint32(round(itemIDSpec));
                 
-                manifestTablePrefix = string(obj.DATASET_TYPE);
-                manifestTableSuffix = string(obj.ITEM_TYPE) + "s";
-                try
-                    manifestTable = obj.manifest.(lower(manifestTablePrefix + "_" + manifestTableSuffix));
-                catch
-                    % This should be consolidated, but for VB Manifest
-                    % tables the names are coded in MATLAB-style
-                    manifestTable = obj.manifest.(manifestTablePrefix + manifestTableSuffix);
-                end
-
+                manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
                 matchingRow = manifestTable.id == itemIDSpec;
                 manifestTableRow = manifestTable(matchingRow, :);                          
             else
                 assert(false);
             end
             
-            assert(~isempty(manifestTableRow),"BOT:Item:idNotFound","Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
+            assert(~isempty(manifestTableRow), "BOT:Item:idNotFound", ...
+                "Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
             
             % - Assign the table data to the metadata structure
             obj.info = table2struct(manifestTableRow);

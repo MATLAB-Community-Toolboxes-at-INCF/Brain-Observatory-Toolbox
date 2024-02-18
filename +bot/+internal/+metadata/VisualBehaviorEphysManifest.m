@@ -164,6 +164,24 @@ classdef VisualBehaviorEphysManifest < bot.item.internal.Manifest
     %% Low-level getter method for EPhys manifest item tables
     methods (Access = public)
 
+        function table = getItemTable(obj, itemType)
+            arguments 
+                obj (1,1) bot.item.internal.Manifest
+                itemType (1,1) bot.item.internal.enum.ItemType
+            end
+
+            manifestTablePrefix = string(obj.DATASET_TYPE);
+            manifestTableSuffix = string(itemType) + "s";
+                
+            if strcmp(string(itemType), "Session")
+                tableName = manifestTablePrefix + manifestTableSuffix;
+            else
+                tableName = manifestTableSuffix;
+            end
+
+            table = obj.(tableName);
+        end
+
         function itemTable = fetch_item_table(obj, itemType)
         %fetch_item_table Fetch item table (get from cache or download)
 

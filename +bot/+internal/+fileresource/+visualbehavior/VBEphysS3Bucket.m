@@ -81,7 +81,7 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
 
             arguments
                 itemObject      % Item object
-                nickname char {mustBeMember(nickname, ["SessNWB", "EphysNWB", "BehaviorNWB", "ProbeNWB"])}
+                nickname char {mustBeMember(nickname, ["SessNWB", "EphysNWB", "BehaviorNWB", "ProbeNWB", "LFPNWB"])}
                 options.ephysSessionId (1,1) string = ""
                 options.behaviorSessionId (1,1) string = ""
                 options.probeName = ""
@@ -90,7 +90,7 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
             if ~isempty(itemObject)
                 exp_id = itemObject.info.ephys_session_id; %??
                 ephysSessionId = string(exp_id);
-                if isa(itemObject, 'bot.behavior.item.Probe')
+                if isa(itemObject, 'bot.behavior.item.Probe') || isa(itemObject, 'bot.item.Probe')
                     probeName = itemObject.info.name;
                 end
             end
@@ -126,7 +126,7 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
                     folderPath = fullfile('behavior_only_sessions', behaviorSessionId);
                     fileName = sprintf('behavior_session_%s.nwb', behaviorSessionId);
 
-                case 'ProbeNWB' % OphysNWB      
+                case {'LFPNWB', 'ProbeNWB'}     
                     folderPath = fullfile('behavior_ecephys_sessions', ephysSessionId);
                     fileName = sprintf('probe_%s_lfp.nwb', probeName);
             end

@@ -122,11 +122,11 @@ classdef Experiment < bot.behavior.item.internal.abstract.Item & ...
             % item, because creating an OphysSession item will create items
             % for each associated experiment and thus there will be an
             % infinite recursion issue.
-            sessions = bot.listSessions('Ophys', 'Dataset', 'VisualBehavior', 'Id', obj.info.ophys_session_id);
+            sessions = bot.listSessions('VisualBehavior', 'Ophys', 'Id', obj.info.ophys_session_id);
             obj.Session = sessions;
         
             % Get cells associated with the experiment
-            cells = bot.behavior.listCells();
+            cells = bot.listCells(obj.DATASET);
             obj.Cells = cells(cells.ophys_experiment_id == obj.id, :);
             obj.Cells = sortrows(obj.Cells, 'cell_roi_id');
         end

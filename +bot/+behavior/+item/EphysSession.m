@@ -114,7 +114,6 @@ classdef EphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET = bot.item.internal.enum.Dataset("VisualBehavior")
         DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys")
     end
     

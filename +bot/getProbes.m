@@ -1,6 +1,11 @@
 % Obtain object array representing identified probe item(s) from an Allen Brain Observatory dataset
 % 
-% Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
+% Supports the Visual Coding Neuropixels [3] dataset and the Visual 
+% Behavior Neuropixels [5] dataset from the Allen Brain Observatory.
+%
+% Usage:
+%   probeObj = bot.getProbes(probeIDSpec) returns a probe item object given a
+%       probeIDSpec. See below for more details on probeIDSpec.
 %
 % Specify item(s) by unique numeric IDs for item. These can be obtained via:
 %   * table returned by bot.listProbes() 
@@ -11,15 +16,14 @@
 % been "filtered" to one or a few rows of interest via table indexing
 % operations.
 %
-% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
-% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% 
-%% function probeObj = getProbes(probeIDSpec)
+% For references [#]:
+%   See also bot.util.showReferences
+
 function probeObj = getProbes(probeIDSpec)
-
-arguments
-    probeIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
+    arguments
+        probeIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
+    end
+    
+    % - Return the probe object
+    probeObj = bot.item.Probe(probeIDSpec);
 end
-
-% - Return the probe object
-probeObj = bot.item.Probe(probeIDSpec);

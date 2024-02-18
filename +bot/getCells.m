@@ -1,6 +1,11 @@
 % Obtain object array representing identified cell item(s) from an Allen Brain Observatory dataset
 % 
-% Supports the Visual Coding 2P [1] dataset from the Allen Brain Observatory [2]. 
+% Supports the Visual Coding 2P [2] dataset and the Visual Behavior 2P [4] 
+% dataset from the Allen Brain Observatory [1].
+%
+% Usage:
+%   cellObj = bot.getCells(cellIDSpec) returns a cell item object given a
+%       cellIdSpec. See below for more details on cellIDSpec.
 %
 % Specify item(s) by unique numeric IDs for item. These can be obtained via:
 %   * table returned by bot.listCells() 
@@ -11,15 +16,14 @@
 % been "filtered" to one or a few rows of interest via table indexing
 % operations.   
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
-% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% 
-%% function cellObj = getCells(cellIDSpec)
+% For references [#]:
+%   See also bot.util.showReferences
+
 function cellObj = getCells(cellIDSpec)
-
-arguments
-    cellIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
+    arguments
+        cellIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec}
+    end
+    
+    % - Return the unit object
+    cellObj = bot.item.Cell(cellIDSpec);
 end
-
-% - Return the unit object
-cellObj = bot.item.Cell(cellIDSpec);

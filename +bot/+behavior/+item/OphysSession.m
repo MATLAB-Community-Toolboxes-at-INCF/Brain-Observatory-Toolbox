@@ -144,7 +144,7 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
             end
     
             % Get cells for experiments of session
-            cells = bot.behavior.listCells();
+            cells = bot.listCells(obj.DATASET);
             obj.Cells = cells(ismember(cells.ophys_experiment_id, experimentIds), :);
             obj.Cells = sortrows(obj.Cells, 'cell_roi_id');
         end
