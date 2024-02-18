@@ -134,11 +134,11 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
             % Get list of experiments for this ophys session
             experimentIds = obj.getExperimentIDs();
 
-            expList = bot.behavior.listExperiments();
+            expList = bot.listExperiments("VisualBehavior");
             expList = expList(ismember(expList.id, experimentIds),:);
 
             % Create experiment items
-            obj.Experiment = bot.behavior.getExperiments(expList);
+            obj.Experiment = bot.getExperiments(expList);
             for i = 1:numel(obj.Experiment)
                 obj.Experiment(i).setLinkedSession(obj);
             end

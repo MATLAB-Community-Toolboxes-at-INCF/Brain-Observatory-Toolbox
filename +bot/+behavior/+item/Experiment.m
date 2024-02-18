@@ -113,7 +113,7 @@ classdef Experiment < bot.behavior.item.internal.abstract.Item & ...
 
             % Get all experiments belonging to the same container:
             containerId = uint32( obj.info.ophys_container_id );
-            expList = bot.behavior.listExperiments();
+            expList = bot.listExperiments("VisualBehavior");
             expList = expList(expList.ophys_container_id == containerId & expList.id~=obj.id,:);
             obj.Container = expList;
 
