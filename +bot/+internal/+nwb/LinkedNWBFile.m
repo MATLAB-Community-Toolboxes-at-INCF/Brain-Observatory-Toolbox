@@ -193,7 +193,9 @@ classdef (Abstract) LinkedNWBFile < bot.internal.behavior.LinkedFile
 
             switch obj.(propertyName).NeuroDataType
             
-                case {'TimeSeries', 'RoiResponseSeries', 'IndexSeries', 'OphysEventDetection', 'EllipseSeries'}
+                % Todo: General time series? Or check if timestamps are
+                % present?
+                case {'TimeSeries', 'RoiResponseSeries', 'IndexSeries', 'OphysEventDetection', 'EllipseSeries', 'ElectricalSeries'}
                     
                     tsDatasetID = H5D.open(groupID, 'timestamps');
                     timestamps = H5D.read(tsDatasetID);
@@ -246,10 +248,9 @@ classdef (Abstract) LinkedNWBFile < bot.internal.behavior.LinkedFile
                 tmpGroupPath = h5path(groupSplit{1:i});
                 tmpGroupName = groupSplit{i};
 
-
                 if ~hasWildcard(i)
                     H5G.close(gid)
-                    gid = h5info(obj.FilePath, tmpGroupPath);
+                    gid = H5G.open(obj.H5FileID, tmpGroupPath);
                     continue
                 end
 
@@ -271,6 +272,12 @@ classdef (Abstract) LinkedNWBFile < bot.internal.behavior.LinkedFile
                         matchedGroupName = subGroupNames{hasMatch};
                         groupSplit{i} = matchedGroupName;
                     end
+                end
+
+                % Open new resolved group
+                if i ~= numGroups
+                    H5G.close(gid)
+                    gid = H5G.open(obj.H5FileID, h5path(groupSplit{1:i}));
                 end
             end
             
