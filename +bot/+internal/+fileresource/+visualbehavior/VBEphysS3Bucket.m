@@ -81,39 +81,43 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
 
             arguments
                 itemObject      % Item object
-                nickname char {mustBeMember(nickname, ["SessNWB", "EphysNWB", "BehaviorNWB"])}
-                options.ephysExperimentId (1,1) string = ""
+                nickname char {mustBeMember(nickname, ["SessNWB", "EphysNWB", "BehaviorNWB", "ProbeNWB"])}
+                options.ephysSessionId (1,1) string = ""
                 options.behaviorSessionId (1,1) string = ""
-                options.probeId = "A"
+                options.probeName = ""
             end
             
             if ~isempty(itemObject)
                 exp_id = itemObject.info.ephys_session_id; %??
-                ephysExperimentId = string(exp_id);
+                ephysSessionId = string(exp_id);
+                if isa(itemObject, 'bot.behavior.item.Probe')
+                    probeName = itemObject.info.name;
+                end
             end
 
-            if options.ephysExperimentId ~= ""
-                ephysExperimentId = options.ephysExperimentId;
+            if options.ephysSessionId ~= ""
+                ephysSessionId = options.ephysSessionId;
             end
 
             if options.behaviorSessionId ~= ""
                 behaviorSessionId = options.behaviorSessionId;
             end
 
-            % Hardcoded awaiting implementation 
-            probeId = 'A';
+            if options.probeName ~= ""
+                probeName = options.probeName;
+            end
 
             switch nickname
         
-                case 'SessNWB' % Todo: OphysNWB      
-                    folderPath = fullfile('behavior_ecephys_sessions', ephysExperimentId);
+                case 'SessNWB'    
+                    folderPath = fullfile('behavior_ecephys_sessions', ephysSessionId);
                     fileName = sprintf('ecephys_session_%s.nwb', ...
-                        ephysExperimentId);
+                        ephysSessionId);
                 
-                case 'EphysNWB' % OphysNWB      
+                case 'EphysNWB' % valid?
                     folderPath = 'behavior_ecephys_sessions';
                     fileName = sprintf('ecephys_session_%s.nwb', ...
-                        ephysExperimentId);
+                        ephysSessionId);
 
                 case 'BehaviorNWB'
                     if ~isempty(itemObject)
@@ -123,9 +127,8 @@ classdef VBEphysS3Bucket < bot.internal.fileresource.abstract.S3Bucket
                     fileName = sprintf('behavior_session_%s.nwb', behaviorSessionId);
 
                 case 'ProbeNWB' % OphysNWB      
-                    folderPath = fullfile('behavior_ecephys_experiments', ephysExperimentId);
-                    fileName = sprintf('probe_probe%s_lfp.nwb', ...
-                        probeId);
+                    folderPath = fullfile('behavior_ecephys_sessions', ephysSessionId);
+                    fileName = sprintf('probe_%s_lfp.nwb', probeName);
             end
 
             relativeFilePath = fullfile(folderPath, fileName);
