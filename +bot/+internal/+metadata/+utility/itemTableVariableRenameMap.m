@@ -17,5 +17,17 @@ function nameMap = itemTableVariableRenameMap()
     nameMap('use_lfp_data') = 'has_lfp_data';
 
     nameMap('ecephys_channel_id') = 'ephys_channel_id';
+
+    % Ephys (units)
+    nameMap('PT_ratio') = 'waveform_PT_ratio';
+    nameMap('amplitude') = 'waveform_amplitude';
+    nameMap('duration') = 'waveform_duration';
+    nameMap('halfwidth') = 'waveform_halfwidth';
+    nameMap('recovery_slope') = 'waveform_recovery_slope';
+    nameMap('repolarization_slope') = 'waveform_repolarization_slope';
+    nameMap('spread') = 'waveform_spread';
+    nameMap('velocity_above') = 'waveform_velocity_above';
+    nameMap('velocity_below') = 'waveform_velocity_below';
+    nameMap('l_ratio') = 'L_ratio';
+    nameMap('ecephys_channel_id') = 'ephys_channel_id';
 end
-    
