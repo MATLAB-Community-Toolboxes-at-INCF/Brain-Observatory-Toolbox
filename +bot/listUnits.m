@@ -34,9 +34,7 @@ function unitsTable = listUnits(datasetName, includeMetrics)
         datasetName (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
         includeMetrics logical = false;
     end
-
-    import bot.item.internal.enum.Dataset
-
+    
     % Get the metadata manifest for the selected dataset
     manifest = bot.item.internal.Manifest.instance('Ephys', datasetName);
 

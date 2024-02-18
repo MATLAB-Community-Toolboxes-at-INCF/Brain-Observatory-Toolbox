@@ -1,28 +1,64 @@
 % Retrieve table of experiment sessions information for an Allen Brain Observatory dataset 
 % 
-% Can return experiment sessions from either of the Allen Brain Observatory [1] datasets:
+% Can return experimental sessions from either of the Allen Brain 
+% Observatory [1] datasets:
 %   * Visual Coding 2P [2] ("ophys")
-%   * Visual Coding Neuropixels [3] ("ephys") 
+%   * Visual Coding Neuropixels [3] ("ephys")
+%   * Visual Behavior 2P [4] ("ophys")
+%   * Visual Behavior Neuropixels [5] ("ephys")
 %
-% Web data accessed via the Allen Brain Atlas API [4]. 
+% Usage:
+%    sessions = bot.listSessions() returns a table of information for 
+%       sessions of the Visual Coding Neuropixels (ephys) dataset
+%
+%    sessions = bot.listSessions(datasetName, datasetType) returns a 
+%       sessions table for the specified datasetName and datasetType. 
+%       datasetName can be "VisualCoding" or "VisualBehavior" (Default =
+%       "VisualCoding") and datasetType can be "Ephys" or "Ophys" 
+%       (Default = "Ephys")
+%
+%    sessions = bot.listSessions(..., Name, Value) returns a session table
+%       based on additional options provided as name-value pairs.
+%
+%       Available options:
+%
+%         - Id : A list of ids. Will return a table that only includes
+%                sessions for the given Ids
+%
+%         - IncludeBehaviorOnly : Includes behavior-only sessions. Note:
+%                Only available for the Visual Behavior dataset
+%
+% Web data accessed via the Allen Brain Atlas API [6]. 
 %
 % [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
-% [3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
-% [4] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
+% [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/circuits-behavior/visual-coding-2p
+% [3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/circuits-behavior/visual-coding-neuropixels
+% [4] Copyright 2023 Allen Institute for Brain Science. Visual Behavior 2P dataset. Available from: https://portal.brain-map.org/circuits-behavior/visual-behavior-2p
+% [5] Copyright 2023 Allen Institute for Brain Science. Visual Behavior Neuropixels dataset. Available from: https://portal.brain-map.org/circuits-behavior/visual-behavior-neuropixels
+% [6] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
 %
-%% function sessionsTable = listSessions(dataset)
-function sessionsTable = listSessions(datasetType, options)
+%% sessionsTable = bot.listSessions(dataset, datasetType)
+function sessionsTable = listSessions(dataset, datasetType, options)
 
     arguments
-        %dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys", "EPhys", "OPhys"])} 
-        datasetType (1,1) bot.item.internal.enum.DatasetType
-        options.Dataset (:,1) bot.item.internal.enum.Dataset = ["VisualCoding", "VisualBehavior"]
+        dataset (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
+        datasetType (1,1) bot.item.internal.enum.DatasetType = "Ephys"
         options.Id (1,:) = [];
+        options.IncludeBehaviorOnly = false
     end
+
+    import bot.item.internal.enum.Dataset
+
+    % Note: This function can support returning sessions from multiple
+    % datasets, but this functionality is currently not enabled
    
-    datasetNames = [options.Dataset.Name];
+    datasetNames = [dataset.Name];
     datasetType = string(datasetType);
+
+    if options.IncludeBehaviorOnly
+        assert(datasetNames == Dataset.VisualBehavior, ...
+            'Behavior only sessions are only present for the Visual Behavior dataset')
+    end
 
     % Initialize a cell array for unmerged tables (i.e tables from 
     % different datasets)
@@ -30,7 +66,12 @@ function sessionsTable = listSessions(datasetType, options)
 
     % Gather tables from requested datasets
     for i = 1:numel(datasetNames)
-        tableName = datasetType+"Sessions";
+        if options.IncludeBehaviorOnly
+            tableName = 'BehaviorSessions';
+        else
+            tableName = datasetType+"Sessions";
+        end
+        
         manifest = bot.item.internal.Manifest.instance(datasetType, datasetNames(i));
         unmergedTables{i} = manifest.(tableName); % E.g manifest.EphysSessions
         if ~isempty(options.Id)
