@@ -16,7 +16,7 @@ function datasetName = resolveDataset(itemId, datasetType, itemType)
             itemTable = feval(listFcn, iDataset);
         end
 
-        if any( itemTable.id == itemId )
+        if any( ismember(itemTable.id, itemId) )
             datasetName = iDataset;
             return
         end
