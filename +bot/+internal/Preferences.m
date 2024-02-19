@@ -10,8 +10,6 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     %       UseCacheWithS3Mount (logical) : Whether to use cache if working on an AWS cloud computer
     %       DialogMode          (string)  : How to show dialogs with user. 'Dialog Box' (default) or 'Command Window'
     %       AutoDownloadNwb     (logical) : Whether to automatically download files when creating item (session) objects
-
-    %       Suggestions for new preferences (Todo)
     %       DownloadRemoteFiles (logical) : Whether to download remote files (true) or read data directly from remote location (false)
 
     properties (SetObservable)
@@ -38,17 +36,18 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         % Whether to automatically download nwb files when creating session objects
         AutoDownloadNwb     (1,1) logical = true
 
+        % Work in progress (implemented for VisualBehavior ophys sessions)
         GroupNwbProperties (1,1) logical = false
     end
 
     properties (SetObservable)
-        % Download file or read data from remote file (Work in progress).
+        % Download file or read data from remote file.
         DownloadRemoteFiles (1,1) logical = true
     end
 
     properties (SetObservable, Hidden)
         % A temporary directory for storing files when cache directory is
-        % suboptimal.
+        % suboptimal (Not implemented).
         % ScratchDirectory    (1,1) string = ""
     end
 
