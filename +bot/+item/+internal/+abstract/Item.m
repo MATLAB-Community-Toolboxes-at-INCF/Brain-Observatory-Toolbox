@@ -38,7 +38,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         function obj = Item(itemIDSpec)
             
             arguments
-                itemIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec};                
+                itemIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec};
             end
             
             % No Input Argument Constructor Requirement
@@ -67,7 +67,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             if istable(itemIDSpec)
                 obj.DATASET = itemIDSpec.Properties.CustomProperties.DatasetName;
             else
-                obj.DATASET = bot.internal.util.resolveDataset(itemIDSpec, obj.DATASET_TYPE, obj.ITEM_TYPE);
+                obj.DATASET = obj.resolveDatasetName(itemIDSpec);
             end
 
             obj.manifest = bot.item.internal.Manifest.instance(...
@@ -77,11 +77,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             if istable(itemIDSpec)                
                 manifestTableRow = itemIDSpec;
             elseif isnumeric(itemIDSpec)
-                itemIDSpec = uint32(round(itemIDSpec));
-                
-                manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
-                matchingRow = manifestTable.id == itemIDSpec;
-                manifestTableRow = manifestTable(matchingRow, :);                          
+                manifestTableRow = obj.findManifestTableRow(itemIDSpec);
             else
                 assert(false);
             end
@@ -105,6 +101,22 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         end
     end
     
+    methods (Access = protected) % Subclasses may override
+        function datasetName = resolveDatasetName(obj, itemId)
+            datasetName = ...
+                bot.internal.util.resolveDataset(...
+                    itemId, obj.DATASET_TYPE, obj.ITEM_TYPE);
+        end
+
+        function tableRow = findManifestTableRow(obj, itemId)
+            % Ensure ID is correct type
+            itemId = uint32(round(itemId));
+            
+            manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
+            matchingRow = manifestTable.id == itemId;
+            tableRow = manifestTable(matchingRow, :);
+        end
+    end
     
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
     methods (Hidden, Access = protected)
@@ -162,7 +174,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% HIDDEN METHODS - STATIC
     
-    methods (Hidden, Static)        
+    methods (Hidden, Static)
         function  mustBeItemIDSpec(val)
             %MUSTBEITEMIDSPEC Validation function for items specified to BOT item factory functions for item object array construction
                        

@@ -316,6 +316,17 @@ classdef test < matlab.unittest.TestCase
          bot.getCells(cells{1, 'id'});
       end
 
+      function testFactoryBehaviorOnlySessions(testCase)
+         vbEphysManifest = bot.internal.metadata.VisualBehaviorEphysManifest.instance();
+         vbOphysManifest = bot.internal.metadata.VisualBehaviorOphysManifest.instance();
+
+         ephysSessionId = vbEphysManifest.BehaviorSessions.id(1);
+         ophysSessionId = vbOphysManifest.BehaviorSessions.id(1);
+
+         bot.getSessions(ephysSessionId);
+         bot.getSessions(ophysSessionId);
+      end
+
       function testOphysQuickStart(testCase)
          captured = evalc('run(''OphysQuickstart.mlx'')');
          close all

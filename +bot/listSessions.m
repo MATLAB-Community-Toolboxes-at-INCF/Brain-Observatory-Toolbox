@@ -51,8 +51,11 @@ function sessionsTable = listSessions(dataset, datasetType, options)
     datasetType = string(datasetType);
 
     if options.IncludeBehaviorOnly
-        assert(datasetNames == Dataset.VisualBehavior, ...
-            'Behavior only sessions are only present for the Visual Behavior dataset')
+        if datasetNames ~= Dataset.VisualBehavior, ...
+            warning('BOT:ListSessions:BehaviorOnlyNotPresent', ...
+                'Behavior only sessions are only present for the Visual Behavior dataset')
+            options.IncludeBehaviorOnly = false;
+        end
     end
 
     if ~nargout

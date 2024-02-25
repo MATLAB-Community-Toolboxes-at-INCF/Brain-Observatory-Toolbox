@@ -68,17 +68,13 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             if istable(itemIDSpec)                
                 manifestTableRow = itemIDSpec;
             elseif isnumeric(itemIDSpec)
-                itemIDSpec = uint32(round(itemIDSpec));
-
-                manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
-                             
-                matchingRow = manifestTable.id == itemIDSpec;
-                manifestTableRow = manifestTable(matchingRow, :);                          
+                manifestTableRow = obj.findManifestTableRow(itemIDSpec);
             else
                 assert(false);
             end
             
-            assert(~isempty(manifestTableRow),"BOT:Item:idNotFound","Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
+            assert(~isempty(manifestTableRow), "BOT:Item:idNotFound", ...
+                "Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
             
             % - Assign the table data to the metadata structure
             obj.info = table2struct(manifestTableRow);
@@ -126,6 +122,17 @@ classdef Item < handle & matlab.mixin.CustomDisplay
 
         function datasetName = getDatasetName(obj)
             datasetName = char(obj.DATASET);
+        end
+    end
+
+    methods (Access = protected) % Subclasses may override
+        function tableRow = findManifestTableRow(obj, itemId)
+            
+            itemId = uint32(round(itemId)); % Ensure ID is correct type
+            
+            manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
+            matchingRow = manifestTable.id == itemId;
+            tableRow = manifestTable(matchingRow, :);
         end
     end
     

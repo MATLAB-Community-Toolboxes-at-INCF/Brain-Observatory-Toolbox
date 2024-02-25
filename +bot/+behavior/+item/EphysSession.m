@@ -1066,6 +1066,20 @@ classdef EphysSession < bot.item.Session
         end
     end
 
+    methods (Access = protected) % Subclasses may override
+        function datasetName = resolveDatasetName(~, ~)
+            datasetName = bot.item.internal.enum.Dataset.VisualBehavior;
+        end
+
+        function tableRow = findManifestTableRow(obj, itemId)
+            % Ensure ID is correct type
+            itemId = uint32(round(itemId));
+            
+            tableRow = bot.listSessions(obj.DATASET, obj.DATASET_TYPE, ...
+                "Id", itemId, "IncludeBehaviorOnly", true);
+        end
+    end
+    
     % MARK FOR DELETION - potential use case indeterminate
     %     %% HIDDEN INTERFACE - Static Methods
     %     methods(Static, Hidden)

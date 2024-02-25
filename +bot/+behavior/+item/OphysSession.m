@@ -156,6 +156,17 @@ classdef OphysSession < bot.behavior.item.internal.abstract.Item & ...
         end
     end
 
+
+    methods (Access = protected) % Subclasses may override (Item methods)
+        function tableRow = findManifestTableRow(obj, itemId)
+            % Ensure ID is correct type
+            itemId = uint32(round(itemId));
+            
+            tableRow = bot.listSessions(obj.DATASET, obj.DATASET_TYPE, ...
+                "Id", itemId, "IncludeBehaviorOnly", true);
+        end
+    end
+
     methods (Access = private)
         function experimentIDs = getExperimentIDs(obj)
         % getExperimentIDs - Get experiment ids from info struct

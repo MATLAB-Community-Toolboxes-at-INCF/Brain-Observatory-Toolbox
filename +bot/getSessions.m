@@ -75,40 +75,44 @@ end
 
 function [datasetName, sessionType] = resolveSessionType(sessionIDSpec)
     
-    boc = bot.internal.Cache.instance();
+    persistent sessionIdMap
 
-    if boc.isObjectInCache('session_id_map')
-        sessionIdMap = boc.retrieveObject('session_id_map');
-    else
+    if isempty(sessionIdMap)
         sessionIdMap = dictionary();
 
         % Check each of the metadata manifests.
         [~, datasetNames] = enumeration('bot.item.internal.enum.Dataset');
         [~, datasetTypes] = enumeration('bot.item.internal.enum.DatasetType');
         
+        warning('off', 'BOT:ListSessions:BehaviorOnlyNotPresent')
         for iName = string(datasetNames')
             for jType = string(datasetTypes')
-                manifest = bot.item.internal.Manifest.instance(jType, iName);
-                tableName = jType + "Sessions";
-                ids = manifest.(tableName).id;
+                sessionTable = bot.listSessions(iName, jType, "IncludeBehaviorOnly", true);
+                ids = sessionTable.id;
                 sessionIdMap(ids)={{iName, jType}};
             end
         end
-        
-        boc.insertObject('session_id_map', sessionIdMap)
+        warning('on', 'BOT:ListSessions:BehaviorOnlyNotPresent')
     end
 
     numSessions = numel(sessionIDSpec);
     [datasetName, sessionType] = deal( repmat("",1,numSessions) );
     for i = 1:numSessions
-        [datasetName(i), sessionType(i)] = ...
-            deal( sessionIdMap{sessionIDSpec(i)}{:} );
+        try
+            [datasetName(i), sessionType(i)] = ...
+                deal( sessionIdMap{sessionIDSpec(i)}{:} );
+        catch
+            ME = MException('BOT:getSessions:IdNotFound', ...
+                'Could not find any Session with id %d.', sessionIDSpec(i));
+            throwAsCaller(ME)
+        end
     end
 
     sessionType = unique(sessionType);
     datasetName = unique(datasetName);
 
     if numel(sessionType)>1 || numel(datasetName)>1
-        error('Creating sessions of different datasets / types is currently not supported')
+        error('BOT:getSessions:MixedItemsNotSupported', ...
+            'Creating sessions of different datasets / types is currently not supported')
     end
 end
