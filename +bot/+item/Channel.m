@@ -16,7 +16,7 @@ classdef Channel < bot.item.internal.abstract.Item
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys");
         ITEM_TYPE= bot.item.internal.enum.ItemType.Channel;
     end
     
@@ -35,12 +35,15 @@ classdef Channel < bot.item.internal.abstract.Item
             
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
-                % Assign linked Item tables (downstream)
-                obj.units = obj.manifest.ephys_units(obj.manifest.ephys_units.ephys_channel_id == obj.id, :);
-                
+
                 % Assign linked Item objects (upstream)
                 obj.probe = bot.getProbes(obj.info.ephys_probe_id);
-                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys");
+
+                % Assign linked Item tables (downstream)
+                unitsTable =  bot.listUnits(obj.DATASET, true);
+                obj.units = unitsTable(unitsTable.ephys_channel_id == obj.id, :);
+
+                obj.session = bot.getSessions(obj.info.ephys_session_id, "ephys", obj.DATASET);
             end
         end
     end

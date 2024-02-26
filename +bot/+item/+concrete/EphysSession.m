@@ -54,7 +54,7 @@ classdef EphysSession < bot.item.Session
         
         rig_metadata;                   % Metadata about rig used for this session (e.g. rig name, rig geometry)
     end
-    
+
     % Linked File Values (StimTemplatesGroup files)
     properties (Dependent, Transient) % Transient used here as "tag" for linked file properties
         stimulus_templates;             % Stimulus template table
@@ -110,7 +110,7 @@ classdef EphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ephys");
     end
     
     properties (Hidden)
@@ -131,9 +131,9 @@ classdef EphysSession < bot.item.Session
         nwbLocal_;
     end
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
-    properties (Constant, Hidden)
-        S3_PRIMARY_DATA_FOLDER = 'visual-coding-neuropixels';
+    properties (Access = public)
+        % Todo: make dependent on dataset the session belongs to:
+        FileResource = bot.internal.fileresource.visualcoding.VCEphysS3Bucket.instance()
     end
     
     
@@ -147,7 +147,7 @@ classdef EphysSession < bot.item.Session
         
         function num_stimulus_presentations = get.num_stimulus_presentations(self)
             num_stimulus_presentations = self.fetch_cached('num_stimulus_presentations', ...
-                @() self.nwbLocal_.fetch_num_stimulus_presentations());
+                @() self.nwbLocal.fetch_num_stimulus_presentations());
         end
         
         function stimulus_names = get.stimulus_names(self)
@@ -157,7 +157,8 @@ classdef EphysSession < bot.item.Session
         end
         
         function structure_acronyms = get.structure_acronyms(self)
-            structure_acronyms = strip(split(self.info.ephys_structure_acronyms,";"))';
+            info_field_name = 'structure_acronyms';
+            structure_acronyms = strip(split(self.info.(info_field_name),";"))';
         end
         
         
@@ -181,7 +182,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function tbl = get.channel_structure_intervals(self)
-            
+            tic
             %structure_id_key = "ephys_structure_id";
             structure_label_key = "ephys_structure_acronym";
             
@@ -198,6 +199,7 @@ classdef EphysSession < bot.item.Session
             tbl = table;
             tbl.intervals = zlclDiffIntervals(channels_selected.(structure_label_key))';
             tbl.labels = channels_selected.(structure_label_key)(tbl.intervals);
+            toc
         end
        
         function raise_MultipleProbes_warning(self)
@@ -225,8 +227,23 @@ classdef EphysSession < bot.item.Session
         end
         
         function spike_amplitudes = get.spike_amplitudes(self)
-            n = self.nwbLocal;
-            spike_amplitudes = self.fetch_cached('spike_amplitudes', @n.fetch_spike_amplitudes);
+            spike_amplitudes = self.fetch_cached('spike_amplitudes', @self.fetch_spike_amplitudes);
+        end
+
+        function spike_times = get.spike_times(self)
+            if ~self.in_cache('checked_spike_times')
+                self.warn_invalid_spike_intervals();
+                self.property_cache.checked_spike_times = true;
+            end
+
+            spike_times = self.fetch_cached('spike_times', @self.fetch_spike_times);
+            
+            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case
+            %             if ~self.in_cache('spike_times')
+            %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
+            %             end
+            %
+            %             spike_times = self.property_cache.spike_times;
         end
         
         function invalid_times = get.invalid_times(self)
@@ -245,8 +262,7 @@ classdef EphysSession < bot.item.Session
         end
         
         function mean_waveforms = get.mean_waveforms(self)
-            n = self.nwbLocal;
-            mean_waveforms = self.fetch_cached('mean_waveforms', @n.fetch_mean_waveforms);
+            mean_waveforms = self.fetch_cached('mean_waveforms', @self.fetch_mean_waveforms);
         end
         
         function stimulus_conditions = get.stimulus_conditions(self)
@@ -274,26 +290,23 @@ classdef EphysSession < bot.item.Session
     methods
         
         function nwb = get.nwbLocal(obj)
+            
+            % Reset linked file if remote file is set and preference to
+            % download remote file:
+            if strncmp( obj.linkedFiles{"SessNWB","LocalFile"}, 's3', 2) && ~obj.prefersToReadRemoteFile()
+               obj.resetLinkedFile("SessNWB")
+               obj.nwbLocal_ = [];
+            end
+
+            if isempty(obj.nwbLocal_)
+                if ismissing(obj.linkedFiles{"SessNWB","LocalFile"})
+                    obj.downloadLinkedFile("SessNWB");
+                end
+                obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+            end
             nwb = obj.nwbLocal_;
         end
-        
-        function spike_times = get.spike_times(self)
-            if ~self.in_cache('checked_spike_times')
-                self.warn_invalid_spike_intervals();
-                self.property_cache.checked_spike_times = true;
-            end
-            
-            n = self.nwbLocal;
-            spike_times = self.fetch_cached('spike_times', @n.fetch_spike_times);
-            
-            % CONSIDER FOR REMOVAL - currently build_spike_times appears a no-op, but should explore if it has a use case
-            %             if ~self.in_cache('spike_times')
-            %                 self.property_cache.spike_times = self.build_spike_times(self.nwbLocal.fetch_spike_times());
-            %             end
-            %
-            %             spike_times = self.property_cache.spike_times;
-        end
-        
+
         function metadata = get.nwb_metadata(self)
             n = self.nwbLocal;
             metadata = self.fetch_cached('metadata', @n.fetch_nwb_metadata);
@@ -355,7 +368,7 @@ classdef EphysSession < bot.item.Session
             if ~self.in_cache('stimulus_presentations_raw') || ~self.in_cache('stimulus_conditions_raw')
                 % - Read stimulus presentations from NWB file
                 stimulus_presentations_raw = self.nwbLocal.fetch_stimulus_presentations();
-                
+
                 % - Build stimulus presentations tables
                 [stimulus_presentations_raw, stimulus_conditions_raw] = self.build_stimulus_presentations(stimulus_presentations_raw);
                 
@@ -399,7 +412,7 @@ classdef EphysSession < bot.item.Session
             obj = obj@bot.item.Session(itemIDSpec);
             
             % Only process attributes if we are constructing a scalar object
-            if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && height(itemIDSpec) == 1)
+            if obj.isItemIDSpecScalar( itemIDSpec )
                 % - Assign associated table rows
                 obj.probes = obj.manifest.ephys_probes(obj.manifest.ephys_probes.ephys_session_id == obj.id, :);
                 obj.channels = obj.manifest.ephys_channels(obj.manifest.ephys_channels.ephys_session_id == obj.id, :);
@@ -420,10 +433,13 @@ classdef EphysSession < bot.item.Session
                 obj.initLinkedFiles();
                 
                 % Local prop initializations
-                obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+                if ~ismissing( obj.linkedFiles{"SessNWB","LocalFile"} )
+                    obj.nwbLocal_ = bot.internal.nwb.nwb_ephys(obj.linkedFiles{"SessNWB","LocalFile"});
+                end
             end
         end
     end
+
     
     %% METHODS - VISIBLE
     
@@ -922,7 +938,27 @@ classdef EphysSession < bot.item.Session
             units_table = self.build_units_table(self.nwbLocal.fetch_units());
         end
         
-        
+        function spike_amplitudes = fetch_spike_amplitudes(self)
+            n = self.nwbLocal;
+            units_table = self.fetch_cached('units_table', @n.fetch_full_units_table);
+            spike_amplitudes = units_table(:, {'id', 'spike_amplitudes'});
+            spike_amplitudes.Properties.VariableNames(1) = "unit_id";
+        end
+
+        function spike_times = fetch_spike_times(self)
+            n = self.nwbLocal;
+            units_table = self.fetch_cached('units_table', @n.fetch_full_units_table);
+            spike_times = units_table(:, {'id', 'spike_times'});
+            spike_times.Properties.VariableNames(1) = "unit_id";
+        end
+
+        function mean_waveforms = fetch_mean_waveforms(self)
+            n = self.nwbLocal;
+            units_table = self.fetch_cached('units_table', @n.fetch_full_units_table);
+            mean_waveforms = units_table(:, {'id', 'waveform_mean'});
+            mean_waveforms.Properties.VariableNames(1) = "unit_id";
+        end
+
         function df = filter_owned_df(self, key, ids)
             arguments
                 self;
@@ -976,106 +1012,10 @@ classdef EphysSession < bot.item.Session
         function s = getFooter(self)
             if self.warn_multiple_probes
                 s = 'Warning: Structure boundaries were calculated across channels from multiple probes.';
+            else
+                s = '';
             end
         end
-    end
-
-    methods (Hidden, Access = protected)
-        
-        function s3BranchPath = getS3BranchPath(obj, nickname)
-        %getS3BranchPath Get subfolders and filename for file given nickname
-        %
-        % Bucket Organization for neuropixels data :
-        % 
-        % visual-coding-neuropixels
-        % +-- ecephys-cache                  # packaged processed ExtraCellular Electrophysiology data
-        % ¦   +-- manifest.json              # used by AllenSDK to look up file paths
-        % ¦   +-- sessions.csv               # metadata for each experiment session
-        % ¦   +-- probes.csv                 # metadata for each experiment probe
-        % ¦   +-- channels.csv               # metadata for each location on a probe
-        % ¦   +-- units.csv                  # metadata for each recorded signal
-        % ¦   +-- brain_observatory_1.1_analysis_metrics.csv         # pre-computed metrics for brain observatory stimulus set
-        % ¦   +-- functional_connectivity_analysis_metrics.csv       # pre-computed metrics for functional connectivity stimulus set
-        % ¦   +-- session_<experiment_id>
-        % ¦   ¦   +-- session_<experiment_id>.nwb                    # experiment session nwb
-        % ¦   ¦   +-- probe_<probe_id>_lfp.nwb                       # probe lfp nwb
-        % ¦   ¦   +-- session_<experiment_id>_analysis_metrics.csv   # pre-computed metrics for experiment
-        % ¦   +-- ...
-        % ¦   +-- natural_movie_templates
-        % ¦   ¦   +-- natural_movie_1.h5                    # stimulus movie
-        % ¦   ¦   +-- natural_movie_3.h5                    # stimulus movie
-        % ¦   +-- natural_scene_templates
-        % ¦   ¦   +-- natural_scene_<image_id>.tiff         # stimulus image
-        % ¦   ¦   +-- ...
-        % +-- raw-data                       # Sorted spike recordings and unprocessed data streams
-        % ¦   +-- <experiment_id>
-        % ¦   ¦   +-- sync.h5                # Information describing the synchronization of experiment data streams
-        % ¦   ¦   +-- <probe_id>
-        % ¦   ¦   ¦ +-- channel_states.npy   #
-        % ¦   ¦   ¦ +-- event_timestamps.npy #
-        % ¦   ¦   ¦ +-- lfp_band.dat         # Local field potential data
-        % ¦   ¦   ¦ +-- spike_band.dat       # Spike data
-        % ¦   ¦   +-- ...
-        % ¦   +-- ...
-
-            arguments
-                obj             % Class object
-                nickname char   % One of: SessNWB
-                %probeId = 1 % Todo
-                %movieNumber = 1 % Todo
-                %sceneNumber = 1 % Todo
-            end
-            
-            %assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'StimTemplatesGroup'), ...
-            %    'Currently only supports files with nickname SessNWB')
-
-            experimentId = num2str(obj.id);
-
-            % Hardcoded awaiting implementation 
-            probeId = 1;
-            movieNumber = 1;
-            sceneNumber = 2;
-
-            switch nickname
-
-                case 'SessNWB'
-                    folderPath = fullfile('ecephys-cache', sprintf('session_%s', experimentId));
-                    fileName = sprintf('session_%s.nwb', experimentId);
-        
-                case 'StimTemplatesGroup'
-                    s3BranchPath = obj.getS3BranchPath('StimMovie'); return
-                    
-                case 'StimMovie'
-                    folderPath = fullfile('ecephys-cache', 'natural_movie_templates');
-                    fileName = sprintf('natural_movie_%d.h5', movieNumber);
-        
-                case 'StimScene'
-                    folderPath = fullfile('ecephys-cache', 'natural_scene_templates');
-                    fileName = sprintf('natural_scene_%d.tiff', sceneNumber);
-        
-                case 'SyncH5'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'sync.h5';
-                
-                case 'ChStatesNpy'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'channel_states.npy';
-                
-                case 'EventTsNpy'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'event_timestamps.npy';
-        
-                case 'LFPDAT'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'lfp_band.dat';
-        
-                case 'SPKDAT'
-                    folderPath = fullfile('raw_data', experimentId, probeId);
-                    fileName = 'spike_band.dat';
-            end
-            s3BranchPath = fullfile(folderPath, fileName);
-        end
-
     end
 
     % MARK FOR DELETION - potential use case indeterminate
@@ -1118,11 +1058,13 @@ for unit_index = 1:numel(unit_ids)
     unit_id = unit_ids(unit_index);
     data = spike_times(spike_times.unit_id == unit_id, :).spike_times{1};
     
-    start_positions = zlclSearchSorted(data, starts(:));
-    end_positions = zlclSearchSorted(data, ends(:), true);
-    
-    counts = end_positions - start_positions;
-    
+    counts = zlclFindSpikeCounts(data, starts(:), ends(:));
+
+% %     start_positions = zlclSearchSorted(data, starts(:));
+% %     end_positions = zlclSearchSorted(data, ends(:), true);
+% % 
+% %     counts = end_positions - start_positions;
+
     if binarize
         tiled_data(:, :, unit_index) = counts > 0;
     else
@@ -1166,6 +1108,81 @@ end
 % - Find insertion locations
 indices = arrayfun(fhFind, values);
 end
+
+
+function spikeCounts = zlclFindSpikeCounts(spikeTimes, tBinStart, tBinEnd)
+%zlclFindSpikeCounts Find spike counts in a set of time bins/intervals
+
+% Note: This function works with irregular time bins, so e.g histcounts is not
+% suitable.
+
+    % Does the same as zlclSearchSorted, but dynamically adjust search
+    % regions (i.e no need to search from beginning every time, and also no 
+    % need to search from end every time.)
+
+    % The main improvement to performance comes from assuming we only need to 
+    % search in a local window
+
+    spikeCounts = zeros(size(tBinStart));
+    
+    % Sort bins in order to use a moving window
+    [sortedTBinStart, sortedStartIdx] = sort(tBinStart);
+    
+    numSpikeTimes = numel(spikeTimes);
+
+    searchStartIndex = find(spikeTimes > min(tBinStart), 1, 'first');
+    
+    deltaT = tBinEnd(1)-tBinStart(1);
+    minSpikeInterval = min(diff(spikeTimes, 1,1));
+    
+    windowLengthFindFirst = 10; % Selected from observation. Is updated below if needed. 
+    windowLengthFindLast = ceil( deltaT / minSpikeInterval);
+
+    for iBin = 1:numel(tBinStart)
+        binStart = sortedTBinStart(iBin);
+        binEnd = tBinEnd(sortedStartIdx(iBin));
+        
+        searchEndIndex = min( [numSpikeTimes, searchStartIndex+windowLengthFindFirst] );
+        searchWindow = searchStartIndex:searchEndIndex;
+        
+        %iStartIdx = find(spikeTimes(searchStartIndex:end) > binStart, 1, 'first') + searchStartIndex - 1;
+        [found, iStartIdx] = matlab.internal.math.ismemberhelper(true, spikeTimes(searchWindow) > binStart);
+
+        if ~found
+            % This might occur when there is a big jump between two time intervals.
+            searchWindow = searchStartIndex:numSpikeTimes; % Expand search window
+            [found, iStartIdx] = matlab.internal.math.ismemberhelper(true, spikeTimes(searchWindow) > binStart);
+        end
+
+        iStartIdx = iStartIdx + searchStartIndex - 1;
+
+        if ~found 
+            iStartIdx = numel(spikeTimes) + 1;
+        else
+            searchStartIndex = iStartIdx;
+        end
+
+        lastSearchIndex = min([iStartIdx+windowLengthFindLast, numel(spikeTimes)]);
+        iEndIdx = find(spikeTimes(iStartIdx-1:lastSearchIndex) <= binEnd, 1, 'last') + iStartIdx - 1;
+        
+%         lastSearchIndex = min([iStartIdx+windowLengthFindLast, numel(spikeTimes)]);
+%         [found, foundIdx] = matlab.internal.math.ismemberhelper(true, spikeTimes(iStartIdx-1:lastSearchIndex) <= binEnd);
+%         
+%         iEndIdx = foundIdx + iStartIdx - 1;
+
+        if isempty(iEndIdx)
+            iEndIdx = numel(spikeTimes) + 1;
+        end
+
+        spikeCounts(sortedStartIdx(iBin)) = iEndIdx - iStartIdx;
+
+        % Adjust window size
+        if spikeCounts(sortedStartIdx(iBin)) > windowLengthFindFirst
+            windowLengthFindFirst = spikeCounts(sortedStartIdx(iBin));
+        end
+    end
+end
+
 
 %zlclBuildTimeWindowDomain
 function domain = zlclBuildTimeWindowWomain(bin_edges, offsets, callback)

@@ -1,20 +1,46 @@
-% Retrieve table of cell information from the Allen Brain Observatory Visual Coding dataset [1, 2]
+% Retrieve table of ophys cell information from an Allen Brain Observatory [1] dataset
 %
-% Web data accessed via the Allen Brain Atlas API [3]. 
+% Supports the Visual Coding 2P [2] dataset and the Visual Behavior 2P [4] 
+% dataset from the Allen Brain Observatory [1].
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
-% [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
+% Usage:
+%    cells = bot.listCells() returns a table of cell information for the
+%       Visual Coding dataset
 %
-%% function cellsTable = listCells(include_metrics)
-function cellsTable = listCells(include_metrics)
-arguments
-    include_metrics logical = false;
-end
-     manifest = bot.item.internal.Manifest.instance('ophys');
-     cellsTable = manifest.ophys_cells;
-     
-     if ~include_metrics
-         cellsTable = removevars(cellsTable, bot.item.Cell.METRIC_PROPERTIES);
-     end
+%    cells = bot.listCells(datasetName) returns a table of cell information 
+%       for the dataset specified by datasetName. datasetName can be 
+%       "VisualCoding" (default) or "VisualBehavior".
+%
+%    cells = bot.listCells(datasetName, include_metrics) additionally 
+%       specifies whether to include cell metrics or not (Default = false).
+%       Note: The cell table from the Visual Behavior Dataset do not have 
+%           metrics available
+%
+% Web data accessed via the Allen Brain Atlas API [6] or AWS Public 
+% Datasets (Amazon S3). 
+%
+% For references [#]:
+%   See also bot.util.showReferences
+
+function cellsTable = listCells(datasetName, include_metrics)
+    arguments
+        datasetName (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
+        include_metrics logical = false;
+    end
+    
+    % Get the metadata manifest for the selected dataset
+    manifest = bot.item.internal.Manifest.instance('Ophys', datasetName);
+    
+    % Get the cells item table
+    if datasetName == "VisualCoding"
+        cellsTable = manifest.ophys_cells;
+    else
+        cellsTable = manifest.OphysCells;
+    end
+
+    if ~include_metrics 
+        if datasetName == bot.item.internal.enum.Dataset.VisualCoding
+            cellsTable = removevars(cellsTable, bot.item.Cell.METRIC_PROPERTIES);
+        end
+    end
 end

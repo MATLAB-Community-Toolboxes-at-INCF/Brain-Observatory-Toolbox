@@ -81,7 +81,7 @@ classdef OphysSession < bot.item.Session
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ophys");
     end
     
     properties (Hidden)
@@ -94,11 +94,9 @@ classdef OphysSession < bot.item.Session
         LINKED_FILE_PROP_BINDINGS = zlclInitLinkedFilePropBindings;
     end
 
-    % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.LinkedFilesItem)
-    properties (Constant, Hidden)
-        S3_PRIMARY_DATA_FOLDER = 'visual-coding-2p';
-    end
-    
+    properties (Access = public)
+        FileResource = bot.internal.fileresource.visualcoding.VCOphysS3Bucket.instance()
+    end  
     
     %% PROPERTY ACCESS METHODS
     methods
@@ -128,11 +126,11 @@ classdef OphysSession < bot.item.Session
         end
         
         function val = get.max_projection(bos)
-            val = bos.fetch_cached('max_projection',bos.fetch_max_projection);
+            val = bos.fetch_cached('max_projection',@bos.fetch_max_projection);
         end
         
         function tbl = get.motion_correction(bos)
-            tbl = bos.fetch_cached('motion_correction',bos.fetch_motion_correction);
+            tbl = bos.fetch_cached('motion_correction',@bos.fetch_motion_correction);
         end
         
         function neuropil_r = get.neuropil_r(bos)
@@ -140,7 +138,7 @@ classdef OphysSession < bot.item.Session
         end
         
         function traces = get.neuropil_traces(bos)
-            traces = bos.fetch_cached('neuropil_traces',@bos.fetch_neuropil_traces);
+            traces = bos.fetch_cached('neuropil_traces',@bos.fetch_fluorescence_traces_neuropil);
         end
         
         
@@ -149,6 +147,13 @@ classdef OphysSession < bot.item.Session
         end
         
         function loc = get.nwbLocal(self)
+            if ismissing(self.linkedFiles{"SessNWB","LocalFile"})
+                self.downloadLinkedFile("SessNWB");
+                self.updateCellTable()
+            end
+
+            self.checkIfRemoteFileRequiresDownload("SessNWB")
+
             loc = self.linkedFiles{"SessNWB","LocalFile"};
         end
         
@@ -161,7 +166,7 @@ classdef OphysSession < bot.item.Session
         end
         
         function roi_ids = get.roi_ids(bos)
-            roi_ids = bos.fetch_cached('roi_ids',bos.fetch_roi_ids);
+            roi_ids = bos.fetch_cached('roi_ids',@bos.fetch_roi_ids);
         end
         
         function roi_masks = get.roi_mask(bos)
@@ -180,7 +185,7 @@ classdef OphysSession < bot.item.Session
             % get.session_type - GETTER Return the name for the stimulus set used in this session
             %
             % Usage: strSessionType = bos.session_type
-            session_type = bos.info.stimulus_name;
+            session_type = bos.info.session_type;
         end
         
         function tbl = get.spontaneous_activity_stimulus_table(bos)
@@ -215,19 +220,15 @@ classdef OphysSession < bot.item.Session
             
             % fetch_corrected_fluorescence_traces - METHOD Return corrected fluorescence traces for the provided cell specimen IDs
             %
-            % Usage: [timestamps, traces] = fetch_corrected_fluorescence_traces(bos <, cell_specimen_ids>)
+            % Usage: traces = fetch_corrected_fluorescence_traces(bos, <cell_specimen_ids>)
             %
-            % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-            % point defining a sample time for the fluorescence samples. `traces`
-            % will be a TxN matrix of fluorescence samples, with each row `t`
-            % contianing the data for the timestamp in the corresponding entry of
-            % `timestamps`. Each column `n` contains the corrected fluorescence
-            % data for a single cell specimen.
+            % `traces` will be a TxN matrix of fluorescence samples, where each row `t`
+            % contains the data for a single timepoint and each column `n` contains 
+            % the corrected fluorescence data for a single cell specimen.
             %
             % By default, traces for all cell specimens are returned. The optional
-            % argument`vnCellSpecimenIDs` permits you specify which cell specimens
+            % argument `cell_specimen_ids` permits you specify which cell specimens
             % should be returned.
-            
             
             % - Pass an empty matrix to return all cell specimen IDs
             if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
@@ -236,27 +237,26 @@ classdef OphysSession < bot.item.Session
             
             % - Starting in pipeline version 2.0, neuropil correction follows trace demixing
             if str2double(bos.nwb_metadata.pipeline_version) >= 2.0
-                traces = bos.fetch_demixed_traces(cell_specimen_ids);
+                traces = bos.fetch_fluorescence_traces_demixed(cell_specimen_ids);
             else
                 traces = bos.fetch_fluorescence_traces(cell_specimen_ids);
             end
             
             % - Read neuropil correction data
             neuropil_r = bos.fetch_neuropil_r(cell_specimen_ids);
-            neuropil_traces = bos.fetch_neuropil_traces(cell_specimen_ids);
+            neuropil_traces = bos.fetch_fluorescence_traces_neuropil(cell_specimen_ids);
             
             % - Correct fluorescence traces using neuropil demixing model
-            traces = traces - neuropil_traces * reshape(neuropil_r, 1, []);
+            traces = traces - neuropil_traces * reshape(neuropil_r, [], 1);
         end
         
         function timestamps = fetch_fluorescence_timestamps(bos)
-            % get.fluorescence_timestamps - GETTER Return timestamps for the fluorescence traces, in seconds
+            % fetch_fluorescence_timestamps - METHOD Return timestamps for the fluorescence traces, in seconds
             %
-            % Usage: timestamps = bos.fluorescence_timestamps
+            % Usage: timestamps = bos.fetch_fluorescence_timestamps()
             %
-            % `timestamps` will be a vector of time points corresponding to
-            % fluorescence samples, in seconds.
-            
+            % `timestamps` will be a 1xT duration vector of time points 
+            % corresponding to fluorescence samples, in seconds.
             
             % - Read imaging timestamps from NWB file
             timestamps = h5read(bos.nwbLocal, ...
@@ -271,23 +271,17 @@ classdef OphysSession < bot.item.Session
         function traces = fetch_fluorescence_traces(bos, cell_specimen_ids)
             % fetch_fluorescence_traces - METHOD Return raw fluorescence traces for the provided cell specimen IDs
             %
-            % Usage: [timestamps, traces] = fetch_fluorescence_traces(bos <, cell_specimen_ids>)
+            % Usage: traces = fetch_fluorescence_traces(bos, <cell_specimen_ids>)
             %
-            % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-            % point defining a sample time for the fluorescence samples. `traces`
-            % will be a TxN matrix of fluorescence samples, with each row `t`
-            % contianing the data for the timestamp in the corresponding entry of
-            % `timestamps`. Each column `n` contains the demixed fluorescence
-            % data for a single cell specimen.
+            % `traces` will be a TxN matrix of fluorescence samples, where each row `t`
+            % contains the data for a single timepoint and each column `n` contains 
+            % the raw fluorescence data for a single cell specimen.
             %
             % By default, traces for all cell specimens are returned. The optional
-            % argument`cell_specimen_ids` permits you specify which cell specimens
+            % argument `cell_specimen_ids` permits you specify which cell specimens
             % should be returned.
-            
-            
-            % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
-            %          % - Get the fluorescence timestamps
-            %          timestamps = bos.fluorescence_timestamps;
+            %
+            % See also: fetch_fluorescence_timestamps
             
             % - Find cell specimen IDs, if provided
             if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
@@ -307,24 +301,17 @@ classdef OphysSession < bot.item.Session
         
         %TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
         function traces = fetch_fluorescence_traces_demixed(bos, cell_specimen_ids)
-            % fetch_demixed_traces - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
+            % fetch_fluorescence_traces_demixed - METHOD Return neuropil demixed fluorescence traces for the provided cell specimen IDs
             %
-            % Usage: [timestamps, traces] = fetch_demixed_traces(bos <, cell_specimen_ids>)
+            % Usage: traces = fetch_fluorescence_traces_demixed(bos, <cell_specimen_ids>)
             %
-            % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-            % point defining a sample time for the fluorescence samples. `traces`
-            % will be a TxN matrix of fluorescence samples, with each row `t`
-            % contianing the data for the timestamp in the corresponding entry of
-            % `timestamps`. Each column `n` contains the demixed fluorescence
-            % data for a single cell specimen.
+            % `traces` will be a TxN matrix of fluorescence samples, where each row `t`
+            % contains the data for a single timepoint and each column `n` contains 
+            % the demixed fluorescence data for a single cell specimen.
             %
             % By default, traces for all cell specimens are returned. The optional
-            % argument`cell_specimen_ids` permits you specify which cell specimens
+            % argument `cell_specimen_ids` permits you specify which cell specimens
             % should be returned.
-            
-            % SLATED FOR REMOVAL - REMOVED TIMESTAMPS OUTPUT ARG SINCE IT CAN BE ACCESSED VIA SEPARATE PROPERTY
-            %          % - Get the fluorescence timestamps
-            %          timestamps = bos.fluorescence_timestamps;
             
             % - Find cell specimen IDs, if provided
             if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
@@ -342,23 +329,20 @@ classdef OphysSession < bot.item.Session
             traces = traces(:, cell_specimen_indices);
         end
         
-        % TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
+        %TODO: consider adding as public get method for access by cell ID, likely in tandem with Cell item addition
         function traces = fetch_fluorescence_traces_dff(bos, cell_specimen_ids)
             % fetch_dff_traces - METHOD Return dF/F traces for the provided cell specimen IDs
             %
-            % Usage: [timestamps, dff_traces] = fetch_dff_traces(bos <, cell_specimen_ids>)
+            % Usage: dff_traces = fetch_dff_traces(bos, <cell_specimen_ids>)
             %
-            % `timestamps` will be a Tx1 vector of timepoints in seconds, each
-            % point defining a sample time for the fluorescence samples. `dff_traces`
-            % will be a TxN matrix of fluorescence samples, with each row `t`
-            % contianing the data for the timestamp in the corresponding entry of
-            % `timestamps`. Each column `n` contains the delta F/F0 fluorescence
-            % data for a single cell specimen.
+            % dff_traces will be a TxN matrix of fluorescence samples, where each row `t`
+            % contains the data for a single timepoint and each column `n` contains 
+            % the delta F/F0 fluorescence data for a single cell specimen.
             %
             % By default, traces for all cell specimens are returned. The optional
-            % argument`cell_specimen_ids` permits you specify which cell specimens
+            % argument `cell_specimen_ids` permits you specify which cell specimens
             % should be returned.
-            
+
             % - Find cell specimen IDs, if provided
             if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
                 cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
@@ -381,9 +365,37 @@ classdef OphysSession < bot.item.Session
             
             % - Subsample response traces to requested cell specimens
             traces = traces(:, cell_specimen_indices);
-            
         end
         
+        function traces = fetch_fluorescence_traces_neuropil(bos, cell_specimen_ids)
+            % fetch_fluorescence_traces_neuropil - METHOD Return fluorescence traces of neuropil for the provided cell specimen IDs
+            %
+            % Usage: neuropil_traces = fetch_dff_traces(bos, <cell_specimen_ids>)
+            %
+            % neuropil_traces will be a TxN matrix of fluorescence samples, where each
+            % row `t` contains the data for a single timepoint and each column `n`
+            % contains the neuropil fluorescence data for a single cell specimen.
+            %
+            % By default, traces for all cell specimens are returned. The optional
+            % argument `cell_specimen_ids` permits you specify which cell specimens
+            % should be returned.
+
+            % - Find cell specimen IDs, if provided
+            if ~exist('cell_specimen_ids', 'var') || isempty(cell_specimen_ids)
+                cell_specimen_indices = 1:numel(bos.cell_specimen_ids);
+            else
+                cell_specimen_indices = bos.lookup_cell_specimen_indices(cell_specimen_ids);
+            end
+            
+            % - Read response traces
+            traces = h5read(bos.nwbLocal, ...
+                h5path('processing', bos.strPipelineDataset, ...
+                'Fluorescence', 'imaging_plane_1_neuropil_response', 'data'));
+            
+            % - Subselect traces
+            traces = traces(:, cell_specimen_indices);
+        end
+
         function max_projection = fetch_max_projection(bos)
             % get.max_projection - GETTER Return the maximum-intensity projection image for this experimental session
             %
@@ -777,8 +789,7 @@ classdef OphysSession < bot.item.Session
             imaging_timestamps = bos.fluorescence_timestamps;
             
             tt = timetable;
-            
-            [strc.running_speed, strc.running_speed_timestamps] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
+            [tt.RunningSpeed, tt.Time] = align_running_speed(running_speed_, timestamps, imaging_timestamps);
         end
         
         function tbl = fetch_spontaneous_activity_stimulus_table(bos)
@@ -839,7 +850,7 @@ classdef OphysSession < bot.item.Session
             
             % - Get needed session properties
             stimuli = bos.stimulus_list();
-            sessionType = string(bos.session_type);
+            sessionType = string(bos.info.session_type);
             
             % - Loop over stimuli to get stimulus tables
             stimulus_epochs = table();
@@ -985,8 +996,7 @@ classdef OphysSession < bot.item.Session
                 stimulus_template = reshape(stimulus_template, stim_template_size);
             end
         end
-        
-        
+
     end
     
     %% METHODS - VISIBLE
@@ -1248,7 +1258,17 @@ classdef OphysSession < bot.item.Session
                 
                 obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
                 obj.cells = obj.experiment.cells;
+                if ~ismissing(obj.linkedFiles{"SessNWB","LocalFile"})
+                    obj.updateCellTable()
+                end
             end
+        end
+    end
+
+    methods (Access = protected)
+        function updateCellTable(obj)
+            cellSpecimenIds = obj.cell_specimen_ids;
+            obj.cells = obj.cells(ismember(obj.cells.id, uint32(cellSpecimenIds)), :);
         end
     end
 
@@ -1269,71 +1289,6 @@ classdef OphysSession < bot.item.Session
         end
     end
 
-    methods (Hidden, Access = protected)
-
-        function s3BranchPath = getS3BranchPath(obj, nickname)
-        %getS3BranchPath Get subfolders and filename for file given nickname
-        %
-        % Bucket Organization for 2-photon data :
-        % 
-        % visual-coding-2p
-        % +-- ophys_experiment_data       # traces, running speed, etc per experiment session
-        % ¦   +-- <experiment_id>.nwb
-        % ¦   +-- ...
-        % +-- ophys_experiment_analysis   # analysis files per experiment session
-        % ¦   +-- <experiment_id>_<session_name>.h5 (*)
-        % ¦   +-- ...
-        % +-- ophys_movies                # motion-corrected video per experiment session
-        % ¦   +-- ophys_experiment_<experiment_id>.h5
-        % ¦   +-- ...
-        % +-- ophys_experiment_events     # neuron activity modeled as discrete events
-        % ¦   +-- <experiment_id>_events.npz
-        % ¦   +-- ...
-        % +-- ophys_eye_gaze_mapping      # subject eye position over the course of the experiment
-        % ¦   +-- <experiment_id>_<session_id>_eyetracking_dlc_to_screen_mapping.h5
-        % ¦   +-- ...
-        %
-        % Notes:
-        %  * Analysis files are named <experiment_id>_<session_name>_analysis.h5
-
-            arguments
-                obj             % Class object
-                nickname char   % One of : SessNWB
-            end
-            
-            assert(strcmp(nickname, 'SessNWB') || strcmp(nickname, 'SessH5'), ...
-                'Currently only supports files with nickname SessNWB')
-            
-            experimentId = num2str(obj.id);
-            sessionName = obj.session_type;
-        
-            switch nickname
-        
-                case 'SessNWB'       
-                    folderPath = 'ophys_experiment_data';
-                    fileName = sprintf('%s.nwb', experimentId);
-        
-                case 'SessH5' 
-                    folderPath = 'ophys_experiment_analysis';
-                    fileName = sprintf('%s_%s_analysis.h5', experimentId, sessionName);
-        
-                case 'Movie'
-                    folderPath = 'ophys_movies';
-                    fileName = sprintf('ophys_experiment_%s.h5', experimentId);
-        
-                case 'Events'
-                    folderPath = 'ophys_experiment_events';
-                    fileName = sprintf('%s_events.npz', experimentId);
-                
-                case 'EyeH5'
-                    error('File is not available')
-                    folderPath = 'ophys_eye_gaze_mapping';
-                    fileName = sprintf('%s_%s_eyetracking_dlc_to_screen_mapping.h5', experimentId, obj.sessionId);
-            end
-            s3BranchPath = fullfile(folderPath, fileName);
-        end
-
-    end
 
 end
 

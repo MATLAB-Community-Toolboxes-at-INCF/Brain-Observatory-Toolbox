@@ -16,7 +16,7 @@ classdef Cell < bot.item.internal.abstract.Item & bot.item.internal.mixin.Metric
     
     % SUPERCLASS IMPLEMENTATION (bot.item.internal.abstract.Item)
     properties (Hidden, Access = protected, Constant)
-        DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
+        DATASET_TYPE = bot.item.internal.enum.DatasetType("Ophys");
         ITEM_TYPE = bot.item.internal.enum.ItemType.Cell;
     end
     
@@ -62,8 +62,13 @@ classdef Cell < bot.item.internal.abstract.Item & bot.item.internal.mixin.Metric
             % Only process attributes if we are constructing a scalar object
             if (~istable(itemIDSpec) && numel(itemIDSpec) == 1) || (istable(itemIDSpec) && size(itemIDSpec, 1) == 1)
                 % Assign linked Item objects
-                obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
-                obj.sessions = obj.experiment.sessions;
+                if obj.DATASET == "VisualCoding"
+                    obj.experiment = bot.getExperiments(obj.info.experiment_container_id);
+                    obj.sessions = obj.experiment.sessions;
+                elseif obj.DATASET == "VisualBehavior"
+                    obj.experiment = bot.getExperiments(obj.info.ophys_experiment_id);
+                    obj.sessions = obj.experiment.Session;
+                end
                 
                 % Initialise Metrics
                 obj.init_metrics();

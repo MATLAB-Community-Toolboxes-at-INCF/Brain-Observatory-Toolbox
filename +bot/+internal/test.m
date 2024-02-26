@@ -1,11 +1,15 @@
 %% Test class for BOT
 classdef test < matlab.unittest.TestCase
    
+    % Todo: 
+    % [ ] set up test cache...
+    % [ ] test live scripts
+
    %% Test methods block
    methods (Test)
       function testCreateCache(testCase) %#ok<*MANU>
          %% Test creating a BOT cache
-         boc = bot.internal.cache; %#ok<*NASGU>
+         boc = bot.internal.Cache.instance(); %#ok<*NASGU>
       end
       
       function testOphysTables(testCase)
@@ -13,7 +17,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ophys');
          bom = bot.item.internal.OphysManifest.instance();
          bom.ophys_sessions;                   % Table of all OPhys experimental sessions
-         bom.ophys_experiments;                 % Table of all OPhys experimental containers
+         bom.ophys_experiments;                % Table of all OPhys experimental containers
          bom.ophys_cells;                      % Table of all OPhys cells
       end
       
@@ -29,7 +33,7 @@ classdef test < matlab.unittest.TestCase
 
       function testObtainSessionObject(testCase)
          %% Test creation of an OPhys session object
-         sess = bot.listSessions('ophys');
+         sess = bot.listSessions('VisualCoding', 'ophys');
          
          % - Get session IDs
          vIDs = sess.id;
@@ -120,8 +124,8 @@ classdef test < matlab.unittest.TestCase
       
       function testOPhysCell(testCase)
           %% Test obtaining OPhys cell object
-          cell_table = bot.listCells(true);
-          cell_table = bot.listCells(false);
+          cell_table = bot.listCells('VisualCoding', true);
+          cell_table = bot.listCells('VisualCoding', false);
           cell = bot.getCells(cell_table.id(1));
           cell = bot.getCells(cell_table(1, :));
           cells = bot.getCells(cell_table(1:3, :));
@@ -151,7 +155,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get the EPhys sessionts
-         sessions = bot.listSessions('ephys');
+         sessions = bot.listSessions('VisualCoding', 'ephys');
          
          % - Get a session
          s = bot.getSessions(sessions{1, 'id'});
@@ -196,8 +200,8 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
 
          % - Get the units table
-         units = bot.listUnits(true);
-         units = bot.listUnits(false);
+         units = bot.listUnits('VisualCoding', true);
+         units = bot.listUnits('VisualCoding', false);
 
          % - Get units, by ID and by table
          u = bot.getUnits(units{1, 'id'});
@@ -258,7 +262,7 @@ classdef test < matlab.unittest.TestCase
          bom = bot.item.internal.Manifest.instance('ephys');
          s = bot.getSessions(bom.ephys_sessions{1, 'id'});
 
-         sess = bot.listSessions('ephys');
+         sess = bot.listSessions('VisualCoding', 'ephys');
          s = bot.getSessions(sess(1, :));
 
          s.fetch_stimulus_table();
@@ -273,14 +277,14 @@ classdef test < matlab.unittest.TestCase
       function test_factory_functions(testCase)
          %% - Test manifest fetch factory functions
          exps = bot.listExperiments();
-         sess_ephys = bot.listSessions('ephys');
-         sess_ophys = bot.listSessions('ophys');
+         sess_ephys = bot.listSessions('VisualCoding', 'ephys');
+         sess_ophys = bot.listSessions('VisualCoding', 'ophys');
          units = bot.listUnits();
-         units = bot.listUnits(true);
+         units = bot.listUnits('VisualCoding', true);
          probes = bot.listProbes();
          channels = bot.listChannels();
          cells = bot.listCells();
-         cells = bot.listCells(true);
+         cells = bot.listCells('VisualCoding', true);
          
          % - Test "get object" factory functions
          bot.getSessions(sess_ephys{1, 'id'});
@@ -290,6 +294,42 @@ classdef test < matlab.unittest.TestCase
          bot.getProbes(probes{1, 'id'});
          bot.getChannels(channels{1, 'id'});
          bot.getCells(cells{1, 'id'});
+      end
+
+      function testFactoryFunctionsVisualBehavior(testCase)
+         sess_ephys = bot.listSessions('VisualBehavior', 'ephys');
+         sess_ophys = bot.listSessions('VisualBehavior', 'ophys');
+
+         exps = bot.listExperiments('VisualBehavior');
+         probes = bot.listProbes('VisualBehavior');
+         channels = bot.listChannels('VisualBehavior');
+         units = bot.listUnits('VisualBehavior', true);
+         cells = bot.listCells('VisualBehavior', true);
+         
+         % - Test "get object" factory functions
+         bot.getSessions(sess_ephys{1, 'id'});
+         bot.getSessions(sess_ophys{1, 'id'});
+         bot.getExperiments(exps{1, 'id'});
+         bot.getUnits(units{1, 'id'});
+         bot.getProbes(probes{1, 'id'});
+         bot.getChannels(channels{1, 'id'});
+         bot.getCells(cells{1, 'id'});
+      end
+
+      function testFactoryBehaviorOnlySessions(testCase)
+         vbEphysManifest = bot.internal.metadata.VisualBehaviorEphysManifest.instance();
+         vbOphysManifest = bot.internal.metadata.VisualBehaviorOphysManifest.instance();
+
+         ephysSessionId = vbEphysManifest.BehaviorSessions.id(1);
+         ophysSessionId = vbOphysManifest.BehaviorSessions.id(1);
+
+         bot.getSessions(ephysSessionId);
+         bot.getSessions(ophysSessionId);
+      end
+
+      function testOphysQuickStart(testCase)
+         captured = evalc('run(''OphysQuickstart.mlx'')');
+         close all
       end
    end
 end

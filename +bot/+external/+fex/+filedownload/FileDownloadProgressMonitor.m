@@ -24,6 +24,7 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
         UpdateInterval = 1          % Interval (in seconds) for updating progress.
         Filename = ''               % Name of downloaded file.
         IndentSize = 0              % Size of indentation (number of spaces) if displaying progress in command window.
+        Title = ''                  % Title for the progress dialog
     end
 
     properties % Implement superclass properties (matlab.net.http.ProgressMonitor)
@@ -199,8 +200,10 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
     methods (Access = private) % Format messages for display
 
         function titleStr = getProgressTitle(obj)
-            if ~ isempty(obj.Filename)
+            if ~isempty(obj.Filename)
                 titleStr = sprintf('Downloading %s', obj.Filename);
+            elseif ~isempty(obj.Title)
+                titleStr = obj.Title;
             else
                 titleStr = 'Downloading File...';
             end

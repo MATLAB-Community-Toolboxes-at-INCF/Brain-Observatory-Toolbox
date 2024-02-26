@@ -59,6 +59,10 @@ classdef EphysManifest < bot.item.internal.Manifest
         ephys_units        % Table of all EPhys units
     end
 
+    properties (Dependent, Hidden)
+        EphysSessions
+    end
+
 % %     properties (SetAccess = private, Dependent = true) % Todo: rename?
 % %         Sessions     % Table of all EPhys experimental sessions
 % %         Probes       % Table of all EPhys probes
@@ -67,12 +71,17 @@ classdef EphysManifest < bot.item.internal.Manifest
 % %     end
         
     properties (Constant, Access=protected, Hidden)
+        DATASET_NAME = bot.item.internal.enum.Dataset("VisualCoding")
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ephys;
         ITEM_TYPES = ["Session", "Probe", "Channel", "Unit"]
         DOWNLOAD_FROM = containers.Map(...
             bot.item.internal.EphysManifest.ITEM_TYPES, ...
             ["API", "", "", ""] )
     end
+
+    properties (Access = protected)
+        FileResource = bot.internal.fileresource.visualcoding.VCEphysS3Bucket.instance()
+    end  
 
     %% Constructor
     methods (Access = private)
@@ -148,7 +157,13 @@ classdef EphysManifest < bot.item.internal.Manifest
         end
 
     end
-    
+        
+    methods % Getters for alias property names
+        function sessionTable = get.EphysSessions(oManifest)
+            sessionTable = oManifest.fetch_cached('ephys_sessions', ...
+                    @(itemType) oManifest.fetch_item_table('Session') );
+        end
+    end 
 
     %% Low-level getter method for EPhys item tables
     methods (Access = protected)
@@ -167,18 +182,20 @@ classdef EphysManifest < bot.item.internal.Manifest
 
             cache_key = eManifest.getManifestCacheKey(itemType);
 
-            if eManifest.cache.IsObjectInCache(cache_key)
-                itemTable = eManifest.cache.RetrieveObject(cache_key);
+            if eManifest.cache.isObjectInCache(cache_key)
+                itemTable = eManifest.cache.retrieveObject(cache_key);
 
             else
                 itemTable = eManifest.fetchAnnotatedItemTable(itemType);
 
-                eManifest.cache.InsertObject(cache_key, itemTable);
+                eManifest.cache.insertObject(cache_key, itemTable);
                 eManifest.clearTempTableFromCache(itemType)
             end
 
             % Apply standardized table display logic
-            itemTable = eManifest.applyUserDisplayLogic(itemTable); 
+            itemTable = eManifest.applyUserDisplayLogic(itemTable);
+            
+            itemTable = eManifest.addDatasetInformation(itemTable);
         end
 
         function itemTable = fetchRawItemTable(eManifest, itemType)
@@ -243,7 +260,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             
             % - Get structure acronyms Todo?
             session_table = fetch_grouped_uniques(session_table, joint_channel_table, ...
-                'id', 'ephys_session_id', 'ephys_structure_acronym', 'ephys_structure_acronyms');
+                'id', 'ephys_session_id', 'ephys_structure_acronym', 'structure_acronyms');
         end
 
         function probe_table = add_linked_item_counts_to_probe_table(eManifest, probe_table)
@@ -401,7 +418,7 @@ classdef EphysManifest < bot.item.internal.Manifest
             
             ltsf = probe_table.lfp_temporal_subsampling_factor;
             if iscell(ltsf)
-                [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this shoudl be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
+                [ltsf{cellfun(@isempty,ltsf)}] = deal(nan); %TODO: revisit if this should be '1' replaced as above; for now, just focused on re-representing as a numeric array rather than cell array
                 ltsf = cell2mat(ltsf);
             else
                 % missing values are already nan

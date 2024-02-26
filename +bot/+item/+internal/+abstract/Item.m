@@ -2,8 +2,8 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% PROPERTIES
     properties (SetAccess = public)
-        info;         % Struct containing info about this item
         id;           % ID of this item
+        info;         % Struct containing info about this item
     end
     
     %% HIDDEN PROPERTIES
@@ -12,9 +12,13 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         manifest; % Handle to pertinent manifest containing all available Items of this class
     end
     
-    properties (Abstract, Hidden, Access = protected, Constant)
-        DATASET_TYPE(1,1) bot.item.internal.enum.DatasetType
-        ITEM_TYPE(1,1) bot.item.internal.enum.ItemType
+    properties (SetAccess = immutable, GetAccess = protected)
+        DATASET (1,1) bot.item.internal.enum.Dataset
+    end
+
+    properties (Abstract, Constant, Access = protected)
+        DATASET_TYPE (1,1) bot.item.internal.enum.DatasetType
+        ITEM_TYPE (1,1) bot.item.internal.enum.ItemType
     end
     
     properties (Abstract, Hidden)
@@ -34,7 +38,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         function obj = Item(itemIDSpec)
             
             arguments
-                itemIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec};                
+                itemIDSpec {bot.item.internal.abstract.Item.mustBeItemIDSpec};
             end
             
             % No Input Argument Constructor Requirement
@@ -47,45 +51,39 @@ classdef Item < handle & matlab.mixin.CustomDisplay
             
             if ~istable(itemIDSpec) && numel(itemIDSpec) > 1
                 for idx = 1:numel(itemIDSpec)
-                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx)); %#ok<AGROW>
+                   getItemFcn = str2func( sprintf("bot.get%ss", string(item_type)) ); %i.e @bot.getSessions
+                   obj(idx) = getItemFcn(itemIDSpec(idx)); %#ok<AGROW>
                 end
                 return;
             elseif istable(itemIDSpec) && size(itemIDSpec, 1) > 1
                 for idx = 1:size(itemIDSpec, 1)
-                   obj(idx) = bot.(lower(string(item_type)))(itemIDSpec(idx, :)); %#ok<AGROW>
+                   getItemFcn = str2func( sprintf("bot.get%ss", string(item_type)) ); %i.e @bot.getSessions
+                   obj(idx) = getItemFcn(itemIDSpec(idx, :)); %#ok<AGROW>
                 end
                 return;                
             end
-            
-            % Identify associated manifest containing all Items of this class
-            switch obj.DATASET_TYPE
-                case "Ephys"
-                    obj.manifest = bot.item.internal.EphysManifest.instance();
-                case "Ophys"
-                    obj.manifest = bot.item.internal.OphysManifest.instance();
-                otherwise
-                    assert(false);
-            end                       
-            
-            
+
+            % Assign the dataset (name) enumeration
+            if istable(itemIDSpec)
+                obj.DATASET = itemIDSpec.Properties.CustomProperties.DatasetName;
+            else
+                obj.DATASET = obj.resolveDatasetName(itemIDSpec);
+            end
+
+            obj.manifest = bot.item.internal.Manifest.instance(...
+                obj.DATASET_TYPE, obj.DATASET);
+
             % Identify the manifest table row(s) associated to itemIDSpec
             if istable(itemIDSpec)                
                 manifestTableRow = itemIDSpec;
             elseif isnumeric(itemIDSpec)
-                itemIDSpec = uint32(round(itemIDSpec));
-                
-                manifestTablePrefix = lower(string(obj.DATASET_TYPE));
-                manifestTableSuffix = lower(string(obj.ITEM_TYPE)) + "s";
-                
-                manifestTable = obj.manifest.([manifestTablePrefix + "_" + manifestTableSuffix]); %#ok<NBRAK>
-                             
-                matchingRow = manifestTable.id == itemIDSpec;
-                manifestTableRow = manifestTable(matchingRow, :);                          
+                manifestTableRow = obj.findManifestTableRow(itemIDSpec);
             else
                 assert(false);
             end
             
-            assert(~isempty(manifestTableRow),"BOT:Item:idNotFound","Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
+            assert(~isempty(manifestTableRow), "BOT:Item:idNotFound", ...
+                "Specified numeric ID not found within manifest(s) of all available Items of class %s", mfilename('class'));
             
             % - Assign the table data to the metadata structure
             obj.info = table2struct(manifestTableRow);
@@ -97,11 +95,37 @@ classdef Item < handle & matlab.mixin.CustomDisplay
         function datasetType = getDatasetType(obj)
             datasetType = char(obj.DATASET_TYPE);
         end
+
+        function datasetName = getDatasetName(obj)
+            datasetName = char(obj.DATASET);
+        end
     end
     
+    methods (Access = protected) % Subclasses may override
+        function datasetName = resolveDatasetName(obj, itemId)
+            datasetName = ...
+                bot.internal.util.resolveDataset(...
+                    itemId, obj.DATASET_TYPE, obj.ITEM_TYPE);
+        end
+
+        function tableRow = findManifestTableRow(obj, itemId)
+            % Ensure ID is correct type
+            itemId = uint32(round(itemId));
+            
+            manifestTable = obj.manifest.getItemTable(obj.ITEM_TYPE);
+            matchingRow = manifestTable.id == itemId;
+            tableRow = manifestTable(matchingRow, :);
+        end
+    end
     
     %% HIDDEN METHODS  SUPERCLASS IMPLEMENTATION (matlab.mixin.CustomDisplay)
     methods (Hidden, Access = protected)
+
+        function str = getHeader(obj)
+            str = getHeader@matlab.mixin.CustomDisplay(obj);
+            str = replace(str, 'with properties', sprintf('(%s) with properties', obj.getDatasetName()));
+        end
+
         function groups = getPropertyGroups(obj)
             if ~isscalar(obj)
                 groups = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
@@ -150,10 +174,12 @@ classdef Item < handle & matlab.mixin.CustomDisplay
     
     %% HIDDEN METHODS - STATIC
     
-    methods (Hidden, Static)        
+    methods (Hidden, Static)
         function  mustBeItemIDSpec(val)
             %MUSTBEITEMIDSPEC Validation function for items specified to BOT item factory functions for item object array construction
-                        
+                       
+            if isempty(val); return; end
+
             eidTypePrefix = "mustBeBOTItemId:";
             eidTypeSuffix = "";
             msgType = "";
@@ -162,7 +188,7 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 
                 eidTypeSuffix = "invalidItemTable";
                 
-                if ~ismember(val.Properties.VariableNames, 'id')
+                if ~any(ismember(val.Properties.VariableNames, 'id')) && ~any(ismember(val.Properties.VariableNames, 'behavior_session_id'))
                     msgType = "Table supplied not recognized as a valid BOT Item information table";
                 end
                 
@@ -184,6 +210,14 @@ classdef Item < handle & matlab.mixin.CustomDisplay
                 throwAsCaller(MException(eidTypePrefix + eidTypeSuffix,msgType));
             end
         end         
+    
+        function tf = isItemIDSpecScalar(itemIDSpec)
+            if istable(itemIDSpec)
+                tf = height(itemIDSpec) == 1;
+            else
+                tf = numel(itemIDSpec) == 1;
+            end
+        end
     end
     
     %    methods (Static)

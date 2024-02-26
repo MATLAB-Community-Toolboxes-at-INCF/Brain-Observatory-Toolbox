@@ -9,10 +9,8 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     %       S3MountDirectory    (string)  : Path to directory where S3 bucket is mounted locally
     %       UseCacheWithS3Mount (logical) : Whether to use cache if working on an AWS cloud computer
     %       DialogMode          (string)  : How to show dialogs with user. 'Dialog Box' (default) or 'Command Window'
-
-    %       Suggestions for new preferences (Todo)
-    %       AutoDownloadFiles   (logical) : Whether to automatically download files when creating item objects
-    %       DownloadMode        (string)  : Download file or variable
+    %       AutoDownloadNwb     (logical) : Whether to automatically download files when creating item (session) objects
+    %       DownloadRemoteFiles (logical) : Whether to download remote files (true) or read data directly from remote location (false)
 
     properties (SetObservable)
         % Where to download data from, i.e web api or S3 bucket (AWS)
@@ -35,14 +33,22 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         DialogMode          (1,1) string ...
             {mustBeMember(DialogMode, ["Dialog Box" "Command Window"])} = "Dialog Box"
 
-        % %         Suggestions for new preferences (Todo):
-        % %
-        % %         % Whether to automatically download files when creating item objects
-        % %         AutoDownloadFiles   (1,1) logical = true
-        % %
-        % %         % Download file or variable (Work in progress).
-        % %         DownloadMode        (1,1) string ...
-        % %             {mustBeMember(DownloadMode, ["File" "Variable"])} = "File"
+        % Whether to automatically download nwb files when creating session objects
+        AutoDownloadNwb     (1,1) logical = true
+
+        % Work in progress (implemented for VisualBehavior ophys sessions)
+        GroupNwbProperties (1,1) logical = false
+    end
+
+    properties (SetObservable)
+        % Download file or read data from remote file.
+        DownloadRemoteFiles (1,1) logical = true
+    end
+
+    properties (SetObservable, Hidden)
+        % A temporary directory for storing files when cache directory is
+        % suboptimal (Not implemented).
+        % ScratchDirectory    (1,1) string = ""
     end
 
     properties (Constant, Access = private)
@@ -67,6 +73,7 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     methods (Access = private) % Constructor
 
         function obj = Preferences()
+            
             if isfile(obj.Filename)
                 try
                     S = load(obj.Filename);
@@ -75,7 +82,8 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
                     warning('Could not load preferences, using defaults')
                 end
             end
-            addlistener(obj, 'CacheDirectory', 'PostSet', @(s,e) obj.onCacheDirectorySet);
+
+            obj.addListeners()
         end
 
         function save(obj)
@@ -147,6 +155,16 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
     end
 
     methods (Access = private)
+        
+        function addListeners(obj)
+        %createListeners Create listeners for some preferences
+
+            addlistener(obj, 'CacheDirectory', 'PostSet', ...
+                @(s,e) obj.onCacheDirectorySet);
+
+            % % addlistener(obj, 'ScratchDirectory', 'PostSet', ...
+            % %     @(s,e) obj.onScratchDirectorySet);
+        end
 
         function propertyNames = getActivePreferenceGroup(obj)
             %getCurrentPreferenceGroup Get current preference group
@@ -164,25 +182,48 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
             propertyNames = properties(obj);
 
             namesToHide = {};
+            % Todo: Find hidden property names
+            %namesToHide = {'ScratchDirectory'};
+
 
             if ~obj.UseLocalS3Mount
                 namesToHide = [namesToHide, {'S3MountDirectory', 'UseCacheWithS3Mount'}];
             end
 
             if ~isequal(obj.DownloadFrom, "S3")
-                namesToHide = [namesToHide, {'DownloadMode'}];
+                namesToHide = [namesToHide, {'DownloadRemoteFiles'}];
             end
 
             propertyNames = setdiff(propertyNames, namesToHide, 'stable');
         end
 
-        function onCacheDirectorySet(~)
+        function onCacheDirectorySet(obj)
+            %onCacheDirectorySet Callback to execute if CacheDirectory changes
+            %
+            %   Need to reset the in-memory cache if this value is updated.
+            botCache = bot.internal.Cache.instance('nocreate');
+            if isempty(botCache); return; end % Skip if cache singleton is not properly initialized
+
+            botCache.changeCacheDirectory(obj.CacheDirectory)
+            bot.internal.Cache.clearInMemoryCache(true)
+
+            % Todo: Merge Cache classes
+            botCache = bot.internal.behavior.Cache.instance('nocreate');
+            if isempty(botCache); return; end % Skip if cache singleton is not properly initialized
+
+            botCache.changeCacheDirectory(obj.CacheDirectory)
+            bot.internal.behavior.Cache.clearInMemoryCache(true)
+        end
+
+        function onScratchDirectorySet(obj)
             %onCacheDirectorySet Callback to execute if CacheDirectory changes
             %
             %   Need to reset the in-memory cache if this value is updated.
             
-            bot.internal.cache.clearInMemoryCache(true)
+            botCache = bot.internal.Cache.instance();
+            botCache.changeScratchDirectory(obj.ScratchDirectory)
         end
+
     end
 
     %% STATIC METHODS
@@ -224,6 +265,22 @@ classdef Preferences < matlab.mixin.CustomDisplay & handle
         end
 
     end
-
-
 end
+
+% Details on Preferences (for developers):
+
+% DownloadFrom : Which file resource to use to resolve remote file paths.
+
+% DownloadRemoteFiles : 
+%
+%   Note: This option is only available if the DownloadFrom preference is 
+%   set to "S3".
+% 
+%   If value is changed to true:
+%       When requesting data, check if the filepath is remote,
+%       and if yes, get the "cached" filepath instead.
+% 
+%   If value is changed to false:
+%       If the filepath is already a locally cached file, we continue to 
+%       use that one.
+%       If the filepath is missing, we get the remote filepath...

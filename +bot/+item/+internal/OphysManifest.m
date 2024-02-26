@@ -60,6 +60,10 @@ classdef OphysManifest < bot.item.internal.Manifest
         ophys_cells         % Table of all OPhys cells
     end
 
+    properties (Dependent, Hidden)
+        OphysSessions
+    end
+
 % %     properties (SetAccess = private, Dependent = true) % Todo: rename?
 % %         Experiments   % Table of all OPhys experiment containers
 % %         Sessions      % Table of all OPhys experimental sessions
@@ -67,12 +71,18 @@ classdef OphysManifest < bot.item.internal.Manifest
 % %     end
 
     properties (Constant, Access = protected, Hidden)
+        DATASET_NAME = bot.item.internal.enum.Dataset("VisualCoding")
         DATASET_TYPE = bot.item.internal.enum.DatasetType.Ophys;
         ITEM_TYPES = ["Experiment", "Session", "Cell"]
         DOWNLOAD_FROM = containers.Map(...
             bot.item.internal.OphysManifest.ITEM_TYPES, ...
             ["API", "API", ""])
     end
+
+    properties (Access = protected)
+        FileResource = bot.internal.fileresource.visualcoding.VCOphysS3Bucket.instance()
+    end  
+  
     
     %% Constructor
     methods (Access = private)
@@ -136,6 +146,13 @@ classdef OphysManifest < bot.item.internal.Manifest
 
     end
 
+    methods % Getters for alias property names
+        function sessionTable = get.OphysSessions(oManifest)
+            sessionTable = oManifest.fetch_cached('ophys_sessions', ...
+                    @(itemType) oManifest.fetch_item_table('Session') );
+        end
+    end 
+
     %% Low-level getter method for OPhys manifest item tables
     methods (Access = public)
 
@@ -144,8 +161,8 @@ classdef OphysManifest < bot.item.internal.Manifest
 
             cache_key = oManifest.getManifestCacheKey(itemType);
 
-            if oManifest.cache.IsObjectInCache(cache_key)
-                itemTable = oManifest.cache.RetrieveObject(cache_key);
+            if oManifest.cache.isObjectInCache(cache_key)
+                itemTable = oManifest.cache.retrieveObject(cache_key);
 
             else
                 itemTable = oManifest.download_item_table(itemType);
@@ -154,12 +171,14 @@ classdef OphysManifest < bot.item.internal.Manifest
                 fcnName = sprintf('%s.preprocess_ophys_%s_table', class(oManifest), lower(itemType)); % Static method
                 itemTable = feval(fcnName, itemTable);
                 
-                oManifest.cache.InsertObject(cache_key, itemTable);
+                oManifest.cache.insertObject(cache_key, itemTable);
                 oManifest.clearTempTableFromCache(itemType)
             end
 
             % Apply standardized table display logic
-            itemTable = oManifest.applyUserDisplayLogic(itemTable); 
+            itemTable = oManifest.applyUserDisplayLogic(itemTable);
+
+            itemTable = oManifest.addDatasetInformation(itemTable);
         end
 
     end
@@ -209,27 +228,43 @@ classdef OphysManifest < bot.item.internal.Manifest
             % - Create `cre_line` variable from specimen field of session
             %  table and append it back to session table.
             % `cre_line` is important, makes life easier if it's explicit
-            cre_line = cell(num_sessions, 1);
+            [cre_line, full_genotype, sex] = deal( cell(num_sessions, 1) );
+            age = zeros(num_sessions, 1);
+
             for i = 1:num_sessions
                 donor_info = ophys_session_table(i, :).specimen.donor;
                 transgenic_lines_info = struct2table(donor_info.transgenic_lines);
                 cre_line(i, 1) = transgenic_lines_info.name(not(cellfun('isempty', strfind(transgenic_lines_info.transgenic_line_type_name, 'driver')))...
                     & not(cellfun('isempty', strfind(transgenic_lines_info.name, 'Cre'))));
+                
+                full_genotype{i} = ophys_session_table(i, :).specimen.donor.full_genotype;
+
+                % Also get sex and age of animal
+                sex{i} = ophys_session_table(i, :).specimen.donor.sex;
+                age(i) = ophys_session_table(i, :).specimen.donor.age.days;
             end
             
-            ophys_session_table = addvars(ophys_session_table, cre_line, ...
-                'NewVariableNames', 'cre_line');
+            ophys_session_table = addvars(ophys_session_table, full_genotype, cre_line, sex, age, ...
+                'NewVariableNames', {'full_genotype', 'cre_line', 'sex', 'age_in_days'});
             
-            % - Convert variables to useful types
-            ophys_session_table.experiment_container_id = uint32(ophys_session_table.experiment_container_id);
-            ophys_session_table.id = uint32(ophys_session_table.id);
-            ophys_session_table.date_of_acquisition = datetime(ophys_session_table.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
-            ophys_session_table.specimen_id = uint32(ophys_session_table.specimen_id);
+            % - Rename variables
+            ophys_session_table = bot.item.internal.Manifest.renameTableVariables(ophys_session_table);
             
-            ophys_session_table.name = string(ophys_session_table.name);
-            ophys_session_table.stimulus_name = categorical(string(ophys_session_table.stimulus_name)); 
-            ophys_session_table.storage_directory = string(ophys_session_table.storage_directory);
-            ophys_session_table.cre_line = string(ophys_session_table.cre_line);  
+            % Recast / convert data types
+            ophys_session_table = bot.item.internal.Manifest.recastTableVariables(ophys_session_table);
+
+
+            % % - Convert variables to useful types
+            % ophys_session_table.experiment_container_id = uint32(ophys_session_table.experiment_container_id);
+            % ophys_session_table.id = uint32(ophys_session_table.id);
+            % ophys_session_table.date_of_acquisition = datetime(ophys_session_table.date_of_acquisition,'InputFormat','yyyy-MM-dd''T''HH:mm:ss''Z''','TimeZone','UTC');
+            % ophys_session_table.mouse_id = uint32(ophys_session_table.mouse_id);
+            % 
+            % ophys_session_table.name = string(ophys_session_table.name);
+            % ophys_session_table.session_type = categorical(string(ophys_session_table.session_type)); 
+            % ophys_session_table.storage_directory = string(ophys_session_table.storage_directory);
+            % ophys_session_table.cre_line = string(ophys_session_table.cre_line);  
+            % ophys_session_table.sex = categorical(ophys_session_table.sex, {'M', 'F'});
         end
 
         function ophys_cell_table = preprocess_ophys_cell_table(ophys_cell_table)

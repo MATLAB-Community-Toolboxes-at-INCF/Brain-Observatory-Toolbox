@@ -1,34 +1,147 @@
-% Retrieve table of experiment sessions information for an Allen Brain Observatory dataset 
+% Retrieve table of experiment sessions information for an Allen Brain Observatory [1] dataset 
 % 
-% Can return experiment sessions from either of the Allen Brain Observatory [1] datasets:
+% Can return experimental sessions from either of the Allen Brain 
+% Observatory [1] datasets:
 %   * Visual Coding 2P [2] ("ophys")
-%   * Visual Coding Neuropixels [3] ("ephys") 
+%   * Visual Coding Neuropixels [3] ("ephys")
+%   * Visual Behavior 2P [4] ("ophys")
+%   * Visual Behavior Neuropixels [5] ("ephys")
 %
-% Web data accessed via the Allen Brain Atlas API [4]. 
+% Usage:
+%    sessions = bot.listSessions() returns a table of information for 
+%       sessions of the Visual Coding Neuropixels (ephys) dataset.
 %
-% [1] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% [2] Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-2p
-% [3] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
-% [4] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
+%    sessions = bot.listSessions(datasetName, datasetType) returns a 
+%       sessions table for the specified datasetName and datasetType. 
+%       datasetName can be "VisualCoding" (default) or "VisualBehavior" 
+%       and datasetType can be "Ephys" (default) or "Ophys".
 %
-%% function sessionsTable = listSessions(dataset)
-function sessionsTable = listSessions(dataset)
+%    sessions = bot.listSessions(..., Name, Value) returns a session table
+%       based on additional options provided as name-value pairs.
+%
+%       Available options:
+%
+%         - Id : A list of ids. Will return a table that only includes
+%                sessions for the given Ids
+%
+%         - IncludeBehaviorOnly : Includes behavior-only sessions. Note:
+%                Only available for the Visual Behavior dataset
+%
+% Web data accessed via the Allen Brain Atlas API [6] or AWS Public 
+% Datasets (Amazon S3). 
+%
+% For references [#]:
+%   See also bot.util.showReferences
 
-arguments
-    dataset (1,1) string {mustBeMember(dataset,["ephys" "ophys" "Ephys" "Ophys", "EPhys", "OPhys"])}    
-end
+function sessionsTable = listSessions(dataset, datasetType, options)
+
+    arguments
+        dataset (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
+        datasetType (1,1) bot.item.internal.enum.DatasetType = "Ephys"
+        options.Id (1,:) = [];
+        options.IncludeBehaviorOnly = false
+    end
+
+    import bot.item.internal.enum.Dataset
+
+    % Note: This function can support returning sessions from multiple
+    % datasets, but this functionality is currently not enabled
    
-   switch lower(dataset)
-      case 'ephys'
-         manifest = bot.item.internal.Manifest.instance('ephys');
-         sessionsTable = manifest.ephys_sessions;
-         
-      case 'ophys'
-         manifest = bot.item.internal.Manifest.instance('ophys');
-         sessionsTable = manifest.ophys_sessions;
-   end
+    datasetNames = [dataset.Name];
+    datasetType = string(datasetType);
+
+    if options.IncludeBehaviorOnly
+        if datasetNames ~= Dataset.VisualBehavior, ...
+            warning('BOT:ListSessions:BehaviorOnlyNotPresent', ...
+                'Behavior only sessions are only present for the Visual Behavior dataset')
+            options.IncludeBehaviorOnly = false;
+        end
+    end
+
+    if ~nargout
+        fprintf('Listing "%s" sessions from the "%s" dataset\n', datasetType, dataset)
+    end
+
+    % Initialize a cell array for unmerged tables (i.e tables from 
+    % different datasets)
+    unmergedTables = cell(1, numel(datasetNames));
+
+    % Gather tables from requested datasets
+    for i = 1:numel(datasetNames)
+        if options.IncludeBehaviorOnly
+            tableName = 'BehaviorSessions';
+        else
+            tableName = datasetType+"Sessions";
+        end
+        
+        manifest = bot.item.internal.Manifest.instance(datasetType, datasetNames(i));
+        unmergedTables{i} = manifest.(tableName); % E.g manifest.EphysSessions
+        if ~isempty(options.Id)
+            unmergedTables{i} = unmergedTables{i}(ismember(unmergedTables{i}.id, options.Id),:);
+        end
+        unmergedTables{i}.dataset_name = repmat(datasetNames(i), height( unmergedTables{i} ), 1);
+    end
+    
+    % Return if there is only one dataset table
+    if numel(unmergedTables) == 1
+        sessionsTable = unmergedTables{1}; return
+    end
+
+    % Find common set of table variable names for merging
+    tableVariableNames = cellfun(@(t) t.Properties.VariableNames, unmergedTables, 'uni', 0);
+
+    % Handle special case (ophys (VC) and ophys (VB)):
+    if any( strcmp( [tableVariableNames{:}], 'targeted_structure_acronym') )
+        unmergedTables = scalarColumnToCell(unmergedTables, 'targeted_structure_acronym');
+    end
+    tableVariableNames = cellfun(@(t) t.Properties.VariableNames, unmergedTables, 'uni', 0);
+
+    finalVariableNames = intersect(tableVariableNames{1}, tableVariableNames{2}, 'stable');
+    for i = 2:numel(unmergedTables)
+        finalVariableNames = intersect(finalVariableNames, tableVariableNames{i}, 'stable');
+    end
+
+    % Keep only the common set of variables for each table
+    for i = 1:numel(unmergedTables)
+        unmergedTables{i} = unmergedTables{i}(:, finalVariableNames);
+    end
+
+    % Merge tables and return
+    sessionsTable = cat(1, unmergedTables{:});
+
+   % % switch string(datasetType)
+   % %    case "Ephys"
+   % %       manifest = bot.item.internal.Manifest.instance('ephys');
+   % %       sessionsTable = manifest.ephys_sessions;
+   % % 
+   % %    case "Ophys"
+   % %       manifest = bot.item.internal.Manifest.instance('ophys');
+   % %       sessionsTable = manifest.ophys_sessions;
+   % % end
 
 end
+
+function unmergedTables = scalarColumnToCell(unmergedTables, name)
+    
+    for i = 1:numel(unmergedTables)
+        tableVariableNames = unmergedTables{i}.Properties.VariableNames;
+        if any( strcmp( tableVariableNames, name) )
+            data = unmergedTables{i}.(name);
+            data = num2cell(data);
+            unmergedTables{i} = removevars(unmergedTables{i}, name);
+            unmergedTables{i}.([name, 's']) = data; % Make column name plural
+        end
+    end
+end
+
+% Notes: 
+% For the Visual Coding ophys manifest, targeted structure acronym is
+% always a scalar, as imaging was done in one plane. For the Visual
+% Behavior dataset, imaging was done in multiple planes. In the VC ophys
+% table, the variable for this data is called "targeted_structure_acronym",
+% while for the VB datasets it is called "targeted_structure_acronyms" 
+% (plural) and the data is wrapped in cell arrays. When merging these
+% tables the scalar column is made into cell and renamed to plural name
 
 
 % Retained code previously in Session class which previously implemented
@@ -107,7 +220,7 @@ end
 %             success = false;
 %             while ~success && (num_tries > 0)
 %                try
-%                   cached_files = sess.bot_cache.ccCache.pwebsave(local_files, [urls{:}], true);
+%                   cached_files = sess.bot_cache.CloudCacher.pwebsave(local_files, [urls{:}], true);
 %                   success = true;
 %                catch
 %                   num_tries = num_tries - 1;

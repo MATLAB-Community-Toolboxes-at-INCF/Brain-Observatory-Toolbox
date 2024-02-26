@@ -1,25 +1,46 @@
-% Retrieve table of Neuropixels probes information for an Allen Brain Observatory dataset
+% Retrieve table of ephys unit information for an Allen Brain Observatory [1] dataset
 %
-% Supports the Visual Coding Neuropixels [1] dataset from the Allen Brain Observatory [2]. 
+% Supports the Visual Coding Neuropixels [3] dataset and the Visual 
+% Behavior Neuropixels [5] dataset from the Allen Brain Observatory.
 %
-% Web data accessed via the Allen Brain Atlas API [3]. 
+% Usage:
+%    units = bot.listUnits() returns a table of unit information for the
+%       Visual Coding dataset
 %
-% [1] Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels dataset. Available from: https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels
-% [2] Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: https://portal.brain-map.org/explore/circuits
-% [3] Copyright 2015 Allen Institute for Brain Science. Allen Brain Atlas API. Available from: https://brain-map.org/api/index.html
+%    units = bot.listUnits(datasetName) returns a table of unit information 
+%       for the dataset specified by datasetName. datasetName can be 
+%       "VisualCoding" (default) or "VisualBehavior".
 %
-%% function units = listUnits(include_metrics)
-function unitsTable = listUnits(include_metrics)
-arguments
-    include_metrics logical = false;
-end
+%    units = bot.listUnits(datasetName, include_metrics) additionally 
+%       specifies whether to include unit metrics or not (Default = false).
+%
+% Web data accessed via the Allen Brain Atlas API [6] or AWS Public 
+% Datasets (Amazon S3). 
+%
+% For references [#]:
+%   See also bot.util.showReferences
 
-manifest = bot.item.internal.Manifest.instance('ephys');
-   unitsTable = manifest.ephys_units;
-   
-   % - Trim metrics from table
-   if ~include_metrics
-       unitsTable = removevars(unitsTable, bot.item.Unit.METRIC_PROPERTIES);
-   end
-end
+function unitsTable = listUnits(datasetName, includeMetrics)
 
+    arguments 
+        datasetName (1,1) bot.item.internal.enum.Dataset = "VisualCoding"
+        includeMetrics logical = false;
+    end
+    
+    % Get the metadata manifest for the selected dataset
+    manifest = bot.item.internal.Manifest.instance('Ephys', datasetName);
+
+    % Get the units item table
+    if datasetName == "VisualCoding"
+        unitsTable = manifest.ephys_units;
+    else
+        unitsTable = manifest.Units;
+    end
+
+    % - Trim metrics from table
+    if ~includeMetrics
+        metricProperties = bot.item.Unit.METRIC_PROPERTIES;
+        presentMetricProperties = intersect(metricProperties, unitsTable.Properties.VariableNames);
+        unitsTable = removevars(unitsTable, presentMetricProperties);
+    end
+end
