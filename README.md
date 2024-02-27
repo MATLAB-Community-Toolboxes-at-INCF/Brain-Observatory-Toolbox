@@ -9,7 +9,7 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 
 Either will orient you to several **live script examples** available to guide new users, including **_demos_** of neural data analysis & **_tutorials_** covering Brain Observatory Toolbox concepts & operations.
 
-You can also individually view (:eyes:) or run (:arrow_forward:) these examples on MATLAB Online:
+You can also individually view (👀) or run (▶️) these examples on MATLAB Online:
 | Example Type | Data Type | View | Run | Data Type | View | Run | 
 | --- | --- | --- | --- | --- | --- | --- |
 | :rocket: Quickstart | Calcium Imaging (Ophys) | [:eyes:][OphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/OphysQuickstart.mlx) | Neuropixels Probe (Ephys) | [:eyes:][EphysQuickstart] | [:arrow_forward:](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=quickstarts/EphysQuickstart.mlx) |
