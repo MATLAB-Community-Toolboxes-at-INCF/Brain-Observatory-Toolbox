@@ -96,7 +96,10 @@ classdef S3Bucket < bot.internal.abstract.FileResource & matlab.mixin.Heterogene
         %getDataFileURI Get URI for a data file (file belonging to item)
             filename = obj.getRelativeFileUriPath(itemObject, fileNickname, varargin{:});
             baseURI = obj.getDataFolderUri();
-            strURI = uriJoin(baseURI, filename);
+
+            fileNameParts = strsplit(filename, filesep);
+            % Todo: Use fullfile if using file:// scheme
+            strURI = uriJoin(baseURI, fileNameParts{:});
         end
         
         function strURI = getItemTableURI(obj, itemType)
