@@ -56,7 +56,7 @@ The easiest way to install the Brain Observatory Toolbox is to use the [**Add-on
 3. Press the "Add" button. ![image](https://user-images.githubusercontent.com/23032671/188341517-6c2d372a-9eac-4aed-974a-a102880212da.png)
 
 #### Required products
-* MATLAB (R2021a or later)
+* MATLAB (R2023b or later)
 * Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
 
 ----
