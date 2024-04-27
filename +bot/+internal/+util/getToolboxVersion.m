@@ -21,8 +21,9 @@ function [versionStr, versionNumber] = getToolboxVersion()
             'MATLAB''s search path.'], strjoin(strcat({'    '}, pathList), newline))
     end
 
-    [~, toolboxFolderName] = fileparts( bot.internal.util.toolboxdir );
-    
+    [~, toolboxFolderName, ext] = fileparts( bot.internal.util.toolboxdir );
+    toolboxFolderName = [toolboxFolderName ext]; % this is a directory so any .xx should be included
+
     S = ver(toolboxFolderName);
     
     if numel(S) > 1
