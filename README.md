@@ -34,10 +34,12 @@ You can also individually view (👀) or run (▶️) these examples on MATLAB O
 ## About the Allen Brain Observatory datasets
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
 
-| Dataset | Recording Type | Nickname | Details |
+| Dataset | Recording Type | Experiment Type | Details |
 | --- | --- | --- | --- |
-| **Visual Coding Neuropixels** [^2] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
-| **Visual Coding 2P** [^3] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
+| **Visual Behavior Neuropixels** [^2] | ⚡"Ephys" (electrophysiology): large-scale neural probe recordings | Visually Guided Task | [details](https://portal.brain-map.org/explore/circuits/visual-behavior-neuropixels) |
+| **Visual Behavior 2P** [^3] | 🔬 "Ophys" (optical physiology): two-photon (2P) calcium imaging | Visually Guided Task | [details](http://portal.brain-map.org/explore/circuits/visual-behavior-2p) |
+| **Visual Coding Neuropixels** [^4] | ⚡"Ephys" (electrophysiology): large-scale neural probe recordings | Passive Visual Perception | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
+| **Visual Coding 2P** [^5] | 🔬 "Ophys" (optical physiology): two-photon (2P) calcium imaging | Passive Visual Perception | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
 
 The Visual Coding datasets are both collected from the living mouse brain during presentation of varying visual stimuli. Technical white papers (see Details for each dataset) provide detailed information about the experimental technicalities and computational pipelines. 
 
@@ -67,7 +69,7 @@ Initial engineering work, done by Ethan Meyers and Xinzhu Fang, was supported by
 
 [^1]: Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
-[^2]: Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
+[^4]: Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
 
-[^3]: Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
+[^5]: Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
 
