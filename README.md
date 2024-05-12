@@ -3,9 +3,20 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
-🗺️ Get oriented and get started with **3 lines of code**. You can:
-* [**Open in MATLAB Online**](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/%2binternal/README.mlx)
-* Enter `>>bot.README` on your own local/cloud [installation](#Installation)
+## Getting Started with Allen Brain Observatory datasets
+[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory to date include four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each illustrate the core operations of browsing, accessing, and exploring dataset items: 
+
+| Dataset | Recordings | Sessions | Details | Quickstart Example |
+| --- | --- | --- | --- | --- |
+| **Visual Coding 2P** [^2] | 🔬 | 👀 | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) | TODO |
+| **Visual Coding Neuropixels** [^3] | ⚡ | 👀 | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) | TODO |
+| **Visual Behavior 2P** [^4] | 🔬 | 🤔 | [details](http://portal.brain-map.org/explore/circuits/visual-behavior-2p) | TODO |
+| **Visual Behavior Neuropixels** [^5] |⚡ | 🤔 | [details](https://portal.brain-map.org/explore/circuits/visual-behavior-neuropixels) | TODO | 
+
+**Key**: ⚡= large-scale neural probe recordings ("ephys") 🔬= two-photon calcium imaging ("ophys") 👀 = passive viewing 🤔= active cognitive task
+
+Technical white papers (see Details for each dataset) provide information about the experimental technicalities and computational pipelines.
+
 
 Either will orient you to several **live script examples** available to guide new users, including **_demos_** of neural data analysis & **_tutorials_** covering Brain Observatory Toolbox concepts & operations.
 
@@ -31,15 +42,6 @@ You can also individually view (👀) or run (▶️) these examples on MATLAB O
 
 :speech_balloon:	Questions? Suggestions? Roadblocks? Code contributors are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
 
-## About the Allen Brain Observatory datasets
-[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include two datasets of neural activity recordings: 
-
-| Dataset | Recording Type | Nickname | Details |
-| --- | --- | --- | --- |
-| **Visual Coding Neuropixels** [^2] | Large-scale neural probe recordings | "ephys" (electrophysiology) | [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |
-| **Visual Coding 2P** [^3] | Two-photon calcium imaging | "ophys" (optical physiology) | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) |
-
-The Visual Coding datasets are both collected from the living mouse brain during presentation of varying visual stimuli. Technical white papers (see Details for each dataset) provide detailed information about the experimental technicalities and computational pipelines. 
 
 ## About the Brain Observatory Toolbox (BOT) 
  
@@ -67,7 +69,11 @@ Initial engineering work, done by Ethan Meyers and Xinzhu Fang, was supported by
 
 [^1]: Copyright 2016 Allen Institute for Brain Science. Allen Brain Observatory. Available from: [portal.brain-map.org/explore/circuits](http://portal.brain-map.org/explore/circuits).
 
-[^2]: Copyright 2019 Allen Institute for Brain Science. Visual Coding Neuropixels Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-neuropixels](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels).
+[^2]: Dataset: Allen Institute MindScope Program (2016). Allen Brain Observatory -- 2-photon Visual Coding [dataset]. Available from [brain-map.org/explore/circuits](https://portal.brain-map.org/explore/circuits/visual-coding-2p). Primary publication: de Vries, S. E. J., Lecoq, J. A., Buice, M. A., et al. (2020). A large-scale standardized physiological survey reveals functional organization of the mouse visual cortex. Nature Neuroscience, 23, 138-151. [https://doi.org/10.1038/s41593-019-0550-9](https://doi.org/10.1038/s41593-019-0550-9)
 
-[^3]: Copyright 2016 Allen Institute for Brain Science. Visual Coding 2P Dataset. Available from: [portal.brain-map.org/explore/circuits/visual-coding-2p](http://portal.brain-map.org/explore/circuits/visual-coding-2p).
+[^3]: Dataset: Allen Institute MindScope Program (2019). Allen Brain Observatory -- Neuropixels Visual Coding [dataset]. Available from [brain-map.org/explore/circuits](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels). Primary publication: Siegle, J. H., Jia, X., Durand, S., et al. (2021). Survey of spiking in the mouse visual system reveals functional hierarchy. Nature, 592(7612), 86-92. https://doi.org/10.1038/s41586-020-03171-x
+
+[^4]: Dataset: Allen Institute MindScope Program (2021). Allen Brain Observatory -- 2-photon Visual Behavior [dataset]. Available from [brain-map.org/explore/circuits/visual-behavior-2p](https://portal.brain-map.org/explore/circuits/visual-coding-2p).
+
+[^5]: Dataset: Allen Institute MindScope Program (2022). Allen Brain Observatory -- Neuropixels Visual Behavior [dataset].
 
