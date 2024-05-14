@@ -26,8 +26,8 @@ ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
 exampleSession = bot.getSessions( ophysSessionTable(1, :) )
 dff = exampleSession.fluorescence_traces_dff
 ```
-
-## Neural data analysis using the Allen Brain Observatory datasets
+## Going Further 
+### Practical demonstrations illustrating neural data analysis 
 Demonstration examples illustrate neural data analysis concepts and practice using the Allen Brain Observatory datasets: 
 
 | Dataset | Demonstration Example | About |
@@ -37,14 +37,7 @@ Demonstration examples illustrate neural data analysis concepts and practice usi
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
 
-## Using the Brain Observatory Toolbox 
-The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use the Allen Brain Observatory datasets. 
-
-The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
-
-![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
-
-### Tutorial examples
+### Conceptual tutorials illustrating access of varied dataset contents 
 Tutorial examples provide step-by-step guidance for usage of the Brain Observatory Toolbox to access and understand the metadata, processed data, and (where applicable) raw data available in the Allen Brain Observatory datasets: 
 
 | Dataset | Demonstration Example | About |
@@ -54,10 +47,13 @@ Tutorial examples provide step-by-step guidance for usage of the Brain Observato
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
 
-### About the Brain Observatory Toolbox
-:construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
+## Key concepts 
+The Brain Observatory Toolbox (BOT) provides a uniform interface to access and use the Allen Brain Observatory datasets. 
 
-:speech_balloon:	Questions? Suggestions? Roadblocks? Code contributors are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
+The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) representations of available dataset items and [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) representations of specific dataset items: 
+
+![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
+
 
 ## Installation
 To install the Brain Observatory Toolbox persistently on a local machine or cloud instance, the [**Add-on Explorer**](https://www.mathworks.com/products/matlab/add-on-explorer.html) is recommended: 
@@ -70,6 +66,11 @@ To install the Brain Observatory Toolbox persistently on a local machine or clou
 * Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
 
 ----
+### About the Brain Observatory Toolbox
+:construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
+
+:speech_balloon:	Questions? Suggestions? Roadblocks? Code contributors are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
+
 ### Acknowledgements 
 
 Initial engineering work, done by Ethan Meyers and Xinzhu Fang, was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College and hosted by the [Center for Brains, Minds, and Machines](https://cbmm.mit.edu/) at the Massachusetts Institute of Technology. 
