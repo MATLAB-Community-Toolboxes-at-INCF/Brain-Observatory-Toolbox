@@ -3,8 +3,10 @@
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
-## Getting Started with Allen Brain Observatory datasets
-[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each illustrate core operations of browsing, accessing, and viewing dataset items: 
+## Getting Started 
+
+### Quickstart examples for each Allen Brain Observatory dataset
+[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each can be viewed, and readily run in [MATLAB Online](https://www.mathworks.com/products/matlab-online.html): 
 
 | Dataset | Recordings | Experiment | Details | Quickstart Example | 
 | --- | --- | --- | --- | --- | 
@@ -15,7 +17,15 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 
 <sub><sup>a</sup> two-photon (2P) calcium imaging <sup>b</sup> large-scale neural probe recordings <sup>c</sup> presentation of various visual stimuli w/ untrained subjects <sup>d</sup> visual change detection task w/ trained subjects</sub>
 
-All quickstart examples can be run in [MATLAB Online](https://www.mathworks.com/products/matlab-online.html). Technical white papers (see **Details** for each dataset) provide information about the experimental technicalities and computational pipelines.
+Technical white papers (see **Details**) provide information about the experimental technicalities and computational pipelines for each dataset. 
+
+### Three lines of code
+The following three lines of code illustrate the core workflow of the Brain Observatory Toolbox to access neural data: 
+```
+ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
+exampleSession = bot.getSessions( ophysSessionTable(1, :) )
+dff = exampleSession.fluorescence_traces_dff
+```
 
 ## Neural data analysis using the Allen Brain Observatory datasets
 Demonstration examples illustrate neural data analysis concepts and practice using the Allen Brain Observatory datasets: 
@@ -35,7 +45,7 @@ The BOT interface provides [tabular](https://www.mathworks.com/help/matlab/matla
 ![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
 
 ### Tutorial examples
-Tutorial examples provide step-by-step guidance for usage of the Brain Observatory Toolbox to access and understand the metadata, processed data, and (where applciable) raw data available in the Allen Brain Observatory datasets: 
+Tutorial examples provide step-by-step guidance for usage of the Brain Observatory Toolbox to access and understand the metadata, processed data, and (where applicable) raw data available in the Allen Brain Observatory datasets: 
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
