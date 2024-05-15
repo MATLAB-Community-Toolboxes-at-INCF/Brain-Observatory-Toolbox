@@ -17,7 +17,7 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 
 <sub><sup>a</sup> two-photon (2P) calcium imaging <sup>b</sup> large-scale neural probe recordings <sup>c</sup> presentation of various visual stimuli w/ untrained subjects <sup>d</sup> visual change detection task w/ trained subjects</sub>
 
-Technical white papers (see **Details**) provide information about the experimental technicalities and computational pipelines for each dataset. 
+Technical white papers (see **Details**) provide information about the experimental protocols and computational pipelines for each dataset. 
 
 ### Three lines of code
 The following three lines of code illustrate the core workflow of the Brain Observatory Toolbox to access neural data: 
