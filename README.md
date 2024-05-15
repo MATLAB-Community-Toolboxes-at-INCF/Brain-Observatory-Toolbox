@@ -26,7 +26,7 @@ ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
 exampleSession = bot.getSessions( ophysSessionTable(1, :) )
 dff = exampleSession.fluorescence_traces_dff
 ```
-Here `listSessions` lists available _items_ (of type Session) from the Visual Coding 2P dataset and `getSessions` creates an object to interact with the first listed item allowing reterieval of the fully preprocessed fluorescence traces representing the neural recording data. For further explanation, see [Key Concepts](https://github.com/MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox/edit/vijayiyer05-patch-2/README.md#key-concepts) and/or explore [tutorials](TODO).  
+Here `listSessions` lists available _items_ (of type Session) from the Visual Coding 2P dataset and `getSessions` creates an object to interact with the first listed item allowing reterieval of the fully preprocessed fluorescence traces representing the neural recording data. For further explanation, see [Key Concepts](https://github.com/MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox/edit/vijayiyer05-patch-2/README.md#key-concepts) and/or explore [tutorials](#tutorials-explaining-access-of-dataset-contents).  
 
 ## Going Further 
 ### Demonstrations illustrating neural data analysis 
@@ -63,7 +63,7 @@ The Brain Observatory Toolbox provides a set of two functions for each dataset i
 This uniform workflow (across datasets and item types) is illustrated here: 
 ![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
 
-The dataset item's contents are exposed through the object's [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) and (where applicable) [methods](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html). For further guidance and explanation, see the [Tutorials](TODO). 
+The dataset item's contents are exposed through the object's [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) and (where applicable) [methods](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html). For further guidance and explanation, see the [Tutorials](#tutorials-explaining-access-of-dataset-contents). 
 
 ## Installation
 To install the Brain Observatory Toolbox persistently on a local machine or cloud instance, the [**Add-on Explorer**](https://www.mathworks.com/products/matlab/add-on-explorer.html) is recommended: 
