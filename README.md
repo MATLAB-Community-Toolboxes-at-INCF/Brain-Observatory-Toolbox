@@ -20,7 +20,7 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 Technical white papers (see **Details**) provide information about the experimental protocols and computational pipelines for each dataset. 
 
 ### Three lines of code
-The following three lines of code illustrate the core workflow of the Brain Observatory Toolbox to access neural data: 
+These three lines of code illustrate the core workflow of the Brain Observatory Toolbox to access neural data: 
 ```
 ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
 exampleSession = bot.getSessions( ophysSessionTable(1, :) )
@@ -38,7 +38,7 @@ Demonstration examples illustrate neural data analysis concepts and practice usi
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
 
 ### Conceptual tutorials illustrating access of varied dataset contents 
-Tutorial examples provide step-by-step guidance for usage of the Brain Observatory Toolbox to access and understand the metadata, processed data, and (where applicable) raw data available in the Allen Brain Observatory datasets: 
+Tutorial examples provide step-by-step guidance to access and understand the metadata, processed data, and (where applicable) raw data available in the Allen Brain Observatory datasets: 
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
