@@ -60,7 +60,7 @@ The Brain Observatory Toolbox provides a set of two functions for each dataset i
 - `listXXX` functions returns a [table](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) of available items in the dataset
 - `getXXX` functions returns an [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) of selected item(s) by id(s) or table row(s)
 
-This uniform workflow (across datasets and item types) is illustrated here: 
+This workflow id uniform across datasets and item types, and illustrated here: 
 ![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
 
 The dataset item's contents are exposed through the object's [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) and (where applicable) [methods](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html). For further guidance and explanation, see the [Tutorials](#tutorials-explaining-access-of-dataset-contents). 
