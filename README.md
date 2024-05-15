@@ -57,8 +57,8 @@ Allen Brain Observatory datasets each consist of various _items_ of types depend
 
 ### Brain Observatory Toolbox operations
 The Brain Observatory Toolbox provides a set of two functions for each dataset item type: 
-- `listXXX` functions returns a [table](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) of available items in the dataset
-- `getXXX` functions returns an [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) of selected item(s) by id(s) or table row(s)
+- `listXXX` functions return a [table](https://www.mathworks.com/help/matlab/matlab_prog/access-data-in-a-table.html) of available items in the dataset
+- `getXXX` functions return an [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) of selected item(s) by id(s) or table row(s)
 
 This workflow id uniform across datasets and item types, and illustrated here: 
 ![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
