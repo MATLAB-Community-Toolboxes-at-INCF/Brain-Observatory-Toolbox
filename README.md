@@ -44,7 +44,7 @@ Tutorial examples provide step-by-step guidance for using the Brain Observatory 
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
-| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=tutorials/OphysTutorial.mlx&file=demos/OphysDemo.mlx) | TODO |
+| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=tutorials/OphysTutorial.mlx&file=tutorials/OphysTutorial.mlx) | TODO |
 | **Visual Coding Neuropixels** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    (*) | TODO |
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
