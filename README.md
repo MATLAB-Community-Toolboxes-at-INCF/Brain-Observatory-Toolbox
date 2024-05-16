@@ -26,7 +26,7 @@ ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
 exampleSession = bot.getSessions( ophysSessionTable(1, :) )
 dff = exampleSession.fluorescence_traces_dff
 ```
-Here `listSessions` lists available _items_ (of type Session) from the Visual Coding 2P dataset and `getSessions` creates an object to interact with the first listed item allowing reterieval of the fully preprocessed fluorescence traces representing the neural recording data. For further explanation, see [Key Concepts](https://github.com/MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox/edit/vijayiyer05-patch-2/README.md#key-concepts) and/or explore [tutorials](#tutorials-explaining-access-of-dataset-contents).  
+In the first line, `listSessions` lists available _items_ (of type Session) from the Visual Coding 2P dataset. In the second line, `getSessions` creates an object to interact with the first listed item. The third line reterieves from the object fully preprocessed fluorescence traces representing the neural recording data. For further explanation, see [Key Concepts](https://github.com/MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox/edit/vijayiyer05-patch-2/README.md#key-concepts) and/or explore [tutorials](#tutorials-explaining-access-of-dataset-contents).  
 
 ## Going Further 
 ### Demonstrations illustrating neural data analysis 
