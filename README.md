@@ -53,7 +53,7 @@ Tutorial examples provide step-by-step guidance for using the Brain Observatory 
 
 ### Allen Brain Observatory dataset items
 Allen Brain Observatory datasets each consist of various _items_ of types depending on the specific dataset: 
-![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
+![Schematic of BOT data items & workflow](https://private-user-images.githubusercontent.com/23032671/330993800-572d0fa8-e7d7-4abd-9209-7a03f6823486.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTU4MTk2MjksIm5iZiI6MTcxNTgxOTMyOSwicGF0aCI6Ii8yMzAzMjY3MS8zMzA5OTM4MDAtNTcyZDBmYTgtZTdkNy00YWJkLTkyMDktN2EwM2Y2ODIzNDg2LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA1MTYlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNTE2VDAwMjg0OVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTM2ODE3ZWQzNDYwY2JlYTliMWMwZmQzZTlmOTFjOTFjNTk1ODQ0MDk3Y2VmMzZlNDk3NmEwMzg4OTgzY2U0ODcmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.q4dsdxl05fB7sU_Tgg3P0UUqm-kWp0xIJYDcLTVC_-E) 
 
 ### Brain Observatory Toolbox operations
 The Brain Observatory Toolbox provides a set of two functions for each dataset item type: 
@@ -61,7 +61,7 @@ The Brain Observatory Toolbox provides a set of two functions for each dataset i
 - `getXXX` functions return an [object](https://www.mathworks.com/help/matlab/matlab_oop/operations-with-objects.html) of selected item(s) by id(s) or table row(s)
 
 This workflow is uniform across datasets and item types, and illustrated here: 
-![Schematic of BOT data items & workflow](https://user-images.githubusercontent.com/23032671/224573702-01e92b8b-5a05-4f98-bdca-0bd58317f3c5.png)
+![Schematic of BOT data items & workflow](https://private-user-images.githubusercontent.com/23032671/330993799-dc6fb2bf-297c-400e-9719-7e72098614ca.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTU4MTk2MjksIm5iZiI6MTcxNTgxOTMyOSwicGF0aCI6Ii8yMzAzMjY3MS8zMzA5OTM3OTktZGM2ZmIyYmYtMjk3Yy00MDBlLTk3MTktN2U3MjA5ODYxNGNhLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA1MTYlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNTE2VDAwMjg0OVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTY4OTk5OGQzZjlmZjcyMjg1ZWNjZWI1NzYxMDVmZDg4NzA2YzVjMGFjMmIxNGE5MjE2Njk1ODY0YmJhNjNjYjMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.BcqrweSBCvxZ0Ye7a3z6KwCC6AuEw-bL0K1CFXA0xIE)
 
 The dataset item's contents are exposed through the object's [properties](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html) and (where applicable) [methods](https://www.mathworks.com/help/matlab/properties-storing-data-and-state.html). For further guidance and explanation, see the [Tutorials](#tutorials-explaining-access-of-dataset-contents). 
 
