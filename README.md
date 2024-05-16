@@ -11,8 +11,8 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 | Dataset | Recordings | Experiment | Details | Quickstart Example | 
 | --- | --- | --- | --- | --- | 
 | **Visual Coding 2P** [^2] | 🔬 "ophys"<sup>a</sup> | Passive<sup>c</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)      [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=quickstarts/OphysQuickstart.mlx) |
-| **Visual Coding Neuropixels** [^3] | ⚡ "ephys"<sup>b</sup>| Passive<sup>c</sup>| [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |[👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com) |
-| **Visual Behavior 2P** [^4] | 🔬 "ophys"<sup>a</sup>| Active<sup>d</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-behavior-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com) |
+| **Visual Coding Neuropixels** [^3] | ⚡ "ephys"<sup>b</sup>| Passive<sup>c</sup>| [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |[👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=quickstarts/EphysQuickstart.mlx) |
+| **Visual Behavior 2P** [^4] | 🔬 "ophys"<sup>a</sup>| Active<sup>d</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-behavior-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=quickstarts/VBOQuickstart.mlx) |
 | **Visual Behavior Neuropixels** [^5] |⚡ "ephys"<sup>b</sup> | Active<sup>d</sup> | [details](https://portal.brain-map.org/explore/circuits/visual-behavior-neuropixels) | (coming soon) | 
 
 <sub><sup>a</sup> two-photon (2P) calcium imaging <sup>b</sup> large-scale neural probe recordings <sup>c</sup> presentation of various visual stimuli w/ untrained subjects <sup>d</sup> visual change detection task w/ trained subjects</sub>
@@ -34,7 +34,7 @@ Demonstration examples illustrate neural data analysis concepts and practice whi
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
-| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com) | TODO |
+| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=demos/OphysDemo.mlx&file=demos/OphysDemo.mlx) | TODO |
 | **Visual Coding Neuropixels** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)  (*) | TODO |    
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
@@ -44,7 +44,7 @@ Tutorial examples provide step-by-step guidance for using the Brain Observatory 
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
-| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com) | TODO |
+| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=tutorials/OphysTutorial.mlx&file=demos/OphysDemo.mlx) | TODO |
 | **Visual Coding Neuropixels** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    (*) | TODO |
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
