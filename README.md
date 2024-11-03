@@ -6,9 +6,9 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 ## Getting Started 
 
 ### Quickstart examples for each Allen Brain Observatory dataset
-[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each can be readily viewed (at File Exchange) and run (via [MATLAB Online](https://www.mathworks.com/products/matlab-online.html)):
+[Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory span four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each dataset can be readily viewed (at File Exchange) and run (via [MATLAB Online](https://www.mathworks.com/products/matlab-online.html)):
 
-| Dataset | Recordings | Experiment | Details | Quickstart View 👀 | Quickstart Run ▶️|
+| Dataset | Recordings | Experiment | Details | View 👀 | Run ▶️|
 | --- | --- | --- | --- | --- | --- |
 | **Visual Coding 2P** [^2] | 🔬 "ophys"<sup>a</sup> | Passive<sup>c</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) | [![File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox) | [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=VisualCoding-2P/quickstart.mlx) |
 | **Visual Coding Neuropixels** [^3] | ⚡ "ephys"<sup>b</sup>| Passive<sup>c</sup>| [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |[![File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox) | [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=VisualCoding-Neuropoxels/quickstart.mlx) |
