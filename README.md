@@ -1,11 +1,22 @@
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/%2Binternal/README.mlx)  [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)
 
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. The following datasets are available:
+
+A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. Available datasets:
 - **Visual Coding** (Neuropixels and 2-Photon Calcium Imaging)
 - **Visual Behavior** (Neuropixels and 2-Photon Calcium Imaging)
 
-## Getting Started 
+## Contents
+<p align="left">
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#going-further">Going Further</a>  •
+  <a href="#key-concepts">Key Concepts</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#about-the-brain-observatory-toolbox">About</a> •
+  <a href="#acknowledgements">Acknowledgements</a> 
+</p>
+
+## Getting Started
 
 ### Quickstart examples for each Allen Brain Observatory dataset
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each can be viewed, and readily run in [MATLAB Online](https://www.mathworks.com/products/matlab-online.html): 
@@ -51,7 +62,7 @@ Tutorial examples provide step-by-step guidance for using the Brain Observatory 
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
 
-## Key concepts 
+## Key Concepts 
 
 ### Allen Brain Observatory dataset items
 Allen Brain Observatory datasets each consist of various _items_ of types depending on the specific dataset: 
@@ -78,12 +89,12 @@ To install the Brain Observatory Toolbox persistently on a local machine or clou
 * Image Processing Toolbox (if running the Visual Coding 2P demonstration `VisualCoding_OphysDemo.mlx`)
 
 ----
-### About the Brain Observatory Toolbox
+## About the Brain Observatory Toolbox
 :construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
 
 :speech_balloon:	Questions? Suggestions? Roadblocks? Code contributors are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
 
-### Acknowledgements 
+## Acknowledgements 
 
 Initial engineering work, done by Ethan Meyers and Xinzhu Fang, was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College and hosted by the [Center for Brains, Minds, and Machines](https://cbmm.mit.edu/) at the Massachusetts Institute of Technology. 
 
