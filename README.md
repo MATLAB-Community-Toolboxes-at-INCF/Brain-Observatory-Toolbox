@@ -2,8 +2,8 @@
 
 # Brain Observatory Toolbox
 A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. The following datasets are available:
-- Visual Coding (Neuropixels and Two-Photon)
-- Visual Behavior (Neuropixels and Two-Photon)
+- **Visual Coding** (Neuropixels and 2-Photon Calcium Imaging)
+- **Visual Behavior** (Neuropixels and 2-Photon Calcium Imaging)
 
 ## Getting Started 
 
