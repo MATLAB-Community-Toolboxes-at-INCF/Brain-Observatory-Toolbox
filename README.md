@@ -21,8 +21,8 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 
 Technical white papers (see **Details**) provide information about the experimental protocols and computational pipelines for each dataset. 
 
-### Three lines of code
-These three lines of code illustrate the core workflow of the Brain Observatory Toolbox to access neural data, which is common across all datasets: 
+### Programmatic workflow for accessing neural data in the Brain Observatory Toolbox
+These three lines of code demonstrate the core workflow of the Brain Observatory Toolbox for accessing neural data, a workflow common to all datasets:
 ```
 ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
 exampleSession = bot.getSessions( ophysSessionTable(1, :) )
