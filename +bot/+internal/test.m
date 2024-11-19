@@ -328,7 +328,8 @@ classdef test < matlab.unittest.TestCase
       end
 
       function testOphysQuickStart(testCase)
-         captured = evalc('run(''OphysQuickstart.mlx'')');
+         captured = evalc('run(''VisualCoding_OphysQuickstart.mlx'')');
+         testCase.verifyClass(captured, 'char')
          close all
       end
    end

@@ -1,26 +1,39 @@
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=emeyers/Brain-Observatory-Toolbox&file=%2Bbot/%2Binternal/README.mlx)  [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)
 
 # Brain Observatory Toolbox
-A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. 
 
-## Getting Started 
+A MATLAB toolbox for accessing and using the neural recording public datasets from the **Allen Brain Observatory**[^1]. Available datasets:
+- **Visual Coding** (Neuropixels and 2-Photon Calcium Imaging)
+- **Visual Behavior** (Neuropixels and 2-Photon Calcium Imaging)
+
+## Contents
+<p align="left">
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#going-further">Going Further</a>  •
+  <a href="#key-concepts">Key Concepts</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#about-the-brain-observatory-toolbox">About</a> •
+  <a href="#acknowledgements">Acknowledgements</a> 
+</p>
+
+## Getting Started
 
 ### Quickstart examples for each Allen Brain Observatory dataset
 [Data releases](https://portal.brain-map.org/latest-data-release) from the Allen Brain Observatory include four datasets of neural activity recordings during presentations of visual stimuli to awake mice. Quickstart examples for each can be viewed, and readily run in [MATLAB Online](https://www.mathworks.com/products/matlab-online.html): 
 
 | Dataset | Recordings | Experiment | Details | Quickstart Example | 
 | --- | --- | --- | --- | --- | 
-| **Visual Coding 2P** [^2] | 🔬 "ophys"<sup>a</sup> | Passive<sup>c</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)      [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=quickstarts/OphysQuickstart.mlx) |
-| **Visual Coding Neuropixels** [^3] | ⚡ "ephys"<sup>b</sup>| Passive<sup>c</sup>| [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |[👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=quickstarts/EphysQuickstart.mlx) |
-| **Visual Behavior 2P** [^4] | 🔬 "ophys"<sup>a</sup>| Active<sup>d</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-behavior-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=quickstarts/VBOQuickstart.mlx) |
+| **Visual Coding 2P** [^2] | 🔬 "ophys"<sup>a</sup> | Passive<sup>c</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-coding-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)      [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=examples/VisualCoding_OphysQuickstart.mlx) |
+| **Visual Coding Neuropixels** [^3] | ⚡ "ephys"<sup>b</sup>| Passive<sup>c</sup>| [details](https://portal.brain-map.org/explore/circuits/visual-coding-neuropixels) |[👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=examples/VisualCoding_EphysQuickstart.mlx) |
+| **Visual Behavior 2P** [^4] | 🔬 "ophys"<sup>a</sup>| Active<sup>d</sup> | [details](http://portal.brain-map.org/explore/circuits/visual-behavior-2p) | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&file=examples/VisualBehavior_OphysQuickstart.mlx) |
 | **Visual Behavior Neuropixels** [^5] |⚡ "ephys"<sup>b</sup> | Active<sup>d</sup> | [details](https://portal.brain-map.org/explore/circuits/visual-behavior-neuropixels) | (coming soon) | 
 
 <sub><sup>a</sup> two-photon (2P) calcium imaging <sup>b</sup> large-scale neural probe recordings <sup>c</sup> presentation of various visual stimuli w/ untrained subjects <sup>d</sup> visual change detection task w/ trained subjects</sub>
 
 Technical white papers (see **Details**) provide information about the experimental protocols and computational pipelines for each dataset. 
 
-### Three lines of code
-These three lines of code illustrate the core workflow of the Brain Observatory Toolbox to access neural data, which is common across all datasets: 
+### Programmatic workflow for accessing neural data in the Brain Observatory Toolbox
+These three lines of code demonstrate the core workflow of the Brain Observatory Toolbox for accessing neural data, a workflow common to all datasets:
 ```
 ophysSessionTable = bot.listSessions('VisualCoding', 'Ophys')
 exampleSession = bot.getSessions( ophysSessionTable(1, :) )
@@ -34,7 +47,7 @@ Demonstration examples illustrate neural data analysis concepts and practice whi
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
-| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=demos/OphysDemo.mlx&file=demos/OphysDemo.mlx) | TODO |
+| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=examples/VisualCoding_OphysDemo.mlx&file=examples/VisualCoding_OphysDemo.mlx) | TODO |
 | **Visual Coding Neuropixels** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)  (*) | TODO |    
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
@@ -44,12 +57,12 @@ Tutorial examples provide step-by-step guidance for using the Brain Observatory 
 
 | Dataset | Demonstration Example | About |
 | --- | --- | --- |
-| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=tutorials/OphysTutorial.mlx&file=tutorials/OphysTutorial.mlx) | TODO |
+| **Visual Coding 2P** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    [▶️ (run)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=examples/VisualCoding_OphysTutorial.mlx&file=examples/VisualCoding_OphysTutorial.mlx) | TODO |
 | **Visual Coding Neuropixels** | [👀 (view)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)    (*) | TODO |
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
 
-## Key concepts 
+## Key Concepts 
 
 ### Allen Brain Observatory dataset items
 Allen Brain Observatory datasets each consist of various _items_ of types depending on the specific dataset: 
@@ -73,15 +86,15 @@ To install the Brain Observatory Toolbox persistently on a local machine or clou
 
 #### Required products
 * MATLAB (R2023b or later)
-* Image Processing Toolbox (if running the Visual Coding 2P demonstration `OphysDemo.mlx`)
+* Image Processing Toolbox (if running the Visual Coding 2P demonstration `VisualCoding_OphysDemo.mlx`)
 
 ----
-### About the Brain Observatory Toolbox
+## About the Brain Observatory Toolbox
 :construction: The Brain Observatory Toolbox is at an early stage; the interface is not guaranteed stable across the v0.9.x releases. 
 
 :speech_balloon:	Questions? Suggestions? Roadblocks? Code contributors are regularly monitoring user-posted [GitHub issues](https://github.com/emeyers/Brain-Observatory-Toolbox/issues) & the [File Exchange discussion](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox#discussions_tab). 
 
-### Acknowledgements 
+## Acknowledgements 
 
 Initial engineering work, done by Ethan Meyers and Xinzhu Fang, was supported by the Foundation of Psychocultural Research and Sherman Fairchild Award at Hampshire College and hosted by the [Center for Brains, Minds, and Machines](https://cbmm.mit.edu/) at the Massachusetts Institute of Technology. 
 

@@ -119,7 +119,7 @@ classdef FileDownloadProgressMonitor < matlab.net.http.ProgressMonitor
             if ~isempty(obj.Value) && doUpdate
                 
                 if isempty(obj.Max)
-                    % Maxmimum (size of request/response) is not known, 
+                    % Maximum (size of request/response) is not known, 
                     % file download did not start yet.
                     progressValue = 0;
                     msg = 'Waiting for download to start...';
