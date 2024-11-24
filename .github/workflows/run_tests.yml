@@ -26,6 +26,8 @@ jobs:
       # Checks-out the repository under $GITHUB_WORKSPACE, so the job can access it
       - name: Check out repo
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
