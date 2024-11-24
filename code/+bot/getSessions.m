@@ -87,9 +87,11 @@ function [datasetName, sessionType] = resolveSessionType(sessionIDSpec)
         warning('off', 'BOT:ListSessions:BehaviorOnlyNotPresent')
         for iName = string(datasetNames')
             for jType = string(datasetTypes')
-                sessionTable = bot.listSessions(iName, jType, "IncludeBehaviorOnly", true);
-                ids = sessionTable.id;
-                sessionIdMap(ids)={{iName, jType}};
+                for k = 0:1
+                    sessionTable = bot.listSessions(iName, jType, "IncludeBehaviorOnly", logical(k));
+                    ids = sessionTable.id;
+                    sessionIdMap(ids)={{iName, jType}};
+                end
             end
         end
         warning('on', 'BOT:ListSessions:BehaviorOnlyNotPresent')

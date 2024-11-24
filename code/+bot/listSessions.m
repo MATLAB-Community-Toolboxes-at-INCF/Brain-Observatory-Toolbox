@@ -47,7 +47,7 @@ function sessionsTable = listSessions(dataset, datasetType, options)
     % Note: This function can support returning sessions from multiple
     % datasets, but this functionality is currently not enabled
    
-    datasetNames = [dataset.Name];
+    datasetNames = dataset.Name;
     datasetType = string(datasetType);
 
     if options.IncludeBehaviorOnly
