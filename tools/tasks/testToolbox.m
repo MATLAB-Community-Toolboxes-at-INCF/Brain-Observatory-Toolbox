@@ -2,6 +2,7 @@ function testToolbox(varargin)
     installMatBox()
     projectRootDirectory = bottools.projectdir();
 
+    addpath(fullfile(projectRootDirectory, 'code'))
     botPrefs = bot.util.getPreferences();
     if isempty(botPrefs.CacheDirectory)
         botPrefs.DialogMode = "Command Window";
