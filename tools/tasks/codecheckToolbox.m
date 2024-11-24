@@ -1,5 +1,5 @@
 function codecheckToolbox()
-    installMatBox()
+    installMatBox("commit")
     projectRootDirectory = bottools.projectdir();
     matbox.tasks.codecheckToolbox(projectRootDirectory)
 end
