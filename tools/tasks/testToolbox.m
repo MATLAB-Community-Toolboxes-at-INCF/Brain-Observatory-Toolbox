@@ -4,7 +4,7 @@ function testToolbox(varargin)
 
     addpath(fullfile(projectRootDirectory, 'code'))
     botPrefs = bot.util.getPreferences();
-    if isempty(botPrefs.CacheDirectory)
+    if botPrefs.CacheDirectory == "" || ~isfolder(botPrefs.CacheDirectory)
         botPrefs.DialogMode = "Command Window";
         tempCache = fullfile(tempdir, 'bot-cache');
         if ~isfolder(tempCache); mkdir(tempCache); end
