@@ -13,6 +13,7 @@ function testToolbox(varargin)
         end
         cleanupObj = onCleanup(@(fp) rmdir(tempCache, "s"));
         botPrefs.CacheDirectory = tempCache;
+        botPrefs.AutoDownloadNwb = false;
         disp(botPrefs)
     end
 
