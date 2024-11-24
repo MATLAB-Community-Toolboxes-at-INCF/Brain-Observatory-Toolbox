@@ -1074,9 +1074,13 @@ classdef EphysSession < bot.item.Session
         function tableRow = findManifestTableRow(obj, itemId)
             % Ensure ID is correct type
             itemId = uint32(round(itemId));
-            
-            tableRow = bot.listSessions(obj.DATASET, obj.DATASET_TYPE, ...
-                "Id", itemId, "IncludeBehaviorOnly", true);
+            for i = 0:1
+                tableRow = bot.listSessions(obj.DATASET, obj.DATASET_TYPE, ...
+                    "Id", itemId, "IncludeBehaviorOnly", logical(i));
+                if ~isempty(tableRow)
+                    break
+                end
+            end
         end
     end
     

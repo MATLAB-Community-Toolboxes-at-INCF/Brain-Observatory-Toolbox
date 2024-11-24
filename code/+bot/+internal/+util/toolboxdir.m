@@ -1,8 +1,8 @@
 function toolboxFolderPath = toolboxdir()
 
     thisFolderPath = fileparts( mfilename('fullpath') );
-    splitFolderPath = strsplit(thisFolderPath, filesep);
-    
-    % Move 3 folders up:
-    toolboxFolderPath = fullfile( splitFolderPath{1:end-3} );
+    filesepLoc = regexp(thisFolderPath, filesep);
+        
+    % Get path of folder 3 levels up:
+    toolboxFolderPath = extractBefore(thisFolderPath, filesepLoc(end-2));
 end
