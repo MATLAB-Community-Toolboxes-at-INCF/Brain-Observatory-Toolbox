@@ -1,6 +1,9 @@
 # BOT Data Cache
 Cache/
 
+# Ignore everything in docs/reports
+docs/reports/*
+
 # Autosave files
 *.asv
 *.m~

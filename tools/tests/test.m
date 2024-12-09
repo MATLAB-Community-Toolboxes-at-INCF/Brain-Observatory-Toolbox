@@ -4,6 +4,7 @@ classdef test < matlab.unittest.TestCase
     % Todo: 
     % [ ] set up test cache...
     % [ ] test live scripts
+    
 
    %% Test methods block
    methods (Test)
@@ -328,9 +329,10 @@ classdef test < matlab.unittest.TestCase
       end
 
       function testOphysQuickStart(testCase)
-         captured = evalc('run(''VisualCoding_OphysQuickstart.mlx'')');
-         testCase.verifyClass(captured, 'char')
-         close all
+          quickStartPath = fullfile(bot.internal.util.toolboxdir, 'examples', 'VisualCoding_OphysQuickstart.mlx');
+          captured = evalc('run(quickStartPath)');
+          testCase.verifyClass(captured, 'char')
+          close all
       end
    end
 end
