@@ -55,10 +55,10 @@ Demonstration examples illustrate neural data analysis concepts and practice whi
 ### Tutorials explaining access of dataset contents 
 Tutorial examples provide step-by-step guidance for using the Brain Observatory Toolbox to access and understand the metadata, processed data, and (where applicable) raw data available in the Allen Brain Observatory datasets: 
 
-| Dataset | View 👀| Run ▶️ | About |
-| :--- | :---: | :---: | :--- | 
-| **Visual Coding 2P** | [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)  | [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=examples/VisualCoding_OphysTutorial.mlx&file=examples/VisualCoding_OphysTutorial.mlx) | TODO |
-| **Visual Coding Neuropixels** |[![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox) | (*) | TODO |
+| Dataset | View 👀| Run ▶️ | 
+| :--- | :---: | :---: | 
+| **Visual Coding 2P** | [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)  | [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=examples/VisualCoding_OphysTutorial.mlx&file=examples/VisualCoding_OphysTutorial.mlx)  |
+| **Visual Coding Neuropixels** |[![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox) | (*)  |
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
 
