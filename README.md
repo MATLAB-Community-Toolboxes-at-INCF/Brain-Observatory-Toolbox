@@ -47,7 +47,7 @@ Demonstration examples illustrate neural data analysis concepts and practice whi
 
 | Dataset | View 👀 | Run ▶️ | Video |
 | :--- | :---: | :---: | :--- |
-| **Visual Coding 2P** | [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox) | [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=examples/VisualCoding_OphysDemo.mlx&file=examples/VisualCoding_OphysDemo.mlx) | video(https://www.youtube.com/watch?v=sl_GE0piFAI) |
+| **Visual Coding 2P** | [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox) | [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=MATLAB-Community-Toolboxes-at-INCF/Brain-Observatory-Toolbox&project=examples/VisualCoding_OphysDemo.mlx&file=examples/VisualCoding_OphysDemo.mlx) | [video](https://www.youtube.com/watch?v=sl_GE0piFAI) |
 | **Visual Coding Neuropixels** | [![View Brain-Observatory-Toolbox on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/90900-brain-observatory-toolbox)  | (*) | - | 
 
 <sub>(\*) These data-intensive examples are currently recommended for use on local machines or user-configured cloud instances only, not for MATLAB Online</sub>
