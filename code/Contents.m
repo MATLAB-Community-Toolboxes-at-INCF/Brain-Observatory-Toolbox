@@ -1,8 +1,8 @@
-% Brain Observatory Toolbox
+% Brain-Observatory-Toolbox
 % Version 0.9.4 19-feb-2024
 %
-% Copyright (c) 2017, Ethan Meyers
-% ----------------------------------
+% Copyright (c) 2024, Ethan Meyers
+% --------------------------------
 %
 % A MATLAB toolbox for accessing and using the public neural 
 % recording datasets from the Allen Brain Observatory.
