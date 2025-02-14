@@ -6,6 +6,8 @@ A MATLAB toolbox for accessing and using the neural recording public datasets fr
 - **Visual Coding** (Neuropixels and 2-Photon Calcium Imaging)
 - **Visual Behavior** (Neuropixels and 2-Photon Calcium Imaging)
 
+**RRID:SCR_026428**
+
 ## Contents
 <p align="left">
   <a href="#getting-started">Getting Started</a> •
