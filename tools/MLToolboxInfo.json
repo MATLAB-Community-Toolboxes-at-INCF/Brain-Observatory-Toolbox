@@ -1,0 +1,14 @@
+{
+    "Namespace" : "bot",
+    "ToolboxOptions": {
+        "Identifier": "85a3255c-4ff5-42ef-9c10-b441318b4322",
+        "ToolboxName": "Brain-Observatory-Toolbox",
+        "AuthorName": "Ethan Meyers",
+        "AuthorEmail": "",
+        "AuthorCompany": "",
+        "Summary": "A MATLAB toolbox for interacting with the Allen Brain Observatory",
+        "Description": "A MATLAB toolbox for accessing and using the neural recording public datasets from the Allen Brain Observatory. Available datasets: Available datasets: Visual Coding, Visual Behavior (Neuropixels and 2-Photon Calcium Imaging)",
+        "MinimumMatlabRelease": "",
+        "MaximumMatlabRelease": ""
+    }
+}
